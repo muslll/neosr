@@ -1,2 +1,0 @@
-baboon.png (120,123,3) 1
-comic.png (80,60,3) 1

@@ -1,12 +1,11 @@
-#!/usr/bin/env python
-
-from setuptools import find_packages, setup
+#!/usr/bin/python
 
 import os
 import subprocess
 import time
+from setuptools import find_packages, setup
 
-version_file = 'basicsr/version.py'
+VERSION_FILE = 'basicsr/version.py'
 
 
 def readme():
@@ -44,7 +43,7 @@ def get_hash():
     if os.path.exists('.git'):
         sha = get_git_hash()[:7]
     # currently ignore this
-    # elif os.path.exists(version_file):
+    # elif os.path.exists(VERSION_FILE):
     #     try:
     #         from basicsr.version import __version__
     #         sha = __version__.split('+')[-1]
@@ -64,18 +63,18 @@ __gitsha__ = '{}'
 version_info = ({})
 """
     sha = get_hash()
-    with open('VERSION', 'r') as f:
-        SHORT_VERSION = f.read().strip()
-    VERSION_INFO = ', '.join([x if x.isdigit() else f'"{x}"' for x in SHORT_VERSION.split('.')])
+    with open('VERSION', 'r', encoding="utf8") as f:
+        short_version = f.read().strip()
+    version_info = ', '.join([x if x.isdigit() else f'"{x}"' for x in short_version.split('.')])
 
-    version_file_str = content.format(time.asctime(), SHORT_VERSION, sha, VERSION_INFO)
-    with open(version_file, 'w') as f:
-        f.write(version_file_str)
+    VERSION_FILE_str = content.format(time.asctime(), short_version, sha, version_info)
+    with open(VERSION_FILE, 'w', encoding="utf8") as f:
+        f.write(VERSION_FILE_str)
 
 
 def get_version():
-    with open(version_file, 'r') as f:
-        exec(compile(f.read(), version_file, 'exec'))
+    with open(VERSION_FILE, 'r', encoding="utf8") as f:
+        exec(compile(f.read(), VERSION_FILE, 'exec'))
     return locals()['__version__']
 
 
@@ -107,7 +106,7 @@ def make_cuda_ext(name, module, sources, sources_cuda=None):
 
 def get_requirements(filename='requirements.txt'):
     here = os.path.dirname(os.path.realpath(__file__))
-    with open(os.path.join(here, filename), 'r') as f:
+    with open(os.path.join(here, filename), 'r', encoding="utf8") as f:
         requires = [line.replace('\n', '') for line in f.readlines()]
     return requires
 
@@ -118,8 +117,9 @@ if __name__ == '__main__':
         try:
             import torch
             from torch.utils.cpp_extension import BuildExtension, CppExtension, CUDAExtension
-        except ImportError:
-            raise ImportError('Unable to import torch - torch is needed to build cuda extensions')
+        except ImportError as exc:
+            raise ImportError('Unable to import torch - torch is needed to build \
+                cuda extensions') from exc
 
         ext_modules = [
             make_cuda_ext(
@@ -155,7 +155,8 @@ if __name__ == '__main__':
         keywords='computer vision, restoration, super resolution',
         url='https://github.com/xinntao/BasicSR',
         include_package_data=True,
-        packages=find_packages(exclude=('options', 'datasets', 'experiments', 'results', 'tb_logger', 'wandb')),
+        packages=find_packages(exclude=('options', 'datasets', 'experiments', 'results', \
+            'tb_logger', 'wandb')),
         classifiers=[
             'Development Status :: 4 - Beta',
             'License :: OSI Approved :: Apache Software License',
