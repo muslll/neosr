@@ -1,0 +1,18 @@
+name = "neosr"
+repository = "https://github.com/muslll/neosr"
+
+[tool.poetry]
+name = "neosr"
+version = "0.1.0"
+description = ""
+authors = ["musl <132400428+muslll@users.noreply.github.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+opencv-python = "^4.8.0.74"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
