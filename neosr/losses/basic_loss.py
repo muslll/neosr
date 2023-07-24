@@ -116,7 +116,7 @@ class CharbonnierLoss(nn.Module):
 
 @LOSS_REGISTRY.register()
 class WeightedTVLoss(L1Loss):
-    """Weighted TV loss.
+    """Weighted Total Variation loss.
 
     Args:
         loss_weight (float): Loss weight. Default: 1.0.

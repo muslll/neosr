@@ -4,9 +4,8 @@ from os import path as osp
 
 from neosr.utils import get_root_logger, scandir
 from neosr.utils.registry import LOSS_REGISTRY
-from .gan_loss import g_path_regularize, gradient_penalty_loss, r1_penalty
 
-__all__ = ['build_loss', 'gradient_penalty_loss', 'r1_penalty', 'g_path_regularize']
+__all__ = ['build_loss']
 
 # automatically scan and import loss modules for registry
 # scan all the files under the 'losses' folder and collect files ending with '_loss.py'

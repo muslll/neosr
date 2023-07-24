@@ -1,2 +1,0 @@
-gt/baboon.png, lq/baboon.png
-gt/comic.png, lq/comic.png

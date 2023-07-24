@@ -9,7 +9,7 @@ from neosr.data import build_dataloader, build_dataset
 from neosr.data.data_sampler import EnlargedSampler
 from neosr.data.prefetch_dataloader import CPUPrefetcher, CUDAPrefetcher
 from neosr.models import build_model
-from neosr.utils import (AvgTimer, MessageLogger, check_resume, get_env_info, get_root_logger, get_time_str,
+from neosr.utils import (AvgTimer, MessageLogger, check_resume, get_root_logger, get_time_str,
                            init_tb_logger, init_wandb_logger, make_exp_dirs, mkdir_and_rename, scandir)
 from neosr.utils.options import copy_opt_file, dict2str, parse_options
 
@@ -111,7 +111,6 @@ def train_pipeline(root_path):
     # Otherwise the logger will not be properly initialized
     log_file = osp.join(opt['path']['log'], f"train_{opt['name']}_{get_time_str()}.log")
     logger = get_root_logger(logger_name='neosr', log_level=logging.INFO, log_file=log_file)
-    logger.info(get_env_info())
     logger.info(dict2str(opt))
     # initialize wandb and tb loggers
     tb_logger = init_tb_loggers(opt)

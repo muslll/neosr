@@ -184,25 +184,3 @@ def get_root_logger(logger_name='neosr', log_level=logging.INFO, log_file=None):
     initialized_logger[logger_name] = True
     return logger
 
-
-def get_env_info():
-    """Get environment information.
-
-    Currently, only log the software version.
-    """
-    import torch
-    import torchvision
-
-    msg = r"""
-                ____                _       _____  ____
-               / __ ) ____ _ _____ (_)_____/ ___/ / __ \
-              / __  |/ __ `// ___// // ___/\__ \ / /_/ /
-             / /_/ // /_/ /(__  )/ // /__ ___/ // _, _/
-            /_____/ \__,_//____//_/ \___//____//_/ |_|
-     ______                   __   __                 __      __
-    / ____/____   ____   ____/ /  / /   __  __ _____ / /__   / /
-   / / __ / __ \ / __ \ / __  /  / /   / / / // ___// //_/  / /
-  / /_/ // /_/ // /_/ // /_/ /  / /___/ /_/ // /__ / /<    /_/
-  \____/ \____/ \____/ \____/  /_____/\____/ \___//_/|_|  (_)
-    """
-    return msg

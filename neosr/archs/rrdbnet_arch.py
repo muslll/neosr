@@ -64,7 +64,7 @@ class RRDB(nn.Module):
 
 
 @ARCH_REGISTRY.register()
-class RRDBNet(nn.Module):
+class esrgan(nn.Module):
     """Networks consisting of Residual in Residual Dense Block, which is used
     in ESRGAN.
 
@@ -85,7 +85,7 @@ class RRDBNet(nn.Module):
     """
 
     def __init__(self, num_in_ch, num_out_ch, scale=4, num_feat=64, num_block=23, num_grow_ch=32):
-        super(RRDBNet, self).__init__()
+        super(esrgan, self).__init__()
         self.scale = scale
         if scale == 2:
             num_in_ch = num_in_ch * 4
