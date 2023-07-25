@@ -142,7 +142,7 @@ class SRGANModel(SRModel):
 
     def save(self, epoch, current_iter):
         if hasattr(self, 'net_g_ema'):
-            self.save_network([self.net_g, self.net_g_ema], 'net_g', current_iter, param_key=['params', 'params_ema'])
+            self.save_network(self.net_g_ema, 'net_g', current_iter)
         else:
             self.save_network(self.net_g, 'net_g', current_iter)
         self.save_network(self.net_d, 'net_d', current_iter)

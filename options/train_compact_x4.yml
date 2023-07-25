@@ -60,8 +60,9 @@ network_d:
 
 # path
 path:
-  #pretrain_network_g: experiments/051_RRDBNet_PSNR_x4_f64b23_DIV2K_1000k_B16G1_wandb/models/net_g_1000000.pth
-  strict_load_g: true
+  #pretrain_network_g: /tmp/with_ema.pth
+  #Needed only for old pretrains. All models now save to param instead of params_ema
+  #param_key_g: params_ema
   resume_state: ~
 
 # training settings
@@ -83,7 +84,7 @@ train:
     milestones: [50000, 100000, 200000, 300000]
     gamma: 0.5
 
-  total_iter: 400000
+  total_iter: 500
   warmup_iter: -1  # no warm up
 
   # losses
@@ -125,7 +126,7 @@ train:
 # logging settings
 logger:
   print_freq: 100
-  save_checkpoint_freq: !!float 5e3
+  save_checkpoint_freq: 500
   #use_tb_logger: false
   use_tb_logger: true
   #wandb:
