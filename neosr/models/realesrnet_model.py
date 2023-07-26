@@ -5,14 +5,14 @@ from torch.nn import functional as F
 
 from neosr.data.degradations import random_add_gaussian_noise_pt, random_add_poisson_noise_pt
 from neosr.data.transforms import paired_random_crop
-from neosr.models.sr_model import SRModel
+from neosr.models.generic import generic 
 from neosr.utils import DiffJPEG, USMSharp
 from neosr.utils.img_process_util import filter2D
 from neosr.utils.registry import MODEL_REGISTRY
 
 
 @MODEL_REGISTRY.register(suffix='neosr')
-class RealESRNetModel(SRModel):
+class RealESRNetModel(generic):
     """RealESRNet Model for Real-ESRGAN: Training Real-World Blind Super-Resolution with Pure Synthetic Data.
 
     It is trained without GAN losses.

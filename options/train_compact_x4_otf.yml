@@ -4,10 +4,15 @@ model_type: RealESRGANModel
 scale: 4
 num_gpu: auto  # set num_gpu: 0 for cpu mode
 manual_seed: 0
-l1_gt_usm: false
-percep_gt_usm: false
-gan_gt_usm: false
+l1_gt_usm: true
+percep_gt_usm: true
+gan_gt_usm: true
 high_order_degradation: true 
+
+#l1_gt_usm: false
+#percep_gt_usm: false
+#gan_gt_usm: false
+#high_order_degradation: false
 
 resize_prob: [0.2, 0.7, 0.1]  # up, down, keep
 resize_range: [0.15, 1.5]
@@ -27,8 +32,8 @@ poisson_scale_range2: [0.05, 2.5]
 gray_noise_prob2: 0.4
 jpeg_range2: [30, 95]
 
-gt_size: 256
-queue_size: 180
+gt_size: 64
+queue_size: 40
 
 # dataset and data loader settings
 datasets:
@@ -41,6 +46,7 @@ datasets:
     # dataroot_gt: datasets/DIV2K/DIV2K_train_HR_sub.lmdb
     # dataroot_lq: datasets/DIV2K/DIV2K_train_LR_bicubic_X4_sub.lmdb
     meta_info: "/home/anon/meta_info_nomos_uni.txt"
+      #meta_info: "/home/anon/meta_info_nomos_uni_paired.txt"
     io_backend:
       type: disk
       # (for lmdb)
@@ -72,7 +78,7 @@ datasets:
     # data loader
     num_worker_per_gpu: 4
     batch_size_per_gpu: 1
-    dataset_enlarge_ratio: 100
+    dataset_enlarge_ratio: 1
     prefetch_mode: ~
 
   #val:

@@ -12,29 +12,41 @@ from .base_model import BaseModel
 
 
 @MODEL_REGISTRY.register()
-class SRModel(BaseModel):
+class generic(BaseModel):
     """Base SR model for single image super-resolution."""
 
     def __init__(self, opt):
-        super(SRModel, self).__init__(opt)
+        super(generic, self).__init__(opt)
 
-        # define network
+        # define network net_g
         self.net_g = build_network(opt['network_g'])
         self.net_g = self.model_to_device(self.net_g)
         self.print_network(self.net_g)
 
-        # load pretrained models
+        # define network net_d
+        if self.opt.get('network_d', None) is not None:
+            self.net_d = build_network(self.opt['network_d'])
+            self.net_d = self.model_to_device(self.net_d)
+            self.print_network(self.net_d)
+
+        # load pretrained g
         load_path = self.opt['path'].get('pretrain_network_g', None)
         if load_path is not None:
             param_key = self.opt['path'].get('param_key_g', 'params')
             self.load_network(self.net_g, load_path, self.opt['path'].get(
                 'strict_load_g', True), param_key)
 
+        # load pretrained d
+        load_path = self.opt['path'].get('pretrain_network_d', None)
+        if load_path is not None:
+            param_key = self.opt['path'].get('param_key_d', 'params')
+            self.load_network(self.net_d, load_path, self.opt['path'].get(
+                'strict_load_d', True), param_key)
+
         if self.is_train:
             self.init_training_settings()
 
     def init_training_settings(self):
-        self.net_g.train()
         train_opt = self.opt['train']
 
         self.ema_decay = train_opt.get('ema_decay', 0)
@@ -47,14 +59,18 @@ class SRModel(BaseModel):
             # There is no need to wrap with DistributedDataParallel
             self.net_g_ema = build_network(
                 self.opt['network_g']).to(self.device)
-            # load pretrained model
+            # load pretrained g
             load_path = self.opt['path'].get('pretrain_network_g', None)
             if load_path is not None:
                 self.load_network(self.net_g_ema, load_path, self.opt['path'].get(
-                    'strict_load_g', True), 'params_ema')
+                    'strict_load_g', True), 'params')
             else:
                 self.model_ema(0)  # copy net_g weight
             self.net_g_ema.eval()
+
+        self.net_g.train()
+        if self.opt.get('network_d', None) is not None:
+            self.net_d.train()
 
         # define losses
         if train_opt.get('pixel_opt'):
@@ -71,9 +87,24 @@ class SRModel(BaseModel):
         if self.cri_pix is None and self.cri_perceptual is None:
             raise ValueError('Both pixel and perceptual losses are None.')
 
+        # GAN loss
+        if train_opt.get('gan_opt'):
+            self.cri_gan = build_loss(train_opt['gan_opt']).to(self.device)
+        else:
+            self.cri_gan = None
+
+        # LDL loss
+        if train_opt.get('ldl_opt'):
+            self.cri_ldl = build_loss(train_opt['ldl_opt']).to(self.device)
+        else:
+            self.cri_ldl = None
+
+        self.net_d_iters = train_opt.get('net_d_iters', 1)
+        self.net_d_init_iters = train_opt.get('net_d_init_iters', 0)
+
         # set up optimizers and schedulers
-        self.setup_optimizers()
         self.setup_schedulers()
+        self.setup_optimizers()
 
     def setup_optimizers(self):
         train_opt = self.opt['train']
@@ -84,11 +115,16 @@ class SRModel(BaseModel):
             else:
                 logger = get_root_logger()
                 logger.warning(f'Params {k} will not be optimized.')
-
+        # optimizer g
         optim_type = train_opt['optim_g'].pop('type')
         self.optimizer_g = self.get_optimizer(
             optim_type, optim_params, **train_opt['optim_g'])
         self.optimizers.append(self.optimizer_g)
+        # optimizer d
+        if self.opt.get('network_d', None) is not None:
+            optim_type = train_opt['optim_d'].pop('type')
+            self.optimizer_d = self.get_optimizer(optim_type, self.net_d.parameters(), **train_opt['optim_d'])
+            self.optimizers.append(self.optimizer_d)
 
     def feed_data(self, data):
         self.lq = data['lq'].to(self.device)
@@ -96,28 +132,64 @@ class SRModel(BaseModel):
             self.gt = data['gt'].to(self.device)
 
     def optimize_parameters(self, current_iter):
+        # optimize net_g
+        if self.opt.get('network_d', None) is not None:
+            for p in self.net_d.parameters():
+                p.requires_grad = False
+
         self.optimizer_g.zero_grad()
         self.output = self.net_g(self.lq)
 
-        l_total = 0
+        l_g_total = 0
         loss_dict = OrderedDict()
-        # pixel loss
-        if self.cri_pix:
-            l_pix = self.cri_pix(self.output, self.gt)
-            l_total += l_pix
-            loss_dict['l_pix'] = l_pix
-        # perceptual loss
-        if self.cri_perceptual:
-            l_percep, l_style = self.cri_perceptual(self.output, self.gt)
-            if l_percep is not None:
-                l_total += l_percep
-                loss_dict['l_percep'] = l_percep
-            if l_style is not None:
-                l_total += l_style
-                loss_dict['l_style'] = l_style
+        if (current_iter % self.net_d_iters == 0 and current_iter > self.net_d_init_iters):
 
-        l_total.backward()
+        # pixel loss
+            if self.cri_pix:
+                l_g_pix = self.cri_pix(self.output, self.gt)
+                l_g_total += l_g_pix
+                loss_dict['l_g_pix'] = l_g_pix
+        # perceptual loss
+            if self.cri_perceptual:
+                l_g_percep, l_g_style = self.cri_perceptual(self.output, self.gt)
+                if l_g_percep is not None:
+                    l_g_total += l_g_percep
+                    loss_dict['l_percep'] = l_g_percep
+                if l_g_style is not None:
+                    l_g_total += l_g_style
+                    loss_dict['l_style'] = l_g_style
+        # gan loss
+            if self.cri_gan:
+                fake_g_pred = self.net_d(self.output)
+                l_g_gan = self.cri_gan(fake_g_pred, True, is_disc=False)
+                l_g_total += l_g_gan
+                loss_dict['l_g_gan'] = l_g_gan
+
+        l_g_total.backward()
         self.optimizer_g.step()
+
+        # optimize net_d
+        if self.opt.get('network_d', None) is not None:
+            for p in self.net_d.parameters():
+                p.requires_grad = True
+
+            self.optimizer_d.zero_grad()
+
+        # real
+        if self.cri_gan:
+            real_d_pred = self.net_d(self.gt)
+            l_d_real = self.cri_gan(real_d_pred, True, is_disc=True)
+            loss_dict['l_d_real'] = l_d_real
+            loss_dict['out_d_real'] = torch.mean(real_d_pred.detach())
+            l_d_real.backward()
+        # fake
+        if self.cri_gan:
+            fake_d_pred = self.net_d(self.output.detach())
+            l_d_fake = self.cri_gan(fake_d_pred, False, is_disc=True)
+            loss_dict['l_d_fake'] = l_d_fake
+            loss_dict['out_d_fake'] = torch.mean(fake_d_pred.detach())
+            l_d_fake.backward()
+            self.optimizer_d.step()
 
         self.log_dict = self.reduce_loss_dict(loss_dict)
 
@@ -240,4 +312,8 @@ class SRModel(BaseModel):
             self.save_network(self.net_g_ema, 'net_g', current_iter)
         else:
             self.save_network(self.net_g, 'net_g', current_iter)
+
+        if self.opt.get('network_d', None) is not None:
+            self.save_network(self.net_d, 'net_d', current_iter)
+
         self.save_training_state(epoch, current_iter)

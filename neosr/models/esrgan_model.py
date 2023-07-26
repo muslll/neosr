@@ -2,11 +2,11 @@ import torch
 from collections import OrderedDict
 
 from neosr.utils.registry import MODEL_REGISTRY
-from .srgan_model import SRGANModel
+from .generic import generic
 
 
 @MODEL_REGISTRY.register()
-class ESRGANModel(SRGANModel):
+class ESRGANModel(generic):
     """ESRGAN model for single image super-resolution."""
 
     def optimize_parameters(self, current_iter):

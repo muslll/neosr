@@ -1,9 +1,13 @@
 # general settings
 name: 052_ESRGAN_x4_f64b23_DIV2K_400k_B16G1_051pretrain_wandb
-model_type: generic 
+model_type: generic
 scale: 4
 num_gpu: auto  # set num_gpu: 0 for cpu mode
 manual_seed: 0
+  #l1_gt_usm: false
+  #percep_gt_usm: false
+  #gan_gt_usm: false
+  #high_order_degradation: false
 
 # dataset and data loader settings
 datasets:
@@ -27,8 +31,8 @@ datasets:
 
     # data loader
     num_worker_per_gpu: 4
-    batch_size_per_gpu: 1
-    dataset_enlarge_ratio: 1
+    batch_size_per_gpu: 2
+    dataset_enlarge_ratio: 100
     prefetch_mode: ~
 
   #val:
@@ -98,12 +102,12 @@ train:
     perceptual_weight: 1.0
     style_weight: 0
     criterion: l1
-  gan_opt:
-    type: GANLoss
-    gan_type: vanilla
-    real_label_val: 1.0
-    fake_label_val: 0.0
-    loss_weight: !!float 5e-3
+#  gan_opt:
+#    type: GANLoss
+#    gan_type: vanilla
+#    real_label_val: 1.0
+#    fake_label_val: 0.0
+#    loss_weight: !!float 5e-3
 
   net_d_iters: 1
   net_d_init_iters: 0

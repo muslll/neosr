@@ -7,14 +7,15 @@ from torch.nn import functional as F
 from neosr.data.degradations import random_add_gaussian_noise_pt, random_add_poisson_noise_pt
 from neosr.data.transforms import paired_random_crop
 from neosr.losses.loss_util import get_refined_artifact_map
-from neosr.models.srgan_model import SRGANModel
+from neosr.models.generic import generic 
+from neosr.utils import get_root_logger
 from neosr.utils import DiffJPEG, USMSharp
 from neosr.utils.img_process_util import filter2D
 from neosr.utils.registry import MODEL_REGISTRY
 
 
-@MODEL_REGISTRY.register(suffix='neosr')
-class RealESRGANModel(SRGANModel):
+@MODEL_REGISTRY.register()
+class RealESRGANModel(generic):
     """RealESRGAN Model for Real-ESRGAN: Training Real-World Blind Super-Resolution with Pure Synthetic Data.
 
     It mainly performs:
@@ -221,13 +222,13 @@ class RealESRGANModel(SRGANModel):
         l1_gt = self.gt_usm
         percep_gt = self.gt_usm
         gan_gt = self.gt_usm
-        if self.opt['l1_gt_usm'] is False:
-            l1_gt = self.gt
-        if self.opt['percep_gt_usm'] is False:
-            percep_gt = self.gt
-        if self.opt['gan_gt_usm'] is False:
-            gan_gt = self.gt
 
+        if self.opt.get('l1_gt_usm', False or None):
+            l1_gt = self.gt
+        if self.opt.get('percep_gt_usm', False or None):
+            percep_gt = self.gt
+        if self.opt.get('gan_gt_usm', False or None):
+            gan_gt = self.gt
         # optimize net_g
         for p in self.net_d.parameters():
             p.requires_grad = False
