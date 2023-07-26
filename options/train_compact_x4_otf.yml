@@ -1,13 +1,13 @@
 # general settings
 name: 052_ESRGAN_x4_f64b23_DIV2K_400k_B16G1_051pretrain_wandb
-model_type: RealESRGANModel
+model_type: otf 
 scale: 4
 num_gpu: auto  # set num_gpu: 0 for cpu mode
 manual_seed: 0
 l1_gt_usm: true
 percep_gt_usm: true
 gan_gt_usm: true
-high_order_degradation: true 
+#high_order_degradation: true 
 
 #l1_gt_usm: false
 #percep_gt_usm: false
@@ -93,10 +93,10 @@ datasets:
 network_g:
   type: compact 
 
-network_d:
-  type: unet
-  num_in_ch: 3
-  num_feat: 64
+#network_d:
+#  type: unet
+#  num_in_ch: 3
+#  num_feat: 64
 
 # path
 path:
@@ -123,7 +123,7 @@ train:
     milestones: [50000, 100000, 200000, 300000]
     gamma: 0.5
 
-  total_iter: 400000
+  total_iter: 500
   warmup_iter: -1  # no warm up
 
   # losses
@@ -141,12 +141,12 @@ train:
     perceptual_weight: 1.0
     style_weight: 0
     criterion: l1
-  gan_opt:
-    type: GANLoss
-    gan_type: vanilla
-    real_label_val: 1.0
-    fake_label_val: 0.0
-    loss_weight: !!float 5e-3
+#  gan_opt:
+#    type: GANLoss
+#    gan_type: vanilla
+#    real_label_val: 1.0
+#    fake_label_val: 0.0
+#    loss_weight: !!float 5e-3
 
   net_d_iters: 1
   net_d_init_iters: 0
@@ -165,7 +165,7 @@ train:
 # logging settings
 logger:
   print_freq: 100
-  save_checkpoint_freq: !!float 5e3
+  save_checkpoint_freq: 500
   #use_tb_logger: false
   use_tb_logger: true
   #wandb:

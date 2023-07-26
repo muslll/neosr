@@ -10,7 +10,7 @@ from neosr.utils import get_root_logger
 from neosr.utils.dist_util import master_only
 
 
-class BaseModel():
+class base():
     """Base model."""
 
     def __init__(self, opt):

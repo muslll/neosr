@@ -8,11 +8,11 @@ from neosr.losses import build_loss
 from neosr.metrics import calculate_metric
 from neosr.utils import get_root_logger, imwrite, tensor2img
 from neosr.utils.registry import MODEL_REGISTRY
-from .base_model import BaseModel
+from .base import base 
 
 
 @MODEL_REGISTRY.register()
-class generic(BaseModel):
+class generic(base):
     """Base SR model for single image super-resolution."""
 
     def __init__(self, opt):
@@ -131,6 +131,31 @@ class generic(BaseModel):
         if 'gt' in data:
             self.gt = data['gt'].to(self.device)
 
+    # Window size test for transformers
+    def test(self):
+        # pad to multiplication of window_size
+        window_size = self.opt['network_g']['window_size']
+        scale = self.opt.get('scale', 1)
+        mod_pad_h, mod_pad_w = 0, 0
+        _, _, h, w = self.lq.size()
+        if h % window_size != 0:
+            mod_pad_h = window_size - h % window_size
+        if w % window_size != 0:
+            mod_pad_w = window_size - w % window_size
+        img = F.pad(self.lq, (0, mod_pad_w, 0, mod_pad_h), 'reflect')
+        if hasattr(self, 'net_g_ema'):
+            self.net_g_ema.eval()
+            with torch.no_grad():
+                self.output = self.net_g_ema(img)
+        else:
+            self.net_g.eval()
+            with torch.no_grad():
+                self.output = self.net_g(img)
+            self.net_g.train()
+
+        _, _, h, w = self.output.size()
+        self.output = self.output[:, :, 0:h - mod_pad_h * scale, 0:w - mod_pad_w * scale]
+
     def optimize_parameters(self, current_iter):
         # optimize net_g
         if self.opt.get('network_d', None) is not None:
@@ -142,8 +167,8 @@ class generic(BaseModel):
 
         l_g_total = 0
         loss_dict = OrderedDict()
-        if (current_iter % self.net_d_iters == 0 and current_iter > self.net_d_init_iters):
 
+        if (current_iter % self.net_d_iters == 0 and current_iter > self.net_d_init_iters):
         # pixel loss
             if self.cri_pix:
                 l_g_pix = self.cri_pix(self.output, self.gt)
@@ -184,7 +209,7 @@ class generic(BaseModel):
             l_d_real.backward()
         # fake
         if self.cri_gan:
-            fake_d_pred = self.net_d(self.output.detach())
+            fake_d_pred = self.net_d(self.output.detach().clone())
             l_d_fake = self.cri_gan(fake_d_pred, False, is_disc=True)
             loss_dict['l_d_fake'] = l_d_fake
             loss_dict['out_d_fake'] = torch.mean(fake_d_pred.detach())
