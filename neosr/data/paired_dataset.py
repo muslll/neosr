@@ -1,14 +1,15 @@
+import os
 from torch.utils import data as data
 from torchvision.transforms.functional import normalize
 
-from neosr.data.data_util import paired_paths_from_folder, paired_paths_from_lmdb, paired_paths_from_meta_info_file
+from neosr.data.data_util import paired_paths_from_folder, paired_paths_from_lmdb
 from neosr.data.transforms import augment, paired_random_crop
-from neosr.utils import FileClient, bgr2ycbcr, imfrombytes, img2tensor
+from neosr.utils import FileClient, imfrombytes, img2tensor
 from neosr.utils.registry import DATASET_REGISTRY
 
 
 @DATASET_REGISTRY.register()
-class PairedImageDataset(data.Dataset):
+class paired(data.Dataset):
     """Paired image dataset for image restoration.
 
     Read LQ (Low Quality, e.g. LR (Low Resolution), blurry, noisy, etc) and GT image pairs.
@@ -24,7 +25,7 @@ class PairedImageDataset(data.Dataset):
         opt (dict): Config for train datasets. It contains the following keys:
         dataroot_gt (str): Data root path for gt.
         dataroot_lq (str): Data root path for lq.
-        meta_info_file (str): Path for meta information file.
+        meta_info (str): Path for meta information file.
         io_backend (dict): IO backend type and other kwarg.
         filename_tmpl (str): Template for each filename. Note that the template excludes the file extension.
             Default: '{}'.
@@ -36,28 +37,37 @@ class PairedImageDataset(data.Dataset):
     """
 
     def __init__(self, opt):
-        super(PairedImageDataset, self).__init__()
+        super(paired, self).__init__()
         self.opt = opt
-        # file client (io backend)
         self.file_client = None
         self.io_backend_opt = opt['io_backend']
+        # mean and std for normalizing the input images
         self.mean = opt['mean'] if 'mean' in opt else None
         self.std = opt['std'] if 'std' in opt else None
 
         self.gt_folder, self.lq_folder = opt['dataroot_gt'], opt['dataroot_lq']
-        if 'filename_tmpl' in opt:
-            self.filename_tmpl = opt['filename_tmpl']
-        else:
-            self.filename_tmpl = '{}'
+        self.filename_tmpl = opt['filename_tmpl'] if 'filename_tmpl' in opt else '{}'
 
+        # file client (lmdb io backend)
         if self.io_backend_opt['type'] == 'lmdb':
             self.io_backend_opt['db_paths'] = [self.lq_folder, self.gt_folder]
             self.io_backend_opt['client_keys'] = ['lq', 'gt']
             self.paths = paired_paths_from_lmdb([self.lq_folder, self.gt_folder], ['lq', 'gt'])
-        elif 'meta_info_file' in self.opt and self.opt['meta_info_file'] is not None:
-            self.paths = paired_paths_from_meta_info_file([self.lq_folder, self.gt_folder], ['lq', 'gt'],
-                                                          self.opt['meta_info_file'], self.filename_tmpl)
+        elif 'meta_info' in self.opt and self.opt['meta_info'] is not None:
+            # disk backend with meta_info
+            # Each line in the meta_info describes the relative path to an image
+            with open(self.opt['meta_info']) as fin:
+                paths = [line.strip() for line in fin]
+            self.paths = []
+            for path in paths:
+                gt_path, lq_path = path.split(', ')
+                gt_path = os.path.join(self.gt_folder, gt_path)
+                lq_path = os.path.join(self.lq_folder, lq_path)
+                self.paths.append(dict([('gt_path', gt_path), ('lq_path', lq_path)]))
         else:
+            # disk backend
+            # it will scan the whole folder to get meta info
+            # it will be time-consuming for folders with too many files. It is recommended using an extra meta txt file
             self.paths = paired_paths_from_folder([self.lq_folder, self.gt_folder], ['lq', 'gt'], self.filename_tmpl)
 
     def __getitem__(self, index):

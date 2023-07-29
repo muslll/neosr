@@ -8,7 +8,7 @@ from neosr.utils.registry import DATASET_REGISTRY
 
 
 @DATASET_REGISTRY.register()
-class SingleImageDataset(data.Dataset):
+class single(data.Dataset):
     """Read only lq images in the test phase.
 
     Read LQ (Low Quality, e.g. LR (Low Resolution), blurry, noisy, etc).
@@ -25,7 +25,7 @@ class SingleImageDataset(data.Dataset):
     """
 
     def __init__(self, opt):
-        super(SingleImageDataset, self).__init__()
+        super(single, self).__init__()
         self.opt = opt
         # file client (io backend)
         self.file_client = None

@@ -38,15 +38,14 @@ queue_size: 40
 # dataset and data loader settings
 datasets:
   train:
-    name: DIV2K
-    type: RealESRGANDataset 
+    type: otf 
     dataroot_gt: "/home/anon/nomos_uni/"
     #dataroot_lq: "/home/anon/nomos_uni_downscale/"
     # (for lmdb)
     # dataroot_gt: datasets/DIV2K/DIV2K_train_HR_sub.lmdb
     # dataroot_lq: datasets/DIV2K/DIV2K_train_LR_bicubic_X4_sub.lmdb
     meta_info: "/home/anon/meta_info_nomos_uni.txt"
-      #meta_info: "/home/anon/meta_info_nomos_uni_paired.txt"
+    #meta_info: "/home/anon/meta_info_nomos_uni_paired.txt"
     io_backend:
       type: disk
       # (for lmdb)
@@ -83,7 +82,7 @@ datasets:
 
   val:
     name: Set14
-    type: PairedImageDataset
+    type: paired
     dataroot_gt: "/home/anon/Downloads/validation/testset_div2k_val_small/gt/"
     dataroot_lq: "/home/anon/Downloads/validation/testset_div2k_val_small/lq/"
     io_backend:
@@ -120,11 +119,11 @@ train:
 
   scheduler:
     type: MultiStepLR
-    milestones: [200, 300, 400]
+    milestones: [700, 800, 900]
     gamma: 0.5
 
-  total_iter: 700
-  warmup_iter: -1  # no warm up
+  total_iter: 1000
+  warmup_iter: 500  # no warm up
 
   # losses
   pixel_opt:

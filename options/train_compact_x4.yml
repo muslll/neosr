@@ -10,7 +10,8 @@ manual_seed: 0
 datasets:
   train:
     name: DIV2K
-    type: PairedImageDataset
+    type: paired
+    #type: RealESRGANPairedDataset 
     dataroot_gt: "/home/anon/nomos_uni/"
     dataroot_lq: "/home/anon/nomos_uni_downscale/"
     # (for lmdb)

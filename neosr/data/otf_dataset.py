@@ -10,14 +10,13 @@ from torch.utils import data as data
 
 from neosr.data.degradations import circular_lowpass_kernel, random_mixed_kernels
 from neosr.data.transforms import augment
-from neosr.utils import FileClient, get_root_logger, imfrombytes, img2tensor
+from neosr.utils import FileClient, get_root_logger, imfrombytes, img2tensor, scandir
 from neosr.utils.registry import DATASET_REGISTRY
 
 
-@DATASET_REGISTRY.register(suffix='neosr')
-class RealESRGANDataset(data.Dataset):
-    """Dataset used for Real-ESRGAN model:
-    Real-ESRGAN: Training Real-World Blind Super-Resolution with Pure Synthetic Data.
+@DATASET_REGISTRY.register()
+class otf(data.Dataset):
+    """OTF degradation dataset. Originally from Real-ESRGAN
 
     It loads gt (Ground-Truth) images, and augments them.
     It also generates blur kernels and sinc kernels for generating low-quality images.
@@ -34,11 +33,15 @@ class RealESRGANDataset(data.Dataset):
     """
 
     def __init__(self, opt):
-        super(RealESRGANDataset, self).__init__()
+        super(otf, self).__init__()
         self.opt = opt
         self.file_client = None
         self.io_backend_opt = opt['io_backend']
         self.gt_folder = opt['dataroot_gt']
+        #self.lq_folder = opt['dataroot_lq']
+
+        if opt.get('dataroot_lq', None) is not None:
+            raise ValueError(f"'dataroot_lq' not supported by otf, please switch to paired")
 
         # file client (lmdb io backend)
         if self.io_backend_opt['type'] == 'lmdb':
@@ -48,12 +51,17 @@ class RealESRGANDataset(data.Dataset):
                 raise ValueError(f"'dataroot_gt' should end with '.lmdb', but received {self.gt_folder}")
             with open(osp.join(self.gt_folder, 'meta_info.txt')) as fin:
                 self.paths = [line.split('.')[0] for line in fin]
-        else:
+        elif 'meta_info' in self.opt and self.opt['meta_info'] is not None:
             # disk backend with meta_info
             # Each line in the meta_info describes the relative path to an image
             with open(self.opt['meta_info']) as fin:
                 paths = [line.strip().split(' ')[0] for line in fin]
                 self.paths = [os.path.join(self.gt_folder, v) for v in paths]
+        else:
+            # disk backend
+            # it will scan the whole folder to get meta info
+            # it will be time-consuming for folders with too many files. It is recommended using an extra meta txt file
+            self.paths = sorted(list(scandir(self.gt_folder, full_path=True)))
 
         # blur settings for the first degradation
         self.blur_kernel_size = opt['blur_kernel_size']

@@ -27,13 +27,12 @@ def build_dataset(dataset_opt):
 
     Args:
         dataset_opt (dict): Configuration for dataset. It must contain:
-            name (str): Dataset name.
             type (str): Dataset type.
     """
     dataset_opt = deepcopy(dataset_opt)
     dataset = DATASET_REGISTRY.get(dataset_opt['type'])(dataset_opt)
     logger = get_root_logger()
-    logger.info(f'Dataset [{dataset.__class__.__name__}] - {dataset_opt["name"]} is built.')
+    logger.info(f'Dataset [{dataset.__class__.__name__}] is built.')
     return dataset
 
 
