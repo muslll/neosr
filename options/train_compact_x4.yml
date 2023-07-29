@@ -1,6 +1,7 @@
 # general settings
 name: 052_ESRGAN_x4_f64b23_DIV2K_400k_B16G1_051pretrain_wandb
-model_type: generic 
+#model_type: generic 
+model_type: default
 scale: 4
 num_gpu: auto  # set num_gpu: 0 for cpu mode
 manual_seed: 0
@@ -16,6 +17,8 @@ datasets:
     # dataroot_gt: datasets/DIV2K/DIV2K_train_HR_sub.lmdb
     # dataroot_lq: datasets/DIV2K/DIV2K_train_LR_bicubic_X4_sub.lmdb
     meta_info: "/home/anon/meta_info_nomos_uni_paired.txt"
+    # cuda prefetch dataloader, enable pin_memory
+    pin_memory: true
     io_backend:
       type: disk
       # (for lmdb)
@@ -29,15 +32,15 @@ datasets:
     num_worker_per_gpu: 4
     batch_size_per_gpu: 1
     dataset_enlarge_ratio: 1
-    prefetch_mode: ~
+    prefetch_mode: cuda
 
-  #val:
-  #  name: Set14
-  #  type: PairedImageDataset
-  #  dataroot_gt: datasets/Set14/GTmod12
-  #  dataroot_lq: datasets/Set14/LRbicx4
-  #  io_backend:
-  #    type: disk
+  val:
+    name: Set14
+    type: PairedImageDataset
+    dataroot_gt: "/home/anon/Downloads/validation/testset_div2k_val_small/gt/"
+    dataroot_lq: "/home/anon/Downloads/validation/testset_div2k_val_small/lq/"
+    io_backend:
+      type: disk
 
 # network structures
 network_g:
@@ -65,22 +68,22 @@ path:
 train:
   ema_decay: 0.999
   optim_g:
-    type: Adam
+    type: adam
     lr: !!float 1e-4
     weight_decay: 0
     betas: [0.9, 0.99]
   optim_d:
-    type: Adam
+    type: adam
     lr: !!float 1e-4
     weight_decay: 0
     betas: [0.9, 0.99]
 
   scheduler:
     type: MultiStepLR
-    milestones: [50000, 100000, 200000, 300000]
+    milestones: [200, 300, 400]
     gamma: 0.5
 
-  total_iter: 500
+  total_iter: 700
   warmup_iter: -1  # no warm up
 
   # losses
@@ -105,19 +108,22 @@ train:
     fake_label_val: 0.0
     loss_weight: !!float 5e-3
 
-  net_d_iters: 1
-  net_d_init_iters: 0
+      #  net_d_iters: 1
+      #net_d_init_iters: 0
 
 # validation settings
-#val:
-#  val_freq: !!float 5e3
-#  save_img: true
+val:
+  val_freq: 500
+  save_img: true
 
-#  metrics:
-#    psnr: # metric name, can be arbitrary
-#      type: calculate_psnr
-#      crop_border: 4
-#      test_y_channel: false
+  metrics:
+    psnr: # metric name, can be arbitrary
+      type: calculate_psnr
+      crop_border: 4
+      test_y_channel: false
+    ssim:
+      type: calculate_ssim
+      crop_border: 4
 
 # logging settings
 logger:

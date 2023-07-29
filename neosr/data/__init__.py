@@ -75,22 +75,22 @@ def build_dataloader(dataset, dataset_opt, num_gpu=1, dist=False, sampler=None, 
         dataloader_args['worker_init_fn'] = partial(
             worker_init_fn, num_workers=num_workers, rank=rank, seed=seed) if seed is not None else None
     elif phase in ['val', 'test']:  # validation
-        dataloader_args = dict(dataset=dataset, batch_size=1, shuffle=False, num_workers=0)
+        dataloader_args = dict(dataset=dataset, batch_size=1, shuffle=False, num_workers=4)
     else:
         raise ValueError(f"Wrong dataset phase: {phase}. Supported ones are 'train', 'val' and 'test'.")
 
-    dataloader_args['pin_memory'] = dataset_opt.get('pin_memory', False)
-    dataloader_args['persistent_workers'] = dataset_opt.get('persistent_workers', False)
+    dataloader_args['pin_memory'] = dataset_opt.get('pin_memory', True)
+    dataloader_args['persistent_workers'] = dataset_opt.get('persistent_workers', True)
 
     prefetch_mode = dataset_opt.get('prefetch_mode')
     if prefetch_mode == 'cpu':  # CPUPrefetcher
-        num_prefetch_queue = dataset_opt.get('num_prefetch_queue', 1)
+        num_prefetch_queue = dataset_opt.get('num_prefetch_queue', 4)
         logger = get_root_logger()
         logger.info(f'Use {prefetch_mode} prefetch dataloader: num_prefetch_queue = {num_prefetch_queue}')
         return PrefetchDataLoader(num_prefetch_queue=num_prefetch_queue, **dataloader_args)
     else:
         # prefetch_mode=None: Normal dataloader
-        # prefetch_mode='cuda': dataloader for CUDAPrefetcher
+        prefetch_mode='cuda'#: dataloader for CUDAPrefetcher
         return torch.utils.data.DataLoader(**dataloader_args)
 
 

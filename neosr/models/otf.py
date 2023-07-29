@@ -6,23 +6,20 @@ from torch.nn import functional as F
 
 from neosr.data.degradations import random_add_gaussian_noise_pt, random_add_poisson_noise_pt
 from neosr.data.transforms import paired_random_crop
-from neosr.losses.loss_util import get_refined_artifact_map
-from neosr.models.generic import generic 
+from neosr.models.default import default
 from neosr.utils import get_root_logger
-from neosr.utils import DiffJPEG, USMSharp
+from neosr.utils import DiffJPEG
 from neosr.utils.img_process_util import filter2D
 from neosr.utils.registry import MODEL_REGISTRY
 
 
 @MODEL_REGISTRY.register()
-class otf(generic):
-    """RealESRGAN Model for Real-ESRGAN: Training Real-World Blind Super-Resolution with Pure Synthetic Data.
-    """
+class otf(default):
+    """On The Fly degradations, based on RealESRGAN pipeline."""
 
     def __init__(self, opt):
         super(otf, self).__init__(opt)
         self.jpeger = DiffJPEG(differentiable=False).cuda()  # simulate JPEG compression artifacts
-        self.usm_sharpener = USMSharp().cuda()  # do usm sharpening
         self.queue_size = opt.get('queue_size', 180)
 
     @torch.no_grad()
@@ -69,7 +66,6 @@ class otf(generic):
         if self.is_train and self.opt.get('high_order_degradation', True):
             # training data synthesis
             self.gt = data['gt'].to(self.device)
-            self.gt_usm = self.usm_sharpener(self.gt)
 
             self.kernel1 = data['kernel1'].to(self.device)
             self.kernel2 = data['kernel2'].to(self.device)
@@ -79,7 +75,7 @@ class otf(generic):
 
             # ----------------------- The first degradation process ----------------------- #
             # blur
-            out = filter2D(self.gt_usm, self.kernel1)
+            out = filter2D(self.gt, self.kernel1)
             # random resize
             updown_type = random.choices(['up', 'down', 'keep'], self.opt['resize_prob'])[0]
             if updown_type == 'up':
@@ -166,100 +162,21 @@ class otf(generic):
 
             # random crop
             gt_size = self.opt['gt_size']
-            (self.gt, self.gt_usm), self.lq = paired_random_crop([self.gt, self.gt_usm], self.lq, gt_size,
+            (self.gt), self.lq = paired_random_crop([self.gt], self.lq, gt_size,
                                                                  self.opt['scale'])
 
             # training pair pool
             self._dequeue_and_enqueue()
             # sharpen self.gt again, as we have changed the self.gt with self._dequeue_and_enqueue
-            self.gt_usm = self.usm_sharpener(self.gt)
             self.lq = self.lq.contiguous()  # for the warning: grad and param do not obey the gradient layout contract
         else:
             # for paired training or validation
             self.lq = data['lq'].to(self.device)
             if 'gt' in data:
                 self.gt = data['gt'].to(self.device)
-                self.gt_usm = self.usm_sharpener(self.gt)
 
     def nondist_validation(self, dataloader, current_iter, tb_logger, save_img):
         # do not use the synthetic process during validation
         self.is_train = False
         super(otf, self).nondist_validation(dataloader, current_iter, tb_logger, save_img)
         self.is_train = True
-
-    # TODO: there's probably some way to avoid this duplicate code
-    def optimize_parameters(self, current_iter):
-        # usm sharpening
-        l1_gt = self.gt_usm
-        percep_gt = self.gt_usm
-        gan_gt = self.gt_usm
-        if self.opt.get('l1_gt_usm', False or None):
-            l1_gt = self.gt
-        if self.opt.get('percep_gt_usm', False or None):
-            percep_gt = self.gt
-        if self.opt.get('gan_gt_usm', False or None):
-            gan_gt = self.gt
-
-        # optimize net_g
-        if self.opt.get('network_d', None) is not None:
-            for p in self.net_d.parameters():
-                p.requires_grad = False
-
-        self.optimizer_g.zero_grad()
-        self.output = self.net_g(self.lq)
-
-        l_g_total = 0
-        loss_dict = OrderedDict()
-
-        if (current_iter % self.net_d_iters == 0 and current_iter > self.net_d_init_iters):
-        # pixel loss
-            if self.cri_pix:
-                l_g_pix = self.cri_pix(self.output, l1_gt)
-                l_g_total += l_g_pix
-                loss_dict['l_g_pix'] = l_g_pix
-        # perceptual loss
-            if self.cri_perceptual:
-                l_g_percep, l_g_style = self.cri_perceptual(self.output, percep_gt)
-                if l_g_percep is not None:
-                    l_g_total += l_g_percep
-                    loss_dict['l_percep'] = l_g_percep
-                if l_g_style is not None:
-                    l_g_total += l_g_style
-                    loss_dict['l_style'] = l_g_style
-        # gan loss
-            if self.cri_gan:
-                fake_g_pred = self.net_d(self.output)
-                l_g_gan = self.cri_gan(fake_g_pred, True, is_disc=False)
-                l_g_total += l_g_gan
-                loss_dict['l_g_gan'] = l_g_gan
-
-        l_g_total.backward()
-        self.optimizer_g.step()
-
-        # optimize net_d
-        if self.opt.get('network_d', None) is not None:
-            for p in self.net_d.parameters():
-                p.requires_grad = True
-
-            self.optimizer_d.zero_grad()
-
-        # real
-        if self.cri_gan:
-            real_d_pred = self.net_d(gan_gt)
-            l_d_real = self.cri_gan(real_d_pred, True, is_disc=True)
-            loss_dict['l_d_real'] = l_d_real
-            loss_dict['out_d_real'] = torch.mean(real_d_pred.detach())
-            l_d_real.backward()
-        # fake
-        if self.cri_gan:
-            fake_d_pred = self.net_d(self.output.detach().clone())
-            l_d_fake = self.cri_gan(fake_d_pred, False, is_disc=True)
-            loss_dict['l_d_fake'] = l_d_fake
-            loss_dict['out_d_fake'] = torch.mean(fake_d_pred.detach())
-            l_d_fake.backward()
-            self.optimizer_d.step()
-
-        self.log_dict = self.reduce_loss_dict(loss_dict)
-
-        if self.ema_decay > 0:
-            self.model_ema(decay=self.ema_decay)
