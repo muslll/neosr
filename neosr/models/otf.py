@@ -11,6 +11,7 @@ from neosr.utils import get_root_logger
 from neosr.utils import DiffJPEG
 from neosr.utils.img_process_util import filter2D
 from neosr.utils.registry import MODEL_REGISTRY
+from neosr.utils.registry import DATASET_REGISTRY
 
 
 @MODEL_REGISTRY.register()
@@ -63,7 +64,7 @@ class otf(default):
     def feed_data(self, data):
         """Accept data from dataloader, and then add two-order degradations to obtain LQ images.
         """
-        if self.is_train and self.opt.get('high_order_degradation', True):
+        if self.is_train:
             # training data synthesis
             self.gt = data['gt'].to(self.device)
 
@@ -167,7 +168,6 @@ class otf(default):
 
             # training pair pool
             self._dequeue_and_enqueue()
-            # sharpen self.gt again, as we have changed the self.gt with self._dequeue_and_enqueue
             self.lq = self.lq.contiguous()  # for the warning: grad and param do not obey the gradient layout contract
         else:
             # for paired training or validation

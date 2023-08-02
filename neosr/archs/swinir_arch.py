@@ -169,6 +169,9 @@ class WindowAttention(nn.Module):
 
         attn = self.attn_drop(attn)
 
+        # Flash Attention, I guess
+        #x = torch.nn.functional.scaled_dot_product_attention(q, k, v)
+        #x = x.transpose(1, 2).reshape(b_, n, c)
         x = (attn @ v).transpose(1, 2).reshape(b_, n, c)
         x = self.proj(x)
         x = self.proj_drop(x)

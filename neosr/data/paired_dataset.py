@@ -4,7 +4,7 @@ from torchvision.transforms.functional import normalize
 
 from neosr.data.data_util import paired_paths_from_folder, paired_paths_from_lmdb
 from neosr.data.transforms import augment, paired_random_crop
-from neosr.utils import FileClient, imfrombytes, img2tensor
+from neosr.utils import FileClient, bgr2ycbcr, imfrombytes, img2tensor
 from neosr.utils.registry import DATASET_REGISTRY
 
 

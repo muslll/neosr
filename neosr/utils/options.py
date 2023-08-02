@@ -191,7 +191,7 @@ def parse_options(root_path, is_train=True):
     else:  # test
         results_root = opt['path'].get('results_root')
         if results_root is None:
-            results_root = osp.join(root_path, 'results')
+            results_root = osp.join(root_path, 'experiments', 'results')
         results_root = osp.join(results_root, opt['name'])
 
         opt['path']['results_root'] = results_root

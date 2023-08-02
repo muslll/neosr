@@ -4,7 +4,7 @@ from os import path as osp
 
 from neosr.data import build_dataloader, build_dataset
 from neosr.models import build_model
-from neosr.utils import get_env_info, get_root_logger, get_time_str, make_exp_dirs
+from neosr.utils import get_root_logger, get_time_str, make_exp_dirs
 from neosr.utils.options import dict2str, parse_options
 
 
@@ -19,7 +19,6 @@ def test_pipeline(root_path):
     make_exp_dirs(opt)
     log_file = osp.join(opt['path']['log'], f"test_{opt['name']}_{get_time_str()}.log")
     logger = get_root_logger(logger_name='neosr', log_level=logging.INFO, log_file=log_file)
-    logger.info(get_env_info())
     logger.info(dict2str(opt))
 
     # create test dataset and dataloader
@@ -41,5 +40,5 @@ def test_pipeline(root_path):
 
 
 if __name__ == '__main__':
-    root_path = osp.abspath(osp.join(__file__, osp.pardir, osp.pardir))
+    root_path = osp.abspath(osp.join(__file__, osp.pardir))
     test_pipeline(root_path)

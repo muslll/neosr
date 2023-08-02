@@ -118,17 +118,14 @@ class CharbonnierLoss(nn.Module):
 '''
 @LOSS_REGISTRY.register()
 class HuberLoss(nn.Module):
-    """Charbonnier loss (one variant of Robust L1Loss, a differentiable
-    variant of L1Loss).
-
-    Described in "Deep Laplacian Pyramid Networks for Fast and Accurate
-        Super-Resolution".
+    """HuberLoss
 
     Args:
-        loss_weight (float): Loss weight for L1 loss. Default: 1.0.
+        loss_weight (float): Loss weight. Default: 1.0.
         reduction (str): Specifies the reduction to apply to the output.
             Supported choices are 'none' | 'mean' | 'sum'. Default: 'mean'.
-        eps (float): A value used to control the curvature near zero. Default: 1e-12.
+        delta (float): Specifies the threshold at which to change between
+        delta-scaled L1 and L2 loss. The value must be positive. Default: 1.0
     """
 
     def __init__(self, loss_weight=1.0, reduction='mean', delta=1.0):

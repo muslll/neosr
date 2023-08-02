@@ -1,6 +1,5 @@
 # general settings
-name: 052_ESRGAN_x4_f64b23_DIV2K_400k_B16G1_051pretrain_wandb
-#model_type: generic 
+name: testing
 model_type: default
 scale: 4
 num_gpu: auto  # set num_gpu: 0 for cpu mode
@@ -18,14 +17,12 @@ datasets:
     # dataroot_gt: datasets/DIV2K/DIV2K_train_HR_sub.lmdb
     # dataroot_lq: datasets/DIV2K/DIV2K_train_LR_bicubic_X4_sub.lmdb
     meta_info: "/home/anon/meta_info_nomos_uni_paired.txt"
-    # cuda prefetch dataloader, enable pin_memory
-    pin_memory: true
     io_backend:
       type: disk
       # (for lmdb)
       # type: lmdb
 
-    gt_size: 64
+    gt_size: 96
     use_hflip: true
     use_rot: true
 
@@ -33,11 +30,10 @@ datasets:
     num_worker_per_gpu: 4
     batch_size_per_gpu: 1
     dataset_enlarge_ratio: 1
-    prefetch_mode: cuda
 
   val:
     name: Set14
-    type: PairedImageDataset
+    type: paired 
     dataroot_gt: "/home/anon/Downloads/validation/testset_div2k_val_small/gt/"
     dataroot_lq: "/home/anon/Downloads/validation/testset_div2k_val_small/lq/"
     io_backend:
@@ -60,10 +56,11 @@ network_d:
 
 # path
 path:
-  #pretrain_network_g: /tmp/with_ema.pth
+  #pretrain_network_g: /tmp/net_g_latest.pth
   #Needed only for old pretrains. All models now save to param instead of params_ema
   #param_key_g: params_ema
   resume_state: ~
+  #resume_state: /home/anon/code/experiments/testing/training_states/500.state
 
 # training settings
 train:
@@ -84,7 +81,7 @@ train:
     milestones: [200, 300, 400]
     gamma: 0.5
 
-  total_iter: 700
+  total_iter: 2000
   warmup_iter: -1  # no warm up
 
   # losses

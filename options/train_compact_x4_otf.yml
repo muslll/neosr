@@ -50,7 +50,6 @@ datasets:
       type: disk
       # (for lmdb)
       # type: lmdb
-      #
 
     blur_kernel_size: 21
     kernel_list: ['iso', 'aniso', 'generalized_iso', 'generalized_aniso', 'plateau_iso', 'plateau_aniso']
@@ -70,7 +69,7 @@ datasets:
 
     final_sinc_prob: 0.8
 
-    gt_size: 64
+
     use_hflip: true
     use_rot: true
 
@@ -78,7 +77,6 @@ datasets:
     num_worker_per_gpu: 4
     batch_size_per_gpu: 1
     dataset_enlarge_ratio: 1
-    prefetch_mode: ~
 
   val:
     name: Set14
