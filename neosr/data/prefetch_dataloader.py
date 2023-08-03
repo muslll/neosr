@@ -58,27 +58,6 @@ class PrefetchDataLoader(DataLoader):
         return PrefetchGenerator(super().__iter__(), self.num_prefetch_queue)
 
 
-class CPUPrefetcher():
-    """CPU prefetcher.
-
-    Args:
-        loader: Dataloader.
-    """
-
-    def __init__(self, loader):
-        self.ori_loader = loader
-        self.loader = iter(loader)
-
-    def next(self):
-        try:
-            return next(self.loader)
-        except StopIteration:
-            return None
-
-    def reset(self):
-        self.loader = iter(self.ori_loader)
-
-
 class CUDAPrefetcher():
     """CUDA prefetcher.
 
@@ -96,7 +75,7 @@ class CUDAPrefetcher():
         self.loader = iter(loader)
         self.opt = opt
         self.stream = torch.cuda.Stream()
-        self.device = torch.device('cuda' if opt['num_gpu'] != 0 else 'cpu')
+        self.device = torch.device('cuda')
         self.preload()
 
     def preload(self):

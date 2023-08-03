@@ -2,17 +2,8 @@
 name: 052_ESRGAN_x4_f64b23_DIV2K_400k_B16G1_051pretrain_wandb
 model_type: otf 
 scale: 4
-num_gpu: auto  # set num_gpu: 0 for cpu mode
-manual_seed: 0
-#l1_gt_usm: true
-#percep_gt_usm: true
-#gan_gt_usm: true
-#high_order_degradation: true 
-
-l1_gt_usm: false
-percep_gt_usm: false
-gan_gt_usm: false
-#high_order_degradation: false
+num_gpu: 1  # set num_gpu: 0 for cpu mode
+#manual_seed: 0
 
 resize_prob: [0.2, 0.7, 0.1]  # up, down, keep
 resize_range: [0.15, 1.5]

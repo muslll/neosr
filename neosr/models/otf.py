@@ -5,9 +5,9 @@ from torch.nn import functional as F
 
 from neosr.data.degradations import random_add_gaussian_noise_pt, random_add_poisson_noise_pt
 from neosr.data.transforms import paired_random_crop
-from neosr.models.default import default
 from neosr.utils import DiffJPEG
 from neosr.utils.img_process_util import filter2D
+from neosr.models.default import default
 from neosr.utils.registry import MODEL_REGISTRY
 
 
@@ -40,7 +40,7 @@ class otf(default):
         if self.queue_ptr == self.queue_size:  # the pool is full
             # do dequeue and enqueue
             # shuffle
-            idx = torch.randperm(self.queue_size)
+            idx = torch.randperm(self.queue_size, device=torch.device('cuda'))
             self.queue_lr = self.queue_lr[idx]
             self.queue_gt = self.queue_gt[idx]
             # get first b samples

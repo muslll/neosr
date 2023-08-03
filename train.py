@@ -9,7 +9,7 @@ import torch
 
 from neosr.data import build_dataloader, build_dataset
 from neosr.data.data_sampler import EnlargedSampler
-from neosr.data.prefetch_dataloader import CPUPrefetcher, CUDAPrefetcher
+from neosr.data.prefetch_dataloader import CUDAPrefetcher
 from neosr.models import build_model
 from neosr.utils import (AvgTimer, MessageLogger, check_resume, get_root_logger, get_time_str,
                          init_tb_logger, init_wandb_logger, make_exp_dirs, mkdir_and_rename, scandir)
@@ -37,8 +37,7 @@ def create_train_val_dataloader(opt, logger):
         if phase == 'train':
             dataset_enlarge_ratio = dataset_opt.get('dataset_enlarge_ratio', 1)
             train_set = build_dataset(dataset_opt)
-            train_sampler = EnlargedSampler(
-                train_set, opt['world_size'], opt['rank'], dataset_enlarge_ratio)
+            train_sampler = EnlargedSampler(train_set, opt['world_size'], opt['rank'], dataset_enlarge_ratio)
             train_loader = build_dataloader(
                 train_set,
                 dataset_opt,
@@ -90,9 +89,7 @@ def load_resume_state(opt):
     if resume_state_path is None:
         resume_state = None
     else:
-        device_id = torch.cuda.current_device()
-        resume_state = torch.load(
-            resume_state_path, map_location=lambda storage, loc: storage.cuda(device_id))
+        resume_state = torch.load(resume_state_path, map_location=torch.device('cuda'))
         check_resume(opt, resume_state['iter'])
     return resume_state
 
@@ -102,6 +99,7 @@ def train_pipeline(root_path):
     opt, args = parse_options(root_path, is_train=True)
     opt['root_path'] = root_path
 
+    #torch.set_default_device('cuda')
     torch.backends.cudnn.benchmark = True
     # torch.backends.cudnn.deterministic = True
 
@@ -148,18 +146,11 @@ def train_pipeline(root_path):
 
     # dataloader prefetcher
 
-    prefetch_mode = opt['datasets']['train'].get('prefetch_mode')
-    if prefetch_mode == 'cpu':
-        prefetcher = CPUPrefetcher(train_loader)
-    else:
-        prefetcher = CUDAPrefetcher(train_loader, opt)
-        logger.info('Using CUDA prefetch dataloader')
-        if opt['datasets']['train'].get('pin_memory') is False:
-            raise ValueError('Please set pin_memory=True for CUDAPrefetcher.')
+    prefetcher = CUDAPrefetcher(train_loader, opt)
+    logger.info('Using CUDA prefetch dataloader')
 
     # training
-    logger.info(
-        f'Start training from epoch: {start_epoch}, iter: {current_iter}')
+    logger.info(f'Start training from epoch: {start_epoch}, iter: {current_iter}')
     data_timer, iter_timer = AvgTimer(), AvgTimer()
     start_time = time.time()
 

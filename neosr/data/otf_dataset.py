@@ -4,7 +4,6 @@ import random
 import time
 import math
 import cv2
-
 import numpy as np
 import torch
 from torch.utils import data
@@ -42,8 +41,7 @@ class otf(data.Dataset):
         # self.lq_folder = opt['dataroot_lq']
 
         if opt.get('dataroot_lq', None) is not None:
-            raise ValueError(
-                "'dataroot_lq' not supported by otf, please switch to paired")
+            raise ValueError("'dataroot_lq' not supported by otf, please switch to paired")
 
         # file client (lmdb io backend)
         if self.io_backend_opt['type'] == 'lmdb':
@@ -147,13 +145,14 @@ class otf(data.Dataset):
                             left:left + crop_pad_size, ...]
 
         # ------------------------ Generate kernels (used in the first degradation) ------------------------ #
+        rng = np.random.default_rng()
         kernel_size = random.choice(self.kernel_range)
-        if np.random.default_rng().uniform() < self.opt['sinc_prob']:
+        if rng.uniform() < self.opt['sinc_prob']:
             # this sinc filter setting is for kernels ranging from [7, 21]
             if kernel_size < 13:
-                omega_c = np.random.default_rng().uniform(np.pi / 3, np.pi)
+                omega_c = rng.uniform(np.pi / 3, np.pi)
             else:
-                omega_c = np.random.default_rng().uniform(np.pi / 5, np.pi)
+                omega_c = rng.uniform(np.pi / 5, np.pi)
             kernel = circular_lowpass_kernel(
                 omega_c, kernel_size, pad_to=False)
         else:
@@ -172,11 +171,11 @@ class otf(data.Dataset):
 
         # ------------------------ Generate kernels (used in the second degradation) ------------------------ #
         kernel_size = random.choice(self.kernel_range)
-        if np.random.default_rng().uniform() < self.opt['sinc_prob2']:
+        if rng.uniform() < self.opt['sinc_prob2']:
             if kernel_size < 13:
-                omega_c = np.random.default_rng().uniform(np.pi / 3, np.pi)
+                omega_c = rng.uniform(np.pi / 3, np.pi)
             else:
-                omega_c = np.random.default_rng().uniform(np.pi / 5, np.pi)
+                omega_c = rng.uniform(np.pi / 5, np.pi)
             kernel2 = circular_lowpass_kernel(
                 omega_c, kernel_size, pad_to=False)
         else:
@@ -195,9 +194,9 @@ class otf(data.Dataset):
         kernel2 = np.pad(kernel2, ((pad_size, pad_size), (pad_size, pad_size)))
 
         # ------------------------------------- the final sinc kernel ------------------------------------- #
-        if np.random.default_rng().uniform() < self.opt['final_sinc_prob']:
+        if rng.uniform() < self.opt['final_sinc_prob']:
             kernel_size = random.choice(self.kernel_range)
-            omega_c = np.random.default_rng().uniform(np.pi / 3, np.pi)
+            omega_c = rng.uniform(np.pi / 3, np.pi)
             sinc_kernel = circular_lowpass_kernel(
                 omega_c, kernel_size, pad_to=21)
             sinc_kernel = torch.FloatTensor(sinc_kernel)

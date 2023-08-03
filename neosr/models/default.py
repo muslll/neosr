@@ -25,7 +25,7 @@ class default():
 
     def __init__(self, opt):
         self.opt = opt
-        self.device = torch.device('cuda' if opt['num_gpu'] != 0 else 'cpu')
+        self.device = torch.device('cuda')
         self.is_train = opt['is_train']
         self.optimizers = []
         self.schedulers = []
@@ -639,8 +639,7 @@ class default():
         """
         logger = get_root_logger()
         net = self.get_bare_model(net)
-        load_net = torch.load(
-            load_path, map_location=lambda storage, loc: storage)
+        load_net = torch.load(load_path, map_location=torch.device('cuda'))
 
         if param_key is not None:
             if param_key not in load_net and 'params' in load_net:
