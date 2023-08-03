@@ -261,7 +261,7 @@ class PerceptualLoss(nn.Module):
             percep_loss = 0
             for k in x_features.keys():
                 if self.criterion_type == 'fro':
-                    percep_loss += torch.norm(
+                    percep_loss += torch.linalg.norm(
                         x_features[k] - gt_features[k], p='fro') * self.layer_weights[k]
                 else:
                     percep_loss += self.criterion(
@@ -275,7 +275,7 @@ class PerceptualLoss(nn.Module):
             style_loss = 0
             for k in x_features.keys():
                 if self.criterion_type == 'fro':
-                    style_loss += torch.norm(
+                    style_loss += torch.linalg.norm(
                         self._gram_mat(x_features[k]) - self._gram_mat(gt_features[k]), p='fro') * self.layer_weights[k]
                 else:
                     style_loss += self.criterion(self._gram_mat(x_features[k]), self._gram_mat(

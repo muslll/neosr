@@ -33,9 +33,9 @@ class otf(default):
         b, c, h, w = self.lq.size()
         if not hasattr(self, 'queue_lr'):
             assert self.queue_size % b == 0, f'queue size {self.queue_size} should be divisible by batch size {b}'
-            self.queue_lr = torch.zeros(self.queue_size, c, h, w).cuda()
+            self.queue_lr = torch.zeros(self.queue_size, c, h, w, device=self.device).cuda()
             _, c, h, w = self.gt.size()
-            self.queue_gt = torch.zeros(self.queue_size, c, h, w).cuda()
+            self.queue_gt = torch.zeros(self.queue_size, c, h, w, device=self.device).cuda()
             self.queue_ptr = 0
         if self.queue_ptr == self.queue_size:  # the pool is full
             # do dequeue and enqueue
@@ -66,11 +66,11 @@ class otf(default):
         """
         if self.is_train:
             # training data synthesis
-            self.gt = data['gt'].to(self.device)
+            self.gt = data['gt'].to(self.device, non_blocking=True)
 
-            self.kernel1 = data['kernel1'].to(self.device)
-            self.kernel2 = data['kernel2'].to(self.device)
-            self.sinc_kernel = data['sinc_kernel'].to(self.device)
+            self.kernel1 = data['kernel1'].to(self.device, non_blocking=True)
+            self.kernel2 = data['kernel2'].to(self.device, non_blocking=True)
+            self.sinc_kernel = data['sinc_kernel'].to(self.device, non_blocking=True)
 
             ori_h, ori_w = self.gt.size()[2:4]
 
@@ -180,9 +180,9 @@ class otf(default):
             self.lq = self.lq.contiguous()
         else:
             # for paired training or validation
-            self.lq = data['lq'].to(self.device)
+            self.lq = data['lq'].to(self.device, non_blocking=True)
             if 'gt' in data:
-                self.gt = data['gt'].to(self.device)
+                self.gt = data['gt'].to(self.device, non_blocking=True)
 
     def nondist_validation(self, dataloader, current_iter, tb_logger, save_img):
         # do not use the synthetic process during validation

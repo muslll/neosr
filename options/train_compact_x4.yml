@@ -59,8 +59,8 @@ path:
   #pretrain_network_g: /tmp/net_g_500.pth
   #Needed only for old pretrains. All models now save to param instead of params_ema
   #param_key_g: params_ema
-  #resume_state: ~
-  resume_state: /home/anon/code/neosr/experiments/testing/training_states/500.state
+  resume_state: ~
+  #resume_state: /home/anon/code/neosr/experiments/testing/training_states/500.state
 
 # training settings
 train:

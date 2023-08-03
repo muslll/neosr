@@ -70,7 +70,7 @@ class default():
             # net_g_ema is used only for testing on one GPU and saving
             # There is no need to wrap with DistributedDataParallel
             self.net_g_ema = build_network(
-                self.opt['network_g']).to(self.device)
+                self.opt['network_g']).to(self.device, non_blocking=True)
             # load pretrained g
             load_path = self.opt['path'].get('pretrain_network_g', None)
             if load_path is not None:
@@ -86,13 +86,13 @@ class default():
 
         # define losses
         if train_opt.get('pixel_opt'):
-            self.cri_pix = build_loss(train_opt['pixel_opt']).to(self.device)
+            self.cri_pix = build_loss(train_opt['pixel_opt']).to(self.device, non_blocking=True)
         else:
             self.cri_pix = None
 
         if train_opt.get('perceptual_opt'):
             self.cri_perceptual = build_loss(
-                train_opt['perceptual_opt']).to(self.device)
+                train_opt['perceptual_opt']).to(self.device, non_blocking=True)
         else:
             self.cri_perceptual = None
 
@@ -101,13 +101,13 @@ class default():
 
         # GAN loss
         if train_opt.get('gan_opt'):
-            self.cri_gan = build_loss(train_opt['gan_opt']).to(self.device)
+            self.cri_gan = build_loss(train_opt['gan_opt']).to(self.device, non_blocking=True)
         else:
             self.cri_gan = None
 
         # LDL loss
         if train_opt.get('ldl_opt'):
-            self.cri_ldl = build_loss(train_opt['ldl_opt']).to(self.device)
+            self.cri_ldl = build_loss(train_opt['ldl_opt']).to(self.device, non_blocking=True)
         else:
             self.cri_ldl = None
 
@@ -196,7 +196,7 @@ class default():
             for p in self.net_d.parameters():
                 p.requires_grad = False
 
-        self.optimizer_g.zero_grad()
+        self.optimizer_g.zero_grad(set_to_none=True)
         self.output = self.net_g(self.lq)
 
         l_g_total = 0
@@ -241,7 +241,7 @@ class default():
             for p in self.net_d.parameters():
                 p.requires_grad = True
 
-            self.optimizer_d.zero_grad()
+            self.optimizer_d.zero_grad(set_to_none=True)
 
             # real
             if self.cri_gan:
@@ -327,9 +327,9 @@ class default():
             self.net_g.train()
 
     def feed_data(self, data):
-        self.lq = data['lq'].to(self.device)
+        self.lq = data['lq'].to(self.device, non_blocking=True)
         if 'gt' in data:
-            self.gt = data['gt'].to(self.device)
+            self.gt = data['gt'].to(self.device, non_blocking=True)
 
     def dist_validation(self, dataloader, current_iter, tb_logger, save_img):
         if self.opt['rank'] == 0:
@@ -491,7 +491,7 @@ class default():
         Args:
             net (nn.Module)
         """
-        net = net.to(self.device)
+        net = net.to(self.device, non_blocking=True)
         if self.opt['dist']:
             find_unused_parameters = self.opt.get(
                 'find_unused_parameters', False)
