@@ -149,7 +149,8 @@ def _convert_input_type_range(img):
     elif img_type == np.uint8:
         img /= 255.
     else:
-        raise TypeError(f'The img type should be np.float32 or np.uint8, but got {img_type}')
+        raise TypeError(
+            f'The img type should be np.float32 or np.uint8, but got {img_type}')
     return img
 
 
@@ -175,7 +176,8 @@ def _convert_output_type_range(img, dst_type):
         (ndarray): The converted image with desired type and range.
     """
     if dst_type not in (np.uint8, np.float32):
-        raise TypeError(f'The dst_type should be np.float32 or np.uint8, but got {dst_type}')
+        raise TypeError(
+            f'The dst_type should be np.float32 or np.uint8, but got {dst_type}')
     if dst_type == np.uint8:
         img = img.round()
     else:
@@ -198,11 +200,14 @@ def rgb2ycbcr_pt(img, y_only=False):
     """
     if y_only:
         weight = torch.tensor([[65.481], [128.553], [24.966]]).to(img)
-        out_img = torch.matmul(img.permute(0, 2, 3, 1), weight).permute(0, 3, 1, 2) + 16.0
+        out_img = torch.matmul(img.permute(0, 2, 3, 1),
+                               weight).permute(0, 3, 1, 2) + 16.0
     else:
-        weight = torch.tensor([[65.481, -37.797, 112.0], [128.553, -74.203, -93.786], [24.966, 112.0, -18.214]]).to(img)
+        weight = torch.tensor(
+            [[65.481, -37.797, 112.0], [128.553, -74.203, -93.786], [24.966, 112.0, -18.214]]).to(img)
         bias = torch.tensor([16, 128, 128]).view(1, 3, 1, 1).to(img)
-        out_img = torch.matmul(img.permute(0, 2, 3, 1), weight).permute(0, 3, 1, 2) + bias
+        out_img = torch.matmul(img.permute(0, 2, 3, 1),
+                               weight).permute(0, 3, 1, 2) + bias
 
     out_img = out_img / 255.
     return out_img

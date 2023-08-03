@@ -1,7 +1,7 @@
-import cv2
-import math
-import numpy as np
 import random
+import math
+import cv2
+import numpy as np
 import torch
 from scipy import special
 from scipy.stats import multivariate_normal
@@ -25,7 +25,8 @@ def sigma_matrix2(sig_x, sig_y, theta):
         ndarray: Rotated sigma matrix.
     """
     d_matrix = np.array([[sig_x**2, 0], [0, sig_y**2]])
-    u_matrix = np.array([[np.cos(theta), -np.sin(theta)], [np.sin(theta), np.cos(theta)]])
+    u_matrix = np.array([[np.cos(theta), -np.sin(theta)],
+                        [np.sin(theta), np.cos(theta)]])
     return np.dot(u_matrix, np.dot(d_matrix, u_matrix.T))
 
 
@@ -135,7 +136,8 @@ def bivariate_generalized_Gaussian(kernel_size, sig_x, sig_y, theta, beta, grid=
     else:
         sigma_matrix = sigma_matrix2(sig_x, sig_y, theta)
     inverse_sigma = np.linalg.inv(sigma_matrix)
-    kernel = np.exp(-0.5 * np.power(np.sum(np.dot(grid, inverse_sigma) * grid, 2), beta))
+    kernel = np.exp(-0.5 * np.power(np.sum(np.dot(grid,
+                    inverse_sigma) * grid, 2), beta))
     kernel = kernel / np.sum(kernel)
     return kernel
 
@@ -168,7 +170,8 @@ def bivariate_plateau(kernel_size, sig_x, sig_y, theta, beta, grid=None, isotrop
     else:
         sigma_matrix = sigma_matrix2(sig_x, sig_y, theta)
     inverse_sigma = np.linalg.inv(sigma_matrix)
-    kernel = np.reciprocal(np.power(np.sum(np.dot(grid, inverse_sigma) * grid, 2), beta) + 1)
+    kernel = np.reciprocal(
+        np.power(np.sum(np.dot(grid, inverse_sigma) * grid, 2), beta) + 1)
     kernel = kernel / np.sum(kernel)
     return kernel
 
@@ -206,12 +209,14 @@ def random_bivariate_Gaussian(kernel_size,
         sigma_y = sigma_x
         rotation = 0
 
-    kernel = bivariate_Gaussian(kernel_size, sigma_x, sigma_y, rotation, isotropic=isotropic)
+    kernel = bivariate_Gaussian(
+        kernel_size, sigma_x, sigma_y, rotation, isotropic=isotropic)
 
     # add multiplicative noise
     if noise_range is not None:
         assert noise_range[0] < noise_range[1], 'Wrong noise range.'
-        noise = np.random.uniform(noise_range[0], noise_range[1], size=kernel.shape)
+        noise = np.random.uniform(
+            noise_range[0], noise_range[1], size=kernel.shape)
         kernel = kernel * noise
     kernel = kernel / np.sum(kernel)
     return kernel
@@ -258,12 +263,14 @@ def random_bivariate_generalized_Gaussian(kernel_size,
     else:
         beta = np.random.uniform(1, beta_range[1])
 
-    kernel = bivariate_generalized_Gaussian(kernel_size, sigma_x, sigma_y, rotation, beta, isotropic=isotropic)
+    kernel = bivariate_generalized_Gaussian(
+        kernel_size, sigma_x, sigma_y, rotation, beta, isotropic=isotropic)
 
     # add multiplicative noise
     if noise_range is not None:
         assert noise_range[0] < noise_range[1], 'Wrong noise range.'
-        noise = np.random.uniform(noise_range[0], noise_range[1], size=kernel.shape)
+        noise = np.random.uniform(
+            noise_range[0], noise_range[1], size=kernel.shape)
         kernel = kernel * noise
     kernel = kernel / np.sum(kernel)
     return kernel
@@ -310,11 +317,13 @@ def random_bivariate_plateau(kernel_size,
     else:
         beta = np.random.uniform(1, beta_range[1])
 
-    kernel = bivariate_plateau(kernel_size, sigma_x, sigma_y, rotation, beta, isotropic=isotropic)
+    kernel = bivariate_plateau(
+        kernel_size, sigma_x, sigma_y, rotation, beta, isotropic=isotropic)
     # add multiplicative noise
     if noise_range is not None:
         assert noise_range[0] < noise_range[1], 'Wrong noise range.'
-        noise = np.random.uniform(noise_range[0], noise_range[1], size=kernel.shape)
+        noise = np.random.uniform(
+            noise_range[0], noise_range[1], size=kernel.shape)
         kernel = kernel * noise
     kernel = kernel / np.sum(kernel)
 
@@ -401,7 +410,8 @@ def circular_lowpass_kernel(cutoff, kernel_size, pad_to=0):
         lambda x, y: cutoff * special.j1(cutoff * np.sqrt(
             (x - (kernel_size - 1) / 2)**2 + (y - (kernel_size - 1) / 2)**2)) / (2 * np.pi * np.sqrt(
                 (x - (kernel_size - 1) / 2)**2 + (y - (kernel_size - 1) / 2)**2)), [kernel_size, kernel_size])
-    kernel[(kernel_size - 1) // 2, (kernel_size - 1) // 2] = cutoff**2 / (4 * np.pi)
+    kernel[(kernel_size - 1) // 2, (kernel_size - 1) //
+           2] = cutoff**2 / (4 * np.pi)
     kernel = kernel / np.sum(kernel)
     if pad_to > kernel_size:
         pad_size = (pad_to - kernel_size) // 2
@@ -478,11 +488,13 @@ def generate_gaussian_noise_pt(img, sigma=10, gray_noise=0):
         cal_gray_noise = torch.sum(gray_noise) > 0
 
     if cal_gray_noise:
-        noise_gray = torch.randn(*img.size()[2:4], dtype=img.dtype, device=img.device) * sigma / 255.
+        noise_gray = torch.randn(
+            *img.size()[2:4], dtype=img.dtype, device=img.device) * sigma / 255.
         noise_gray = noise_gray.view(b, 1, h, w)
 
     # always calculate color noise
-    noise = torch.randn(*img.size(), dtype=img.dtype, device=img.device) * sigma / 255.
+    noise = torch.randn(*img.size(), dtype=img.dtype,
+                        device=img.device) * sigma / 255.
 
     if cal_gray_noise:
         noise = noise * (1 - gray_noise) + noise_gray * gray_noise

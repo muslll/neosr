@@ -1,8 +1,5 @@
-import math
-import torch
 from torch import autograd as autograd
-from torch import nn as nn
-from torch.nn import functional as F
+from torch import nn
 
 from neosr.utils.registry import LOSS_REGISTRY
 
@@ -30,8 +27,8 @@ class GANLoss(nn.Module):
         if self.gan_type == 'vanilla':
             self.loss = nn.BCEWithLogitsLoss()
         else:
-            raise NotImplementedError(f'GAN type {self.gan_type} is not implemented.')
-
+            raise NotImplementedError(
+                f'GAN type {self.gan_type} is not implemented.')
 
     def get_target_label(self, input, target_is_real):
         """Get target label.
@@ -45,7 +42,8 @@ class GANLoss(nn.Module):
                 return Tensor.
         """
 
-        target_val = (self.real_label_val if target_is_real else self.fake_label_val)
+        target_val = (
+            self.real_label_val if target_is_real else self.fake_label_val)
         return input.new_ones(input.size()) * target_val
 
     def forward(self, input, target_is_real, is_disc=False):
@@ -74,7 +72,8 @@ class MultiScaleGANLoss(GANLoss):
     """
 
     def __init__(self, gan_type, real_label_val=1.0, fake_label_val=0.0, loss_weight=1.0):
-        super(MultiScaleGANLoss, self).__init__(gan_type, real_label_val, fake_label_val, loss_weight)
+        super(MultiScaleGANLoss, self).__init__(
+            gan_type, real_label_val, fake_label_val, loss_weight)
 
     def forward(self, input, target_is_real, is_disc=False):
         """
@@ -93,4 +92,3 @@ class MultiScaleGANLoss(GANLoss):
             return loss / len(input)
         else:
             return super().forward(input, target_is_real, is_disc)
-

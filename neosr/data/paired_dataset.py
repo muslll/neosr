@@ -1,5 +1,5 @@
 import os
-from torch.utils import data as data
+from torch.utils import data
 from torchvision.transforms.functional import normalize
 
 from neosr.data.data_util import paired_paths_from_folder, paired_paths_from_lmdb
@@ -52,7 +52,8 @@ class paired(data.Dataset):
         if self.io_backend_opt['type'] == 'lmdb':
             self.io_backend_opt['db_paths'] = [self.lq_folder, self.gt_folder]
             self.io_backend_opt['client_keys'] = ['lq', 'gt']
-            self.paths = paired_paths_from_lmdb([self.lq_folder, self.gt_folder], ['lq', 'gt'])
+            self.paths = paired_paths_from_lmdb(
+                [self.lq_folder, self.gt_folder], ['lq', 'gt'])
         elif 'meta_info' in self.opt and self.opt['meta_info'] is not None:
             # disk backend with meta_info
             # Each line in the meta_info describes the relative path to an image
@@ -63,16 +64,19 @@ class paired(data.Dataset):
                 gt_path, lq_path = path.split(', ')
                 gt_path = os.path.join(self.gt_folder, gt_path)
                 lq_path = os.path.join(self.lq_folder, lq_path)
-                self.paths.append(dict([('gt_path', gt_path), ('lq_path', lq_path)]))
+                self.paths.append(
+                    dict([('gt_path', gt_path), ('lq_path', lq_path)]))
         else:
             # disk backend
             # it will scan the whole folder to get meta info
             # it will be time-consuming for folders with too many files. It is recommended using an extra meta txt file
-            self.paths = paired_paths_from_folder([self.lq_folder, self.gt_folder], ['lq', 'gt'], self.filename_tmpl)
+            self.paths = paired_paths_from_folder([self.lq_folder, self.gt_folder], [
+                                                  'lq', 'gt'], self.filename_tmpl)
 
     def __getitem__(self, index):
         if self.file_client is None:
-            self.file_client = FileClient(self.io_backend_opt.pop('type'), **self.io_backend_opt)
+            self.file_client = FileClient(
+                self.io_backend_opt.pop('type'), **self.io_backend_opt)
 
         scale = self.opt['scale']
 
@@ -89,9 +93,11 @@ class paired(data.Dataset):
         if self.opt['phase'] == 'train':
             gt_size = self.opt['gt_size']
             # random crop
-            img_gt, img_lq = paired_random_crop(img_gt, img_lq, gt_size, scale, gt_path)
+            img_gt, img_lq = paired_random_crop(
+                img_gt, img_lq, gt_size, scale, gt_path)
             # flip, rotation
-            img_gt, img_lq = augment([img_gt, img_lq], self.opt['use_hflip'], self.opt['use_rot'])
+            img_gt, img_lq = augment(
+                [img_gt, img_lq], self.opt['use_hflip'], self.opt['use_rot'])
 
         # color space transform
         if 'color' in self.opt and self.opt['color'] == 'y':
@@ -101,10 +107,12 @@ class paired(data.Dataset):
         # crop the unmatched GT images during validation or testing, especially for SR benchmark datasets
         # TODO: It is better to update the datasets, rather than force to crop
         if self.opt['phase'] != 'train':
-            img_gt = img_gt[0:img_lq.shape[0] * scale, 0:img_lq.shape[1] * scale, :]
+            img_gt = img_gt[0:img_lq.shape[0] *
+                            scale, 0:img_lq.shape[1] * scale, :]
 
         # BGR to RGB, HWC to CHW, numpy to tensor
-        img_gt, img_lq = img2tensor([img_gt, img_lq], bgr2rgb=True, float32=True)
+        img_gt, img_lq = img2tensor(
+            [img_gt, img_lq], bgr2rgb=True, float32=True)
         # normalize
         if self.mean is not None or self.std is not None:
             normalize(img_lq, self.mean, self.std, inplace=True)

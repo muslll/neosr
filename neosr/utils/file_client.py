@@ -36,11 +36,13 @@ class MemcachedBackend(BaseStorageBackend):
         try:
             import mc
         except ImportError:
-            raise ImportError('Please install memcached to enable MemcachedBackend.')
+            raise ImportError(
+                'Please install memcached to enable MemcachedBackend.')
 
         self.server_list_cfg = server_list_cfg
         self.client_cfg = client_cfg
-        self._client = mc.MemcachedClient.GetInstance(self.server_list_cfg, self.client_cfg)
+        self._client = mc.MemcachedClient.GetInstance(
+            self.server_list_cfg, self.client_cfg)
         # mc.pyvector servers as a point which points to a memory cache
         self._mc_buffer = mc.pyvector()
 
@@ -109,7 +111,8 @@ class LmdbBackend(BaseStorageBackend):
 
         self._client = {}
         for client, path in zip(client_keys, self.db_paths):
-            self._client[client] = lmdb.open(path, readonly=readonly, lock=lock, readahead=readahead, **kwargs)
+            self._client[client] = lmdb.open(
+                path, readonly=readonly, lock=lock, readahead=readahead, **kwargs)
 
     def get(self, filepath, client_key):
         """Get values according to the filepath from one lmdb named client_key.
@@ -119,7 +122,8 @@ class LmdbBackend(BaseStorageBackend):
             client_key (str): Used for distinguishing different lmdb envs.
         """
         filepath = str(filepath)
-        assert client_key in self._client, (f'client_key {client_key} is not in lmdb clients.')
+        assert client_key in self._client, (
+            f'client_key {client_key} is not in lmdb clients.')
         client = self._client[client_key]
         with client.begin(write=False) as txn:
             value_buf = txn.get(filepath.encode('ascii'))

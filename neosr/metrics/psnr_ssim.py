@@ -25,9 +25,11 @@ def calculate_psnr(img, img2, crop_border, input_order='HWC', test_y_channel=Fal
         float: PSNR result.
     """
 
-    assert img.shape == img2.shape, (f'Image shapes are different: {img.shape}, {img2.shape}.')
+    assert img.shape == img2.shape, (
+        f'Image shapes are different: {img.shape}, {img2.shape}.')
     if input_order not in ['HWC', 'CHW']:
-        raise ValueError(f'Wrong input_order {input_order}. Supported input_orders are "HWC" and "CHW"')
+        raise ValueError(
+            f'Wrong input_order {input_order}. Supported input_orders are "HWC" and "CHW"')
     img = reorder_image(img, input_order=input_order)
     img2 = reorder_image(img2, input_order=input_order)
 
@@ -64,7 +66,8 @@ def calculate_psnr_pt(img, img2, crop_border, test_y_channel=False, **kwargs):
         float: PSNR result.
     """
 
-    assert img.shape == img2.shape, (f'Image shapes are different: {img.shape}, {img2.shape}.')
+    assert img.shape == img2.shape, (
+        f'Image shapes are different: {img.shape}, {img2.shape}.')
 
     if crop_border != 0:
         img = img[:, :, crop_border:-crop_border, crop_border:-crop_border]
@@ -105,9 +108,11 @@ def calculate_ssim(img, img2, crop_border, input_order='HWC', test_y_channel=Fal
         float: SSIM result.
     """
 
-    assert img.shape == img2.shape, (f'Image shapes are different: {img.shape}, {img2.shape}.')
+    assert img.shape == img2.shape, (
+        f'Image shapes are different: {img.shape}, {img2.shape}.')
     if input_order not in ['HWC', 'CHW']:
-        raise ValueError(f'Wrong input_order {input_order}. Supported input_orders are "HWC" and "CHW"')
+        raise ValueError(
+            f'Wrong input_order {input_order}. Supported input_orders are "HWC" and "CHW"')
     img = reorder_image(img, input_order=input_order)
     img2 = reorder_image(img2, input_order=input_order)
 
@@ -150,7 +155,8 @@ def calculate_ssim_pt(img, img2, crop_border, test_y_channel=False, **kwargs):
         float: SSIM result.
     """
 
-    assert img.shape == img2.shape, (f'Image shapes are different: {img.shape}, {img2.shape}.')
+    assert img.shape == img2.shape, (
+        f'Image shapes are different: {img.shape}, {img2.shape}.')
 
     if crop_border != 0:
         img = img[:, :, crop_border:-crop_border, crop_border:-crop_border]
@@ -185,7 +191,8 @@ def _ssim(img, img2):
     kernel = cv2.getGaussianKernel(11, 1.5)
     window = np.outer(kernel, kernel.transpose())
 
-    mu1 = cv2.filter2D(img, -1, window)[5:-5, 5:-5]  # valid mode for window size 11
+    # valid mode for window size 11
+    mu1 = cv2.filter2D(img, -1, window)[5:-5, 5:-5]
     mu2 = cv2.filter2D(img2, -1, window)[5:-5, 5:-5]
     mu1_sq = mu1**2
     mu2_sq = mu2**2
@@ -194,7 +201,8 @@ def _ssim(img, img2):
     sigma2_sq = cv2.filter2D(img2**2, -1, window)[5:-5, 5:-5] - mu2_sq
     sigma12 = cv2.filter2D(img * img2, -1, window)[5:-5, 5:-5] - mu1_mu2
 
-    ssim_map = ((2 * mu1_mu2 + c1) * (2 * sigma12 + c2)) / ((mu1_sq + mu2_sq + c1) * (sigma1_sq + sigma2_sq + c2))
+    ssim_map = ((2 * mu1_mu2 + c1) * (2 * sigma12 + c2)) / \
+        ((mu1_sq + mu2_sq + c1) * (sigma1_sq + sigma2_sq + c2))
     return ssim_map.mean()
 
 
@@ -215,16 +223,22 @@ def _ssim_pth(img, img2):
 
     kernel = cv2.getGaussianKernel(11, 1.5)
     window = np.outer(kernel, kernel.transpose())
-    window = torch.from_numpy(window).view(1, 1, 11, 11).expand(img.size(1), 1, 11, 11).to(img.dtype).to(img.device)
+    window = torch.from_numpy(window).view(1, 1, 11, 11).expand(
+        img.size(1), 1, 11, 11).to(img.dtype).to(img.device)
 
-    mu1 = F.conv2d(img, window, stride=1, padding=0, groups=img.shape[1])  # valid mode
-    mu2 = F.conv2d(img2, window, stride=1, padding=0, groups=img2.shape[1])  # valid mode
+    mu1 = F.conv2d(img, window, stride=1, padding=0,
+                   groups=img.shape[1])  # valid mode
+    mu2 = F.conv2d(img2, window, stride=1, padding=0,
+                   groups=img2.shape[1])  # valid mode
     mu1_sq = mu1.pow(2)
     mu2_sq = mu2.pow(2)
     mu1_mu2 = mu1 * mu2
-    sigma1_sq = F.conv2d(img * img, window, stride=1, padding=0, groups=img.shape[1]) - mu1_sq
-    sigma2_sq = F.conv2d(img2 * img2, window, stride=1, padding=0, groups=img.shape[1]) - mu2_sq
-    sigma12 = F.conv2d(img * img2, window, stride=1, padding=0, groups=img.shape[1]) - mu1_mu2
+    sigma1_sq = F.conv2d(img * img, window, stride=1,
+                         padding=0, groups=img.shape[1]) - mu1_sq
+    sigma2_sq = F.conv2d(img2 * img2, window, stride=1,
+                         padding=0, groups=img.shape[1]) - mu2_sq
+    sigma12 = F.conv2d(img * img2, window, stride=1,
+                       padding=0, groups=img.shape[1]) - mu1_mu2
 
     cs_map = (2 * sigma12 + c2) / (sigma1_sq + sigma2_sq + c2)
     ssim_map = ((2 * mu1_mu2 + c1) / (mu1_sq + mu2_sq + c1)) * cs_map

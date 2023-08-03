@@ -68,7 +68,8 @@ class Registry():
             ret = self._obj_map.get(name + '_' + suffix)
             print(f'Name {name} is not found, use name: {name}_{suffix}!')
         if ret is None:
-            raise KeyError(f"No object named '{name}' found in '{self._name}' registry!")
+            raise KeyError(
+                f"No object named '{name}' found in '{self._name}' registry!")
         return ret
 
     def __contains__(self, name):

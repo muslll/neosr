@@ -86,7 +86,8 @@ class MessageLogger():
         current_iter = log_vars.pop('iter')
         lrs = log_vars.pop('lrs')
 
-        message = (f'[{self.exp_name[:5]}..][epoch:{epoch:3d}, iter:{current_iter:8,d}, lr:(')
+        message = (
+            f'[{self.exp_name[:5]}..][epoch:{epoch:3d}, iter:{current_iter:8,d}, lr:(')
         for v in lrs:
             message += f'{v:.3e},'
         message += ')] '
@@ -138,7 +139,8 @@ def init_wandb_logger(opt):
         wandb_id = wandb.util.generate_id()
         resume = 'never'
 
-    wandb.init(id=wandb_id, resume=resume, name=opt['name'], config=opt, project=project, sync_tensorboard=True)
+    wandb.init(id=wandb_id, resume=resume,
+               name=opt['name'], config=opt, project=project, sync_tensorboard=True)
 
     logger.info(f'Use wandb logger with id={wandb_id}; project={project}.')
 
@@ -183,4 +185,3 @@ def get_root_logger(logger_name='neosr', log_level=logging.INFO, log_file=None):
         logger.addHandler(file_handler)
     initialized_logger[logger_name] = True
     return logger
-

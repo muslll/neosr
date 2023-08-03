@@ -1,11 +1,11 @@
-import cv2
-import numpy as np
 import os
 import sys
 from multiprocessing import Pool
 from os import path as osp
-from tqdm import tqdm
 
+import cv2
+import numpy as np
+from tqdm import tqdm
 from basicsr.utils import scandir
 
 
@@ -99,7 +99,8 @@ def extract_subimages(opt):
     pbar = tqdm(total=len(img_list), unit='image', desc='Extract')
     pool = Pool(opt['n_thread'])
     for path in img_list:
-        pool.apply_async(worker, args=(path, opt), callback=lambda arg: pbar.update(1))
+        pool.apply_async(worker, args=(path, opt),
+                         callback=lambda arg: pbar.update(1))
     pool.close()
     pool.join()
     pbar.close()
@@ -127,7 +128,8 @@ def worker(path, opt):
     img_name, extension = osp.splitext(osp.basename(path))
 
     # remove the x2, x3, x4 and x8 in the filename for DIV2K
-    img_name = img_name.replace('x2', '').replace('x3', '').replace('x4', '').replace('x8', '')
+    img_name = img_name.replace('x2', '').replace(
+        'x3', '').replace('x4', '').replace('x8', '')
 
     img = cv2.imread(path, cv2.IMREAD_UNCHANGED)
 
@@ -146,7 +148,8 @@ def worker(path, opt):
             cropped_img = img[x:x + crop_size, y:y + crop_size, ...]
             cropped_img = np.ascontiguousarray(cropped_img)
             cv2.imwrite(
-                osp.join(opt['save_folder'], f'{img_name}_s{index:03d}{extension}'), cropped_img,
+                osp.join(opt['save_folder'],
+                         f'{img_name}_s{index:03d}{extension}'), cropped_img,
                 [cv2.IMWRITE_PNG_COMPRESSION, opt['compression_level']])
     process_info = f'Processing {img_name} ...'
     return process_info

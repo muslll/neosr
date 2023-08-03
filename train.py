@@ -3,8 +3,9 @@ import datetime
 import logging
 import math
 import time
-import torch
 from os import path as osp
+
+import torch
 
 from neosr.data import build_dataloader, build_dataset
 from neosr.data.data_sampler import EnlargedSampler
@@ -24,7 +25,8 @@ def init_tb_loggers(opt):
         init_wandb_logger(opt)
     tb_logger = None
     if opt['logger'].get('use_tb_logger') and 'debug' not in opt['name']:
-        tb_logger = init_tb_logger(log_dir=osp.join(opt['root_path'], 'experiments', 'tb_logger', opt['name']))
+        tb_logger = init_tb_logger(log_dir=osp.join(
+            opt['root_path'], 'experiments', 'tb_logger', opt['name']))
     return tb_logger
 
 
@@ -78,7 +80,8 @@ def load_resume_state(opt):
                           recursive=False, full_path=False))
             if len(states) != 0:
                 states = [float(v.split('.state')[0]) for v in states]
-                resume_state_path = osp.join(state_path, f'{max(states):.0f}.state')
+                resume_state_path = osp.join(
+                    state_path, f'{max(states):.0f}.state')
                 opt['path']['resume_state'] = resume_state_path
     else:
         if opt['path'].get('resume_state'):
@@ -88,7 +91,8 @@ def load_resume_state(opt):
         resume_state = None
     else:
         device_id = torch.cuda.current_device()
-        resume_state = torch.load(resume_state_path, map_location=lambda storage, loc: storage.cuda(device_id))
+        resume_state = torch.load(
+            resume_state_path, map_location=lambda storage, loc: storage.cuda(device_id))
         check_resume(opt, resume_state['iter'])
     return resume_state
 
@@ -107,7 +111,8 @@ def train_pipeline(root_path):
     if resume_state is None:
         make_exp_dirs(opt)
         if opt['logger'].get('use_tb_logger') and 'debug' not in opt['name'] and opt['rank'] == 0:
-            mkdir_and_rename(osp.join(opt['root_path'], 'experiments', 'tb_logger', opt['name']))
+            mkdir_and_rename(
+                osp.join(opt['root_path'], 'experiments', 'tb_logger', opt['name']))
 
     # copy the yml file to the experiment root
     copy_opt_file(args.opt, opt['path']['experiments_root'])
@@ -116,7 +121,8 @@ def train_pipeline(root_path):
     # Otherwise the logger will not be properly initialized
     log_file = osp.join(opt['path']['log'],
                         f"train_{opt['name']}_{get_time_str()}.log")
-    logger = get_root_logger(logger_name='neosr', log_level=logging.INFO, log_file=log_file)
+    logger = get_root_logger(
+        logger_name='neosr', log_level=logging.INFO, log_file=log_file)
     logger.info(dict2str(opt))
     # initialize wandb and tb loggers
     tb_logger = init_tb_loggers(opt)
@@ -147,7 +153,7 @@ def train_pipeline(root_path):
         prefetcher = CPUPrefetcher(train_loader)
     else:
         prefetcher = CUDAPrefetcher(train_loader, opt)
-        logger.info(f'Using CUDA prefetch dataloader')
+        logger.info('Using CUDA prefetch dataloader')
         if opt['datasets']['train'].get('pin_memory') is False:
             raise ValueError('Please set pin_memory=True for CUDAPrefetcher.')
 
@@ -210,7 +216,8 @@ def train_pipeline(root_path):
 
         # end of epoch
 
-        consumed_time = str(datetime.timedelta(seconds=int(time.time() - start_time)))
+        consumed_time = str(datetime.timedelta(
+            seconds=int(time.time() - start_time)))
         logger.info(f'End of training. Time consumed: {consumed_time}')
         logger.info('Save the latest model.')
         model.save(epoch=-1, current_iter=-1)  # -1 stands for the latest

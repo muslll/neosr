@@ -1,5 +1,5 @@
 import torch
-from torch import nn as nn
+from torch import nn
 from torch.nn import functional as F
 
 from neosr.archs.vgg_arch import VGGFeatureExtractor
@@ -23,9 +23,10 @@ def mse_loss(pred, target):
 def charbonnier_loss(pred, target, eps=1e-12):
     return torch.sqrt((pred - target)**2 + eps)
 
-#@weighted_loss
-#def huber_loss(pred, target, delta=1.0):
-#    return F.huber_loss(pred, target, delta=1.0) 
+# @weighted_loss
+# def huber_loss(pred, target, delta=1.0):
+#    return F.huber_loss(pred, target, delta=1.0)
+
 
 @LOSS_REGISTRY.register()
 class L1Loss(nn.Module):
@@ -40,7 +41,8 @@ class L1Loss(nn.Module):
     def __init__(self, loss_weight=1.0, reduction='mean'):
         super(L1Loss, self).__init__()
         if reduction not in ['none', 'mean', 'sum']:
-            raise ValueError(f'Unsupported reduction mode: {reduction}. Supported ones are: {_reduction_modes}')
+            raise ValueError(
+                f'Unsupported reduction mode: {reduction}. Supported ones are: {_reduction_modes}')
 
         self.loss_weight = loss_weight
         self.reduction = reduction
@@ -68,7 +70,8 @@ class MSELoss(nn.Module):
     def __init__(self, loss_weight=1.0, reduction='mean'):
         super(MSELoss, self).__init__()
         if reduction not in ['none', 'mean', 'sum']:
-            raise ValueError(f'Unsupported reduction mode: {reduction}. Supported ones are: {_reduction_modes}')
+            raise ValueError(
+                f'Unsupported reduction mode: {reduction}. Supported ones are: {_reduction_modes}')
 
         self.loss_weight = loss_weight
         self.reduction = reduction
@@ -81,6 +84,7 @@ class MSELoss(nn.Module):
             weight (Tensor, optional): of shape (N, C, H, W). Element-wise weights. Default: None.
         """
         return self.loss_weight * mse_loss(pred, target, weight, reduction=self.reduction)
+
 
 @LOSS_REGISTRY.register()
 class CharbonnierLoss(nn.Module):
@@ -100,7 +104,8 @@ class CharbonnierLoss(nn.Module):
     def __init__(self, loss_weight=1.0, reduction='mean', eps=1e-12):
         super(CharbonnierLoss, self).__init__()
         if reduction not in ['none', 'mean', 'sum']:
-            raise ValueError(f'Unsupported reduction mode: {reduction}. Supported ones are: {_reduction_modes}')
+            raise ValueError(
+                f'Unsupported reduction mode: {reduction}. Supported ones are: {_reduction_modes}')
 
         self.loss_weight = loss_weight
         self.reduction = reduction
@@ -114,6 +119,7 @@ class CharbonnierLoss(nn.Module):
             weight (Tensor, optional): of shape (N, C, H, W). Element-wise weights. Default: None.
         """
         return self.loss_weight * charbonnier_loss(pred, target, weight, eps=self.eps, reduction=self.reduction)
+
 
 '''
 @LOSS_REGISTRY.register()
@@ -147,6 +153,7 @@ class HuberLoss(nn.Module):
         return self.loss_weight * huber_loss(pred, target, weight, delta=self.delta, reduction=self.reduction)
 '''
 
+
 @LOSS_REGISTRY.register()
 class WeightedTVLoss(L1Loss):
     """Weighted Total Variation loss.
@@ -157,8 +164,10 @@ class WeightedTVLoss(L1Loss):
 
     def __init__(self, loss_weight=1.0, reduction='mean'):
         if reduction not in ['mean', 'sum']:
-            raise ValueError(f'Unsupported reduction mode: {reduction}. Supported ones are: mean | sum')
-        super(WeightedTVLoss, self).__init__(loss_weight=loss_weight, reduction=reduction)
+            raise ValueError(
+                f'Unsupported reduction mode: {reduction}. Supported ones are: mean | sum')
+        super(WeightedTVLoss, self).__init__(
+            loss_weight=loss_weight, reduction=reduction)
 
     def forward(self, pred, weight=None):
         if weight is None:
@@ -168,8 +177,10 @@ class WeightedTVLoss(L1Loss):
             y_weight = weight[:, :, :-1, :]
             x_weight = weight[:, :, :, :-1]
 
-        y_diff = super().forward(pred[:, :, :-1, :], pred[:, :, 1:, :], weight=y_weight)
-        x_diff = super().forward(pred[:, :, :, :-1], pred[:, :, :, 1:], weight=x_weight)
+        y_diff = super().forward(
+            pred[:, :, :-1, :], pred[:, :, 1:, :], weight=y_weight)
+        x_diff = super().forward(
+            pred[:, :, :, :-1], pred[:, :, :, 1:], weight=x_weight)
 
         loss = x_diff + y_diff
 
@@ -223,12 +234,13 @@ class PerceptualLoss(nn.Module):
             self.criterion = torch.nn.L1Loss()
         elif self.criterion_type == 'l2':
             self.criterion = torch.nn.MSELoss()
-        #elif self.criterion_type == 'huber':
+        # elif self.criterion_type == 'huber':
         #    self.criterion = torch.nn.HuberLoss()
         elif self.criterion_type == 'fro':
             self.criterion = None
         else:
-            raise NotImplementedError(f'{criterion} criterion has not been supported.')
+            raise NotImplementedError(
+                f'{criterion} criterion has not been supported.')
 
     def forward(self, x, gt):
         """Forward function.
@@ -249,9 +261,11 @@ class PerceptualLoss(nn.Module):
             percep_loss = 0
             for k in x_features.keys():
                 if self.criterion_type == 'fro':
-                    percep_loss += torch.norm(x_features[k] - gt_features[k], p='fro') * self.layer_weights[k]
+                    percep_loss += torch.norm(
+                        x_features[k] - gt_features[k], p='fro') * self.layer_weights[k]
                 else:
-                    percep_loss += self.criterion(x_features[k], gt_features[k]) * self.layer_weights[k]
+                    percep_loss += self.criterion(
+                        x_features[k], gt_features[k]) * self.layer_weights[k]
             percep_loss *= self.perceptual_weight
         else:
             percep_loss = None

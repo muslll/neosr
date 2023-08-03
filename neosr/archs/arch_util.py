@@ -1,15 +1,11 @@
 import collections.abc
 import math
-import torch
-import torchvision
 import warnings
+import torch
 from itertools import repeat
-from torch import nn as nn
-from torch.nn import functional as F
-from torch.nn import init as init
+from torch import nn
+from torch.nn import init
 from torch.nn.modules.batchnorm import _BatchNorm
-
-from neosr.utils import get_root_logger
 
 
 @torch.no_grad()
@@ -77,7 +73,8 @@ class Upsample(nn.Sequential):
             m.append(nn.Conv2d(num_feat, 9 * num_feat, 3, 1, 1))
             m.append(nn.PixelShuffle(3))
         else:
-            raise ValueError(f'scale {scale} is not supported. Supported scales: 2^n and 3.')
+            raise ValueError(
+                f'scale {scale} is not supported. Supported scales: 2^n and 3.')
         super(Upsample, self).__init__(*m)
 
 

@@ -1,17 +1,14 @@
 import numpy as np
 import random
 import torch
-from collections import OrderedDict
 from torch.nn import functional as F
 
 from neosr.data.degradations import random_add_gaussian_noise_pt, random_add_poisson_noise_pt
 from neosr.data.transforms import paired_random_crop
 from neosr.models.default import default
-from neosr.utils import get_root_logger
 from neosr.utils import DiffJPEG
 from neosr.utils.img_process_util import filter2D
 from neosr.utils.registry import MODEL_REGISTRY
-from neosr.utils.registry import DATASET_REGISTRY
 
 
 @MODEL_REGISTRY.register()
@@ -20,7 +17,8 @@ class otf(default):
 
     def __init__(self, opt):
         super(otf, self).__init__(opt)
-        self.jpeger = DiffJPEG(differentiable=False).cuda()  # simulate JPEG compression artifacts
+        # simulate JPEG compression artifacts
+        self.jpeger = DiffJPEG(differentiable=False).cuda()
         self.queue_size = opt.get('queue_size', 180)
 
     @torch.no_grad()
@@ -56,8 +54,10 @@ class otf(default):
             self.gt = gt_dequeue
         else:
             # only do enqueue
-            self.queue_lr[self.queue_ptr:self.queue_ptr + b, :, :, :] = self.lq.clone()
-            self.queue_gt[self.queue_ptr:self.queue_ptr + b, :, :, :] = self.gt.clone()
+            self.queue_lr[self.queue_ptr:self.queue_ptr +
+                          b, :, :, :] = self.lq.clone()
+            self.queue_gt[self.queue_ptr:self.queue_ptr +
+                          b, :, :, :] = self.gt.clone()
             self.queue_ptr = self.queue_ptr + b
 
     @torch.no_grad()
@@ -78,7 +78,8 @@ class otf(default):
             # blur
             out = filter2D(self.gt, self.kernel1)
             # random resize
-            updown_type = random.choices(['up', 'down', 'keep'], self.opt['resize_prob'])[0]
+            updown_type = random.choices(
+                ['up', 'down', 'keep'], self.opt['resize_prob'])[0]
             if updown_type == 'up':
                 scale = np.random.uniform(1, self.opt['resize_range'][1])
             elif updown_type == 'down':
@@ -100,8 +101,10 @@ class otf(default):
                     clip=True,
                     rounds=False)
             # JPEG compression
-            jpeg_p = out.new_zeros(out.size(0)).uniform_(*self.opt['jpeg_range'])
-            out = torch.clamp(out, 0, 1)  # clamp to [0, 1], otherwise JPEGer will result in unpleasant artifacts
+            jpeg_p = out.new_zeros(out.size(0)).uniform_(
+                *self.opt['jpeg_range'])
+            # clamp to [0, 1], otherwise JPEGer will result in unpleasant artifacts
+            out = torch.clamp(out, 0, 1)
             out = self.jpeger(out, quality=jpeg_p)
 
             # ----------------------- The second degradation process ----------------------- #
@@ -109,7 +112,8 @@ class otf(default):
             if np.random.uniform() < self.opt['second_blur_prob']:
                 out = filter2D(out, self.kernel2)
             # random resize
-            updown_type = random.choices(['up', 'down', 'keep'], self.opt['resize_prob2'])[0]
+            updown_type = random.choices(
+                ['up', 'down', 'keep'], self.opt['resize_prob2'])[0]
             if updown_type == 'up':
                 scale = np.random.uniform(1, self.opt['resize_range2'][1])
             elif updown_type == 'down':
@@ -142,20 +146,24 @@ class otf(default):
             if np.random.uniform() < 0.5:
                 # resize back + the final sinc filter
                 mode = random.choice(['area', 'bilinear', 'bicubic'])
-                out = F.interpolate(out, size=(ori_h // self.opt['scale'], ori_w // self.opt['scale']), mode=mode)
+                out = F.interpolate(out, size=(
+                    ori_h // self.opt['scale'], ori_w // self.opt['scale']), mode=mode)
                 out = filter2D(out, self.sinc_kernel)
                 # JPEG compression
-                jpeg_p = out.new_zeros(out.size(0)).uniform_(*self.opt['jpeg_range2'])
+                jpeg_p = out.new_zeros(out.size(0)).uniform_(
+                    *self.opt['jpeg_range2'])
                 out = torch.clamp(out, 0, 1)
                 out = self.jpeger(out, quality=jpeg_p)
             else:
                 # JPEG compression
-                jpeg_p = out.new_zeros(out.size(0)).uniform_(*self.opt['jpeg_range2'])
+                jpeg_p = out.new_zeros(out.size(0)).uniform_(
+                    *self.opt['jpeg_range2'])
                 out = torch.clamp(out, 0, 1)
                 out = self.jpeger(out, quality=jpeg_p)
                 # resize back + the final sinc filter
                 mode = random.choice(['area', 'bilinear', 'bicubic'])
-                out = F.interpolate(out, size=(ori_h // self.opt['scale'], ori_w // self.opt['scale']), mode=mode)
+                out = F.interpolate(out, size=(
+                    ori_h // self.opt['scale'], ori_w // self.opt['scale']), mode=mode)
                 out = filter2D(out, self.sinc_kernel)
 
             # clamp and round
@@ -164,11 +172,12 @@ class otf(default):
             # random crop
             gt_size = self.opt['gt_size']
             (self.gt), self.lq = paired_random_crop([self.gt], self.lq, gt_size,
-                                                                 self.opt['scale'])
+                                                    self.opt['scale'])
 
             # training pair pool
             self._dequeue_and_enqueue()
-            self.lq = self.lq.contiguous()  # for the warning: grad and param do not obey the gradient layout contract
+            # for the warning: grad and param do not obey the gradient layout contract
+            self.lq = self.lq.contiguous()
         else:
             # for paired training or validation
             self.lq = data['lq'].to(self.device)
@@ -178,5 +187,6 @@ class otf(default):
     def nondist_validation(self, dataloader, current_iter, tb_logger, save_img):
         # do not use the synthetic process during validation
         self.is_train = False
-        super(otf, self).nondist_validation(dataloader, current_iter, tb_logger, save_img)
+        super(otf, self).nondist_validation(
+            dataloader, current_iter, tb_logger, save_img)
         self.is_train = True

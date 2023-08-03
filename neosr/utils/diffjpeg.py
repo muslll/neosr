@@ -7,19 +7,22 @@ https://dsp.stackexchange.com/questions/35339/jpeg-dct-padding/35343#35343
 import itertools
 import numpy as np
 import torch
-import torch.nn as nn
+
+from torch import nn
 from torch.nn import functional as F
 
 # ------------------------ utils ------------------------#
 y_table = np.array(
-    [[16, 11, 10, 16, 24, 40, 51, 61], [12, 12, 14, 19, 26, 58, 60, 55], [14, 13, 16, 24, 40, 57, 69, 56],
-     [14, 17, 22, 29, 51, 87, 80, 62], [18, 22, 37, 56, 68, 109, 103, 77], [24, 35, 55, 64, 81, 104, 113, 92],
+    [[16, 11, 10, 16, 24, 40, 51, 61], [12, 12, 14, 19, 26, 58, 60, 55],
+     [14, 13, 16, 24, 40, 57, 69, 56], [14, 17, 22, 29, 51, 87, 80, 62],
+     [18, 22, 37, 56, 68, 109, 103, 77], [24, 35, 55, 64, 81, 104, 113, 92],
      [49, 64, 78, 87, 103, 121, 120, 101], [72, 92, 95, 98, 112, 100, 103, 99]],
     dtype=np.float32).T
 y_table = nn.Parameter(torch.from_numpy(y_table))
 c_table = np.empty((8, 8), dtype=np.float32)
 c_table.fill(99)
-c_table[:4, :4] = np.array([[17, 18, 24, 47], [18, 21, 26, 66], [24, 26, 56, 99], [47, 66, 99, 99]]).T
+c_table[:4, :4] = np.array([[17, 18, 24, 47], [18, 21, 26, 66], [
+                           24, 26, 56, 99], [47, 66, 99, 99]]).T
 c_table = nn.Parameter(torch.from_numpy(c_table))
 
 
@@ -88,8 +91,10 @@ class ChromaSubsampling(nn.Module):
             cr(tensor): batch x height/2 x width/2
         """
         image_2 = image.permute(0, 3, 1, 2).clone()
-        cb = F.avg_pool2d(image_2[:, 1, :, :].unsqueeze(1), kernel_size=2, stride=(2, 2), count_include_pad=False)
-        cr = F.avg_pool2d(image_2[:, 2, :, :].unsqueeze(1), kernel_size=2, stride=(2, 2), count_include_pad=False)
+        cb = F.avg_pool2d(image_2[:, 1, :, :].unsqueeze(
+            1), kernel_size=2, stride=(2, 2), count_include_pad=False)
+        cr = F.avg_pool2d(image_2[:, 2, :, :].unsqueeze(
+            1), kernel_size=2, stride=(2, 2), count_include_pad=False)
         cb = cb.permute(0, 2, 3, 1)
         cr = cr.permute(0, 2, 3, 1)
         return image[:, :, :, 0], cb.squeeze(3), cr.squeeze(3)
@@ -113,7 +118,8 @@ class BlockSplitting(nn.Module):
         """
         height, _ = image.shape[1:3]
         batch_size = image.shape[0]
-        image_reshaped = image.view(batch_size, height // self.k, self.k, -1, self.k)
+        image_reshaped = image.view(
+            batch_size, height // self.k, self.k, -1, self.k)
         image_transposed = image_reshaped.permute(0, 1, 3, 2, 4)
         return image_transposed.contiguous().view(batch_size, -1, self.k, self.k)
 
@@ -126,10 +132,12 @@ class DCT8x8(nn.Module):
         super(DCT8x8, self).__init__()
         tensor = np.zeros((8, 8, 8, 8), dtype=np.float32)
         for x, y, u, v in itertools.product(range(8), repeat=4):
-            tensor[x, y, u, v] = np.cos((2 * x + 1) * u * np.pi / 16) * np.cos((2 * y + 1) * v * np.pi / 16)
+            tensor[x, y, u, v] = np.cos(
+                (2 * x + 1) * u * np.pi / 16) * np.cos((2 * y + 1) * v * np.pi / 16)
         alpha = np.array([1. / np.sqrt(2)] + [1] * 7)
         self.tensor = nn.Parameter(torch.from_numpy(tensor).float())
-        self.scale = nn.Parameter(torch.from_numpy(np.outer(alpha, alpha) * 0.25).float())
+        self.scale = nn.Parameter(torch.from_numpy(
+            np.outer(alpha, alpha) * 0.25).float())
 
     def forward(self, image):
         """
@@ -301,10 +309,12 @@ class iDCT8x8(nn.Module):
     def __init__(self):
         super(iDCT8x8, self).__init__()
         alpha = np.array([1. / np.sqrt(2)] + [1] * 7)
-        self.alpha = nn.Parameter(torch.from_numpy(np.outer(alpha, alpha)).float())
+        self.alpha = nn.Parameter(
+            torch.from_numpy(np.outer(alpha, alpha)).float())
         tensor = np.zeros((8, 8, 8, 8), dtype=np.float32)
         for x, y, u, v in itertools.product(range(8), repeat=4):
-            tensor[x, y, u, v] = np.cos((2 * u + 1) * x * np.pi / 16) * np.cos((2 * v + 1) * y * np.pi / 16)
+            tensor[x, y, u, v] = np.cos(
+                (2 * u + 1) * x * np.pi / 16) * np.cos((2 * v + 1) * y * np.pi / 16)
         self.tensor = nn.Parameter(torch.from_numpy(tensor).float())
 
     def forward(self, image):
@@ -340,7 +350,8 @@ class BlockMerging(nn.Module):
         """
         k = 8
         batch_size = patches.shape[0]
-        image_reshaped = patches.view(batch_size, height // k, width // k, k, k)
+        image_reshaped = patches.view(
+            batch_size, height // k, width // k, k, k)
         image_transposed = image_reshaped.permute(0, 1, 3, 2, 4)
         return image_transposed.contiguous().view(batch_size, height, width)
 
@@ -382,7 +393,8 @@ class YCbCr2RGBJpeg(nn.Module):
     def __init__(self):
         super(YCbCr2RGBJpeg, self).__init__()
 
-        matrix = np.array([[1., 0., 1.402], [1, -0.344136, -0.714136], [1, 1.772, 0]], dtype=np.float32).T
+        matrix = np.array(
+            [[1., 0., 1.402], [1, -0.344136, -0.714136], [1, 1.772, 0]], dtype=np.float32).T
         self.shift = nn.Parameter(torch.tensor([0, -128., -128.]))
         self.matrix = nn.Parameter(torch.from_numpy(matrix))
 
@@ -436,10 +448,12 @@ class DeCompressJpeg(nn.Module):
             comp = self.idct(comp)
             components[k] = self.merging(comp, height, width)
             #
-        image = self.chroma(components['y'], components['cb'], components['cr'])
+        image = self.chroma(
+            components['y'], components['cb'], components['cr'])
         image = self.colors(image)
 
-        image = torch.min(255 * torch.ones_like(image), torch.max(torch.zeros_like(image), image))
+        image = torch.min(255 * torch.ones_like(image),
+                          torch.max(torch.zeros_like(image), image))
         return image / 255
 
 
@@ -486,7 +500,8 @@ class DiffJPEG(nn.Module):
         x = F.pad(x, (0, w_pad, 0, h_pad), mode='constant', value=0)
 
         y, cb, cr = self.compress(x, factor=factor)
-        recovered = self.decompress(y, cb, cr, (h + h_pad), (w + w_pad), factor=factor)
+        recovered = self.decompress(
+            y, cb, cr, (h + h_pad), (w + w_pad), factor=factor)
         recovered = recovered[:, :, 0:h, 0:w]
         return recovered
 

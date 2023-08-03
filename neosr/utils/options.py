@@ -1,10 +1,10 @@
 import argparse
 import os
 import random
-import torch
-import yaml
-from collections import OrderedDict
 from os import path as osp
+from collections import OrderedDict
+import yaml
+import torch
 
 from neosr.utils import set_random_seed
 from neosr.utils.dist_util import get_dist_info, init_dist, master_only
@@ -98,8 +98,10 @@ def _postprocess_yml_value(value):
 
 def parse_options(root_path, is_train=True):
     parser = argparse.ArgumentParser()
-    parser.add_argument('-opt', type=str, required=True, help='Path to option YAML file.')
-    parser.add_argument('--launcher', choices=['none', 'pytorch', 'slurm'], default='none', help='job launcher')
+    parser.add_argument('-opt', type=str, required=True,
+                        help='Path to option YAML file.')
+    parser.add_argument(
+        '--launcher', choices=['none', 'pytorch', 'slurm'], default='none', help='job launcher')
     parser.add_argument('--auto_resume', action='store_true')
     parser.add_argument('--debug', action='store_true')
     parser.add_argument('--local_rank', type=int, default=0)
@@ -178,9 +180,11 @@ def parse_options(root_path, is_train=True):
 
         opt['path']['experiments_root'] = experiments_root
         opt['path']['models'] = osp.join(experiments_root, 'models')
-        opt['path']['training_states'] = osp.join(experiments_root, 'training_states')
+        opt['path']['training_states'] = osp.join(
+            experiments_root, 'training_states')
         opt['path']['log'] = experiments_root
-        opt['path']['visualization'] = osp.join(experiments_root, 'visualization')
+        opt['path']['visualization'] = osp.join(
+            experiments_root, 'visualization')
 
         # change some options for debug mode
         if 'debug' in opt['name']:
@@ -213,6 +217,7 @@ def copy_opt_file(opt_file, experiments_root):
 
     with open(filename, 'r+') as f:
         lines = f.readlines()
-        lines.insert(0, f'# GENERATE TIME: {time.asctime()}\n# CMD:\n# {cmd}\n\n')
+        lines.insert(
+            0, f'# GENERATE TIME: {time.asctime()}\n# CMD:\n# {cmd}\n\n')
         f.seek(0)
         f.writelines(lines)

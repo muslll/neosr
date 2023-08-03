@@ -1,8 +1,8 @@
+from os import path as osp
+
 import cv2
 import numpy as np
 import torch
-from os import path as osp
-from torch.nn import functional as F
 
 from neosr.data.transforms import mod_crop
 from neosr.utils import img2tensor, scandir
@@ -61,7 +61,8 @@ def generate_frame_indices(crt_idx, max_frame_num, num_frames, padding='reflecti
         list[int]: A list of indices.
     """
     assert num_frames % 2 == 1, 'num_frames should be an odd number.'
-    assert padding in ('replicate', 'reflection', 'reflection_circle', 'circle'), f'Wrong padding mode: {padding}.'
+    assert padding in ('replicate', 'reflection', 'reflection_circle',
+                       'circle'), f'Wrong padding mode: {padding}.'
 
     max_frame_num = max_frame_num - 1  # start from 0
     num_pad = num_frames // 2
@@ -131,7 +132,8 @@ def paired_paths_from_lmdb(folders, keys):
     """
     assert len(folders) == 2, ('The len of folders should be 2 with [input_folder, gt_folder]. '
                                f'But got {len(folders)}')
-    assert len(keys) == 2, f'The len of keys should be 2 with [input_key, gt_key]. But got {len(keys)}'
+    assert len(
+        keys) == 2, f'The len of keys should be 2 with [input_key, gt_key]. But got {len(keys)}'
     input_folder, gt_folder = folders
     input_key, gt_key = keys
 
@@ -145,11 +147,13 @@ def paired_paths_from_lmdb(folders, keys):
     with open(osp.join(gt_folder, 'meta_info.txt')) as fin:
         gt_lmdb_keys = [line.split('.')[0] for line in fin]
     if set(input_lmdb_keys) != set(gt_lmdb_keys):
-        raise ValueError(f'Keys in {input_key}_folder and {gt_key}_folder are different.')
+        raise ValueError(
+            f'Keys in {input_key}_folder and {gt_key}_folder are different.')
     else:
         paths = []
         for lmdb_key in sorted(input_lmdb_keys):
-            paths.append(dict([(f'{input_key}_path', lmdb_key), (f'{gt_key}_path', lmdb_key)]))
+            paths.append(
+                dict([(f'{input_key}_path', lmdb_key), (f'{gt_key}_path', lmdb_key)]))
         return paths
 
 
@@ -180,7 +184,8 @@ def paired_paths_from_meta_info_file(folders, keys, meta_info_file, filename_tmp
     """
     assert len(folders) == 2, ('The len of folders should be 2 with [input_folder, gt_folder]. '
                                f'But got {len(folders)}')
-    assert len(keys) == 2, f'The len of keys should be 2 with [input_key, gt_key]. But got {len(keys)}'
+    assert len(
+        keys) == 2, f'The len of keys should be 2 with [input_key, gt_key]. But got {len(keys)}'
     input_folder, gt_folder = folders
     input_key, gt_key = keys
 
@@ -193,7 +198,8 @@ def paired_paths_from_meta_info_file(folders, keys, meta_info_file, filename_tmp
         input_name = f'{filename_tmpl.format(basename)}{ext}'
         input_path = osp.join(input_folder, input_name)
         gt_path = osp.join(gt_folder, gt_name)
-        paths.append(dict([(f'{input_key}_path', input_path), (f'{gt_key}_path', gt_path)]))
+        paths.append(
+            dict([(f'{input_key}_path', input_path), (f'{gt_key}_path', gt_path)]))
     return paths
 
 
@@ -214,7 +220,8 @@ def paired_paths_from_folder(folders, keys, filename_tmpl):
     """
     assert len(folders) == 2, ('The len of folders should be 2 with [input_folder, gt_folder]. '
                                f'But got {len(folders)}')
-    assert len(keys) == 2, f'The len of keys should be 2 with [input_key, gt_key]. But got {len(keys)}'
+    assert len(
+        keys) == 2, f'The len of keys should be 2 with [input_key, gt_key]. But got {len(keys)}'
     input_folder, gt_folder = folders
     input_key, gt_key = keys
 
@@ -229,7 +236,8 @@ def paired_paths_from_folder(folders, keys, filename_tmpl):
         input_path = osp.join(input_folder, input_name)
         assert input_name in input_paths, f'{input_name} is not in {input_key}_paths.'
         gt_path = osp.join(gt_folder, gt_path)
-        paths.append(dict([(f'{input_key}_path', input_path), (f'{gt_key}_path', gt_path)]))
+        paths.append(
+            dict([(f'{input_key}_path', input_path), (f'{gt_key}_path', gt_path)]))
     return paths
 
 

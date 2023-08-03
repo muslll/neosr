@@ -1,12 +1,13 @@
 import os
 import time
-import torch
-
 from collections import OrderedDict
 from copy import deepcopy
 from os import path as osp
+
+import torch
 from tqdm import tqdm
 from torch.nn.parallel import DataParallel, DistributedDataParallel
+from torch.nn import functional as F
 
 from neosr.archs import build_network
 from neosr.losses import build_loss
@@ -636,8 +637,9 @@ class default():
         """
         logger = get_root_logger()
         net = self.get_bare_model(net)
-        load_net = torch.load(load_path, map_location=lambda storage, loc: storage)
-            
+        load_net = torch.load(
+            load_path, map_location=lambda storage, loc: storage)
+
         if param_key is not None:
             if param_key not in load_net and 'params' in load_net:
                 param_key = 'params'

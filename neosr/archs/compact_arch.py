@@ -1,4 +1,4 @@
-from torch import nn as nn
+from torch import nn
 from torch.nn import functional as F
 
 from neosr.utils.registry import ARCH_REGISTRY
@@ -54,7 +54,8 @@ class compact(nn.Module):
             self.body.append(activation)
 
         # the last conv
-        self.body.append(nn.Conv2d(num_feat, num_out_ch * upscale * upscale, 3, 1, 1))
+        self.body.append(nn.Conv2d(num_feat, num_out_ch *
+                         upscale * upscale, 3, 1, 1))
         # upsample
         self.upsampler = nn.PixelShuffle(upscale)
 

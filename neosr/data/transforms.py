@@ -1,5 +1,5 @@
-import cv2
 import random
+import cv2
 import torch
 
 
@@ -74,16 +74,20 @@ def paired_random_crop(img_gts, img_lqs, gt_patch_size, scale, gt_path=None):
 
     # crop lq patch
     if input_type == 'Tensor':
-        img_lqs = [v[:, :, top:top + lq_patch_size, left:left + lq_patch_size] for v in img_lqs]
+        img_lqs = [v[:, :, top:top + lq_patch_size,
+                     left:left + lq_patch_size] for v in img_lqs]
     else:
-        img_lqs = [v[top:top + lq_patch_size, left:left + lq_patch_size, ...] for v in img_lqs]
+        img_lqs = [v[top:top + lq_patch_size, left:left +
+                     lq_patch_size, ...] for v in img_lqs]
 
     # crop corresponding gt patch
     top_gt, left_gt = int(top * scale), int(left * scale)
     if input_type == 'Tensor':
-        img_gts = [v[:, :, top_gt:top_gt + gt_patch_size, left_gt:left_gt + gt_patch_size] for v in img_gts]
+        img_gts = [v[:, :, top_gt:top_gt + gt_patch_size,
+                     left_gt:left_gt + gt_patch_size] for v in img_gts]
     else:
-        img_gts = [v[top_gt:top_gt + gt_patch_size, left_gt:left_gt + gt_patch_size, ...] for v in img_gts]
+        img_gts = [v[top_gt:top_gt + gt_patch_size,
+                     left_gt:left_gt + gt_patch_size, ...] for v in img_gts]
     if len(img_gts) == 1:
         img_gts = img_gts[0]
     if len(img_lqs) == 1:
