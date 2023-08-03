@@ -148,12 +148,12 @@ class otf(data.Dataset):
 
         # ------------------------ Generate kernels (used in the first degradation) ------------------------ #
         kernel_size = random.choice(self.kernel_range)
-        if np.random.uniform() < self.opt['sinc_prob']:
+        if np.random.default_rng().uniform() < self.opt['sinc_prob']:
             # this sinc filter setting is for kernels ranging from [7, 21]
             if kernel_size < 13:
-                omega_c = np.random.uniform(np.pi / 3, np.pi)
+                omega_c = np.random.default_rng().uniform(np.pi / 3, np.pi)
             else:
-                omega_c = np.random.uniform(np.pi / 5, np.pi)
+                omega_c = np.random.default_rng().uniform(np.pi / 5, np.pi)
             kernel = circular_lowpass_kernel(
                 omega_c, kernel_size, pad_to=False)
         else:
@@ -172,11 +172,11 @@ class otf(data.Dataset):
 
         # ------------------------ Generate kernels (used in the second degradation) ------------------------ #
         kernel_size = random.choice(self.kernel_range)
-        if np.random.uniform() < self.opt['sinc_prob2']:
+        if np.random.default_rng().uniform() < self.opt['sinc_prob2']:
             if kernel_size < 13:
-                omega_c = np.random.uniform(np.pi / 3, np.pi)
+                omega_c = np.random.default_rng().uniform(np.pi / 3, np.pi)
             else:
-                omega_c = np.random.uniform(np.pi / 5, np.pi)
+                omega_c = np.random.default_rng().uniform(np.pi / 5, np.pi)
             kernel2 = circular_lowpass_kernel(
                 omega_c, kernel_size, pad_to=False)
         else:
@@ -195,9 +195,9 @@ class otf(data.Dataset):
         kernel2 = np.pad(kernel2, ((pad_size, pad_size), (pad_size, pad_size)))
 
         # ------------------------------------- the final sinc kernel ------------------------------------- #
-        if np.random.uniform() < self.opt['final_sinc_prob']:
+        if np.random.default_rng().uniform() < self.opt['final_sinc_prob']:
             kernel_size = random.choice(self.kernel_range)
-            omega_c = np.random.uniform(np.pi / 3, np.pi)
+            omega_c = np.random.default_rng().uniform(np.pi / 3, np.pi)
             sinc_kernel = circular_lowpass_kernel(
                 omega_c, kernel_size, pad_to=21)
             sinc_kernel = torch.FloatTensor(sinc_kernel)

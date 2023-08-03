@@ -66,12 +66,12 @@ path:
 train:
   ema_decay: 0.999
   optim_g:
-    type: adam
+    type: Adam
     lr: !!float 1e-4
     weight_decay: 0
     betas: [0.9, 0.99]
   optim_d:
-    type: adam
+    type: Adam
     lr: !!float 1e-4
     weight_decay: 0
     betas: [0.9, 0.99]

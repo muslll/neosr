@@ -110,7 +110,7 @@ class LmdbBackend(BaseStorageBackend):
                                                         f'but received {len(client_keys)} and {len(self.db_paths)}.')
 
         self._client = {}
-        for client, path in zip(client_keys, self.db_paths):
+        for client, path in zip(client_keys, self.db_paths, strict=True):
             self._client[client] = lmdb.open(
                 path, readonly=readonly, lock=lock, readahead=readahead, **kwargs)
 

@@ -11,7 +11,7 @@ from .dist_util import master_only
 def set_random_seed(seed):
     """Set random seeds."""
     random.seed(seed)
-    np.random.seed(seed)
+    np.random.default_rng(seed=seed)
     torch.manual_seed(seed)
     torch.cuda.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)

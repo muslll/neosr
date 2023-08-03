@@ -119,9 +119,11 @@ class default():
         self.setup_schedulers()
 
     def get_optimizer(self, optim_type, params, lr, **kwargs):
-        if optim_type == 'Adam' or 'adam':
+        #if optim_type == 'Adam' or 'adam':
+        if optim_type in {'Adam', 'adam'}:
             optimizer = torch.optim.Adam(params, lr, **kwargs)
-        elif optim_type == 'AdamW' or 'adamw':
+        #elif optim_type == 'AdamW' or 'adamw':
+        elif optim_type in {'AdamW', 'adamw'}:
             optimizer = torch.optim.AdamW(params, lr, **kwargs)
         else:
             raise NotImplementedError(
@@ -154,11 +156,11 @@ class default():
         train_opt = self.opt['train']
         scheduler_type = train_opt['scheduler'].pop('type')
 
-        if scheduler_type == 'MultiStepLR' or 'multisteplr':
+        if scheduler_type in {'MultiStepLR', 'multisteplr'}:
             for optimizer in self.optimizers:
                 self.schedulers.append(torch.optim.lr_scheduler.MultiStepLR(
                     optimizer, **train_opt['scheduler']))
-        elif scheduler_type == 'CosineAnnealingLR' or 'cosineannealinglr':
+        elif scheduler_type in {'CosineAnnealingLR', 'cosineannealinglr'}:
             for optimizer in self.optimizers:
                 self.schedulers.append(torch.optim.lr_scheduler.CosineAnnealingLR(
                     optimizer, **train_opt['scheduler']))
@@ -184,8 +186,8 @@ class default():
         Args:
             lr_groups_l (list): List for lr_groups, each for an optimizer.
         """
-        for optimizer, lr_groups in zip(self.optimizers, lr_groups_l):
-            for param_group, lr in zip(optimizer.param_groups, lr_groups):
+        for optimizer, lr_groups in zip(self.optimizers, lr_groups_l, strict=True):
+            for param_group, lr in zip(optimizer.param_groups, lr_groups, strict=True):
                 param_group['lr'] = lr
 
     def optimize_parameters(self, current_iter):
@@ -550,7 +552,7 @@ class default():
             param_key), 'The lengths of net and param_key should be the same.'
 
         save_dict = {}
-        for net_, param_key_ in zip(net, param_key):
+        for net_, param_key_ in zip(net, param_key, strict=True):
             net_ = self.get_bare_model(net_)
             state_dict = net_.state_dict()
             for key, param in state_dict.items():
@@ -730,7 +732,7 @@ class default():
                 torch.distributed.reduce(losses, dst=0)
                 if self.opt['rank'] == 0:
                     losses /= self.opt['world_size']
-                loss_dict = {key: loss for key, loss in zip(keys, losses)}
+                loss_dict = {key: loss for key, loss in zip(keys, losses, strict=True)}
 
             log_dict = OrderedDict()
             for name, value in loss_dict.items():
