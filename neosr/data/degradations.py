@@ -13,6 +13,8 @@ from torchvision.transforms.functional import rgb_to_grayscale
 
 
 # --------------------------- util functions --------------------------- #
+
+
 def sigma_matrix2(sig_x, sig_y, theta):
     """Calculate the rotated sigma matrix (two dimensional matrix).
 

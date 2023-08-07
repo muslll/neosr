@@ -1,5 +1,5 @@
 # general settings
-name: testing
+name: testing_compact
 model_type: default
 scale: 4
 num_gpu: 1  # set num_gpu: 0 for cpu mode
@@ -10,7 +10,6 @@ datasets:
   train:
     name: DIV2K
     type: paired
-    #type: RealESRGANPairedDataset 
     dataroot_gt: "/home/anon/nomos_uni/"
     dataroot_lq: "/home/anon/nomos_uni_downscale/"
     # (for lmdb)
@@ -22,7 +21,7 @@ datasets:
       # (for lmdb)
       # type: lmdb
 
-    gt_size: 96
+    gt_size: 312
     use_hflip: true
     use_rot: true
 
@@ -66,22 +65,24 @@ path:
 train:
   ema_decay: 0.999
   optim_g:
-    type: Adam
+    type: AdamW
     lr: !!float 1e-4
     weight_decay: 0
     betas: [0.9, 0.99]
+    fused: True
   optim_d:
-    type: Adam
+    type: AdamW
     lr: !!float 1e-4
     weight_decay: 0
     betas: [0.9, 0.99]
+    fused: True
 
   scheduler:
     type: MultiStepLR
-    milestones: [200, 300, 400]
+    milestones: [60000, 190000]
     gamma: 0.5
 
-  total_iter: 2000
+  total_iter: 3000000
   warmup_iter: -1  # no warm up
 
   # losses
@@ -111,7 +112,7 @@ train:
 
 # validation settings
 val:
-  val_freq: 500
+  val_freq: 1500
   save_img: true
 
   metrics:
@@ -126,9 +127,9 @@ val:
 # logging settings
 logger:
   print_freq: 100
-  save_checkpoint_freq: 500
+  save_checkpoint_freq: 1000
   #use_tb_logger: false
-  use_tb_logger: true
+  use_tb_logger: false
   #wandb:
   #  project: ~
   #  resume_id: ~

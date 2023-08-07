@@ -64,7 +64,7 @@ def tensor2img(tensor, rgb2bgr=True, out_type=np.uint8, min_max=(0, 1)):
         tensor = [tensor]
     result = []
     for _tensor in tensor:
-        _tensor = _tensor.squeeze(0).float().detach().cuda().clamp_(*min_max)
+        _tensor = _tensor.squeeze(0).float().detach().cpu().clamp_(*min_max)
         _tensor = (_tensor - min_max[0]) / (min_max[1] - min_max[0])
 
         n_dim = _tensor.dim()
@@ -108,7 +108,7 @@ def tensor2img_fast(tensor, rgb2bgr=True, min_max=(0, 1)):
     """
     output = tensor.squeeze(0).detach().clamp_(*min_max).permute(1, 2, 0)
     output = (output - min_max[0]) / (min_max[1] - min_max[0]) * 255
-    output = output.type(torch.uint8).cuda().numpy()
+    output = output.type(torch.uint8).cpu().numpy()
     if rgb2bgr:
         output = cv2.cvtColor(output, cv2.COLOR_RGB2BGR)
     return output

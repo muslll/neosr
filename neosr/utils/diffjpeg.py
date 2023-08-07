@@ -25,6 +25,7 @@ c_table[:4, :4] = np.array([[17, 18, 24, 47], [18, 21, 26, 66], [
                            24, 26, 56, 99], [47, 66, 99, 99]]).T
 c_table = nn.Parameter(torch.from_numpy(c_table))
 
+device = torch.device('cuda')
 
 def diff_round(x):
     """ Differentiable rounding function
@@ -57,7 +58,7 @@ class RGB2YCbCrJpeg(nn.Module):
         super(RGB2YCbCrJpeg, self).__init__()
         matrix = np.array([[0.299, 0.587, 0.114], [-0.168736, -0.331264, 0.5], [0.5, -0.418688, -0.081312]],
                           dtype=np.float32).T
-        self.shift = nn.Parameter(torch.tensor([0., 128., 128.]))
+        self.shift = nn.Parameter(torch.tensor([0., 128., 128.], device=device))
         self.matrix = nn.Parameter(torch.from_numpy(matrix))
 
     def forward(self, image):
@@ -395,7 +396,7 @@ class YCbCr2RGBJpeg(nn.Module):
 
         matrix = np.array(
             [[1., 0., 1.402], [1, -0.344136, -0.714136], [1, 1.772, 0]], dtype=np.float32).T
-        self.shift = nn.Parameter(torch.tensor([0, -128., -128.]))
+        self.shift = nn.Parameter(torch.tensor([0, -128., -128.], device=device))
         self.matrix = nn.Parameter(torch.from_numpy(matrix))
 
     def forward(self, image):

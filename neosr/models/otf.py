@@ -20,6 +20,7 @@ class otf(default):
         # simulate JPEG compression artifacts
         self.jpeger = DiffJPEG(differentiable=False).cuda()
         self.queue_size = opt.get('queue_size', 180)
+        self.device = torch.device('cuda')
 
     @torch.no_grad()
     def _dequeue_and_enqueue(self):
@@ -40,7 +41,7 @@ class otf(default):
         if self.queue_ptr == self.queue_size:  # the pool is full
             # do dequeue and enqueue
             # shuffle
-            idx = torch.randperm(self.queue_size, device=torch.device('cuda'))
+            idx = torch.randperm(self.queue_size, device=self.device)
             self.queue_lr = self.queue_lr[idx]
             self.queue_gt = self.queue_gt[idx]
             # get first b samples
@@ -66,7 +67,7 @@ class otf(default):
         """
         if self.is_train:
             # training data synthesis
-            self.gt = data['gt'].to(self.device, non_blocking=True)
+            self.gt = data['gt'].to(self.device, memory_format=torch.channels_last, non_blocking=True)
 
             self.kernel1 = data['kernel1'].to(self.device, non_blocking=True)
             self.kernel2 = data['kernel2'].to(self.device, non_blocking=True)
@@ -180,9 +181,9 @@ class otf(default):
             self.lq = self.lq.contiguous()
         else:
             # for paired training or validation
-            self.lq = data['lq'].to(self.device, non_blocking=True)
+            self.lq = data['lq'].to(self.device, memory_format=torch.channels_last, non_blocking=True)
             if 'gt' in data:
-                self.gt = data['gt'].to(self.device, non_blocking=True)
+                self.gt = data['gt'].to(self.device, memory_format=torch.channels_last, non_blocking=True)
 
     def nondist_validation(self, dataloader, current_iter, tb_logger, save_img):
         # do not use the synthetic process during validation

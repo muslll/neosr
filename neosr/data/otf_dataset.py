@@ -38,7 +38,6 @@ class otf(data.Dataset):
         self.file_client = None
         self.io_backend_opt = opt['io_backend']
         self.gt_folder = opt['dataroot_gt']
-        # self.lq_folder = opt['dataroot_lq']
 
         if opt.get('dataroot_lq', None) is not None:
             raise ValueError("'dataroot_lq' not supported by otf, please switch to paired")
@@ -92,7 +91,7 @@ class otf(data.Dataset):
         self.kernel_range = [2 * v + 1 for v in range(3, 11)]
         # TODO: kernel range is now hard-coded, should be in the configure file
         # convolving with pulse tensor brings no blurry effect
-        self.pulse_tensor = torch.zeros(21, 21).float()
+        self.pulse_tensor = torch.zeros(21, 21, device=torch.device('cuda')).float()
         self.pulse_tensor[10, 10] = 1
 
     def __getitem__(self, index):
