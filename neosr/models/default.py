@@ -195,44 +195,54 @@ class default():
 
         # optimize net_g
         self.optimizer_g.zero_grad(set_to_none=True)
-        self.output = self.net_g(self.lq)
 
-        l_g_total = 0
-        loss_dict = OrderedDict()
+        use_amp = False
 
-        if (current_iter % self.net_d_iters == 0 and current_iter > self.net_d_init_iters):
-            # pixel loss
-            if self.cri_pix:
-                l_g_pix = self.cri_pix(self.output, self.gt)
-                l_g_total += l_g_pix
-                loss_dict['l_g_pix'] = l_g_pix
-            # perceptual loss
-            if self.cri_perceptual:
-                l_g_percep, l_g_style = self.cri_perceptual(
-                    self.output, self.gt)
-                if l_g_percep is not None:
-                    l_g_total += l_g_percep
-                    loss_dict['l_percep'] = l_g_percep
-                if l_g_style is not None:
-                    l_g_total += l_g_style
-                    loss_dict['l_style'] = l_g_style
-            # ldl loss
-            if self.cri_ldl:
-                pixel_weight = get_refined_artifact_map(
-                    self.gt, self.output, self.output_ema, 7)
-                l_g_ldl = self.cri_ldl(
-                    torch.mul(pixel_weight, self.output), torch.mul(pixel_weight, self.gt))
-                l_g_total += l_g_ldl
-                loss_dict['l_g_ldl'] = l_g_ldl
-            # gan loss
-            if self.cri_gan:
-                fake_g_pred = self.net_d(self.output)
-                l_g_gan = self.cri_gan(fake_g_pred, True, is_disc=False)
-                l_g_total += l_g_gan
-                loss_dict['l_g_gan'] = l_g_gan
+        if self.opt['use_amp'] is True:
+            use_amp = True
 
-            l_g_total.backward()
-            self.optimizer_g.step()
+        scaler = torch.cuda.amp.GradScaler(enabled=use_amp)
+
+        with torch.autocast(device_type='cuda', dtype=torch.float16, enabled=use_amp):
+            self.output = self.net_g(self.lq)
+
+            l_g_total = 0
+            loss_dict = OrderedDict()
+
+            if (current_iter % self.net_d_iters == 0 and current_iter > self.net_d_init_iters):
+                # pixel loss
+                if self.cri_pix:
+                    l_g_pix = self.cri_pix(self.output, self.gt)
+                    l_g_total += l_g_pix
+                    loss_dict['l_g_pix'] = l_g_pix
+                # perceptual loss
+                if self.cri_perceptual:
+                    l_g_percep, l_g_style = self.cri_perceptual(
+                        self.output, self.gt)
+                    if l_g_percep is not None:
+                        l_g_total += l_g_percep
+                        loss_dict['l_percep'] = l_g_percep
+                    if l_g_style is not None:
+                        l_g_total += l_g_style
+                        loss_dict['l_style'] = l_g_style
+                # ldl loss
+                if self.cri_ldl:
+                    pixel_weight = get_refined_artifact_map(
+                        self.gt, self.output, self.output_ema, 7)
+                    l_g_ldl = self.cri_ldl(
+                        torch.mul(pixel_weight, self.output), torch.mul(pixel_weight, self.gt))
+                    l_g_total += l_g_ldl
+                    loss_dict['l_g_ldl'] = l_g_ldl
+                # gan loss
+                if self.cri_gan:
+                    fake_g_pred = self.net_d(self.output)
+                    l_g_gan = self.cri_gan(fake_g_pred, True, is_disc=False)
+                    l_g_total += l_g_gan
+                    loss_dict['l_g_gan'] = l_g_gan
+
+                scaler.scale(l_g_total).backward()
+                scaler.step(self.optimizer_g)
+                scaler.update()
 
         # optimize net_d
         if self.opt.get('network_d', None) is not None:
@@ -241,22 +251,24 @@ class default():
 
             self.optimizer_d.zero_grad(set_to_none=True)
 
-            # real
-            if self.cri_gan:
-                real_d_pred = self.net_d(self.gt)
-                l_d_real = self.cri_gan(real_d_pred, True, is_disc=True)
-                loss_dict['l_d_real'] = l_d_real
-                loss_dict['out_d_real'] = torch.mean(real_d_pred.detach())
-                l_d_real.backward()
-            # fake
-            if self.cri_gan:
-                fake_d_pred = self.net_d(self.output.detach().clone())
-                l_d_fake = self.cri_gan(fake_d_pred, False, is_disc=True)
-                loss_dict['l_d_fake'] = l_d_fake
-                loss_dict['out_d_fake'] = torch.mean(fake_d_pred.detach())
-                l_d_fake.backward()
+            with torch.autocast(device_type='cuda', dtype=torch.float16, enabled=use_amp):
+                # real
+                if self.cri_gan:
+                    real_d_pred = self.net_d(self.gt)
+                    l_d_real = self.cri_gan(real_d_pred, True, is_disc=True)
+                    loss_dict['l_d_real'] = l_d_real
+                    loss_dict['out_d_real'] = torch.mean(real_d_pred.detach())
+                    scaler.scale(l_d_real).backward()
+                # fake
+                if self.cri_gan:
+                    fake_d_pred = self.net_d(self.output.detach().clone())
+                    l_d_fake = self.cri_gan(fake_d_pred, False, is_disc=True)
+                    loss_dict['l_d_fake'] = l_d_fake
+                    loss_dict['out_d_fake'] = torch.mean(fake_d_pred.detach())
+                    scaler.scale(l_d_fake).backward()
 
-            self.optimizer_d.step()
+                scaler.step(self.optimizer_d)
+                scaler.update()
 
         self.log_dict = self.reduce_loss_dict(loss_dict)
 
@@ -666,9 +678,10 @@ class default():
             epoch (int): Current epoch.
             current_iter (int): Current iteration.
         """
+
         if current_iter != -1:
             state = {'epoch': epoch, 'iter': current_iter,
-                     'optimizers': [], 'schedulers': []}
+                    'optimizers': [], 'schedulers': []}
             for o in self.optimizers:
                 state['optimizers'].append(o.state_dict())
             for s in self.schedulers:
