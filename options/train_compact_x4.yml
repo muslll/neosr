@@ -24,7 +24,7 @@ datasets:
       # (for lmdb)
       # type: lmdb
 
-    gt_size: 304
+    gt_size: 128
     use_hflip: true
     use_rot: true
 

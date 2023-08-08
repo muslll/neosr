@@ -68,10 +68,15 @@ class otf(default):
         if self.is_train:
             # training data synthesis
             self.gt = data['gt'].to(device=self.device, memory_format=torch.channels_last, non_blocking=True)
+            #self.gt = data['gt'].to(self.device, memory_format=torch.channels_last, non_blocking=True)
 
             self.kernel1 = data['kernel1'].to(device=self.device, non_blocking=True)
             self.kernel2 = data['kernel2'].to(device=self.device, non_blocking=True)
             self.sinc_kernel = data['sinc_kernel'].to(device=self.device, non_blocking=True)
+
+            #self.kernel1 = data['kernel1'].to(self.device, non_blocking=True)
+            #self.kernel2 = data['kernel2'].to(self.device, non_blocking=True)
+            #self.sinc_kernel = data['sinc_kernel'].to(self.device, non_blocking=True)
 
             ori_h, ori_w = self.gt.size()[2:4]
 
@@ -182,8 +187,10 @@ class otf(default):
         else:
             # for paired training or validation
             self.lq = data['lq'].to(device=self.device, memory_format=torch.channels_last, non_blocking=True)
+            #self.lq = data['lq'].to(self.device, memory_format=torch.channels_last, non_blocking=True)
             if 'gt' in data:
                 self.gt = data['gt'].to(device=self.device, memory_format=torch.channels_last, non_blocking=True)
+                #self.gt = data['gt'].to(self.device, memory_format=torch.channels_last, non_blocking=True)
 
     def nondist_validation(self, dataloader, current_iter, tb_logger, save_img):
         # do not use the synthetic process during validation

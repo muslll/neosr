@@ -99,7 +99,10 @@ def train_pipeline(root_path):
     opt, args = parse_options(root_path, is_train=True)
     opt['root_path'] = root_path
 
-    #torch.set_default_device('cuda')
+    # NOTE: temporary workaround because otf won't work if tensors are forced to cuda
+    if 'paired' in opt['datasets']['train'].get('type'):
+        torch.set_default_device('cuda')
+
     torch.backends.cudnn.benchmark = True
     # torch.backends.cudnn.deterministic = True
 

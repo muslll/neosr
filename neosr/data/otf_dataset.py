@@ -91,7 +91,8 @@ class otf(data.Dataset):
         self.kernel_range = [2 * v + 1 for v in range(3, 11)]
         # TODO: kernel range is now hard-coded, should be in the configure file
         # convolving with pulse tensor brings no blurry effect
-        self.pulse_tensor = torch.zeros(21, 21, dtype=torch.float32, device='cuda')
+        # Note: this tensor must send to cpu, otherwise CUDAPrefetcher will fail
+        self.pulse_tensor = torch.zeros(21, 21, dtype=torch.float32)
         self.pulse_tensor[10, 10] = 1
 
     def __getitem__(self, index):
@@ -198,15 +199,14 @@ class otf(data.Dataset):
             omega_c = rng.uniform(np.pi / 3, np.pi)
             sinc_kernel = circular_lowpass_kernel(
                 omega_c, kernel_size, pad_to=21)
-            #sinc_kernel = torch.tensor(sinc_kernel, device='cuda')
             sinc_kernel = torch.FloatTensor(sinc_kernel)
         else:
             sinc_kernel = self.pulse_tensor
 
         # BGR to RGB, HWC to CHW, numpy to tensor
         img_gt = img2tensor([img_gt], bgr2rgb=True, float32=True)[0]
-        #kernel = torch.tensor(kernel, device='cuda')
-        #kernel2 = torch.tensor(kernel2, device='cuda')
+        # NOTE: using torch.tensor(device='cuda') won't work.
+        # Keeping old constructor for now.
         kernel = torch.FloatTensor(kernel)
         kernel2 = torch.FloatTensor(kernel2)
 
