@@ -3,6 +3,9 @@ name: testing_compact
 model_type: default
 scale: 4
 num_gpu: 1  # set num_gpu: 0 for cpu mode
+use_amp: false
+bfloat16: false
+compile: false
 #manual_seed: 0
 
 # dataset and data loader settings
@@ -21,7 +24,7 @@ datasets:
       # (for lmdb)
       # type: lmdb
 
-    gt_size: 312
+    gt_size: 304
     use_hflip: true
     use_rot: true
 
@@ -90,6 +93,10 @@ train:
     type: L1Loss
     loss_weight: !!float 1e-2
     reduction: mean
+  #ldl_opt:
+  #  type: L1Loss
+  #  loss_weight: !!float 1.0
+  #  reduction: mean
   perceptual_opt:
     type: PerceptualLoss
     layer_weights:

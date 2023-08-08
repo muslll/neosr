@@ -3,6 +3,9 @@ name: 052_ESRGAN_x4_f64b23_DIV2K_400k_B16G1_051pretrain_wandb
 model_type: otf 
 scale: 4
 num_gpu: 1  # set num_gpu: 0 for cpu mode
+use_amp: true
+bfloat16: false
+compile: false
 #manual_seed: 0
 
 resize_prob: [0.2, 0.7, 0.1]  # up, down, keep
@@ -24,18 +27,19 @@ gray_noise_prob2: 0.4
 jpeg_range2: [30, 95]
 
 gt_size: 64
-queue_size: 40
+queue_size: 180
 
 # dataset and data loader settings
 datasets:
   train:
+    name: DIV2K
     type: otf 
     dataroot_gt: "/home/anon/nomos_uni/"
     #dataroot_lq: "/home/anon/nomos_uni_downscale/"
     # (for lmdb)
     # dataroot_gt: datasets/DIV2K/DIV2K_train_HR_sub.lmdb
     # dataroot_lq: datasets/DIV2K/DIV2K_train_LR_bicubic_X4_sub.lmdb
-    meta_info: "/home/anon/meta_info_nomos_uni.txt"
+    #meta_info: "/home/anon/meta_info_nomos_uni.txt"
     #meta_info: "/home/anon/meta_info_nomos_uni_paired.txt"
     io_backend:
       type: disk
@@ -80,6 +84,12 @@ datasets:
 # network structures
 network_g:
   type: compact 
+  num_in_ch: 3
+  num_out_ch: 3
+  num_feat: 64
+  num_conv: 16
+  upscale: 4
+  act_type: prelu
 
 network_d:
   type: unet
@@ -89,12 +99,11 @@ network_d:
 # path
 path:
   #pretrain_network_g: experiments/051_RRDBNet_PSNR_x4_f64b23_DIV2K_1000k_B16G1_wandb/models/net_g_1000000.pth
-  strict_load_g: true
   resume_state: ~
 
 # training settings
 train:
-  ema_decay: 0.99998
+  #ema_decay: 0.99998
   optim_g:
     type: Adam
     lr: !!float 1e-4
@@ -136,8 +145,8 @@ train:
     fake_label_val: 0.0
     loss_weight: !!float 5e-3
 
-  net_d_iters: 1
-  net_d_init_iters: 0
+      #net_d_iters: 1
+      #net_d_init_iters: 0
 
 val:
   val_freq: 500
@@ -157,12 +166,12 @@ logger:
   print_freq: 100
   save_checkpoint_freq: 500
   #use_tb_logger: false
-  use_tb_logger: true
+  use_tb_logger: false
   #wandb:
   #  project: ~
   #  resume_id: ~
 
 # dist training settings
-dist_params:
-  backend: nccl
-  port: 29500
+#dist_params:
+#  backend: nccl
+#  port: 29500

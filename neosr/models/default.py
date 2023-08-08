@@ -197,17 +197,23 @@ class default():
         self.optimizer_g.zero_grad(set_to_none=True)
 
         use_amp = False
+        amp_dtype = torch.float16
 
         if self.opt['use_amp'] is True:
             use_amp = True
+        if self.opt['bfloat16'] is True:
+            amp_dtype = torch.bfloat16
 
         scaler = torch.cuda.amp.GradScaler(enabled=use_amp)
 
-        with torch.autocast(device_type='cuda', dtype=torch.float16, enabled=use_amp):
+        with torch.autocast(device_type='cuda', dtype=amp_dtype, enabled=use_amp):
             self.output = self.net_g(self.lq)
 
             l_g_total = 0
             loss_dict = OrderedDict()
+
+            if self.cri_ldl:
+                self.output_ema = self.net_g_ema(self.lq)
 
             if (current_iter % self.net_d_iters == 0 and current_iter > self.net_d_init_iters):
                 # pixel loss
@@ -251,7 +257,7 @@ class default():
 
             self.optimizer_d.zero_grad(set_to_none=True)
 
-            with torch.autocast(device_type='cuda', dtype=torch.float16, enabled=use_amp):
+            with torch.autocast(device_type='cuda', dtype=amp_dtype, enabled=use_amp):
                 # real
                 if self.cri_gan:
                     real_d_pred = self.net_d(self.gt)
@@ -492,6 +498,9 @@ class default():
             net_g_ema_params[k].data.mul_(decay).add_(
                 net_g_params[k].data, alpha=1 - decay)
 
+        # TODO: ema will fail with torch.compile
+        # Decorator @torch.compile works, but need to pass opt condition 
+
     def get_current_log(self):
         return self.log_dict
 
@@ -503,7 +512,9 @@ class default():
             net (nn.Module)
         """
         net = net.to(self.device, non_blocking=True)
-        #net = torch.compile(net, mode="reduce-overhead") 
+
+        if self.opt['compile'] is True:
+            net = torch.compile(net, mode="reduce-overhead") 
 
         if self.opt['dist']:
             find_unused_parameters = self.opt.get(

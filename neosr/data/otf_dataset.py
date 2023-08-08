@@ -91,7 +91,7 @@ class otf(data.Dataset):
         self.kernel_range = [2 * v + 1 for v in range(3, 11)]
         # TODO: kernel range is now hard-coded, should be in the configure file
         # convolving with pulse tensor brings no blurry effect
-        self.pulse_tensor = torch.zeros(21, 21, device=torch.device('cuda')).float()
+        self.pulse_tensor = torch.zeros(21, 21, dtype=torch.float32, device='cuda')
         self.pulse_tensor[10, 10] = 1
 
     def __getitem__(self, index):
@@ -124,10 +124,10 @@ class otf(data.Dataset):
         # -------------------- Do augmentation for training: flip, rotation -------------------- #
         img_gt = augment(img_gt, self.opt['use_hflip'], self.opt['use_rot'])
 
-        # crop or pad to 400
-        # TODO: 400 is hard-coded. You may change it accordingly
+        # crop or pad to 512
+        # TODO: 512 is hard-coded. You may change it accordingly
         h, w = img_gt.shape[0:2]
-        crop_pad_size = 400
+        crop_pad_size = 512
         # pad
         if h < crop_pad_size or w < crop_pad_size:
             pad_h = max(0, crop_pad_size - h)
@@ -198,12 +198,15 @@ class otf(data.Dataset):
             omega_c = rng.uniform(np.pi / 3, np.pi)
             sinc_kernel = circular_lowpass_kernel(
                 omega_c, kernel_size, pad_to=21)
+            #sinc_kernel = torch.tensor(sinc_kernel, device='cuda')
             sinc_kernel = torch.FloatTensor(sinc_kernel)
         else:
             sinc_kernel = self.pulse_tensor
 
         # BGR to RGB, HWC to CHW, numpy to tensor
         img_gt = img2tensor([img_gt], bgr2rgb=True, float32=True)[0]
+        #kernel = torch.tensor(kernel, device='cuda')
+        #kernel2 = torch.tensor(kernel2, device='cuda')
         kernel = torch.FloatTensor(kernel)
         kernel2 = torch.FloatTensor(kernel2)
 

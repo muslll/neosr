@@ -7,6 +7,7 @@ from os import path as osp
 import numpy as np
 import torch
 import torch.utils.data
+import torch.multiprocessing as mp
 
 from neosr.data.prefetch_dataloader import PrefetchDataLoader
 from neosr.utils import get_root_logger, scandir
@@ -55,6 +56,7 @@ def build_dataloader(dataset, dataset_opt, num_gpu=1, dist=False, sampler=None, 
         sampler (torch.utils.data.sampler): Data sampler. Default: None.
         seed (int | None): Seed. Default: None
     """
+    mp.set_start_method('spawn', force=True)
     phase = dataset_opt['phase']
     rank, _ = get_dist_info()
     if phase == 'train':

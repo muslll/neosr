@@ -4,6 +4,8 @@ model_type: default
 scale: 4
 num_gpu: 1  # set num_gpu: 0 for cpu mode
 use_amp: true
+bfloat16: false
+compile: false 
 #manual_seed: 0
 
 # dataset and data loader settings
@@ -41,7 +43,7 @@ datasets:
 
 # validation settings
 val:
-  val_freq: 1500
+  val_freq: 500
   save_img: true
 
   metrics:
@@ -104,6 +106,10 @@ train:
   pixel_opt:
     type: L1Loss
     loss_weight: !!float 1e-2
+    reduction: mean
+  ldl_opt:
+    type: L1Loss
+    loss_weight: !!float 1.0
     reduction: mean
   perceptual_opt:
     type: PerceptualLoss
