@@ -4,7 +4,6 @@ model_type: default
 scale: 4
 num_gpu: 1
 compile: false
-#manual_seed: 0
 
 datasets:
   test_1:  

@@ -2,7 +2,6 @@ from torch import nn
 from torch.nn import functional as F
 
 from neosr.utils.registry import ARCH_REGISTRY
-from neosr.utils.options import parse_options
 
 
 @ARCH_REGISTRY.register()
