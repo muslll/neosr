@@ -1,5 +1,5 @@
 
-name: train_swinir
+name: train_esrgan
 model_type: default
 scale: 4
 num_gpu: 1
@@ -11,9 +11,9 @@ compile: false
 datasets:
   train:
     type: paired
-    dataroot_gt: "datasets/gt/"
-    dataroot_lq: "datasets/lq/"
-    #meta_info: "datasets/meta_info.txt"
+    dataroot_gt: "datasets/nomos_uni/gt/"
+    dataroot_lq: "datasets/nomos_uni/lq/"
+    #meta_info: "datasets/nomos_uni/meta_info.txt"
     io_backend:
       type: disk
 
@@ -48,14 +48,10 @@ path:
   resume_state: ~
 
 network_g:
-  type: swinir
-#  upscale: 2
-#  img_size: 64
-#  embed_dim: 180
-#  depths: [6, 6, 6, 6, 6, 6]
-#  num_heads: [6, 6, 6, 6, 6, 6]
-#  upsampler: 'nearest+conv'
-#  window_size: 12
+  type: esrgan
+#  scale: 2
+#  num_feat: 64
+#  num_block: 23
 
 network_d:
   type: unet

@@ -17,7 +17,7 @@ class unet(nn.Module):
         skip_connection (bool): Whether to use skip connections between U-Net. Default: True.
     """
 
-    def __init__(self, num_in_ch, num_feat=64, skip_connection=True):
+    def __init__(self, num_in_ch=3, num_feat=64, skip_connection=True):
         super(unet, self).__init__()
         self.skip_connection = skip_connection
         norm = spectral_norm

@@ -756,14 +756,14 @@ class swinir(nn.Module):
     """
 
     def __init__(self,
-                 img_size=64,
+                 img_size=32,
                  patch_size=1,
                  in_chans=3,
-                 embed_dim=96,
+                 embed_dim=60,
                  depths=(6, 6, 6, 6),
                  num_heads=(6, 6, 6, 6),
-                 window_size=7,
-                 mlp_ratio=4.,
+                 window_size=8,
+                 mlp_ratio=2.,
                  qkv_bias=True,
                  qk_scale=None,
                  drop_rate=0.,
@@ -773,9 +773,9 @@ class swinir(nn.Module):
                  ape=False,
                  patch_norm=True,
                  use_checkpoint=False,
-                 upscale=2,
+                 upscale=4,
                  img_range=1.,
-                 upsampler='',
+                 upsampler='pixelshuffle',
                  resi_connection='1conv',
                  **kwargs):
         super(swinir, self).__init__()

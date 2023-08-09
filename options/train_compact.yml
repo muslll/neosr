@@ -1,5 +1,5 @@
 
-name: train_swinir
+name: train_compact
 model_type: default
 scale: 4
 num_gpu: 1
@@ -48,14 +48,10 @@ path:
   resume_state: ~
 
 network_g:
-  type: swinir
+  type: compact 
 #  upscale: 2
-#  img_size: 64
-#  embed_dim: 180
-#  depths: [6, 6, 6, 6, 6, 6]
-#  num_heads: [6, 6, 6, 6, 6, 6]
-#  upsampler: 'nearest+conv'
-#  window_size: 12
+#  num_feat: 64
+#  num_conv: 16
 
 network_d:
   type: unet

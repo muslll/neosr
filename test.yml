@@ -2,11 +2,12 @@ name: inference_test
 model_type: default
 scale: 4
 num_gpu: 1  # set num_gpu: 0 for cpu mode
+compile: false
 manual_seed: 0
 
 datasets:
   test_1:  # the 1st test dataset
-    name: Set5
+    name: val_1
     type: single
     #dataroot_lq: /home/anon/Downloads/validation/testset_div2k_val_small/lq/
     dataroot_lq: /tmp/test/
@@ -26,7 +27,7 @@ network_g:
 
 # path
 path:
-  pretrain_network_g: /tmp/net_g_30000.pth
+  pretrain_network_g: /tmp/net_g_latest.pth
   #param_key_g: params_ema
   strict_load_g: true
 

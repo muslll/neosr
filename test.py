@@ -12,6 +12,7 @@ def test_pipeline(root_path):
     # parse options, set distributed setting, set ramdom seed
     opt, _ = parse_options(root_path, is_train=False)
 
+    torch.set_default_device('cuda')
     torch.backends.cudnn.benchmark = True
     # torch.backends.cudnn.deterministic = True
 

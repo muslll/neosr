@@ -1,0 +1,29 @@
+# Results will be saved to neosr/experiments/results/
+name: test_compact
+model_type: default
+scale: 4
+num_gpu: 1
+compile: false
+#manual_seed: 0
+
+datasets:
+  test_1:  
+    name: val_1
+    type: single
+    dataroot_lq: "datasets/val/"
+    io_backend:
+      type: disk
+
+network_g:
+  type: compact
+#  upscale: 2
+#  num_feat: 64
+#  num_conv: 16
+
+path:
+  pretrain_network_g: "model.pth"
+  #param_key_g: params_ema
+
+val:
+  save_img: true
+  suffix: ~
