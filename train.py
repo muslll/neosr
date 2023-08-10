@@ -169,10 +169,10 @@ def train_pipeline(root_path):
                 current_iter += 1
                 if current_iter > total_iters:
                     break
-                # update learning rate
                 # training
                 model.feed_data(train_data)
                 model.optimize_parameters(current_iter)
+                # update learning rate
                 model.update_learning_rate(
                     current_iter, warmup_iter=opt['train'].get('warmup_iter', -1))
                 iter_timer.record()

@@ -8,7 +8,6 @@ import numpy as np
 import torch
 import torch.utils.data
 
-from neosr.data.prefetch_dataloader import PrefetchDataLoader
 from neosr.utils import get_root_logger, scandir
 from neosr.utils.dist_util import get_dist_info
 from neosr.utils.registry import DATASET_REGISTRY

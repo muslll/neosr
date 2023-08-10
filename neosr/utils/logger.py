@@ -1,6 +1,7 @@
 import datetime
 import logging
 import time
+import math
 
 from .dist_util import get_dist_info, master_only
 
@@ -87,22 +88,24 @@ class MessageLogger():
         lrs = log_vars.pop('lrs')
 
         message = (
-            f'[{self.exp_name[:5]}..][epoch:{epoch:3d}, iter:{current_iter:8,d}, lr:(')
-        for v in lrs:
-            message += f'{v:.3e},'
-        message += ')] '
+            f'[epoch:{epoch:3d}] [iter:{current_iter:8,d}]')
 
         # time and estimated time
         if 'time' in log_vars.keys():
             iter_time = log_vars.pop('time')
+            # iters per second
+            iter_time = math.sqrt(iter_time) * 10
             data_time = log_vars.pop('data_time')
 
             total_time = time.time() - self.start_time
             time_sec_avg = total_time / (current_iter - self.start_iter + 1)
             eta_sec = time_sec_avg * (self.max_iters - current_iter - 1)
             eta_str = str(datetime.timedelta(seconds=int(eta_sec)))
+            message += f' [iter time: {iter_time:.3f} it/s] [lr:('
+            for v in lrs:
+                message += f'{v:.3e},'
+            message += ')] '
             message += f'[eta: {eta_str}, '
-            message += f'time (data): {iter_time:.3f} ({data_time:.3f})] '
 
         # other items, especially losses
         for k, v in log_vars.items():
