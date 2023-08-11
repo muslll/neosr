@@ -1,7 +1,6 @@
 import datetime
 import logging
 import time
-import math
 
 from .dist_util import get_dist_info, master_only
 
@@ -94,14 +93,16 @@ class MessageLogger():
         if 'time' in log_vars.keys():
             iter_time = log_vars.pop('time')
             # iters per second
-            iter_time = math.sqrt(iter_time) * 10
+            #iter_time = math.sqrt(iter_time) * 10
+            iter_time = iter_time * 100
+            iter_time = 100 / iter_time
             data_time = log_vars.pop('data_time')
 
             total_time = time.time() - self.start_time
             time_sec_avg = total_time / (current_iter - self.start_iter + 1)
             eta_sec = time_sec_avg * (self.max_iters - current_iter - 1)
             eta_str = str(datetime.timedelta(seconds=int(eta_sec)))
-            message += f' [iter time: {iter_time:.3f} it/s] [lr:('
+            message += f' [performance: {iter_time:.3f} it/s] [lr:('
             for v in lrs:
                 message += f'{v:.3e},'
             message += ')] '

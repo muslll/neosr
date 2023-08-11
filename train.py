@@ -82,6 +82,7 @@ def load_resume_state(opt):
                 resume_state_path = osp.join(
                     state_path, f'{max(states):.0f}.state')
                 opt['path']['resume_state'] = resume_state_path
+
     else:
         if opt['path'].get('resume_state'):
             resume_state_path = opt['path']['resume_state']
@@ -122,8 +123,8 @@ def train_pipeline(root_path):
     # Otherwise the logger will not be properly initialized
     log_file = osp.join(opt['path']['log'],
                         f"train_{opt['name']}_{get_time_str()}.log")
-    logger = get_root_logger(
-        logger_name='neosr', log_level=logging.INFO, log_file=log_file)
+    logger = get_root_logger(logger_name='neosr', log_level=logging.INFO, log_file=log_file)
+    logger.info(f'\n-------- neosr --------\nPytorch Version: {torch.__version__}')
     logger.info(dict2str(opt))
     # initialize wandb and tb loggers
     tb_logger = init_tb_loggers(opt)
