@@ -133,8 +133,9 @@ def get_refined_artifact_map(img_gt, img_output, img_ema, ksize):
         overall_weight: weight for each pixel to be discriminated as an artifact pixel
         (calculated based on both local and global observations).
     """
-
-    residual_ema = torch.sum(torch.abs(img_gt - img_ema), 1, keepdim=True)
+    if img_ema is not None:
+        residual_ema = torch.sum(torch.abs(img_gt - img_ema), 1, keepdim=True)
+    residual_ema = torch.sum(img_gt, 1, keepdim=True)
     residual_sr = torch.sum(torch.abs(img_gt - img_output), 1, keepdim=True)
 
     patch_level_weight = torch.var(
