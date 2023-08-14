@@ -236,8 +236,9 @@ class default():
                     if self.ema_decay > 0:
                         pixel_weight = get_refined_artifact_map(
                             self.gt, self.output, self.output_ema, 7)
-                    pixel_weight = get_refined_artifact_map(
-                        self.gt, self.output, None, 7)
+                    else:
+                        pixel_weight = get_refined_artifact_map(
+                            self.gt, self.output, None, 7)
                     l_g_ldl = self.cri_ldl(
                         torch.mul(pixel_weight, self.output), torch.mul(pixel_weight, self.gt))
                     l_g_total += l_g_ldl
