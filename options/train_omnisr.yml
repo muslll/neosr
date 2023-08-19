@@ -1,5 +1,5 @@
 
-name: train_swinir
+name: train_omnisr
 model_type: default
 scale: 4
 num_gpu: 1

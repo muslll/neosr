@@ -1,5 +1,5 @@
 
-name: train_omnisr_otf
+name: train_srformer_otf
 model_type: otf
 scale: 4
 num_gpu: 1
@@ -86,9 +86,14 @@ path:
   resume_state: ~
 
 network_g:
-  type: omnisr
-  upsampling: 4
-  window_size: 8
+  type: srformer
+#  upscale: 4
+#  img_size: 48
+#  window_size: 24
+#  embed_dim: 180
+#  depths: [6, 6, 6, 6, 6, 6]
+#  num_heads: [6, 6, 6, 6, 6, 6]
+#  upsampler: 'pixelshuffle'
 
 network_d:
   type: unet
