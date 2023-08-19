@@ -14,8 +14,8 @@ datasets:
       type: disk
 
 network_g:
-  type: swinir_small
-  #type: swinir_medium
+  type: srformer_light
+  #type: srformer_medium
   upscale: 4
 
 path:

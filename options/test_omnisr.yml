@@ -14,9 +14,9 @@ datasets:
       type: disk
 
 network_g:
-  type: swinir_small
-  #type: swinir_medium
-  upscale: 4
+  type: omnisr
+  upsampling: 4
+  window_size: 8
 
 path:
   pretrain_network_g: "model.pth"
