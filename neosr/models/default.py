@@ -111,6 +111,12 @@ class default():
         else:
             self.cri_ldl = None
 
+        # Color Loss
+        if train_opt.get('color_opt'):
+            self.cri_color = build_loss(train_opt['color_opt']).to(self.device, memory_format=torch.channels_last, non_blocking=True)
+        else:
+            self.cri_color = None
+
         self.net_d_iters = train_opt.get('net_d_iters', 1)
         self.net_d_init_iters = train_opt.get('net_d_init_iters', 0)
 
@@ -223,8 +229,7 @@ class default():
                     loss_dict['l_g_pix'] = l_g_pix
                 # perceptual loss
                 if self.cri_perceptual:
-                    l_g_percep, l_g_style = self.cri_perceptual(
-                        self.output, self.gt)
+                    l_g_percep, l_g_style = self.cri_perceptual(self.output, self.gt)
                     if l_g_percep is not None:
                         l_g_total += l_g_percep
                         loss_dict['l_percep'] = l_g_percep
@@ -243,6 +248,11 @@ class default():
                         torch.mul(pixel_weight, self.output), torch.mul(pixel_weight, self.gt))
                     l_g_total += l_g_ldl
                     loss_dict['l_g_ldl'] = l_g_ldl
+                # color loss
+                if self.cri_color:
+                    l_g_color = self.cri_color(self.output, self.gt)
+                    l_g_total += l_g_color
+                    loss_dict['l_g_color'] = l_g_pix
                 # gan loss
                 if self.cri_gan:
                     fake_g_pred = self.net_d(self.output)

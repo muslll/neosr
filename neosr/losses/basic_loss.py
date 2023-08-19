@@ -5,6 +5,7 @@ from torch.nn import functional as F
 from neosr.archs.vgg_arch import VGGFeatureExtractor
 from neosr.utils.registry import LOSS_REGISTRY
 from .loss_util import weighted_loss
+from neosr.utils.color_util import rgb_to_xyz
 
 _reduction_modes = ['none', 'mean', 'sum']
 
@@ -226,3 +227,25 @@ class PerceptualLoss(nn.Module):
         features_t = features.transpose(1, 2)
         gram = features.bmm(features_t) / (c * h * w)
         return gram
+
+@LOSS_REGISTRY.register()
+class colorloss(torch.nn.Module):
+    def __init__(self, criterion='l1', loss_weight=1.0):
+        super(colorloss, self).__init__()
+        self.loss_weight = loss_weight 
+        self.criterion_type = criterion
+        if self.criterion_type == 'l1':
+            self.criterion = torch.nn.L1Loss()
+        elif self.criterion_type == 'l2':
+            self.criterion = torch.nn.MSELoss()
+        elif self.criterion_type == 'huber':
+            self.criterion = torch.nn.HuberLoss()
+        else:
+            raise NotImplementedError(
+                f'{criterion} criterion has not been supported.')
+
+    def forward(self, input, target):
+        input = rgb_to_xyz(input)
+        target = rgb_to_xyz(target)
+        return self.criterion(input[:, 1:], target[:, 1:]) * self.loss_weight
+

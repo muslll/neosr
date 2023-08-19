@@ -142,6 +142,10 @@ train:
     real_label_val: 1.0
     fake_label_val: 0.0
     loss_weight: !!float 5e-3
+  color_opt:
+    type: colorloss
+    loss_weight: 1.0
+    criterion: l1
   #ldl_opt:
   #  type: L1Loss
   #  loss_weight: 1.0
