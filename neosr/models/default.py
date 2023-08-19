@@ -120,6 +120,12 @@ class default():
         else:
             self.cri_color = None
 
+        # Focal Frequency Loss
+        if train_opt.get('ff_opt'):
+            self.cri_ff = build_loss(train_opt['ff_opt']).to(self.device, memory_format=torch.channels_last, non_blocking=True)
+        else:
+            self.cri_ff = None
+
         self.net_d_iters = train_opt.get('net_d_iters', 1)
         self.net_d_init_iters = train_opt.get('net_d_init_iters', 0)
 
@@ -261,7 +267,12 @@ class default():
                 if self.cri_color:
                     l_g_color = self.cri_color(self.output, self.gt)
                     l_g_total += l_g_color
-                    loss_dict['l_g_color'] = l_g_pix
+                    loss_dict['l_g_color'] = l_g_color
+                # Focal Frequency Loss
+                if self.cri_ff:
+                    l_g_ff = self.cri_ff(self.output, self.gt)
+                    l_g_total += l_g_ff
+                    loss_dict['l_g_ff'] = l_g_ff
                 # gan loss
                 if self.cri_gan:
                     fake_g_pred = self.net_d(self.output)
