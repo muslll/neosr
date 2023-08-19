@@ -100,7 +100,7 @@ train:
     gan_type: vanilla
     real_label_val: 1.0
     fake_label_val: 0.0
-    loss_weight: !!float 5e-3
+    loss_weight: 0.1
   color_opt:
     type: colorloss
     loss_weight: 1.0
