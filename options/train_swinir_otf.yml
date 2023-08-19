@@ -86,14 +86,9 @@ path:
   resume_state: ~
 
 network_g:
-  type: swinir
-#  upscale: 2
-#  img_size: 64
-#  embed_dim: 180
-#  depths: [6, 6, 6, 6, 6, 6]
-#  num_heads: [6, 6, 6, 6, 6, 6]
-#  upsampler: 'nearest+conv'
-#  window_size: 12
+  type: swinir_small
+  #type: swinir_medium
+  upscale: 4
 
 network_d:
   type: unet

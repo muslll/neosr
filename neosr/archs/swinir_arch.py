@@ -726,7 +726,6 @@ class UpsampleOneStep(nn.Sequential):
         return flops
 
 
-@ARCH_REGISTRY.register()
 class swinir(nn.Module):
     r""" SwinIR
         A PyTorch impl of : `SwinIR: Image Restoration Using Swin Transformer`, based on Swin Transformer.
@@ -999,3 +998,37 @@ if __name__ == '__main__':
     x = torch.randn((1, 3, height, width))
     x = model(x)
     print(x.shape)
+
+
+@ARCH_REGISTRY.register()
+def swinir_small(**kwargs):
+    return swinir(
+            in_chans=3,
+            img_size=64,
+            window_size=8,
+            img_range=1.0,
+            depths=[6, 6, 6, 6],
+            embed_dim=60,
+            num_heads=[6, 6, 6, 6],
+            mlp_ratio=2,
+            upsampler="pixelshuffledirect",
+            resi_connection="1conv",
+            **kwargs
+            )
+
+@ARCH_REGISTRY.register()
+def swinir_medium(**kwargs):
+    return swinir(
+            in_chans=3,
+            img_size=48,
+            window_size=8,
+            img_range=1.0,
+            depths=[6, 6, 6, 6, 6, 6],
+            embed_dim=180,
+            num_heads=[6, 6, 6, 6, 6, 6],
+            mlp_ratio=2,
+            upsampler="pixelshuffle",
+            resi_connection="1conv",
+            **kwargs
+            )
+
