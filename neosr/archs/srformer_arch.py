@@ -755,7 +755,6 @@ class UpsampleOneStep(nn.Sequential):
         return flops
 
 
-@ARCH_REGISTRY.register()
 class srformer(nn.Module):
     r""" SRFormer
         A PyTorch implement of : `SRFormer: Permuted Self-Attention for Single Image Super-Resolution`, based on Swin Transformer.
@@ -1009,4 +1008,35 @@ class srformer(nn.Module):
         return flops
 
 
+@ARCH_REGISTRY.register()
+def srformer_light(**kwargs):
+    return srformer(
+            in_chans=3,
+            img_size=64,
+            window_size=16,
+            img_range=1.,
+            depths=[6, 6, 6, 6],
+            embed_dim=60,
+            num_heads=[6, 6, 6, 6],
+            mlp_ratio=2,
+            upsampler='pixelshuffledirect',
+            resi_connection='1conv',
+            **kwargs
+            )
+
+@ARCH_REGISTRY.register()
+def srformer_medium(**kwargs):
+    return srformer(
+            in_chans=3,
+            img_size=48,
+            window_size=24,
+            img_range=1.,
+            depths=[6, 6, 6, 6, 6, 6],
+            embed_dim=180,
+            num_heads=[6, 6, 6, 6, 6, 6],
+            mlp_ratio=2,
+            upsampler='pixelshuffle',
+            resi_connection='1conv',
+            **kwargs
+            )
 

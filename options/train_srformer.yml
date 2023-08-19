@@ -48,14 +48,9 @@ path:
   resume_state: ~
 
 network_g:
-  type: srformer
-#  upscale: 4
-#  img_size: 48
-#  window_size: 24
-#  embed_dim: 180
-#  depths: [6, 6, 6, 6, 6, 6]
-#  num_heads: [6, 6, 6, 6, 6, 6]
-#  upsampler: 'pixelshuffle'
+  type: srformer_light
+  #type: srformer_medium
+  upscale: 4
 
 network_d:
   type: unet
