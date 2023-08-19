@@ -104,7 +104,7 @@ class MessageLogger():
             eta_str = str(datetime.timedelta(seconds=int(eta_sec)))
             message += f' [performance: {iter_time:.3f} it/s] [lr:('
             for v in lrs:
-                message += f'{v:.3e},'
+                message += f'{v:.3e}'
             message += ')] '
             message += f'[eta: {eta_str}, '
 
