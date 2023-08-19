@@ -5,6 +5,7 @@ from copy import deepcopy
 from os import path as osp
 
 import torch
+import pytorch_optimizer
 from tqdm import tqdm
 from torch.nn.parallel import DataParallel, DistributedDataParallel
 from torch.nn import functional as F
@@ -131,6 +132,12 @@ class default():
             optimizer = torch.optim.Adam(params, lr, **kwargs)
         elif optim_type in {'AdamW', 'adamw'}:
             optimizer = torch.optim.AdamW(params, lr, **kwargs)
+        elif optim_type in {'Adan', 'adan'}:
+            optimizer = pytorch_optimizer.Adan(params, lr, **kwargs)
+        elif optim_type in {'Lamb', 'lamb'}:
+            optimizer = pytorch_optimizer.Lamb(params, lr, **kwargs)
+        elif optim_type in {'Lion', 'lion'}:
+            optimizer = pytorch_optimizer.Lion(params, lr, **kwargs)
         else:
             raise NotImplementedError(
                 f'optimizer {optim_type} is not supported yet.')

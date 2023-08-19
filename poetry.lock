@@ -820,6 +820,21 @@ files = [
 pyasn1 = ">=0.4.6,<0.6.0"
 
 [[package]]
+name = "pytorch-optimizer"
+version = "2.11.1"
+description = "optimizer & lr scheduler & objective function collections in PyTorch"
+optional = false
+python-versions = ">=3.7.2,<4.0.0"
+files = [
+    {file = "pytorch_optimizer-2.11.1-py3-none-any.whl", hash = "sha256:2f4109b54a72cf10868f4fd0248b4e77b85692daf87417fb679c14c5e56fc77f"},
+    {file = "pytorch_optimizer-2.11.1.tar.gz", hash = "sha256:3492286d430fcfece8d45b23641cef87787602546f0c62ad4bfbc6d845e59b88"},
+]
+
+[package.dependencies]
+numpy = {version = "*", markers = "python_version >= \"3.8\""}
+torch = {version = ">=1.10", markers = "python_version >= \"3.8\""}
+
+[[package]]
 name = "pyyaml"
 version = "6.0.1"
 description = "YAML parser and emitter for Python"
@@ -1245,4 +1260,4 @@ test = ["pytest (>=6.0.0)", "setuptools (>=65)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11,<3.12"
-content-hash = "8f809d6b3e3956f24bbdfb41135181d28210fbec80ef99ca22e9b5261714e8fc"
+content-hash = "133a840e992401781250b92b5472738491b5add5efc5abaa311041eb8fd337e0"

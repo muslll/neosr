@@ -12,6 +12,7 @@ numpy = "^1.25.2"
 torch = ">=2.0.0, !=2.0.1"
 lmdb = "^1.4.1"
 einops = "^0.6.1"
+pytorch-optimizer = "^2.11.1"
 
 [tool.poetry.group.dev.dependencies]
 scipy = "^1.11.1"
