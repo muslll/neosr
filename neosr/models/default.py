@@ -33,13 +33,15 @@ class default():
         # define network net_g
         self.net_g = build_network(opt['network_g'])
         self.net_g = self.model_to_device(self.net_g)
-        self.print_network(self.net_g)
+        if self.opt.get('print_network', False) is True:
+            self.print_network(self.net_g)
 
         # define network net_d
         if self.opt.get('network_d', None) is not None:
             self.net_d = build_network(self.opt['network_d'])
             self.net_d = self.model_to_device(self.net_d)
-            self.print_network(self.net_d)
+            if self.opt.get('print_network', False) is True:
+                self.print_network(self.net_d)
 
         # load pretrained g
         load_path = self.opt['path'].get('pretrain_network_g', None)
