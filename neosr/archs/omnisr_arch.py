@@ -4,8 +4,8 @@ import math
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch import nn, einsum
-from einops import rearrange, repeat
+from torch import einsum
+from einops import rearrange
 from einops.layers.torch import Rearrange, Reduce
 from ..utils.registry import ARCH_REGISTRY
 

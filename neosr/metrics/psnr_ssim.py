@@ -1,7 +1,5 @@
 import cv2
 import numpy as np
-import torch
-import torch.nn.functional as F
 
 from neosr.metrics.metric_util import reorder_image, to_y_channel
 from neosr.utils.registry import METRIC_REGISTRY

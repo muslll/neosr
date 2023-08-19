@@ -79,7 +79,6 @@ class MessageLogger():
                 lrs (list): List for learning rates.
 
                 time (float): Iter time.
-                data_time (float): Data time for each iter.
         """
         # epoch, iter, learning rates
         epoch = log_vars.pop('epoch')
@@ -96,7 +95,6 @@ class MessageLogger():
             #iter_time = math.sqrt(iter_time) * 10
             iter_time = iter_time * 100
             iter_time = 100 / iter_time
-            data_time = log_vars.pop('data_time')
 
             total_time = time.time() - self.start_time
             time_sec_avg = total_time / (current_iter - self.start_iter + 1)
