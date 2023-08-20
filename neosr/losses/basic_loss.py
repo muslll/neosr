@@ -263,20 +263,9 @@ class focalfrequencyloss(torch.nn.Module):
         log_matrix (bool): whether to adjust the spectrum weight matrix by logarithm. Default: False
         batch_matrix (bool): whether to calculate the spectrum weight matrix using batch-based statistics. Default: False
     """
-    def __init__(self, criterion='l1', loss_weight=1.0, alpha=1.0, patch_factor=1,
-                 ave_spectrum=False, log_matrix=False, batch_matrix=False):
+    def __init__(self, loss_weight=1.0, alpha=1.0, patch_factor=1, ave_spectrum=False,
+                 log_matrix=False, batch_matrix=False):
         super(focalfrequencyloss, self).__init__()
-        self.loss_weight = loss_weight
-        self.criterion_type = criterion
-        if self.criterion_type == 'l1':
-            self.criterion = torch.nn.L1Loss()
-        elif self.criterion_type == 'l2':
-            self.criterion = torch.nn.MSELoss()
-        elif self.criterion_type == 'huber':
-            self.criterion = torch.nn.HuberLoss()
-        else:
-            raise NotImplementedError(
-                f'{criterion} criterion has not been supported.')
         self.loss_weight = loss_weight
         self.alpha = alpha
         self.patch_factor = patch_factor
