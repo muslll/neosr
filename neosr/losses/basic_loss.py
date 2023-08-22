@@ -230,7 +230,7 @@ class PerceptualLoss(nn.Module):
         return gram
 
 @LOSS_REGISTRY.register()
-class colorloss(torch.nn.Module):
+class colorloss(nn.Module):
     def __init__(self, criterion='l1', loss_weight=1.0):
         super(colorloss, self).__init__()
         self.loss_weight = loss_weight 
@@ -251,7 +251,7 @@ class colorloss(torch.nn.Module):
         return self.criterion(input[:, 1:], target[:, 1:]) * self.loss_weight
 
 @LOSS_REGISTRY.register()
-class focalfrequencyloss(torch.nn.Module):
+class focalfrequencyloss(nn.Module):
     """Focal Frequency Loss.
        From: https://github.com/EndlessSora/focal-frequency-loss
 

@@ -26,6 +26,8 @@ class GANLoss(nn.Module):
 
         if self.gan_type == 'vanilla':
             self.loss = nn.BCEWithLogitsLoss()
+        elif self.gan_type == 'lsgan':
+            self.loss = nn.MSELoss()
         else:
             raise NotImplementedError(
                 f'GAN type {self.gan_type} is not implemented.')

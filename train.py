@@ -4,8 +4,10 @@ import logging
 import math
 import time
 from os import path as osp
+from os import environ
 
 import torch
+import numpy as np
 
 from neosr.data import build_dataloader, build_dataset
 from neosr.data.data_sampler import EnlargedSampler
@@ -105,7 +107,15 @@ def train_pipeline(root_path):
         torch.set_default_device('cuda')
 
     torch.backends.cudnn.benchmark = True
-    # torch.backends.cudnn.deterministic = True
+
+    # Determinism
+    if opt["deterministic"] is True:
+        environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
+        torch.manual_seed(opt["manual_seed"])
+        np.random.seed(opt["manual_seed"])
+        torch.backends.cudnn.deterministic = True
+        torch.use_deterministic_algorithms(True, warn_only=True)
+        torch.backends.cudnn.benchmark = False
 
     # load resume states if necessary
     resume_state = load_resume_state(opt)
@@ -141,6 +151,7 @@ def train_pipeline(root_path):
             f"Resuming training from epoch: {resume_state['epoch']}, iter: {resume_state['iter']}.")
         start_epoch = resume_state['epoch']
         current_iter = resume_state['iter']
+        torch.cuda.empty_cache()
     else:
         start_epoch = 0
         current_iter = 0

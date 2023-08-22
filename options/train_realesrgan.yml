@@ -89,7 +89,6 @@ train:
   perceptual_opt:
     type: PerceptualLoss
     layer_weights:
-      # before relu
       "conv1_2": 0.1
       "conv2_2": 0.1
       "conv3_4": 1

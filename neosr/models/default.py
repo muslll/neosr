@@ -713,6 +713,7 @@ class default():
                 load_net.pop(k)
         self._print_different_keys_loading(net, load_net, strict)
         net.load_state_dict(load_net, strict=strict)
+        torch.cuda.empty_cache()
 
     @master_only
     def save_training_state(self, epoch, current_iter):
@@ -770,6 +771,7 @@ class default():
             self.optimizers[i].load_state_dict(o)
         for i, s in enumerate(resume_schedulers):
             self.schedulers[i].load_state_dict(s)
+        torch.cuda.empty_cache()
 
     def reduce_loss_dict(self, loss_dict):
         """reduce loss dict.

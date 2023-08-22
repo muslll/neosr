@@ -87,7 +87,11 @@ train:
   perceptual_opt:
     type: PerceptualLoss
     layer_weights:
-      'conv5_4': 1  # before relu
+      "conv1_2": 0.1
+      "conv2_2": 0.1
+      "conv3_4": 1
+      "conv4_4": 1
+      'conv5_4': 1
     vgg_type: vgg19
     use_input_norm: true
     range_norm: false

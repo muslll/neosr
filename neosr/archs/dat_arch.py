@@ -205,14 +205,14 @@ class Spatial_Attention(nn.Module):
             # generate mother-set
             position_bias_h = torch.arange(1 - self.H_sp, self.H_sp)
             position_bias_w = torch.arange(1 - self.W_sp, self.W_sp)
-            biases = torch.stack(torch.meshgrid([position_bias_h, position_bias_w]))
+            biases = torch.stack(torch.meshgrid([position_bias_h, position_bias_w], indexing="ij"))
             biases = biases.flatten(1).transpose(0, 1).contiguous().float()
             self.register_buffer('rpe_biases', biases)
 
             # get pair-wise relative position index for each token inside the window
             coords_h = torch.arange(self.H_sp)
             coords_w = torch.arange(self.W_sp)
-            coords = torch.stack(torch.meshgrid([coords_h, coords_w]))
+            coords = torch.stack(torch.meshgrid([coords_h, coords_w], indexing="ij"))
             coords_flatten = torch.flatten(coords, 1)
             relative_coords = coords_flatten[:, :, None] - coords_flatten[:, None, :]
             relative_coords = relative_coords.permute(1, 2, 0).contiguous()
