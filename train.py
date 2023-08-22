@@ -3,6 +3,7 @@ import datetime
 import logging
 import math
 import time
+import random
 from os import path as osp
 from os import environ
 
@@ -113,6 +114,7 @@ def train_pipeline(root_path):
         environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
         torch.manual_seed(opt["manual_seed"])
         np.random.seed(opt["manual_seed"])
+        random.seed(opt["manual_seed"])
         torch.backends.cudnn.deterministic = True
         torch.use_deterministic_algorithms(True, warn_only=True)
         torch.backends.cudnn.benchmark = False
