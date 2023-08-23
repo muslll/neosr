@@ -3,7 +3,6 @@
 import math
 import torch
 import torch.nn as nn
-import torch.utils.checkpoint as checkpoint
 
 from neosr.archs.arch_util import to_2tuple, DropPath
 from torch.nn.init import trunc_normal_
@@ -430,7 +429,6 @@ class AttenBlocks(nn.Module):
         drop_path (float | tuple[float], optional): Stochastic depth rate. Default: 0.0
         norm_layer (nn.Module, optional): Normalization layer. Default: nn.LayerNorm
         downsample (nn.Module | None, optional): Downsample layer at the end of the layer. Default: None
-        use_checkpoint (bool): Whether to use checkpointing to save memory. Default: False.
     """
 
     def __init__(self,
@@ -450,14 +448,12 @@ class AttenBlocks(nn.Module):
                  attn_drop=0.,
                  drop_path=0.,
                  norm_layer=nn.LayerNorm,
-                 downsample=None,
-                 use_checkpoint=False):
+                 downsample=None):
 
         super().__init__()
         self.dim = dim
         self.input_resolution = input_resolution
         self.depth = depth
-        self.use_checkpoint = use_checkpoint
 
         # build blocks
         self.blocks = nn.ModuleList([
@@ -526,7 +522,6 @@ class RHAG(nn.Module):
         drop_path (float | tuple[float], optional): Stochastic depth rate. Default: 0.0
         norm_layer (nn.Module, optional): Normalization layer. Default: nn.LayerNorm
         downsample (nn.Module | None, optional): Downsample layer at the end of the layer. Default: None
-        use_checkpoint (bool): Whether to use checkpointing to save memory. Default: False.
         img_size: Input image size.
         patch_size: Patch size.
         resi_connection: The convolutional block before residual connection.
@@ -550,7 +545,6 @@ class RHAG(nn.Module):
                  drop_path=0.,
                  norm_layer=nn.LayerNorm,
                  downsample=None,
-                 use_checkpoint=False,
                  img_size=224,
                  patch_size=4,
                  resi_connection='1conv'):
@@ -576,8 +570,7 @@ class RHAG(nn.Module):
             attn_drop=attn_drop,
             drop_path=drop_path,
             norm_layer=norm_layer,
-            downsample=downsample,
-            use_checkpoint=use_checkpoint)
+            downsample=downsample)
 
         if resi_connection == '1conv':
             self.conv = nn.Conv2d(dim, dim, 3, 1, 1)
@@ -702,7 +695,6 @@ class hat(nn.Module):
         norm_layer (nn.Module): Normalization layer. Default: nn.LayerNorm.
         ape (bool): If True, add absolute position embedding to the patch embedding. Default: False
         patch_norm (bool): If True, add normalization after patch embedding. Default: True
-        use_checkpoint (bool): Whether to use checkpointing to save memory. Default: False
         upscale: Upscale factor. 2/3/4/8 for image SR, 1 for denoising and compress artifact reduction
         img_range: Image range. 1. or 255.
         upsampler: The reconstruction reconstruction module. 'pixelshuffle'/'pixelshuffledirect'/'nearest+conv'/None
@@ -730,7 +722,6 @@ class hat(nn.Module):
                  norm_layer=nn.LayerNorm,
                  ape=False,
                  patch_norm=True,
-                 use_checkpoint=False,
                  upscale=2,
                  img_range=1.,
                  upsampler='',
@@ -821,7 +812,6 @@ class hat(nn.Module):
                 drop_path=dpr[sum(depths[:i_layer]):sum(depths[:i_layer + 1])],  # no impact on SR results
                 norm_layer=norm_layer,
                 downsample=None,
-                use_checkpoint=use_checkpoint,
                 img_size=img_size,
                 patch_size=patch_size,
                 resi_connection=resi_connection)

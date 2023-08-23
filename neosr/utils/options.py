@@ -5,7 +5,6 @@ from os import path as osp
 from collections import OrderedDict
 import yaml
 import torch
-import numpy as np
 
 from neosr.utils import set_random_seed
 from neosr.utils.dist_util import get_dist_info, init_dist, master_only
