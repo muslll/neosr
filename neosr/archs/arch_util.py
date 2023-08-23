@@ -134,30 +134,35 @@ def _no_grad_trunc_normal_(tensor, mean, std, a, b):
         return tensor
 
 
-def trunc_normal_(tensor, mean=0., std=1., a=-2., b=2.):
-    r"""Fills the input Tensor with values drawn from a truncated
-    normal distribution.
+def drop_path(x, drop_prob: float = 0., training: bool = False):
+    """Drop paths (Stochastic Depth) per sample (when applied in main path of residual blocks).
 
-    From: https://github.com/rwightman/pytorch-image-models/blob/master/timm/models/layers/weight_init.py
-
-    The values are effectively drawn from the
-    normal distribution :math:`\mathcal{N}(\text{mean}, \text{std}^2)`
-    with values outside :math:`[a, b]` redrawn until they are within
-    the bounds. The method used for generating the random values works
-    best when :math:`a \leq \text{mean} \leq b`.
-
-    Args:
-        tensor: an n-dimensional `torch.Tensor`
-        mean: the mean of the normal distribution
-        std: the standard deviation of the normal distribution
-        a: the minimum cutoff value
-        b: the maximum cutoff value
-
-    Examples:
-        >>> w = torch.empty(3, 5)
-        >>> nn.init.trunc_normal_(w)
+    From: https://github.com/rwightman/pytorch-image-models/blob/master/timm/models/layers/drop.py
     """
-    return _no_grad_trunc_normal_(tensor, mean, std, a, b)
+    if drop_prob == 0. or not training:
+        return x
+    keep_prob = 1 - drop_prob
+    # work with diff dim tensors, not just 2D ConvNets
+    shape = (x.shape[0], ) + (1, ) * (x.ndim - 1)
+    random_tensor = keep_prob + \
+        torch.rand(shape, dtype=x.dtype, device=x.device)
+    random_tensor.floor_()  # binarize
+    output = x.div(keep_prob) * random_tensor
+    return output
+
+
+class DropPath(nn.Module):
+    """Drop paths (Stochastic Depth) per sample  (when applied in main path of residual blocks).
+
+    From: https://github.com/rwightman/pytorch-image-models/blob/master/timm/models/layers/drop.py
+    """
+
+    def __init__(self, drop_prob=None):
+        super(DropPath, self).__init__()
+        self.drop_prob = drop_prob
+
+    def forward(self, x):
+        return drop_path(x, self.drop_prob, self.training)
 
 
 # From PyTorch
