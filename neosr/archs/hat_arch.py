@@ -5,7 +5,7 @@ import torch
 import torch.nn as nn
 import torch.utils.checkpoint as checkpoint
 
-from basicsr.archs.arch_util import to_2tuple, DropPath
+from neosr.archs.arch_util import to_2tuple, DropPath
 from torch.nn.init import trunc_normal_
 from neosr.utils.registry import ARCH_REGISTRY
 
@@ -857,7 +857,7 @@ class hat(nn.Module):
         # calculate relative position index for SA
         coords_h = torch.arange(self.window_size)
         coords_w = torch.arange(self.window_size)
-        coords = torch.stack(torch.meshgrid([coords_h, coords_w]))  # 2, Wh, Ww
+        coords = torch.stack(torch.meshgrid([coords_h, coords_w], indexing="ij"))  # 2, Wh, Ww
         coords_flatten = torch.flatten(coords, 1)  # 2, Wh*Ww
         relative_coords = coords_flatten[:, :, None] - coords_flatten[:, None, :]  # 2, Wh*Ww, Wh*Ww
         relative_coords = relative_coords.permute(1, 2, 0).contiguous()  # Wh*Ww, Wh*Ww, 2
@@ -874,12 +874,12 @@ class hat(nn.Module):
 
         coords_h = torch.arange(window_size_ori)
         coords_w = torch.arange(window_size_ori)
-        coords_ori = torch.stack(torch.meshgrid([coords_h, coords_w]))  # 2, ws, ws
+        coords_ori = torch.stack(torch.meshgrid([coords_h, coords_w], indexing="ij"))  # 2, ws, ws
         coords_ori_flatten = torch.flatten(coords_ori, 1)  # 2, ws*ws
 
         coords_h = torch.arange(window_size_ext)
         coords_w = torch.arange(window_size_ext)
-        coords_ext = torch.stack(torch.meshgrid([coords_h, coords_w]))  # 2, wse, wse
+        coords_ext = torch.stack(torch.meshgrid([coords_h, coords_w], indexing="ij"))  # 2, wse, wse
         coords_ext_flatten = torch.flatten(coords_ext, 1)  # 2, wse*wse
 
         relative_coords = coords_ext_flatten[:, None, :] - coords_ori_flatten[:, :, None]   # 2, ws*ws, wse*wse
@@ -973,7 +973,7 @@ def hat_s(**kwargs):
             num_heads=[6,6,6,6,6,6],
             mlp_ratio=2,
             upsampler='pixelshuffle',
-            resi_connection: '1conv',
+            resi_connection='1conv',
             **kwargs
             )
 
@@ -993,7 +993,7 @@ def hat_m(**kwargs):
             num_heads=[6,6,6,6,6,6],
             mlp_ratio=2,
             upsampler='pixelshuffle',
-            resi_connection: '1conv',
+            resi_connection='1conv',
             **kwargs
             )
 
@@ -1013,7 +1013,7 @@ def hat_l(**kwargs):
             num_heads=[6,6,6,6,6,6,6,6,6,6,6,6],
             mlp_ratio=2,
             upsampler='pixelshuffle',
-            resi_connection: '1conv',
+            resi_connection='1conv',
             **kwargs
             )
 
