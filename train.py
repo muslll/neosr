@@ -109,16 +109,6 @@ def train_pipeline(root_path):
 
     torch.backends.cudnn.benchmark = True
 
-    # Determinism
-    if opt["deterministic"] is True:
-        environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
-        torch.manual_seed(opt["manual_seed"])
-        np.random.seed(opt["manual_seed"])
-        random.seed(opt["manual_seed"])
-        torch.backends.cudnn.deterministic = True
-        torch.use_deterministic_algorithms(True, warn_only=True)
-        torch.backends.cudnn.benchmark = False
-
     # load resume states if necessary
     resume_state = load_resume_state(opt)
     # mkdir for experiments and logger

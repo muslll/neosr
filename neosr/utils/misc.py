@@ -12,10 +12,8 @@ def set_random_seed(seed):
     """Set random seeds."""
     random.seed(seed)
     np.random.default_rng(seed=seed)
+    np.random.seed(seed)
     torch.manual_seed(seed)
-    torch.cuda.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)
-
 
 def get_time_str():
     return time.strftime('%Y%m%d_%H%M%S', time.localtime())

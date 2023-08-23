@@ -5,6 +5,7 @@ from os import path as osp
 from collections import OrderedDict
 import yaml
 import torch
+import numpy as np
 
 from neosr.utils import set_random_seed
 from neosr.utils.dist_util import get_dist_info, init_dist, master_only
@@ -127,8 +128,15 @@ def parse_options(root_path, is_train=True):
     # random seed
     seed = opt.get('manual_seed')
     if seed is None:
-        seed = random.randint(1, 10000)
+        seed = random.randint(1024, 10000)
         opt['manual_seed'] = seed
+    else:
+        # Determinism
+        os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
+        os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":16:8"
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
+        torch.use_deterministic_algorithms(True, warn_only=True)
     set_random_seed(seed + opt['rank'])
 
     # force to update yml options
