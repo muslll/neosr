@@ -47,13 +47,13 @@ def create_train_val_dataloader(opt, logger):
                 seed=opt['manual_seed'])
 
             num_iter_per_epoch = math.ceil(
-                len(train_set) * dataset_enlarge_ratio / (dataset_opt['batch_size_per_gpu'] * opt['world_size']))
+                len(train_set) * dataset_enlarge_ratio / (dataset_opt['batch_size'] * opt['world_size']))
             total_iters = int(opt['train']['total_iter'])
             total_epochs = math.ceil(total_iters / (num_iter_per_epoch))
             logger.info('Training statistics:'
                         f'\n\tNumber of train images: {len(train_set)}'
                         f'\n\tDataset enlarge ratio: {dataset_enlarge_ratio}'
-                        f'\n\tBatch size per gpu: {dataset_opt["batch_size_per_gpu"]}'
+                        f'\n\tBatch size per gpu: {dataset_opt["batch_size"]}'
                         f'\n\tWorld size (gpu number): {opt["world_size"]}'
                         f'\n\tRequire iter number per epoch: {num_iter_per_epoch}'
                         f'\n\tTotal epochs: {total_epochs}; iters: {total_iters}.')

@@ -18,7 +18,7 @@ datasets:
       type: disk
 
     gt_size: 128
-    batch_size_per_gpu: 6
+    batch_size: 6
     use_hflip: true
     use_rot: true
     num_worker_per_gpu: 4
@@ -113,6 +113,9 @@ train:
   #  type: L1Loss
   #  loss_weight: 1.0
   #  reduction: mean
+  #ff_opt:
+  #  type: focalfrequencyloss
+  #  loss_weight: 1.0
 
   #net_d_iters: 1
   #net_d_init_iters: 0

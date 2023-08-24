@@ -46,7 +46,7 @@ def build_dataloader(dataset, dataset_opt, num_gpu=1, dist=False, sampler=None, 
         dataset_opt (dict): Dataset options. It contains the following keys:
             phase (str): 'train' or 'val'.
             num_worker_per_gpu (int): Number of workers for each GPU.
-            batch_size_per_gpu (int): Training batch size for each GPU.
+            batch_size (int): Training batch size for each GPU.
         num_gpu (int): Number of GPUs. Used only in the train phase.
             Default: 1.
         dist (bool): Whether in distributed training. Used only in the train
@@ -58,11 +58,11 @@ def build_dataloader(dataset, dataset_opt, num_gpu=1, dist=False, sampler=None, 
     rank, _ = get_dist_info()
     if phase == 'train':
         if dist:  # distributed training
-            batch_size = dataset_opt['batch_size_per_gpu']
+            batch_size = dataset_opt['batch_size']
             num_workers = dataset_opt['num_worker_per_gpu']
         else:  # non-distributed training
             multiplier = 1 if num_gpu == 0 else num_gpu
-            batch_size = dataset_opt['batch_size_per_gpu'] * multiplier
+            batch_size = dataset_opt['batch_size'] * multiplier
             num_workers = dataset_opt['num_worker_per_gpu'] * multiplier
         dataloader_args = dict(
             dataset=dataset,
