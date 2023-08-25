@@ -10,7 +10,7 @@ In this document each configuration option for `neosr` will be explained. [Templ
 
 - Make sure to use slashes in the path that match your system. For Windows, backslashes should be used (`\`). For Unix-like systems (OSX and Linux), you should use normal slashes (`/`).
 
-- Use quotation marks for all paths (especially if they contain spaces or special characters in it).
+- Use single quotation marks (`'`)for all paths (especially if they contain spaces or special characters in it).
 
 - Pay attention to indentation. The configuration is done in yaml (for now), so if the indentation is wrong, you may find problems.
 
@@ -59,13 +59,14 @@ num_gpu: 1
 ```
 
 ---
-#### `use_amp`, `bfloat16`
+#### `use_amp` and `bfloat16`
 
 The `use_amp` option enables [Automatic Mixed Precision](https://pytorch.org/blog/accelerating-training-on-nvidia-gpus-with-pytorch-automatic-mixed-precision/) to speed up training. If you are using a GPU with tensor cores (Nvidia Turing or higher), using AMP is recommended. The `bfloat16` option sets the dtype to [BFloat16](https://en.wikipedia.org/wiki/Bfloat16_floating-point_format) instead of the default float16. Using this is recommended if your GPU has support (Nvidia Ampere or higher), as it won't cause precision problems.
 
 ```
 # Turing or above
 use_amp: true
+
 # Ampere or above
 bfloat16: true
 ```
@@ -120,13 +121,13 @@ The `dataroot_gt` and `dataroot_lq` options are the folder paths to your dataset
 The "gt" (ground-truth) are the ideal images, the ones you want your model to transform your images to. The "lq" (low quality) images are the degraded ones.
 For a folder with images, just include the path:
 ```
-dataroot_gt: "C:\My_Images_Folder\gt\"
-dataroot_lq: "C:\My_Images_Folder\lq\"
+dataroot_gt: 'C:\My_Images_Folder\gt\'
+dataroot_lq: 'C:\My_Images_Folder\lq\'
 ```
 If you're using LMDB, both paths should end with the `.lmdb` suffix:
 ```
-dataroot_gt: "/home/user/dataset_gt.lmdb"
-dataroot_lq: "/home/user/dataset_lq.lmdb"
+dataroot_gt: '/home/user/dataset_gt.lmdb'
+dataroot_lq: '/home/user/dataset_lq.lmdb'
 ```
 
 ---
@@ -139,7 +140,7 @@ To generate the meta_info, you can use the script [generate_meta_info.py](datase
 **Note**: If you use `create_lmdb.py` to convert all your images into an LMDB database, the `meta_info` option is not necessary, as the script will automatically generate and link it.
 
 ```
-meta_info: "C:\meta_info.txt"
+meta_info: 'C:\meta_info.txt'
 ```
 
 ---
@@ -236,7 +237,7 @@ datasets:
         val:
             name: any_name
             type: single
-            dataroot_lq: "/folder/path"
+            dataroot_lq: '/folder/path'
             io_backend:
                 type: disk
 
@@ -254,8 +255,8 @@ datasets:
         val:
             name: any_name
             type: paired
-            dataroot_gt: "/folder/path/gt/"
-            dataroot_lq: "/folder/path/lq/"
+            dataroot_gt: '/folder/path/gt/'
+            dataroot_lq: '/folder/path/lq/'
             io_backend:
                 type: disk
 
@@ -279,9 +280,9 @@ The `path` options describe the path for pretrained models or resume state.
 
 ```
 # Generator Pretrain
-pretrain_network_g: "/path/to/pretrain.pth"
+pretrain_network_g: '/path/to/pretrain.pth'
 # Discriminator Pretrain
-pretrain_network_d: "/path/to/pretrain.pth"
+pretrain_network_d: '/path/to/pretrain.pth'
 ```
 If you have problems loading a pretrain and you have made sure that both your `scale` and `network_g`/`network_d` parameters are the same as the pretrained model, you can try using one of the following options:
 
@@ -293,7 +294,7 @@ strict: false
 If you have a `.state` file that you want to load, comment out the `pretrain_network_*` option and use `resume_state` instead:
 
 ```
-resume_state: "/path/to/pretrain.state"
+resume_state: '/path/to/pretrain.state'
 ```
 
 ---

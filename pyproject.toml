@@ -1,24 +1,21 @@
 [tool.poetry]
 name = "neosr"
 version = "0.1.0"
-description = ""
-authors = ["musl <132400428+muslll@users.noreply.github.com>"]
-readme = "README.md"
+description = "neosr, a framework for training real-world single-image super-resolution networks."
+authors = ["musl"]
+license = "Apache 2.0"
+readme = "readme.md"
 
 [tool.poetry.dependencies]
 python = "^3.11,<3.12"
 opencv-python = "^4.8.0.74"
 numpy = "^1.25.2"
-torch = ">=2.0.0, !=2.0.1"
 lmdb = "^1.4.1"
 einops = "^0.6.1"
 pytorch-optimizer = "^2.11.1"
-
-[tool.poetry.group.dev.dependencies]
 scipy = "^1.11.1"
 PyYAML = "^6.0.1"
 tb-nightly = "^2.14.0a20230802"
-torchvision = ">=0.15.0, <0.15.2"
 tqdm = "^4.65.0"
 
 [tool.ruff]

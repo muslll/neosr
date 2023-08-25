@@ -222,6 +222,8 @@ class default():
 
         if self.opt['use_amp'] is True:
             use_amp = True
+            logger = get_root_logger()
+            logger.info('AMP enabled.')
         if self.opt['bfloat16'] is True:
             amp_dtype = torch.bfloat16
 

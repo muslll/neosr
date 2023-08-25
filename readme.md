@@ -4,22 +4,28 @@
 
 ## installation
 
-Requires Python =>3.11 and CUDA =>11.7
+Requires Python 3.11 and CUDA =>11.7
+
 ```
 git clone https://github.com/muslll/neosr
 cd neosr
 ```
-Install [**`poetry`**](https://python-poetry.org/) (*recommended*), then run inside the repository:
-```
-poetry install
-```
-Note: you must to use `poetry shell` to enter the env.
 
+Install via `pip`:
 
-Alternatively, you can install via `pip` (**not recommended**):
 ```
 pip install -e .
 ```
+Pytorch and TorchVision are not declared as dependencies. This is due to platform inconsistencies in their releases.
+If you're using `pip`, please follow the [pytorch installation instructions](https://pytorch.org/get-started/locally/).
+
+Install via [**`poetry`**](https://python-poetry.org/docs/#installation) (*recommended on linux*):
+
+```
+poetry install
+poetry add torch@!=2.0.1 torchvision@!=0.15.2
+```
+Note: You must to use `poetry shell` to enter the env after installation. Versions 2.0.1 and 0.15.2 of `torch` and `torchvision` were released without cuda support, once this is fixed you can use `poetry add torch@latest torchvision@latest` instead.
 
 ## quick start
 

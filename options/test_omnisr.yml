@@ -9,7 +9,7 @@ datasets:
   test_1:  
     name: val_1
     type: single
-    dataroot_lq: "datasets/val/"
+    dataroot_lq: 'datasets/val/'
     io_backend:
       type: disk
 
@@ -19,7 +19,7 @@ network_g:
   window_size: 8
 
 path:
-  pretrain_network_g: "model.pth"
+  pretrain_network_g: 'model.pth'
   #param_key_g: params_ema
 
 val:

@@ -14,8 +14,8 @@ queue_size: 180
 datasets:
   train:
     type: otf
-    dataroot_gt: "datasets/gt/"
-    #meta_info: "datasets/meta_info.txt"
+    dataroot_gt: 'datasets/gt/'
+    #meta_info: 'datasets/meta_info.txt'
     io_backend:
       type: disk
 
@@ -28,8 +28,8 @@ datasets:
 #  val:
 #    name: val_1
 #    type: paired
-#    dataroot_gt: "datasets/val/gt/"
-#    dataroot_lq: "datasets/val/lq/"
+#    dataroot_gt: 'datasets/val/gt/'
+#    dataroot_lq: 'datasets/val/lq/'
 #    io_backend:
 #      type: disk
 
@@ -81,7 +81,7 @@ jpeg_range2: [60, 95]
 #      crop_border: 4
 
 path:
-  #pretrain_network_g: "experiments/pretrain.pth"
+  #pretrain_network_g: 'experiments/pretrain.pth'
   #param_key_g: params_ema
   resume_state: ~
 

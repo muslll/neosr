@@ -13,7 +13,7 @@ from neosr.data.prefetch_dataloader import CUDAPrefetcher
 from neosr.models import build_model
 from neosr.utils import (AvgTimer, MessageLogger, check_resume, get_root_logger, get_time_str,
                          init_tb_logger, init_wandb_logger, make_exp_dirs, mkdir_and_rename, scandir)
-from neosr.utils.options import copy_opt_file, dict2str, parse_options
+from neosr.utils.options import copy_opt_file, parse_options
 
 
 def init_tb_loggers(opt):
@@ -106,6 +106,10 @@ def train_pipeline(root_path):
 
     torch.backends.cudnn.benchmark = True
 
+    if opt['bfloat16'] is True:
+        torch.backends.cuda.matmul.allow_tf32 = True
+        torch.backends.cudnn.allow_tf32 = True
+
     # load resume states if necessary
     resume_state = load_resume_state(opt)
     # mkdir for experiments and logger
@@ -123,8 +127,7 @@ def train_pipeline(root_path):
     log_file = osp.join(opt['path']['log'],
                         f"train_{opt['name']}_{get_time_str()}.log")
     logger = get_root_logger(logger_name='neosr', log_level=logging.INFO, log_file=log_file)
-    logger.info(f'\n-------- neosr --------\nPytorch Version: {torch.__version__}')
-    logger.info(dict2str(opt))
+    logger.info(f'\n------------------------ neosr ------------------------\nPytorch Version: {torch.__version__}')
     # initialize wandb and tb loggers
     tb_logger = init_tb_loggers(opt)
 
