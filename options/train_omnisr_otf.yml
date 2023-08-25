@@ -87,8 +87,8 @@ path:
 
 network_g:
   type: omnisr
-  upsampling: 4
-  window_size: 8
+  #upsampling: 2
+  #window_size: 16
 
 network_d:
   type: unet

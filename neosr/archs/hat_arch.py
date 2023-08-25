@@ -722,7 +722,7 @@ class hat(nn.Module):
                  norm_layer=nn.LayerNorm,
                  ape=False,
                  patch_norm=True,
-                 upscale=2,
+                 upscale=4,
                  img_range=1.,
                  upsampler='',
                  resi_connection='1conv',

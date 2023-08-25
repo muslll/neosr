@@ -50,7 +50,7 @@ path:
 network_g:
   type: srformer_light
   #type: srformer_medium
-  upscale: 4
+  #upscale: 2
 
 network_d:
   type: unet

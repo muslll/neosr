@@ -50,7 +50,7 @@ path:
 network_g:
   type: swinir_small
   #type: swinir_medium
-  upscale: 4
+  #upscale: 2
 
 network_d:
   type: unet

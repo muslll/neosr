@@ -51,7 +51,7 @@ network_g:
   type: hat_s
   #type: hat_m
   #type: hat_l
-  upscale: 4
+  #upscale: 2
 
 network_d:
   type: unet

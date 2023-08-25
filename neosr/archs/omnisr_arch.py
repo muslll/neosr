@@ -827,7 +827,7 @@ class OSAG(nn.Module):
         return self.esa(out)
 
 class omnisr_net(nn.Module):
-    def __init__(self,num_in_ch=3,num_out_ch=3,num_feat=64,**kwargs):
+    def __init__(self,num_in_ch=3,num_out_ch=3,num_feat=64, window_size=8, upsampling=4, **kwargs):
         super(omnisr_net, self).__init__()
 
         res_num     = kwargs["res_num"]
