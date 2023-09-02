@@ -156,6 +156,9 @@ def train_pipeline(root_path):
     prefetcher = CUDAPrefetcher(train_loader, opt)
     logger.info('Using CUDA prefetch dataloader')
 
+    if opt['use_amp'] is True:
+        logger.info('AMP enabled.')
+
     # training
     logger.info(f'Start training from epoch: {start_epoch}, iter: {current_iter}')
     data_timer, iter_timer = AvgTimer(), AvgTimer()

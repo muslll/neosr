@@ -225,10 +225,6 @@ class default():
         if self.opt['bfloat16'] is True:
             amp_dtype = torch.bfloat16
 
-        if use_amp is True: 
-            logger = get_root_logger()
-            logger.info('AMP enabled.')
-
         scaler = torch.cuda.amp.GradScaler(enabled=use_amp)
 
         with torch.autocast(device_type='cuda', dtype=amp_dtype, enabled=use_amp):
