@@ -34,7 +34,7 @@ Start training by running:
 python train.py -opt options.yml
 ```
 Where `options.yml` is a configuration file. Templates can be found in [options](options/).
-Please read the wiki [Configuration Walkthrough]() for an explanation of each option.
+Please read the wiki [Configuration Walkthrough](https://github.com/muslll/neosr/wiki/Configuration-Walkthrough) for an explanation of each option.
 
 ## features
 
