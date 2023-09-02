@@ -552,7 +552,7 @@ class Attention(nn.Module):
             self.rel_pos_bias = nn.Embedding((2 * window_size - 1) ** 2, self.heads)
 
             pos = torch.arange(window_size)
-            grid = torch.stack(torch.meshgrid(pos, pos))
+            grid = torch.stack(torch.meshgrid(pos, pos, indexing="ij"))
             grid = rearrange(grid, 'c i j -> (i j) c')
             rel_pos = rearrange(grid, 'i ... -> i 1 ...') - rearrange(grid, 'j ... -> 1 j ...')
             rel_pos += window_size - 1
@@ -827,7 +827,7 @@ class OSAG(nn.Module):
         return self.esa(out)
 
 class omnisr_net(nn.Module):
-    def __init__(self,num_in_ch=3,num_out_ch=3,num_feat=64, window_size=8, upsampling=4, **kwargs):
+    def __init__(self, num_in_ch=3, num_out_ch=3, num_feat=64, **kwargs):
         super(omnisr_net, self).__init__()
 
         res_num     = kwargs["res_num"]
