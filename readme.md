@@ -10,7 +10,7 @@ Requires Python 3.11 and CUDA =>11.7
 git clone https://github.com/muslll/neosr
 cd neosr
 ```
-Install [Pytorch 2.0 and TorchVision]((https://pytorch.org/get-started/locally/)) (required).
+Install [Pytorch 2.0 and TorchVision](https://pytorch.org/get-started/locally/) (required).
 
 Then install other dependencies via `pip`:
 
@@ -34,7 +34,7 @@ Start training by running:
 python train.py -opt options.yml
 ```
 Where `options.yml` is a configuration file. Templates can be found in [options](options/).
-Please read the [Options Walkthrough]() for an explanation of each option.
+Please read the wiki [Configuration Walkthrough]() for an explanation of each option.
 
 ## features
 
@@ -55,7 +55,7 @@ Please read the [Options Walkthrough]() for an explanation of each option.
 
 | net                               | option |
 |-----------------------------------|--------|
-| U-net with spectral normalization | `unet` |
+| U-Net SN | `unet` |
 
 ### Supported Optimizers:
 
@@ -69,10 +69,10 @@ Please read the [Options Walkthrough]() for an explanation of each option.
 
 ### Supported models:
 
-| model                                                                  | option    |
-|------------------------------------------------------------------------|-----------|
-| Base model, supports both Generator and Discriminator                  | `default` |
-| Builds on top of `default`, adding Real-ESRGAN on-the-fly degradations | `otf`     |
+| model   | description                                                            | option    |
+|---------|------------------------------------------------------------------------|-----------|
+| Default | Base model, supports both Generator and Discriminator                  | `default` |
+| OTF     | Builds on top of `default`, adding Real-ESRGAN on-the-fly degradations | `otf`     |
 
 ### Supported dataset loaders:
 
@@ -84,15 +84,16 @@ Please read the [Options Walkthrough]() for an explanation of each option.
 
 ### Supported losses:
 
-| loss                                        | option               |
-|---------------------------------------------|----------------------|
-| L1 Loss                                     | `L1Loss`, `l1`       |
-| L2 Loss                                     | `MSELoss`, `l2`      |
-| Huber Loss                                  | `HuberLoss`, `huber` |
-| Perceptual Loss                             | `PerceptualLoss`     |
-| GAN                                         | `GANLoss`            |
-| XYZ Color Loss                              | `colorloss`          |
-| [LDL Loss](https://github.com/csjliang/LDL) | `ldl_opt`            |
+| loss                                                                   | option               |
+|------------------------------------------------------------------------|----------------------|
+| L1 Loss                                                                | `L1Loss`, `l1`       |
+| L2 Loss                                                                | `MSELoss`, `l2`      |
+| Huber Loss                                                             | `HuberLoss`, `huber` |
+| Perceptual Loss                                                        | `PerceptualLoss`     |
+| GAN                                                                    | `GANLoss`            |
+| XYZ Color Loss                                                         | `colorloss`          |
+| [LDL Loss](https://github.com/csjliang/LDL)                            | `ldl_opt`            |
+| [Focal Frequency](https://github.com/EndlessSora/focal-frequency-loss) | `ff_opt`             |
 
 ## datasets
 
@@ -115,9 +116,9 @@ These datasets have been tiled and manually curated across multiple sources, inc
 *Note: these are not intended for use in academic research*.
 
 
-## support
+# support
 
-Consider supporting me on [**KoFi**](https://ko-fi.com/muslll).
+&#9749; Consider supporting me on [**KoFi**](https://ko-fi.com/muslll). &#9749;
 
 ## license and acknowledgements
 

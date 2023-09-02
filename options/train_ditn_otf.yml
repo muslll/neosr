@@ -1,5 +1,5 @@
 
-name: train_dat_otf
+name: train_ditn_otf
 model_type: otf
 scale: 4
 num_gpu: 1

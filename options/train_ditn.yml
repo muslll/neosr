@@ -1,5 +1,5 @@
 
-name: train_dat
+name: train_ditn
 model_type: default
 scale: 4
 num_gpu: 1
