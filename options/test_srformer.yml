@@ -1,5 +1,5 @@
 # Results will be saved to neosr/experiments/results/
-name: test_compact
+name: test_srformer
 model_type: default
 scale: 4
 num_gpu: 1

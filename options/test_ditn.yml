@@ -1,5 +1,5 @@
 # Results will be saved to neosr/experiments/results/
-name: test_dat
+name: test_ditn
 model_type: default
 scale: 4
 num_gpu: 1
@@ -14,10 +14,9 @@ datasets:
       type: disk
 
 network_g:
-  type: dat_light
-  #type: dat_small
-  #type: dat_medium
-  upscale: 4
+  type: ditn
+  #upscale: 2
+  #patch_size: 16
 
 path:
   pretrain_network_g: 'model.pth'
