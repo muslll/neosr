@@ -6,7 +6,7 @@ from os import path as osp
 import cv2
 import numpy as np
 from tqdm import tqdm
-from basicsr.utils import scandir
+from neosr.utils import scandir
 
 
 def main():

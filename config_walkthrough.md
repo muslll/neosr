@@ -16,6 +16,39 @@ In this document each configuration option for `neosr` will be explained. [Templ
 
 - **Do not** mix OTF degradations with `paired` and `default`. OTF should always be used with model `otf` and dataloader `otf`.
 
+## Launch Options
+
+This section describes the relevant launch options.
+
+---
+#### `-opt`
+
+The `-opt` argument specifies the configuration file. It must be in YAML format.
+
+```
+python train.py -opt config.yml
+```
+This option is required.
+
+---
+#### `--auto_resume`
+
+The `--auto_resume` argument will resume training if the `name` option in your config file corresponds to an existing folder in `/experiments` and if a model is found under the `/experiments/modelname/models/` folder.
+
+```
+python train.py --auto_resume -opt config.yml
+```
+
+---
+#### `--launcher`
+
+The `--launcher` argument specifies the job launcher. This is only useful if you're doing distributed training (multiple GPUs).
+Possible options are `none`, `pytorch` and `slurm`. See the [distributed training](#distributed-training) section for more information.
+
+```
+python --launch slurm -opt config.yml
+```
+
 ## Header Options
 
 In this document we will use [train_compact.yml]() as the base configuration file.
@@ -219,10 +252,10 @@ num_worker_per_gpu: 6
 ---
 ### `dataset_enlarge_ratio`
 
-The `dataset_enlarge_ratio` option is used to artificially increase the size of the dataset. If your dataset is too small, training will reach an epoch too fast, causing slowdowns. Using this option will duplicate the dataset by N times, so epochs will take longer to reach.
+The `dataset_enlarge_ratio` option is used to artificially increase the size of the dataset. If your dataset is too small, training will reach an epoch too fast, causing slowdowns. Using this option will virtually duplicate the dataset by N times, so epochs will take longer to reach.
 
 ```
-dataset_enlarge_ratio: 1
+dataset_enlarge_ratio: 10
 ```
 
 ---

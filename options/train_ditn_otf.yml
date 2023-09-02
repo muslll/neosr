@@ -1,5 +1,5 @@
 
-name: train_srformer_otf
+name: train_dat_otf
 model_type: otf
 scale: 4
 num_gpu: 1
@@ -87,9 +87,9 @@ path:
   resume_state: ~
 
 network_g:
-  type: srformer_light
-  #type: srformer_medium
+  type: ditn
   #upscale: 2
+  #patch_size: 16
 
 network_d:
   type: unet
@@ -102,13 +102,11 @@ train:
     lr: !!float 1e-4
     weight_decay: 0
     betas: [0.9, 0.99]
-    fused: true
   optim_d:
     type: adamw
     lr: !!float 1e-4
     weight_decay: 0
     betas: [0.9, 0.99]
-    fused: true
 
   scheduler:
     type: multisteplr

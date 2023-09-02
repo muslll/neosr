@@ -26,10 +26,10 @@ def create_lmdb_for_div2k():
     make_lmdb_from_imgs(folder_path, lmdb_path, img_path_list, keys, multiprocessing_read=True)
 
     # LRx4 images
-    folder_path = '/path/'
-    lmdb_path = '/path/output.lmdb'
-    img_path_list, keys = prepare_keys_div2k(folder_path)
-    make_lmdb_from_imgs(folder_path, lmdb_path, img_path_list, keys, multiprocessing_read=True)
+    #folder_path = '/path/'
+    #lmdb_path = '/path/output.lmdb'
+    #img_path_list, keys = prepare_keys_div2k(folder_path)
+    #make_lmdb_from_imgs(folder_path, lmdb_path, img_path_list, keys, multiprocessing_read=True)
 
 
 def prepare_keys_div2k(folder_path):

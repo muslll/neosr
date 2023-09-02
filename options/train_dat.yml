@@ -22,7 +22,7 @@ datasets:
     use_hflip: true
     use_rot: true
     num_worker_per_gpu: 4
-    dataset_enlarge_ratio: 1
+    dataset_enlarge_ratio: 20
 
 #  val:
 #    name: val_1
@@ -45,6 +45,7 @@ datasets:
 path:
   #pretrain_network_g: 'experiments/pretrain.pth'
   #param_key_g: params_ema
+  #strict_load_g: false
   resume_state: ~
 
 network_g:

@@ -4,7 +4,7 @@ import cv2
 import numpy as np
 
 from torchvision.transforms.functional import normalize
-from basicsr.utils import img2tensor
+from neosr.utils import img2tensor
 
 try:
     import lpips
