@@ -929,8 +929,22 @@ def dat_medium(**kwargs):
             depth=[6,6,6,6,6,6],
             embed_dim=180,
             num_heads=[6,6,6,6,6,6],
-            expansion_factor=2,
+            expansion_factor=4,
             resi_connection='1conv',
             **kwargs
             )
 
+@ARCH_REGISTRY.register()
+def dat_2(**kwargs):
+    return dat(
+            in_chans=3,
+            img_size=64,
+            img_range=1.,
+            split_size=[8,32],
+            depth=[6,6,6,6,6,6],
+            embed_dim=180,
+            num_heads=[6,6,6,6,6,6],
+            expansion_factor=2,
+            resi_connection='1conv',
+            **kwargs
+            )
