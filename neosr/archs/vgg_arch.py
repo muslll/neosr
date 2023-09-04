@@ -103,7 +103,7 @@ class VGGFeatureExtractor(nn.Module):
                 max_idx = idx
 
         if os.path.exists(VGG_PRETRAIN_PATH):
-            vgg_net = getattr(vgg, vgg_type)(pretrained=False)
+            vgg_net = getattr(vgg, vgg_type)
             state_dict = torch.load(VGG_PRETRAIN_PATH, map_location=torch.device('cuda'))
             vgg_net.load_state_dict(state_dict)
         else:

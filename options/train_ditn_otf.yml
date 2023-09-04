@@ -154,9 +154,6 @@ train:
   #  type: focalfrequencyloss
   #  loss_weight: 1.0
 
-  #net_d_iters: 1
-  #net_d_init_iters: 0
-
 logger:
   print_freq: 100
   save_checkpoint_freq: 1000

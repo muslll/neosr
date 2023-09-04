@@ -280,9 +280,9 @@ class default():
                     l_g_total += l_g_gan
                     loss_dict['l_g_gan'] = l_g_gan
 
-                scaler.scale(l_g_total).backward()
-                scaler.step(self.optimizer_g)
-                scaler.update()
+        scaler.scale(l_g_total).backward()
+        scaler.step(self.optimizer_g)
+        scaler.update()
 
         # optimize net_d
         if self.opt.get('network_d', None) is not None:
@@ -307,8 +307,8 @@ class default():
                     loss_dict['out_d_fake'] = torch.mean(fake_d_pred.detach())
                     scaler.scale(l_d_fake).backward()
 
-                scaler.step(self.optimizer_d)
-                scaler.update()
+            scaler.step(self.optimizer_d)
+            scaler.update()
 
         self.log_dict = self.reduce_loss_dict(loss_dict)
 
