@@ -120,7 +120,7 @@ train:
 logger:
   print_freq: 100
   save_checkpoint_freq: 1000
-  use_tb_logger: false
+  use_tb_logger: true
   #wandb:
   #  project: ~
   #  resume_id: ~
