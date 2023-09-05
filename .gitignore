@@ -2,3 +2,4 @@ experiments/*
 options/tmp/
 __pycache__/
 .ruff_cache/
+neosr/data/paired_aug_dataset.py

@@ -25,14 +25,6 @@ datasets:
     num_worker_per_gpu: 4
     dataset_enlarge_ratio: 20
 
-#  val:
-#    name: val_1
-#    type: paired
-#    dataroot_gt: 'datasets/val/gt/'
-#    dataroot_lq: 'datasets/val/lq/'
-#    io_backend:
-#      type: disk
-
     blur_kernel_size: 21
     kernel_list: ["iso", "aniso", "generalized_iso", "generalized_aniso", "plateau_iso", "plateau_aniso"]
     kernel_prob: [0.45, 0.25, 0.12, 0.03, 0.12, 0.03]
@@ -50,6 +42,25 @@ datasets:
     betap_range2: [1, 2]
 
     final_sinc_prob: 0.8
+
+#  val:
+#    name: val_1
+#    type: paired
+#    dataroot_gt: 'datasets/val/gt/'
+#    dataroot_lq: 'datasets/val/lq/'
+#    io_backend:
+#      type: disk
+
+#val:
+#  val_freq: 1000
+#  save_img: true
+#  metrics:
+#    psnr:
+#      type: calculate_psnr
+#      crop_border: 4
+#    ssim:
+#      type: calculate_ssim
+#      crop_border: 4
 
 resize_prob: [0.2, 0.7, 0.1] # up, down, keep
 resize_range: [0.15, 1.5]
@@ -69,17 +80,6 @@ poisson_scale_range2: [0.05, 2.5]
 gray_noise_prob2: 0.2
 jpeg_range2: [60, 95]
 
-#val:
-#  val_freq: 1000
-#  save_img: true
-#  metrics:
-#    psnr:
-#      type: calculate_psnr
-#      crop_border: 4
-#    ssim:
-#      type: calculate_ssim
-#      crop_border: 4
-
 path:
   #pretrain_network_g: 'experiments/pretrain.pth'
   #param_key_g: params_ema
@@ -90,6 +90,7 @@ network_g:
   type: dat_light
   #type: dat_small
   #type: dat_medium
+  #type: dat_2
   #upscale: 2
 
 network_d:
