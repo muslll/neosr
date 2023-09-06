@@ -545,6 +545,7 @@ class default():
         Args:
             net (nn.Module)
         """
+        #net = net.to(self.device, memory_format=torch.channels_last, non_blocking=True)
         net = net.to(self.device, non_blocking=True)
 
         if self.opt['compile'] is True:
@@ -700,10 +701,9 @@ class default():
         load_net = torch.load(load_path, map_location=torch.device('cuda'))
 
         if param_key is not None:
-            if param_key not in load_net and 'params' in load_net:
-                param_key = 'params'
-                logger.info('Loading: params_ema does not exist, use params.')
-            load_net = load_net[param_key]
+            if param_key not in load_net and 'params_ema' in load_net:
+                logger.info('Loading: params does not exist, use option param_key_g: params_ema.')
+
         logger.info(
             f'Loading {net.__class__.__name__} model from {load_path}, with param key: [{param_key}].')
         # remove unnecessary 'module.'
