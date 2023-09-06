@@ -753,11 +753,10 @@ class default():
         net = self.get_bare_model(net)
         load_net = torch.load(load_path, map_location=torch.device('cuda'))
 
-        if param_key is not None and opt['path'].get('pretrain_network_g', None):
+        if param_key is not None:
             if param_key not in load_net and 'params_ema' in load_net:
-                logger.info('Loading: params does not exist, use option param_key_g: params_ema.')
-            else:
                 param_key = 'params'
+                logger.info('Loading: params does not exist, use option param_key_g: params_ema.')
                 load_net = load_net[param_key]
 
         logger.info(
