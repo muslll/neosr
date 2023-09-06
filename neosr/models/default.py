@@ -242,15 +242,6 @@ class default():
                     l_g_pix = self.cri_pix(self.output, self.gt)
                     l_g_total += l_g_pix
                     loss_dict['l_g_pix'] = l_g_pix
-                # perceptual loss
-                if self.cri_perceptual:
-                    l_g_percep, l_g_style = self.cri_perceptual(self.output, self.gt)
-                    if l_g_percep is not None:
-                        l_g_total += l_g_percep
-                        loss_dict['l_percep'] = l_g_percep
-                    if l_g_style is not None:
-                        l_g_total += l_g_style
-                        loss_dict['l_style'] = l_g_style
                 # ldl loss
                 if self.cri_ldl:
                     if self.ema_decay > 0:
@@ -280,6 +271,21 @@ class default():
                     l_g_total += l_g_gan
                     loss_dict['l_g_gan'] = l_g_gan
 
+        # TODO: workaround for perceptual loss. See issue:
+        # https://github.com/muslll/neosr/issues/4
+        if (current_iter % self.net_d_iters == 0 and current_iter > self.net_d_init_iters):
+            # perceptual loss
+            l_g_total_p = 0
+            if self.cri_perceptual:
+                l_g_percep, l_g_style = self.cri_perceptual(self.output, self.gt)
+                if l_g_percep is not None:
+                    l_g_total_p += l_g_percep
+                    loss_dict['l_percep'] = l_g_percep
+                if l_g_style is not None:
+                    l_g_total_p += l_g_style
+                    loss_dict['l_style'] = l_g_style
+
+        l_g_total_p.backward(retain_graph=True)
         scaler.scale(l_g_total).backward()
         scaler.step(self.optimizer_g)
         scaler.update()
@@ -545,7 +551,6 @@ class default():
         Args:
             net (nn.Module)
         """
-        #net = net.to(self.device, memory_format=torch.channels_last, non_blocking=True)
         net = net.to(self.device, non_blocking=True)
 
         if self.opt['compile'] is True:
