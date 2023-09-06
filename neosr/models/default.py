@@ -304,15 +304,15 @@ class default():
                     l_d_real = self.cri_gan(real_d_pred, True, is_disc=True)
                     loss_dict['l_d_real'] = l_d_real
                     loss_dict['out_d_real'] = torch.mean(real_d_pred.detach())
-                    scaler.scale(l_d_real).backward()
                 # fake
                 if self.cri_gan:
                     fake_d_pred = self.net_d(self.output.detach().clone())
                     l_d_fake = self.cri_gan(fake_d_pred, False, is_disc=True)
                     loss_dict['l_d_fake'] = l_d_fake
                     loss_dict['out_d_fake'] = torch.mean(fake_d_pred.detach())
-                    scaler.scale(l_d_fake).backward()
 
+            scaler.scale(l_d_real).backward()
+            scaler.scale(l_d_fake).backward()
             scaler.step(self.optimizer_d)
             scaler.update()
 
@@ -706,8 +706,10 @@ class default():
         load_net = torch.load(load_path, map_location=torch.device('cuda'))
 
         if param_key is not None:
+            param_key = 'params'
             if param_key not in load_net and 'params_ema' in load_net:
                 logger.info('Loading: params does not exist, use option param_key_g: params_ema.')
+            load_net = load_net[param_key]
 
         logger.info(
             f'Loading {net.__class__.__name__} model from {load_path}, with param key: [{param_key}].')
