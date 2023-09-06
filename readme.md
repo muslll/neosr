@@ -53,9 +53,10 @@ Please read the wiki [Configuration Walkthrough](https://github.com/muslll/neosr
 
 ### Supported Discriminators:
 
-| net                               | option |
-|-----------------------------------|--------|
-| U-Net SN | `unet` |
+| net                               				  | option 		       |
+|-----------------------------------------------------------------|----------------------------|
+| U-Net SN 							  | `unet` 		       |
+| [A-ESRGAN](https://github.com/stroking-fishes-ml-corp/A-ESRGAN) | `unet_attn`,`unet_attn_ms` |
 
 ### Supported Optimizers:
 

@@ -82,7 +82,6 @@ class unet(nn.Module):
 # "A-ESRGAN: Training Real-World Blind Super-Resolution with
 #  Attention-based U-net Discriminators"
 
-@ARCH_REGISTRY.register()
 class add_attn(nn.Module):
     def __init__(self, x_channels, g_channels=256):
         super(add_attn, self).__init__()
@@ -133,7 +132,6 @@ class add_attn(nn.Module):
         W_y = self.W(y)
         return W_y
 
-@ARCH_REGISTRY.register()
 class unetCat(nn.Module):
     def __init__(self, dim_in, dim_out):
         super(unetCat, self).__init__()
@@ -157,7 +155,9 @@ class unetCat(nn.Module):
 
 @ARCH_REGISTRY.register()
 class unet_attn(nn.Module):
-    """Defines a U-Net discriminator with spectral normalization (SN)"""
+    """A-ESRGAN: Training Real-World Blind Super-Resolution
+       with Attention-based U-net Discriminators
+    """
 
     def __init__(self, num_in_ch=3, num_feat=64):
         super(unet_attn, self).__init__()
@@ -232,13 +232,13 @@ class unet_attn(nn.Module):
 
 
 @ARCH_REGISTRY.register()
-class unet_ms(nn.Module):
+class unet_attn_ms(nn.Module):
     def __init__(self, num_in_ch=3, num_feat=64, num_D=2):
-        super(unet_ms, self).__init__()
+        super(unet_attn_ms, self).__init__()
         self.num_D = num_D
 
         for i in range(num_D):
-            netD = unet_attn(num_in_ch=3, num_feat=num_feat)
+            netD = unet_attn(num_in_ch, num_feat=num_feat)
             setattr(self, 'layer' + str(i), netD)
 
         self.downsample = nn.AvgPool2d(
