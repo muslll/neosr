@@ -9,7 +9,7 @@ class GANLoss(nn.Module):
     """Define GAN loss.
 
     Args:
-        gan_type (str): Support 'vanilla'.
+        gan_type (str): Support 'vanilla', 'lsgan' (l2) and 'huber'.
         real_label_val (float): The value for real label. Default: 1.0.
         fake_label_val (float): The value for fake label. Default: 0.0.
         loss_weight (float): Loss weight. Default: 1.0.
@@ -28,6 +28,8 @@ class GANLoss(nn.Module):
             self.loss = nn.BCEWithLogitsLoss()
         elif self.gan_type == 'lsgan':
             self.loss = nn.MSELoss()
+        elif self.gan_type == 'huber':
+            self.loss = nn.HuberLoss()
         else:
             raise NotImplementedError(
                 f'GAN type {self.gan_type} is not implemented.')
