@@ -11,8 +11,8 @@ compile: false
 datasets:
   train:
     type: paired
-    dataroot_gt: 'datasets/nomos_uni/gt/'
-    dataroot_lq: 'datasets/nomos_uni/lq/'
+    dataroot_gt: 'datasets/gt/'
+    dataroot_lq: 'datasets/lq/'
     #meta_info: 'datasets/nomos_uni/meta_info.txt'
     io_backend:
       type: disk
@@ -44,7 +44,7 @@ datasets:
 
 path:
   #pretrain_network_g: 'experiments/pretrain.pth'
-  #param_key_g: params_ema
+  #param_key_g: ~
   #strict_load_g: false
   resume_state: ~
 
