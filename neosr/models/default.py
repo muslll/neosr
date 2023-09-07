@@ -754,10 +754,13 @@ class default():
         load_net = torch.load(load_path, map_location=torch.device('cuda'))
 
         if param_key is not None:
-            if param_key not in load_net and 'params_ema' in load_net:
+            if 'params_ema' in load_path:
+                param_key = 'params_ema'
+            elif 'params-ema' in load_path:
+                param_key = 'params-ema'
+            elif 'params' in load_path:
                 param_key = 'params'
-                logger.info('Loading: params does not exist, use option param_key_g: params_ema.')
-                load_net = load_net[param_key]
+            load_net = load_net[param_key]
 
         logger.info(
             f'Loading {net.__class__.__name__} model from {load_path}, with param key: [{param_key}].')
