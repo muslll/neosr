@@ -754,11 +754,11 @@ class default():
         load_net = torch.load(load_path, map_location=torch.device('cuda'))
 
         if param_key is not None:
-            if 'params_ema' in load_path:
+            if 'params_ema' in load_net:
                 param_key = 'params_ema'
-            elif 'params-ema' in load_path:
+            elif 'params-ema' in load_net:
                 param_key = 'params-ema'
-            elif 'params' in load_path:
+            elif 'params' in load_net:
                 param_key = 'params'
             load_net = load_net[param_key]
 
