@@ -303,7 +303,8 @@ class default():
                     l_g_total_p += l_g_style
                     loss_dict['l_style'] = l_g_style
 
-        l_g_total_p.backward(retain_graph=True)
+        if self.cri_perceptual:
+            l_g_total_p.backward(retain_graph=True)
         scaler.scale(l_g_total).backward()
         scaler.step(self.optimizer_g)
         scaler.update()
