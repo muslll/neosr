@@ -210,19 +210,20 @@ class default():
                 param_group['lr'] = lr
 
     def optimize_parameters(self, current_iter):
+
+        # a-esrgan gan loss toggle
+        unet_attn_ms = False
+
         if self.opt.get('network_d', None) is not None:
             for p in self.net_d.parameters():
                 p.requires_grad = False
+            # a-esrgan gan loss toggle condition 
+            unet_attn_ms = self.opt['network_d'].get('type')
+            if 'unet_attn_ms' in unet_attn_ms:
+                unet_attn_ms = True
 
         # optimize net_g
         self.optimizer_g.zero_grad(set_to_none=True)
-
-        # for a-esrgan gan loss 
-        unet_attn_ms = self.opt['network_d'].get('type')
-        if 'unet_attn_ms' in unet_attn_ms:
-            unet_attn_ms = True
-        else:
-            unet_attn_ms = False
 
         # for amp
         use_amp = False
