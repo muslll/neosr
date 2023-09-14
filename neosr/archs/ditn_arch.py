@@ -210,8 +210,8 @@ class ditn(nn.Module):
         bias = False,
         LayerNorm_type = 'WithBias',
         patch_size=8,
-        upscale=4
-    ):
+        upscale=4,
+        **kwargs):
 
         super(ditn, self).__init__()
         self.patch_size = patch_size
@@ -253,3 +253,4 @@ class ditn(nn.Module):
 
 if __name__ == '__main__':
     pass
+
