@@ -63,26 +63,6 @@ class default():
 
     def init_training_settings(self):
         train_opt = self.opt['train']
-
-        self.ema_decay = train_opt.get('ema_decay', 0)
-        if self.ema_decay > 0:
-            logger = get_root_logger()
-            logger.info(
-                f'Use Exponential Moving Average with decay: {self.ema_decay}')
-            # define network net_g with Exponential Moving Average (EMA)
-            # net_g_ema is used only for testing on one GPU and saving
-            # There is no need to wrap with DistributedDataParallel
-            self.net_g_ema = build_network(
-                self.opt['network_g']).to(self.device, memory_format=torch.channels_last, non_blocking=True)
-            # load pretrained g
-            load_path = self.opt['path'].get('pretrain_network_g', None)
-            if load_path is not None:
-                self.load_network(self.net_g_ema, load_path, self.opt['path'].get(
-                    'strict_load_g', True), 'params')
-            else:
-                self.model_ema(0)  # copy net_g weight
-            self.net_g_ema.eval()
-
         self.net_g.train()
         if self.opt.get('network_d', None) is not None:
             self.net_d.train()
@@ -242,9 +222,6 @@ class default():
             l_g_total = 0
             loss_dict = OrderedDict()
 
-            if self.cri_ldl and self.ema_decay > 0:
-                self.output_ema = self.net_g_ema(self.lq)
-
             if (current_iter % self.net_d_iters == 0 and current_iter > self.net_d_init_iters):
                 # pixel loss
                 if self.cri_pix:
@@ -253,12 +230,7 @@ class default():
                     loss_dict['l_g_pix'] = l_g_pix
                 # ldl loss
                 if self.cri_ldl:
-                    if self.ema_decay > 0:
-                        pixel_weight = get_refined_artifact_map(
-                            self.gt, self.output, self.output_ema, 7)
-                    else:
-                        pixel_weight = get_refined_artifact_map(
-                            self.gt, self.output, None, 7)
+                    pixel_weight = get_refined_artifact_map(self.gt, self.output, None, 7)
                     l_g_ldl = self.cri_ldl(
                         torch.mul(pixel_weight, self.output), torch.mul(pixel_weight, self.gt))
                     l_g_total += l_g_ldl
@@ -368,10 +340,6 @@ class default():
 
         self.log_dict = self.reduce_loss_dict(loss_dict)
 
-        if self.ema_decay > 0:
-            self.model_ema(decay=self.ema_decay)
-
-
     def update_learning_rate(self, current_iter, warmup_iter=-1):
         """Update learning rate.
 
@@ -396,10 +364,15 @@ class default():
             # set learning rate
             self._set_lr(warm_up_lr_l)
 
-    # Window size test for transformers
-    def testwindow(self):
+    def test(self):
         # pad to multiplication of window_size
-        window_size = self.opt['network_g']['window_size']
+        if self.opt.get('window_size', None) is not None:
+            window_size = self.opt.get('window_size') 
+        elif self.opt.get('patch_size', None) is not None:
+            window_size = self.opt.get('patch_size')
+        else:
+            window_size = 8
+
         scale = self.opt.get('scale', 1)
         mod_pad_h, mod_pad_w = 0, 0
         _, _, h, w = self.lq.size()
@@ -408,30 +381,15 @@ class default():
         if w % window_size != 0:
             mod_pad_w = window_size - w % window_size
         img = F.pad(self.lq, (0, mod_pad_w, 0, mod_pad_h), 'reflect')
-        if hasattr(self, 'net_g_ema'):
-            self.net_g_ema.eval()
-            with torch.no_grad():
-                self.output = self.net_g_ema(img)
-        else:
-            self.net_g.eval()
-            with torch.no_grad():
-                self.output = self.net_g(img)
-            self.net_g.train()
+
+        self.net_g.eval()
+        with torch.no_grad():
+            self.output = self.net_g(img)
+        self.net_g.train()
 
         _, _, h, w = self.output.size()
         self.output = self.output[:, :, 0:h -
                                   mod_pad_h * scale, 0:w - mod_pad_w * scale]
-
-    def test(self):
-        if hasattr(self, 'net_g_ema'):
-            self.net_g_ema.eval()
-            with torch.no_grad():
-                self.output = self.net_g_ema(self.lq)
-        else:
-            self.net_g.eval()
-            with torch.no_grad():
-                self.output = self.net_g(self.lq)
-            self.net_g.train()
 
     def feed_data(self, data):
         self.lq = data['lq'].to(self.device, memory_format=torch.channels_last, non_blocking=True)
@@ -578,19 +536,6 @@ class default():
                 self.best_metric_results[dataset_name][metric]['val'] = val
                 self.best_metric_results[dataset_name][metric]['iter'] = current_iter
 
-    def model_ema(self, decay=0.999):
-        net_g = self.get_bare_model(self.net_g)
-
-        net_g_params = dict(net_g.named_parameters())
-        net_g_ema_params = dict(self.net_g_ema.named_parameters())
-
-        for k in net_g_ema_params.keys():
-            net_g_ema_params[k].data.mul_(decay).add_(
-                net_g_params[k].data, alpha=1 - decay)
-
-        # TODO: ema will fail with torch.compile
-        # Decorator @torch.compile works, but need to pass opt condition 
-
     def get_current_log(self):
         return self.log_dict
 
@@ -695,10 +640,7 @@ class default():
 
     def save(self, epoch, current_iter):
         """Save networks and training state."""
-        if hasattr(self, 'net_g_ema'):
-            self.save_network(self.net_g_ema, 'net_g', current_iter)
-        else:
-            self.save_network(self.net_g, 'net_g', current_iter)
+        self.save_network(self.net_g, 'net_g', current_iter)
 
         if self.opt.get('network_d', None) is not None:
             self.save_network(self.net_d, 'net_d', current_iter)
