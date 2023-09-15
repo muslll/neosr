@@ -106,7 +106,7 @@ def parse_options(root_path, is_train=True):
     parser.add_argument('--debug', action='store_true')
     parser.add_argument('--local_rank', type=int, default=0)
     parser.add_argument(
-        '--force_yml', nargs='+', default=None, help='Force to update yml files. Examples: train:ema_decay=0.999')
+        '--force_yml', nargs='+', default=None, help='Force to update yml files. Examples: train:total_iter=200000')
     args = parser.parse_args()
 
     # parse yml to dict

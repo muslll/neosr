@@ -230,7 +230,7 @@ class default():
                     loss_dict['l_g_pix'] = l_g_pix
                 # ldl loss
                 if self.cri_ldl:
-                    pixel_weight = get_refined_artifact_map(self.gt, self.output, None, 7)
+                    pixel_weight = get_refined_artifact_map(self.gt, self.output, 7)
                     l_g_ldl = self.cri_ldl(
                         torch.mul(pixel_weight, self.output), torch.mul(pixel_weight, self.gt))
                     l_g_total += l_g_ldl

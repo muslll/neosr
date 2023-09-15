@@ -119,30 +119,25 @@ def get_local_weights(residual, ksize):
     return pixel_level_weight
 
 
-def get_refined_artifact_map(img_gt, img_output, img_ema, ksize):
+def get_refined_artifact_map(img_gt, img_output, ksize):
     """Calculate the artifact map of LDL
     (Details or Artifacts: A Locally Discriminative Learning Approach to Realistic Image Super-Resolution. In CVPR 2022)
 
     Args:
         img_gt (Tensor): ground truth images.
         img_output (Tensor): output images given by the optimizing model.
-        img_ema (Tensor): output images given by the ema model.
         ksize (Int): size of the local window.
 
     Returns:
         overall_weight: weight for each pixel to be discriminated as an artifact pixel
         (calculated based on both local and global observations).
     """
-    if img_ema is not None:
-        residual_ema = torch.sum(torch.abs(img_gt - img_ema), 1, keepdim=True)
-    residual_ema = torch.sum(img_gt, 1, keepdim=True)
+
     residual_sr = torch.sum(torch.abs(img_gt - img_output), 1, keepdim=True)
 
     patch_level_weight = torch.var(
         residual_sr.clone(), dim=(-1, -2, -3), keepdim=True)**(1 / 5)
     pixel_level_weight = get_local_weights(residual_sr.clone(), ksize)
     overall_weight = patch_level_weight * pixel_level_weight
-
-    overall_weight[residual_sr < residual_ema] = 0
 
     return overall_weight
