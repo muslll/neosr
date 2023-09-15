@@ -77,11 +77,10 @@ train:
 
   total_iter: 500000
   warmup_iter: -1  # no warm up
-  #ema_decay: 0.999
 
   # losses
   pixel_opt:
-    type: L1Loss
+    type: HuberLoss
     loss_weight: 1.0
     reduction: mean
   perceptual_opt:
@@ -92,29 +91,24 @@ train:
       "conv3_4": 1
       "conv4_4": 1
       'conv5_4': 1
-    vgg_type: vgg19
-    use_input_norm: true
-    range_norm: false
     perceptual_weight: 1.0
     style_weight: 0
-    criterion: l1
+    criterion: huber
   gan_opt:
     type: GANLoss
     gan_type: vanilla
-    real_label_val: 1.0
-    fake_label_val: 0.0
     loss_weight: 0.1
   color_opt:
     type: colorloss
     loss_weight: 1.0
-    criterion: l1
+    criterion: huber
   #ldl_opt:
-  #  type: L1Loss
+  #  type: HuberLoss
   #  loss_weight: 1.0
   #  reduction: mean
   #ff_opt:
   #  type: focalfrequencyloss
-  #  loss_weight: 1.0
+  #  loss_weight: 0.5
 
 logger:
   print_freq: 100
