@@ -191,16 +191,9 @@ class default():
 
     def optimize_parameters(self, current_iter):
 
-        # a-esrgan gan loss toggle
-        unet_attn_ms = False
-
         if self.opt.get('network_d', None) is not None:
             for p in self.net_d.parameters():
                 p.requires_grad = False
-            # a-esrgan gan loss toggle condition 
-            unet_attn_ms = self.opt['network_d'].get('type')
-            if 'unet_attn_ms' in unet_attn_ms:
-                unet_attn_ms = True
 
         # optimize net_g
         self.optimizer_g.zero_grad(set_to_none=True)
@@ -245,20 +238,11 @@ class default():
                     l_g_ff = self.cri_ff(self.output, self.gt)
                     l_g_total += l_g_ff
                     loss_dict['l_g_ff'] = l_g_ff
-                if unet_attn_ms is True and self.cri_gan:
-                    # a-esrgan gan loss
-                    fake_g_preds = self.net_d(self.output)
-                    loss_dict['l_g_gan'] = 0
-                    for fake_g_pred in fake_g_preds:
-                        l_g_gan = self.cri_gan(fake_g_pred, True, is_disc=False)
-                        l_g_total += l_g_gan
-                        loss_dict['l_g_gan'] += l_g_gan
-                else:
-                    if self.cri_gan:
-                        fake_g_pred = self.net_d(self.output)
-                        l_g_gan = self.cri_gan(fake_g_pred, True, is_disc=False)
-                        l_g_total += l_g_gan
-                        loss_dict['l_g_gan'] = l_g_gan
+                if self.cri_gan:
+                    fake_g_pred = self.net_d(self.output)
+                    l_g_gan = self.cri_gan(fake_g_pred, True, is_disc=False)
+                    l_g_total += l_g_gan
+                    loss_dict['l_g_gan'] = l_g_gan
 
 
         # TODO: workaround for perceptual loss. See issue:
@@ -291,47 +275,18 @@ class default():
 
             with torch.autocast(device_type='cuda', dtype=amp_dtype, enabled=use_amp):
                 # real
-                if unet_attn_ms is True and self.cri_gan:
-                    # a-esrgan gan loss
-                    real_d_preds = self.net_d(self.gt)
-                    loss_dict['l_d_real'] = 0
-                    loss_dict['out_d_real'] = 0
-                    l_d_real_tot = 0
-                    for real_d_pred in real_d_preds:
-                        l_d_real = self.cri_gan(real_d_pred, True, is_disc=True)
-                        l_d_real_tot += l_d_real
-                        loss_dict['l_d_real'] += l_d_real
-                        loss_dict['out_d_real'] += torch.mean(real_d_pred.detach())
-                else:
-                    if self.cri_gan:
-                        real_d_pred = self.net_d(self.gt)
-                        l_d_real = self.cri_gan(real_d_pred, True, is_disc=True)
-                        loss_dict['l_d_real'] = l_d_real
-                        loss_dict['out_d_real'] = torch.mean(real_d_pred.detach())
-
+                if self.cri_gan:
+                    real_d_pred = self.net_d(self.gt)
+                    l_d_real = self.cri_gan(real_d_pred, True, is_disc=True)
+                    loss_dict['l_d_real'] = l_d_real
+                    loss_dict['out_d_real'] = torch.mean(real_d_pred.detach())
                 # fake
-                if unet_attn_ms is True and self.cri_gan:
-                    fake_d_preds = self.net_d(self.output.detach().clone())  # clone for pt1.9
-                    loss_dict['l_d_fake'] = 0
-                    loss_dict['out_d_fake'] = 0
-                    l_d_fake_tot = 0
-                    for fake_d_pred in fake_d_preds:
-                        l_d_fake = self.cri_gan(fake_d_pred, False, is_disc=True)
-                        l_d_fake_tot += l_d_fake
-                        loss_dict['l_d_fake'] += l_d_fake
-                        loss_dict['out_d_fake'] += torch.mean(fake_d_pred.detach())
-                else:
-                    if self.cri_gan:
-                        fake_d_pred = self.net_d(self.output.detach().clone())
-                        l_d_fake = self.cri_gan(fake_d_pred, False, is_disc=True)
-                        loss_dict['l_d_fake'] = l_d_fake
-                        loss_dict['out_d_fake'] = torch.mean(fake_d_pred.detach())
+                    fake_d_pred = self.net_d(self.output.detach().clone())
+                    l_d_fake = self.cri_gan(fake_d_pred, False, is_disc=True)
+                    loss_dict['l_d_fake'] = l_d_fake
+                    loss_dict['out_d_fake'] = torch.mean(fake_d_pred.detach())
 
-            if unet_attn_ms is True:
-                # a-esrgan gan loss
-                scaler.scale(l_d_real_tot).backward()
-                scaler.scale(l_d_fake_tot).backward()
-            else:
+            if self.cri_gan:
                 scaler.scale(l_d_real).backward()
                 scaler.scale(l_d_fake).backward()
 

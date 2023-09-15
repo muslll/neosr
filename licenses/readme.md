@@ -18,4 +18,3 @@
 | [`pytorch-optimizer`](https://github.com/kozistr/pytorch_optimizer)                                 | [Apache 2.0](https://github.com/kozistr/pytorch_optimizer/blob/main/LICENSE)          |
 | [`DiffJPEG`](https://github.com/mlomnitz/DiffJPEG)                                                  | [MIT](https://github.com/mlomnitz/DiffJPEG/blob/master/LICENSE)                       |
 | `DropPath` from [`timm`](https://github.com/huggingface/pytorch-image-models)                       | [Apache 2.0](https://github.com/huggingface/pytorch-image-models/blob/main/LICENSE)   |
-| [`A-ESRGAN`](https://github.com/stroking-fishes-ml-corp/A-ESRGAN)				      | [BSD 3-Clause](https://github.com/stroking-fishes-ml-corp/A-ESRGAN/blob/main/LICENSE) |
