@@ -200,13 +200,13 @@ def rgb2ycbcr_pt(img, y_only=False):
     """
     if y_only:
         weight = torch.tensor([[65.481], [128.553], [24.966]]).to(img, non_blocking=True)
-        out_img = torch.linalg.matmul(img.permute(0, 2, 3, 1),
+        out_img = torch.matmul(img.permute(0, 2, 3, 1),
                                weight).permute(0, 3, 1, 2) + 16.0
     else:
         weight = torch.tensor(
             [[65.481, -37.797, 112.0], [128.553, -74.203, -93.786], [24.966, 112.0, -18.214]]).to(img, non_blocking=True)
         bias = torch.tensor([16, 128, 128]).view(1, 3, 1, 1).to(img, non_blocking=True)
-        out_img = torch.linalg.matmul(img.permute(0, 2, 3, 1),
+        out_img = torch.matmul(img.permute(0, 2, 3, 1),
                                weight).permute(0, 3, 1, 2) + bias
 
     out_img = out_img / 255.
