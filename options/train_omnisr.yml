@@ -3,7 +3,7 @@ name: train_omnisr
 model_type: default
 scale: 4
 num_gpu: 1
-use_amp: true
+use_amp: false
 bfloat16: false
 compile: false
 #manual_seed: 1024

@@ -3,7 +3,7 @@ name: train_compact_otf
 model_type: otf
 scale: 4
 num_gpu: 1
-use_amp: true
+use_amp: false
 bfloat16: false
 compile: false
 #manual_seed: 1024
@@ -88,9 +88,9 @@ path:
 
 network_g:
   type: compact
-#  upscale: 2
-#  num_feat: 64
-#  num_conv: 16
+  #upscale: 2
+  #num_feat: 32
+  #num_conv: 8
 
 network_d:
   type: unet
