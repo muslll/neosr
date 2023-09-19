@@ -132,32 +132,24 @@ def _convert_input_type_range(img):
     It converts the input image to np.float32 type and range of [0, 1].
 
     Args:
-        img (ndarray or tensor): The input image.
+        img (ndarray): The input image.
 
     Returns:
-        (ndarray or tensor): The converted image with type of float32 and range of
+        (ndarray): The converted image with type of float32 and range of
             [0, 1].
     """
 
     img_type = img.dtype
-
-    if isinstance(img, np.ndarray):
-        img = img.astype(np.float32)
-    else:
-        img = img.type(torch.float32, non_blocking=True)
-
-    if img_type == np.float32 or torch.float32:
+    img = img.astype(np.float32)
+    if img_type == np.float32:
         pass
-    elif img_type == np.float16 or torch.float16:
+    elif img_type == np.float16:
         pass
-    elif img_type == torch.bfloat16:
-        pass
-    elif img_type == np.uint8 or torch.uint8:
+    elif img_type == np.uint8:
         img /= 255.
     else:
         raise TypeError(
-            f'Received img with unsupported data type, got {img_type}')
-
+            f'The img type should be np.float32, np.float16 or np.uint8, but got {img_type}')
     return img
 
 
@@ -166,39 +158,28 @@ def _convert_output_type_range(img, dst_type):
 
     It converts the image to desired type and range. If `dst_type` is uint8,
     images will be converted to np.uint8 type with range [0, 255]. If
-    `dst_type` is float32, float16 or bfloat16, it converts the image to
+    `dst_type` is float32, float16, it converts the image to
     those types with range [0, 1].
 
     Args:
-        img (ndarray or tensor): The image to be converted with np.float32 type and
+        img (ndarray): The image to be converted with np.float32 type and
             range [0, 255].
         dst_type (type): If dst_type is uint8, it converts the image to np.uint8
             type with range [0, 255]. If dst_type is float32, it converts the
             image to np.float32 type with range [0, 1].
 
     Returns:
-        (ndarray or tensor): The converted image with desired type and range.
+        (ndarray): The converted image with desired type and range.
     """
 
-    if dst_type not in (np.uint8, np.float32, torch.float16, torch.bfloat16, torch.float32):
+    if dst_type not in (np.uint8, np.float32, np.float16):
         raise TypeError(
-            f'dst_type unsupported, got {dst_type}')
-
-    if dst_type == np.uint8 or torch.uint8:
+            f'The dst_type should be np.float32, np.float16 or np.uint8, but got {dst_type}')
+    if dst_type == np.uint8:
         img = img.round()
-    elif dst_type == np.float16 or torch.float16:
-        img /= 255.
-    elif dst_type == torch.bfloat16:
-        img /= 255.
     else:
         img /= 255.
-
-    if isinstance(img, np.ndarray):
-        out_img = img.astype(dst_type)
-    else:
-        out_img = img.type(dst_type, non_blocking=True)
-
-    return out_img
+    return img.astype(dst_type)
 
 
 def rgb2ycbcr_pt(img, y_only=False):
@@ -229,65 +210,19 @@ def rgb2ycbcr_pt(img, y_only=False):
     return out_img
 
 
-def rgb_to_linear_rgb(img):
-    r"""Convert an sRGB image to linear RGB. Used in colorspace conversions.
-
-    Args:
-        img: sRGB Image to be converted to linear RGB of shape :math:`(*,3,H,W)`.
-
-    Returns:
-        linear RGB version of the image with shape of :math:`(*,3,H,W)`.
-    """
+def rgb_to_uv(img: torch.Tensor) -> torch.Tensor:
+    '''
+    RGB to YCbCr. Outputs tensor with only CbCr channels. 
+    '''
 
     if not isinstance(img, torch.Tensor):
-        raise TypeError(f"Input type is not a torch.Tensor. Got {type(img)}")
+        raise TypeError(f"Input type is not a Tensor. Got {type(image)}")
 
     if len(img.shape) < 3 or img.shape[-3] != 3:
-        raise ValueError(f"Input size must have a shape of (*, 3, H, W).Got {img.shape}")
+        raise ValueError(f"Input size must have a shape of (*, 3, H, W). Got {image.shape}")
 
-    img = _convert_input_type_range(img)
-
-    lin_rgb: torch.Tensor = torch.where(img > 0.04045, torch.pow(((img + 0.055) / 1.055), 2.4), img / 12.92)
-
-    return lin_rgb
-
-def rgb_to_xyz(img):
-    r"""Convert a RGB image to XZ (colors) using CIE XYZ.
-
-    Args:
-        image: RGB Image to be converted to XYZ with shape :math:`(*, 3, H, W)`.
-
-    Returns:
-         XYZ version of the image with shape :math:`(*, 3, H, W)`.
-    """
-    if not isinstance(img, torch.Tensor):
-        raise TypeError(f"Input type is not a torch.Tensor. Got {type(img)}")
-
-    if len(img.shape) < 3 or img.shape[-3] != 3:
-        raise ValueError(f"Input size must have a shape of (*, 3, H, W). Got {img.shape}")
-
-    # sRGB to Linear RGB
-    lin_rgb = rgb_to_linear_rgb(img)
-
-    r: torch.Tensor = lin_rgb[..., 0, :, :]
-    g: torch.Tensor = lin_rgb[..., 1, :, :]
-    b: torch.Tensor = lin_rgb[..., 2, :, :]
-
-    # To CIE XYZ - Assumes D65 white point
-    x: torch.Tensor = 0.412453 * r + 0.357580 * g + 0.180423 * b
-    y: torch.Tensor = 0.212671 * r + 0.715160 * g + 0.072169 * b
-    z: torch.Tensor = 0.019334 * r + 0.119193 * g + 0.950227 * b
-
-    out_img: torch.Tensor = torch.stack([x, z], -3)
-
-    return out_img
-
-def rgb_to_uv(img):
-    '''
-    Assumes normalized [0, 1] images.
-    '''
     # normalize images
-    img = _convert_input_type_range(img)
+    #img = img / 255
 
     # define separate rgb
     r: torch.Tensor = img[..., 0, :, :]

@@ -89,8 +89,6 @@ path:
 network_g:
   type: compact
   #upscale: 2
-  #num_feat: 32
-  #num_conv: 8
 
 network_d:
   type: unet

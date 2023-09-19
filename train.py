@@ -154,7 +154,7 @@ def train_pipeline(root_path):
     # dataloader prefetcher
 
     prefetcher = CUDAPrefetcher(train_loader, opt)
-    logger.info('Using CUDA prefetch dataloader')
+    logger.info('Using CUDA prefetch dataloader.')
 
     if opt['use_amp'] is True:
         logger.info('AMP enabled.')

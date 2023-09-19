@@ -91,7 +91,7 @@ Please read the wiki [Configuration Walkthrough](https://github.com/muslll/neosr
 | Huber Loss                                                             | `HuberLoss`, `huber` 		     |
 | Perceptual Loss                                                        | `perceptual_opt`, `PerceptualLoss`        |
 | GAN                                                                    | `gan_opt`, `GANLoss`, `MultiScaleGANLoss` |
-| XYZ Color Loss                                                         | `color_opt`, `colorloss`                  |
+| YCbCr Color Loss                                                       | `color_opt`, `colorloss`                  |
 | [LDL Loss](https://github.com/csjliang/LDL)                            | `ldl_opt`  			             |
 | [Focal Frequency](https://github.com/EndlessSora/focal-frequency-loss) | `ff_opt`, `focalfrequencyloss`            |
 
