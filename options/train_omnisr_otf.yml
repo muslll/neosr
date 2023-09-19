@@ -23,7 +23,7 @@ datasets:
     use_hflip: true
     use_rot: true
     num_worker_per_gpu: 4
-    dataset_enlarge_ratio: 20
+    dataset_enlarge_ratio: 5
 
     blur_kernel_size: 21
     kernel_list: ["iso", "aniso", "generalized_iso", "generalized_aniso", "plateau_iso", "plateau_aniso"]
@@ -121,14 +121,13 @@ train:
   pixel_opt:
     type: HuberLoss
     loss_weight: 1.0
-    reduction: mean
   perceptual_opt:
     type: PerceptualLoss
     layer_weights:
-      "conv1_2": 0.1
-      "conv2_2": 0.1
-      "conv3_4": 1
-      "conv4_4": 1
+      'conv1_2': 0.1
+      'conv2_2': 0.1
+      'conv3_4': 1
+      'conv4_4': 1
       'conv5_4': 1
     perceptual_weight: 1.0
     style_weight: 0

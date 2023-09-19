@@ -212,7 +212,7 @@ def rgb2ycbcr_pt(img, y_only=False):
 
 def rgb_to_uv(img: torch.Tensor) -> torch.Tensor:
     '''
-    RGB to YCbCr. Outputs tensor with only CbCr channels. 
+    RGB to YUV. Outputs tensor with only UV channels. 
     '''
 
     if not isinstance(img, torch.Tensor):
@@ -221,10 +221,7 @@ def rgb_to_uv(img: torch.Tensor) -> torch.Tensor:
     if len(img.shape) < 3 or img.shape[-3] != 3:
         raise ValueError(f"Input size must have a shape of (*, 3, H, W). Got {image.shape}")
 
-    # normalize images
-    #img = img / 255
-
-    # define separate rgb
+    # define separate rgb channels
     r: torch.Tensor = img[..., 0, :, :]
     g: torch.Tensor = img[..., 1, :, :]
     b: torch.Tensor = img[..., 2, :, :]
