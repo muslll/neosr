@@ -207,7 +207,7 @@ class default():
         if self.opt['bfloat16'] is True:
             amp_dtype = torch.bfloat16
         
-        scaler = torch.cuda.amp.GradScaler(enabled=use_amp, init_scale=2.**11)
+        scaler = torch.cuda.amp.GradScaler(enabled=use_amp, init_scale=2**8, growth_factor=2.0, backoff_factor=0.5, growth_interval=2000)
 
         with torch.autocast(device_type='cuda', dtype=amp_dtype, enabled=use_amp):
             self.output = self.net_g(self.lq)
@@ -253,9 +253,20 @@ class default():
                     l_g_total += l_g_gan
                     loss_dict['l_g_gan'] = l_g_gan
 
+
         scaler.scale(l_g_total).backward()
+        
+      # perform gradient clipping
+        scaler.unscale_(self.optimizer_g)
+        max_norm = 1.0
+        parameters = self.net_g.parameters()
+        if len(list(parameters)) > 0 and any(p.grad is not None for p in parameters):
+            max_norm = max(p.grad.data.norm(2) for p in parameters if p.grad is not None)
+            max_norm = max_norm.item()
+        torch.nn.utils.clip_grad_norm_(self.net_g.parameters(), max_norm=max_norm)
+        
         scaler.step(self.optimizer_g)
-        scaler.update()
+        #do not call scaler.update until all optimizers have been stepped https://pytorch.org/docs/stable/notes/amp_examples.html#working-with-multiple-models-losses-and-optimizers
 
         # optimize net_d
         if self.opt.get('network_d', None) is not None:
@@ -280,8 +291,17 @@ class default():
             if self.cri_gan:
                 scaler.scale(l_d_real).backward()
                 scaler.scale(l_d_fake).backward()
-
-            scaler.step(self.optimizer_d)
+          
+          # perform gradient clipping
+            scaler.unscale_(self.optimizer_d)
+            max_norm = 1.0
+            parameters = self.net_d.parameters()
+            if len(list(parameters)) > 0 and any(p.grad is not None for p in parameters):
+                max_norm = max(p.grad.data.norm(2) for p in parameters if p.grad is not None)
+                max_norm = max_norm.item()
+            torch.nn.utils.clip_grad_norm_(self.net_d.parameters(), max_norm=max_norm)
+        
+            scaler.step(self.optimizer_d)                             
             scaler.update()
 
         self.log_dict = self.reduce_loss_dict(loss_dict)
