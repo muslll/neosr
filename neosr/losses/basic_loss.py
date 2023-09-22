@@ -284,21 +284,21 @@ class focalfrequencyloss(nn.Module):
         patch_w = w // patch_factor
         for i in range(patch_factor):
             for j in range(patch_factor):
-                patch_list.append(x[:, :, i * patch_h:(i + 1) * patch_h, j * patch_w:(j + 1) * patch_w])
+                patch = x[:, :, i * patch_h:(i + 1) * patch_h, j * patch_w:(j + 1) * patch_w]
+                patch = torch.as_tensor(patch, dtype=x.dtype)
+                patch_list.append(patch)
 
         # stack to patch tensor
         y = torch.stack(patch_list, 1)
-        
-        # perform type conversions
-        if y.dtype == torch.bfloat16 or y.dtype == torch.float16:
-            y = y.to(torch.float32)
 
         # perform 2D DFT (real-to-complex, orthonormalization)
-        freq = torch.fft.fft2(y, norm='ortho')
-        freq_real = freq.real.unsqueeze(-1)
-        freq_imag = freq.imag.unsqueeze(-1)
-        freq = torch.cat([freq_real, freq_imag], -1)
+        if IS_HIGH_VERSION:
+            freq = torch.fft.fft2(y, norm='ortho')
+            freq = torch.stack([freq.real, freq.imag], -1)
+        else:
+            freq = torch.rfft(y, 2, onesided=False, normalized=True)
         return freq
+
 
     def loss_formulation(self, recon_freq, real_freq, matrix=None):
         # spectrum weight matrix
