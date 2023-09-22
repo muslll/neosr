@@ -285,7 +285,7 @@ class focalfrequencyloss(nn.Module):
         for i in range(patch_factor):
             for j in range(patch_factor):
                 patch = x[:, :, i * patch_h:(i + 1) * patch_h, j * patch_w:(j + 1) * patch_w]
-                patch = torch.as_tensor(patch, dtype=x.dtype)
+                patch = torch.as_tensor(patch, dtype=torch.float32)
                 patch_list.append(patch)
 
         # stack to patch tensor
