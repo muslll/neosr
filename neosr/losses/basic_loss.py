@@ -292,11 +292,8 @@ class focalfrequencyloss(nn.Module):
         y = torch.stack(patch_list, 1)
 
         # perform 2D DFT (real-to-complex, orthonormalization)
-        if IS_HIGH_VERSION:
-            freq = torch.fft.fft2(y, norm='ortho')
-            freq = torch.stack([freq.real, freq.imag], -1)
-        else:
-            freq = torch.rfft(y, 2, onesided=False, normalized=True)
+        freq = torch.fft.fft2(y, norm='ortho')
+        freq = torch.stack([freq.real, freq.imag], -1)
         return freq
 
 
