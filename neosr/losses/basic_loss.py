@@ -274,6 +274,11 @@ class focalfrequencyloss(nn.Module):
         self.batch_matrix = batch_matrix
 
     def tensor2freq(self, x):
+
+        # for amp dtype
+        if x.dtype == torch.float16:
+            x = x.to(torch.float32)
+
         # crop image patches
         patch_factor = self.patch_factor
         _, _, h, w = x.shape
@@ -292,6 +297,7 @@ class focalfrequencyloss(nn.Module):
         # perform 2D DFT (real-to-complex, orthonormalization)
         freq = torch.fft.fft2(y, norm='ortho')
         freq = torch.stack([freq.real, freq.imag], -1)
+
         return freq
 
     def loss_formulation(self, recon_freq, real_freq, matrix=None):

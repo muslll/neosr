@@ -255,7 +255,6 @@ class default():
 
         scaler.scale(l_g_total).backward()
         scaler.step(self.optimizer_g)
-        scaler.update()
 
         # optimize net_d
         if self.opt.get('network_d', None) is not None:
@@ -282,9 +281,11 @@ class default():
                 scaler.scale(l_d_fake).backward()
 
             scaler.step(self.optimizer_d)
-            scaler.update()
 
         self.log_dict = self.reduce_loss_dict(loss_dict)
+
+        # update gradscaler
+        scaler.update()
 
     def update_learning_rate(self, current_iter, warmup_iter=-1):
         """Update learning rate.

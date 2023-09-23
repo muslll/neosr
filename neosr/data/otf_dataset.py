@@ -9,7 +9,7 @@ import torch
 from torch.utils import data
 
 from neosr.data.degradations import circular_lowpass_kernel, random_mixed_kernels
-from neosr.data.transforms import augment
+from neosr.data.transforms import basic_augment
 from neosr.utils import FileClient, get_root_logger, imfrombytes, img2tensor, scandir
 from neosr.utils.registry import DATASET_REGISTRY
 
@@ -123,7 +123,7 @@ class otf(data.Dataset):
         img_gt = imfrombytes(img_bytes, float32=True)
 
         # -------------------- Do augmentation for training: flip, rotation -------------------- #
-        img_gt = augment(img_gt, self.opt['use_hflip'], self.opt['use_rot'])
+        img_gt = basic_augment(img_gt, self.opt['use_hflip'], self.opt['use_rot'])
 
         # crop or pad to 512
         # TODO: 512 is hard-coded. You may change it accordingly
