@@ -20,6 +20,9 @@ root_path = Path(__file__).parents[2]
 opt, args = parse_options(root_path, is_train=True)
 # set scale factor in network parameters
 upscale = opt['scale']
+# set img_size parameter
+gt_size = opt['datasets']['train']['gt_size']
+img_size = int(gt_size / upscale)
 
 
 class emptyModule(nn.Module):
@@ -769,7 +772,7 @@ class srformer(nn.Module):
     """
 
     def __init__(self,
-                 img_size=64,
+                 img_size=img_size,
                  patch_size=1,
                  in_chans=3,
                  embed_dim=60,
@@ -997,7 +1000,6 @@ class srformer(nn.Module):
 def srformer_light(**kwargs):
     return srformer(
             in_chans=3,
-            img_size=64,
             window_size=16,
             img_range=1.,
             depths=[6, 6, 6, 6],
@@ -1013,7 +1015,6 @@ def srformer_light(**kwargs):
 def srformer_medium(**kwargs):
     return srformer(
             in_chans=3,
-            img_size=48,
             window_size=24,
             img_range=1.,
             depths=[6, 6, 6, 6, 6, 6],
