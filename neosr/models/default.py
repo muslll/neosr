@@ -207,7 +207,7 @@ class default():
         if self.opt['bfloat16'] is True:
             amp_dtype = torch.bfloat16
         
-        scaler = torch.cuda.amp.GradScaler(enabled=use_amp, init_scale=2**8, growth_factor=2.0, backoff_factor=0.5, growth_interval=2000)
+        scaler = torch.cuda.amp.GradScaler(enabled=use_amp, init_scale=2**11)
 
         with torch.autocast(device_type='cuda', dtype=amp_dtype, enabled=use_amp):
             self.output = self.net_g(self.lq)
@@ -266,7 +266,6 @@ class default():
         torch.nn.utils.clip_grad_norm_(self.net_g.parameters(), max_norm=max_norm)
         
         scaler.step(self.optimizer_g)
-        #do not call scaler.update until all optimizers have been stepped https://pytorch.org/docs/stable/notes/amp_examples.html#working-with-multiple-models-losses-and-optimizers
 
         # optimize net_d
         if self.opt.get('network_d', None) is not None:
