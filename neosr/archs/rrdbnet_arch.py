@@ -1,9 +1,19 @@
+from pathlib import Path
+
 import torch
 from torch import nn
 from torch.nn import functional as F
 
-from neosr.utils.registry import ARCH_REGISTRY
 from .arch_util import default_init_weights, make_layer, pixel_unshuffle
+from neosr.utils.registry import ARCH_REGISTRY
+from neosr.utils.options import parse_options
+
+
+# initialize options parsing
+root_path = Path(__file__).parents[2]
+opt, args = parse_options(root_path, is_train=True)
+# set scale factor in network parameters
+scale = opt['scale']
 
 
 class ResidualDenseBlock(nn.Module):
@@ -87,7 +97,7 @@ class esrgan(nn.Module):
         num_grow_ch (int): Channels for each growth. Default: 32.
     """
 
-    def __init__(self, num_in_ch=3, num_out_ch=3, scale=4, num_feat=64, num_block=23, num_grow_ch=32):
+    def __init__(self, num_in_ch=3, num_out_ch=3, scale=scale, num_feat=64, num_block=23, num_grow_ch=32):
         super(esrgan, self).__init__()
         self.scale = scale
         if scale == 2:

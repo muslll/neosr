@@ -1,7 +1,16 @@
+from pathlib import Path
 from torch import nn
 from torch.nn import functional as F
 
 from neosr.utils.registry import ARCH_REGISTRY
+from neosr.utils.options import parse_options
+
+
+# initialize options parsing
+root_path = Path(__file__).parents[2]
+opt, args = parse_options(root_path, is_train=True)
+# set scale factor in network parameters
+upscale = opt['scale']
 
 
 @ARCH_REGISTRY.register()
@@ -20,7 +29,7 @@ class compact(nn.Module):
         act_type (str): Activation type, options: 'relu', 'prelu', 'leakyrelu'. Default: prelu.
     """
 
-    def __init__(self, num_in_ch=3, num_out_ch=3, num_feat=64, num_conv=16, upscale=4, act_type='prelu', **kwargs):
+    def __init__(self, num_in_ch=3, num_out_ch=3, num_feat=64, num_conv=16, upscale=upscale, act_type='prelu', **kwargs):
         super(compact, self).__init__()
         self.num_in_ch = num_in_ch
         self.num_out_ch = num_out_ch
@@ -28,6 +37,7 @@ class compact(nn.Module):
         self.num_conv = num_conv
         self.upscale = upscale
         self.act_type = act_type
+        self.opt = opt
 
         self.body = nn.ModuleList()
         # the first conv

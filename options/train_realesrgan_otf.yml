@@ -88,9 +88,8 @@ path:
 
 network_g:
   type: esrgan 
-#  scale: 2
-#  num_feat: 64
-#  num_block: 23
+  #num_feat: 64
+  #num_block: 23
 
 network_d:
   type: unet

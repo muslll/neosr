@@ -88,7 +88,6 @@ path:
 
 network_g:
   type: compact
-  #upscale: 2
 
 network_d:
   type: unet

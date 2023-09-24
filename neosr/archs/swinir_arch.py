@@ -1,15 +1,27 @@
 # Modified from https://github.com/JingyunLiang/SwinIR
 
 import math
+from pathlib import Path
+
 import torch
 import torch.utils.checkpoint as checkpoint
+
 from torch import nn
 from torch.nn.init import trunc_normal_
+
 from .arch_util import to_2tuple, DropPath
 from neosr.utils.registry import ARCH_REGISTRY
+from neosr.utils.options import parse_options
+
+
+# initialize options parsing
+root_path = Path(__file__).parents[2]
+opt, args = parse_options(root_path, is_train=True)
+# set scale factor in network parameters
+upscale = opt['scale']
+
 
 class Mlp(nn.Module):
-
     def __init__(self, in_features, hidden_features=None, out_features=None, act_layer=nn.GELU, drop=0.):
         super().__init__()
         out_features = out_features or in_features
@@ -739,7 +751,7 @@ class swinir(nn.Module):
                  ape=False,
                  patch_norm=True,
                  use_checkpoint=False,
-                 upscale=4,
+                 upscale=upscale,
                  img_range=1.,
                  upsampler='pixelshuffle',
                  resi_connection='1conv',

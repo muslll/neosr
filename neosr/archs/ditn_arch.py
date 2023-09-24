@@ -1,12 +1,23 @@
 
 import math
 import numbers
+from pathlib import Path
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from einops import rearrange
 
 from neosr.utils.registry import ARCH_REGISTRY
+from neosr.utils.options import parse_options
+
+
+# initialize options parsing
+root_path = Path(__file__).parents[2]
+opt, args = parse_options(root_path, is_train=True)
+# set scale factor in network parameters
+upscale = opt['scale']
+
 
 def default_conv(in_channels, out_channels, kernel_size, bias=True):
     return nn.Conv2d(
@@ -210,7 +221,7 @@ class ditn(nn.Module):
         bias = False,
         LayerNorm_type = 'WithBias',
         patch_size=8,
-        upscale=4,
+        upscale=upscale,
         **kwargs):
 
         super(ditn, self).__init__()

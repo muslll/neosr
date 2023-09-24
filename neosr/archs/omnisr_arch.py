@@ -1,13 +1,26 @@
 # Code from: https://github.com/Francis0625/Omni-SR
 
 import math
+from pathlib import Path
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
 from torch import einsum
 from einops import rearrange
 from einops.layers.torch import Rearrange, Reduce
-from ..utils.registry import ARCH_REGISTRY
+
+from neosr.utils.registry import ARCH_REGISTRY
+from neosr.utils.options import parse_options
+
+
+# initialize options parsing
+root_path = Path(__file__).parents[2]
+opt, args = parse_options(root_path, is_train=True)
+# set scale factor in network parameters
+upsampling = opt['scale']
+
 
 class CA_layer(nn.Module):
     def __init__(self, channel, reduction=16):
@@ -776,7 +789,6 @@ class OSA_Block(nn.Module):
                 Rearrange('b x y w1 w2 d -> b d (x w1) (y w2)'),
                 Conv_PreNormResidual(channel_num, Gated_Conv_FeedForward(dim = channel_num, dropout = dropout)),
 
-
                 # channel-like attention
                 Conv_PreNormResidual(channel_num, Channel_Attention(dim = channel_num, heads=4, dropout = dropout, window_size = window_size)),
                 Conv_PreNormResidual(channel_num, Gated_Conv_FeedForward(dim = channel_num, dropout = dropout)),
@@ -786,31 +798,22 @@ class OSA_Block(nn.Module):
                 Rearrange('b x y w1 w2 d -> b d (w1 x) (w2 y)'),
                 Conv_PreNormResidual(channel_num, Gated_Conv_FeedForward(dim = channel_num, dropout = dropout)),
 
-                
-
                 # channel-like attention
                 Conv_PreNormResidual(channel_num, Channel_Attention_grid(dim = channel_num, heads=4, dropout = dropout, window_size = window_size)),
                 Conv_PreNormResidual(channel_num, Gated_Conv_FeedForward(dim = channel_num, dropout = dropout)),
                 )
 
-
-
     def forward(self, x):
-
         out = self.layer(x)
         return out
 
 class OSAG(nn.Module):
-    def __init__(self, channel_num=64, bias = True, block_num=4,**kwargs):
+    def __init__(self, channel_num=64, bias=True, block_num=4, **kwargs):
         super(OSAG, self).__init__()
 
         ffn_bias    = kwargs.get("ffn_bias", False)
         window_size = kwargs.get("window_size", 0)
         pe          = kwargs.get("pe", False)
-
-        print("window_size: %d"%(window_size))
-        print('with_pe', pe)
-        print("ffn_bias: %d"%(ffn_bias))
 
         group_list = []
         for _ in range(block_num):
@@ -826,16 +829,25 @@ class OSAG(nn.Module):
         out = out + x
         return self.esa(out)
 
-class omnisr_net(nn.Module):
-    def __init__(self, num_in_ch=3, num_out_ch=3, num_feat=64, **kwargs):
-        super(omnisr_net, self).__init__()
+@ARCH_REGISTRY.register()
+class omnisr(nn.Module):
+    def __init__(self,
+        num_in_ch=3,
+        num_out_ch=3,
+        num_feat=64,
+        res_num=5,
+        block_num=1,
+        bias=True,
+        pe=True,
+        ffn_bias=True,
+        upsampling=upsampling,
+        **kwargs):
 
-        res_num     = kwargs["res_num"]
-        up_scale    = kwargs["upsampling"]
-        bias        = kwargs["bias"]
-
+        super(omnisr, self).__init__()
+        self.window_size = kwargs['window_size']
+        up_scale = upsampling
+        self.up_scale = up_scale
         residual_layer  = []
-        self.res_num    = res_num
 
         for _ in range(res_num):
             temp_res = OSAG(channel_num=num_feat,**kwargs)
@@ -852,8 +864,6 @@ class omnisr_net(nn.Module):
         #         n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
         #         m.weight.data.normal_(0, sqrt(2. / n))
 
-        self.window_size   = kwargs["window_size"]
-        self.up_scale = up_scale
     
     def check_image_size(self, x):
         _, _, h, w = x.size()
@@ -878,13 +888,3 @@ class omnisr_net(nn.Module):
         out = out[:, :, :H*self.up_scale, :W*self.up_scale]
         return  out
 
-@ARCH_REGISTRY.register()
-def omnisr(**kwargs):
-    return omnisr_net(
-            res_num=5,
-            block_num=1,
-            bias=True,
-            pe=True,
-            ffn_bias=True,
-            **kwargs
-            )
