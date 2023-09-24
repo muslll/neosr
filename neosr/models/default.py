@@ -299,11 +299,13 @@ class default():
                 max_norm = max(p.grad.data.norm(2) for p in parameters if p.grad is not None)
                 max_norm = max_norm.item()
             torch.nn.utils.clip_grad_norm_(self.net_d.parameters(), max_norm=max_norm)
-        
-            scaler.step(self.optimizer_d)                             
-            scaler.update()
+
+            scaler.step(self.optimizer_d)
 
         self.log_dict = self.reduce_loss_dict(loss_dict)
+
+        # update gradscaler
+        scaler.update()
 
     def update_learning_rate(self, current_iter, warmup_iter=-1):
         """Update learning rate.

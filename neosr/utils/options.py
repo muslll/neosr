@@ -115,7 +115,6 @@ def parse_options(root_path, is_train=True):
     # distributed settings
     if args.launcher == 'none':
         opt['dist'] = False
-        print('Disable distributed.', flush=True)
     else:
         opt['dist'] = True
         if args.launcher == 'slurm' and 'dist_params' in opt:

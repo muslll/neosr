@@ -3,7 +3,7 @@ from torch.utils import data
 from torchvision.transforms.functional import normalize
 
 from neosr.data.data_util import paired_paths_from_folder, paired_paths_from_lmdb
-from neosr.data.transforms import augment, paired_random_crop
+from neosr.data.transforms import basic_augment, paired_random_crop
 from neosr.utils import FileClient, bgr2ycbcr, imfrombytes, img2tensor
 from neosr.utils.registry import DATASET_REGISTRY
 
@@ -96,7 +96,7 @@ class paired(data.Dataset):
             img_gt, img_lq = paired_random_crop(
                 img_gt, img_lq, gt_size, scale, gt_path)
             # flip, rotation
-            img_gt, img_lq = augment(
+            img_gt, img_lq = basic_augment(
                 [img_gt, img_lq], self.opt['use_hflip'], self.opt['use_rot'])
 
         # color space transform
