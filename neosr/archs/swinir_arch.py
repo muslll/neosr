@@ -19,9 +19,6 @@ root_path = Path(__file__).parents[2]
 opt, args = parse_options(root_path, is_train=True)
 # set scale factor in network parameters
 upscale = opt['scale']
-# set img_size parameter
-gt_size = opt['datasets']['train']['gt_size']
-img_size = int(gt_size / upscale)
 
 
 class Mlp(nn.Module):
@@ -737,7 +734,7 @@ class swinir(nn.Module):
     """
 
     def __init__(self,
-                 img_size=img_size,
+                 img_size=32,
                  patch_size=1,
                  in_chans=3,
                  embed_dim=60,
@@ -986,6 +983,7 @@ if __name__ == '__main__':
 def swinir_small(**kwargs):
     return swinir(
             in_chans=3,
+            img_size=64,
             window_size=8,
             img_range=1.0,
             depths=[6, 6, 6, 6],
@@ -1001,6 +999,7 @@ def swinir_small(**kwargs):
 def swinir_medium(**kwargs):
     return swinir(
             in_chans=3,
+            img_size=48,
             window_size=8,
             img_range=1.0,
             depths=[6, 6, 6, 6, 6, 6],

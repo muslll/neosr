@@ -19,9 +19,7 @@ root_path = Path(__file__).parents[2]
 opt, args = parse_options(root_path, is_train=True)
 # set scale factor in network parameters
 upscale = opt['scale']
-# set img_size parameter
-gt_size = opt['datasets']['train']['gt_size']
-img_size = int(gt_size / upscale)
+
 
 class ChannelAttention(nn.Module):
     """Channel attention used in RCAN.
@@ -714,7 +712,7 @@ class hat(nn.Module):
     """
 
     def __init__(self,
-                 img_size=img_size,
+                 img_size=64,
                  patch_size=1,
                  in_chans=3,
                  embed_dim=96,
