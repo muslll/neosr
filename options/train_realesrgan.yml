@@ -64,13 +64,11 @@ train:
     lr: !!float 1e-4
     weight_decay: 0
     betas: [0.9, 0.99]
-    fused: true
   optim_d:
     type: adamw
     lr: !!float 1e-4
     weight_decay: 0
     betas: [0.9, 0.99]
-    fused: true
 
   scheduler:
     type: multisteplr

@@ -872,35 +872,10 @@ class dat(nn.Module):
         return x
 
 
-if __name__ == '__main__':
-    upscale = 1
-    height = 64
-    width = 64
-    model = dat(
-        upscale=2,
-        in_chans=3,
-        img_size=64,
-        img_range=1.,
-        depth=[6,6,6,6,6,6],
-        embed_dim=180,
-        num_heads=[6,6,6,6,6,6],
-        expansion_factor=2,
-        resi_connection='1conv',
-        split_size=[8,16],
-                ).cuda().eval()
-
-    print(height, width)
-
-    x = torch.randn((1, 3, height, width)).cuda()
-    x = model(x)
-
-    print(x.shape)
-
 @ARCH_REGISTRY.register()
 def dat_light(**kwargs):
     return dat(
             in_chans=3,
-            img_size=64,
             img_range=1.,
             depth=[18],
             embed_dim=60,
@@ -916,7 +891,6 @@ def dat_light(**kwargs):
 def dat_small(**kwargs):
     return dat(
             in_chans=3,
-            img_size=64,
             img_range=1.,
             split_size=[8,16],
             depth=[6,6,6,6,6,6],
@@ -931,7 +905,6 @@ def dat_small(**kwargs):
 def dat_medium(**kwargs):
     return dat(
             in_chans=3,
-            img_size=64,
             img_range=1.,
             split_size=[8,32],
             depth=[6,6,6,6,6,6],
@@ -946,7 +919,6 @@ def dat_medium(**kwargs):
 def dat_2(**kwargs):
     return dat(
             in_chans=3,
-            img_size=64,
             img_range=1.,
             split_size=[8,32],
             depth=[6,6,6,6,6,6],

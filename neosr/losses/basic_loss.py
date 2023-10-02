@@ -276,7 +276,7 @@ class focalfrequencyloss(nn.Module):
     def tensor2freq(self, x):
 
         # for amp dtype
-        if x.dtype == torch.float16:
+        if x.dtype is not torch.float32:
             x = x.to(torch.float32)
 
         # crop image patches

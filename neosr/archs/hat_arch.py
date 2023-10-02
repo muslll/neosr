@@ -961,7 +961,6 @@ class hat(nn.Module):
 def hat_s(**kwargs):
     return hat(
             in_chans=3,
-            img_size=64,
             window_size=16,
             compress_ratio=24,
             squeeze_factor=24,
@@ -981,7 +980,6 @@ def hat_s(**kwargs):
 def hat_m(**kwargs):
     return hat(
             in_chans=3,
-            img_size=64,
             window_size=16,
             compress_ratio=3,
             squeeze_factor=30,
@@ -1001,7 +999,6 @@ def hat_m(**kwargs):
 def hat_l(**kwargs):
     return hat(
             in_chans=3,
-            img_size=64,
             window_size=16,
             compress_ratio=3,
             squeeze_factor=30,
