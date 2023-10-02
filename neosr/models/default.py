@@ -223,7 +223,7 @@ class default():
         if self.opt['bfloat16'] is True:
             amp_dtype = torch.bfloat16
         
-        scaler = torch.cuda.amp.GradScaler(enabled=use_amp, init_scale=2.**11)
+        scaler = torch.cuda.amp.GradScaler(enabled=use_amp, init_scale=2**11)
 
         with torch.autocast(device_type='cuda', dtype=amp_dtype, enabled=use_amp):
             self.output = self.net_g(self.lq)
