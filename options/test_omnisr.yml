@@ -15,7 +15,6 @@ datasets:
 
 network_g:
   type: omnisr
-  upsampling: 4
   window_size: 8
 
 path:

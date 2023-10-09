@@ -15,8 +15,6 @@ datasets:
 
 network_g:
   type: ditn
-  #upscale: 2
-  #patch_size: 16
 
 path:
   pretrain_network_g: 'model.pth'

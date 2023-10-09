@@ -17,7 +17,6 @@ network_g:
   type: dat_light
   #type: dat_small
   #type: dat_medium
-  upscale: 4
 
 path:
   pretrain_network_g: 'model.pth'

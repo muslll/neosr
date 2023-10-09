@@ -16,7 +16,6 @@ datasets:
 network_g:
   type: swinir_small
   #type: swinir_medium
-  upscale: 4
 
 path:
   pretrain_network_g: 'model.pth'
