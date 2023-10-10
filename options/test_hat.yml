@@ -17,7 +17,6 @@ network_g:
   type: hat_s
   #type: hat_m
   #type: hat_l
-  upscale: 4
 
 path:
   pretrain_network_g: 'model.pth'

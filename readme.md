@@ -4,13 +4,13 @@
 
 ## installation
 
-Requires Python 3.11 and CUDA =>11.7
+Requires Python 3.11 and CUDA =>11.8
 
 ```
 git clone https://github.com/muslll/neosr
 cd neosr
 ```
-Install [Pytorch 2.0 and TorchVision](https://pytorch.org/get-started/locally/) (required).
+Install [Pytorch 2.1 and TorchVision](https://pytorch.org/get-started/locally/) (required).
 
 Then install other dependencies via `pip`:
 
@@ -22,9 +22,9 @@ Alternatively, use [**`poetry`**](https://python-poetry.org/docs/#installation) 
 
 ```
 poetry install
-poetry add torch@!=2.0.1 torchvision@!=0.15.2
+poetry add torch@latest torchvision@latest
 ```
-Note: You must to use `poetry shell` to enter the env after installation. Versions 2.0.1 and 0.15.2 of `torch` and `torchvision` were released without cuda support, once this problem is fixed you can use `poetry add torch@latest torchvision@latest` instead.
+Note: You must to use `poetry shell` to enter the env after installation.
 
 ## quick start
 
@@ -40,16 +40,17 @@ Please read the wiki [Configuration Walkthrough](https://github.com/muslll/neosr
 
 ### Supported archs:
 
-| arch                                                                                              | option                                 |
-|---------------------------------------------------------------------------------------------------|----------------------------------------|
-| [Real-ESRGAN](https://github.com/xinntao/Real-ESRGAN)                                             | `esrgan`                               |
-| [SRVGGNetCompact](https://github.com/XPixelGroup/BasicSR/blob/master/basicsr/archs/srvgg_arch.py) | `compact`                              |
-| [SwinIR](https://github.com/JingyunLiang/SwinIR)                                                  | `swinir_small`, `swinir_medium`        |
-| [HAT](https://github.com/XPixelGroup/HAT)                                                         | `hat_s`, `hat_m`, `hat_l`              |
-| [OmniSR](https://github.com/Francis0625/Omni-SR)                                                  | `omnisr`                               |
-| [SRFormer](https://github.com/HVision-NKU/SRFormer)                                               | `srformer_light`, `srformer_medium`    |
-| [DAT](https://github.com/zhengchen1999/dat)                                                       | `dat_light`, `dat_small`, `dat_medium`, `dat_2` |
-| [DITN](https://github.com/yongliuy/DITN)							    | `ditn`				     |
+| arch                                                                                              | option                                 		|
+|---------------------------------------------------------------------------------------------------|---------------------------------------------------|
+| [Real-ESRGAN](https://github.com/xinntao/Real-ESRGAN)                                             | `esrgan`                               		|
+| [SRVGGNetCompact](https://github.com/XPixelGroup/BasicSR/blob/master/basicsr/archs/srvgg_arch.py) | `compact`                              		|
+| [SwinIR](https://github.com/JingyunLiang/SwinIR)                                                  | `swinir_small`, `swinir_medium`        		|
+| [HAT](https://github.com/XPixelGroup/HAT)                                                         | `hat_s`, `hat_m`, `hat_l`              		|
+| [OmniSR](https://github.com/Francis0625/Omni-SR)                                                  | `omnisr`                               		|
+| [SRFormer](https://github.com/HVision-NKU/SRFormer)                                               | `srformer_light`, `srformer_medium`    		|
+| [DAT](https://github.com/zhengchen1999/dat)                                                       | `dat_light`, `dat_small`, `dat_medium`, `dat_2` 	|
+| [DITN](https://github.com/yongliuy/DITN)							    | `ditn`				     	      	|
+| [MDBN](https://github.com/thy960112/MDBN)							    | `mdbn`				     	      	|
 
 ### Supported Discriminators:
 
@@ -115,8 +116,14 @@ These datasets have been tiled and manually curated across multiple sources, inc
 
 *Note: these are not intended for use in academic research*.
 
+# resources
 
-# support
+- [OpenModelDB](https://openmodeldb.info/)
+- [chaiNNer](https://chainner.app/)
+- [Training Guide](https://github.com/Sirosky/Upscale-Hub/wiki/%F0%9F%93%88-Training-a-Model-in-NeoSR) from [@Sirosky](https://github.com/Sirosky) 
+- [Training Info](https://github.com/Kim2091/training-info) from [@Kim](https://github.com/Kim2091)
+
+# support me
 
 &#9749; Consider supporting me on [**KoFi**](https://ko-fi.com/muslll). &#9749;
 

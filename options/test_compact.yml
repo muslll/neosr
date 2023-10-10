@@ -15,9 +15,6 @@ datasets:
 
 network_g:
   type: compact
-#  upscale: 2
-#  num_feat: 64
-#  num_conv: 16
 
 path:
   pretrain_network_g: 'model.pth'
