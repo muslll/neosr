@@ -1,0 +1,123 @@
+
+name: train_lkdn_s_test
+model_type: default
+scale: 4
+num_gpu: 1
+use_amp: false
+bfloat16: false
+compile: false
+#manual_seed: 1024
+
+datasets:
+  train:
+    type: paired
+    dataroot_gt: "D:/nomos_uni/nomos_uni_gt.lmdb"
+    dataroot_lq: "D:/nomos_uni/nomos_uni_lq_4x.lmdb"
+    io_backend:
+      type: lmdb
+
+    gt_size: 128
+    batch_size: 6
+    use_hflip: true
+    use_rot: true
+    num_worker_per_gpu: 4
+    dataset_enlarge_ratio: 5
+
+  val:
+    name: val_1
+    type: paired 
+    dataroot_gt: 'D:/validation/4xLSDIR_Trimmed_val/HR'
+    dataroot_lq: 'D:/validation/4xLSDIR_Trimmed_val/LR'
+    io_backend:
+      type: disk
+val:
+ val_freq: 1000
+ save_img: true
+ metrics:
+   psnr:
+     type: calculate_psnr
+     crop_border: 4
+   ssim:
+     type: calculate_ssim
+     crop_border: 4
+
+path:
+  #pretrain_network_g: 'experiments/pretrain.pth'
+  #param_key_g: ~
+  #strict_load_g: false
+  resume_state: ~
+
+network_g:
+  type: lkdn_s
+
+network_d:
+  type: unet
+
+#print_network: true
+
+train:
+  optim_g:
+    type: adanlkdn
+    lr: !!float 8e-4
+    weight_decay: 0.02
+  optim_d:
+    type: adanlkdn
+    lr: !!float 1e-4
+    weight_decay: 0.02
+
+  scheduler:
+    type: multisteplr
+    milestones: [60000, 120000]
+    gamma: 0.5
+
+  total_iter: 120000
+  warmup_iter: -1  # no warm up
+
+  # losses
+  pixel_opt:
+    type: HuberLoss
+    loss_weight: 1.0
+  perceptual_opt:
+    type: PerceptualLoss
+    layer_weights:
+      'conv1_2': 0.1
+      'conv2_2': 0.1
+      'conv3_4': 1
+      'conv4_4': 1
+      'conv5_4': 1
+    perceptual_weight: 1.0
+    style_weight: 0
+    criterion: huber
+  gan_opt:
+    type: GANLoss
+    gan_type: vanilla
+    loss_weight: 0.1
+  color_opt:
+    type: colorloss
+    loss_weight: 1.0
+    criterion: huber
+  #ldl_opt:
+  #  type: HuberLoss
+  #  loss_weight: 1.0
+  #  reduction: mean
+  #ff_opt:
+  #  type: focalfrequencyloss
+  #  loss_weight: 0.5
+
+grad_clip:
+  use_agc: false
+  #eps: 1e-3
+  clip_factor: 0.06
+
+logger:
+  print_freq: 100
+  save_checkpoint_freq: 1000
+  use_tb_logger: true
+  #wandb:
+  #  project: ~
+  #  resume_id: ~
+
+# dist training settings
+#dist_params:
+#  backend: nccl
+#  port: 29500
