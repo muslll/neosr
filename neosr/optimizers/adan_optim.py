@@ -104,7 +104,7 @@ class AdanLKDN(Optimizer):
         super().__init__(params, defaults)
 
     def __setstate__(self, state):
-        super(Adan, self).__setstate__(state)
+        super(AdanLKDN, self).__setstate__(state)
         for group in self.param_groups:
             group.setdefault('no_prox', False)
 
