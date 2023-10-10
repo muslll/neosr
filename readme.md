@@ -134,5 +134,5 @@ This code was originally based on [BasicSR](https://github.com/XPixelGroup/Basic
 
 Thanks to [victorca25/traiNNer](https://github.com/victorca25/traiNNer), [styler00dollar/Colab-traiNNer](https://github.com/styler00dollar/Colab-traiNNer/) and [timm](https://github.com/huggingface/pytorch-image-models) for providing helpful insights into some problems.
 
-Thanks to contributors [@Phhofm](https://github.com/Phhofm), [@Sirosky](https://github.com/Sirosky) and [@terreiner](https://github.com/terrainer) for helping with tests and bug reporting. 
+Thanks to contributors [@Phhofm](https://github.com/Phhofm), [@Sirosky](https://github.com/Sirosky) and [@terrainer](https://github.com/terrainer) for helping with tests and bug reporting. 
 

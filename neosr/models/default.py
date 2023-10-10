@@ -159,9 +159,9 @@ class default():
             for optimizer in self.optimizers:
                 self.schedulers.append(torch.optim.lr_scheduler.MultiStepLR(
                     optimizer, **train_opt['scheduler']))
-        elif scheduler_type in {'CosineAnnealingLR', 'cosineannealinglr'}:
+        elif scheduler_type in {'CAWR', 'cawr'}:
             for optimizer in self.optimizers:
-                self.schedulers.append(torch.optim.lr_scheduler.CosineAnnealingLR(
+                self.schedulers.append(torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(
                     optimizer, **train_opt['scheduler']))
         else:
             raise NotImplementedError(
