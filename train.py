@@ -225,7 +225,7 @@ def train_pipeline(root_path):
         model.save(epoch=-1, current_iter=-1)  # -1 stands for the latest
 
     except KeyboardInterrupt:
-        logger.info('Interrupted, saving to latest.pth')
+        logger.info('Interrupted, saving latest models.')
         model.save(epoch=-1, current_iter=-1)
         sys.exit(0)
 

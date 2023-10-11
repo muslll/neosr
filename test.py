@@ -14,7 +14,6 @@ def test_pipeline(root_path):
 
     torch.set_default_device('cuda')
     torch.backends.cudnn.benchmark = True
-    # torch.backends.cudnn.deterministic = True
 
     # mkdir and initialize loggers
     make_exp_dirs(opt)
@@ -22,7 +21,6 @@ def test_pipeline(root_path):
                         f"test_{opt['name']}_{get_time_str()}.log")
     logger = get_root_logger(
         logger_name='neosr', log_level=logging.INFO, log_file=log_file)
-    logger.info(dict2str(opt))
 
     # create test dataset and dataloader
     test_loaders = []

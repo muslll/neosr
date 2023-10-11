@@ -17,10 +17,11 @@ network_g:
   type: dat_light
   #type: dat_small
   #type: dat_medium
+  #type: dat_2
 
 path:
   pretrain_network_g: 'model.pth'
-  #param_key_g: params_ema
+  #param_key_g: ~
 
 val:
   save_img: true

@@ -19,7 +19,7 @@ network_g:
 
 path:
   pretrain_network_g: 'model.pth'
-  #param_key_g: params_ema
+  #param_key_g: ~
 
 val:
   save_img: true
