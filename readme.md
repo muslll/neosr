@@ -24,7 +24,7 @@ Alternatively, use [**`poetry`**](https://python-poetry.org/docs/#installation) 
 poetry install
 poetry add torch@latest torchvision@latest
 ```
-Note: You must to use `poetry shell` to enter the env after installation.
+Note: You must use `poetry shell` to enter the env after installation.
 
 ## quick start
 

@@ -582,7 +582,7 @@ class default():
             finally:
                 retry -= 1
         if retry == 0:
-            logger.warning(f'Still cannot save {save_path}. Just ignore it.')
+            logger.warning(f'Still cannot save {save_path}.')
             raise IOError(f'Cannot save {save_path}.')
 
     def save(self, epoch, current_iter):
