@@ -163,6 +163,10 @@ class default():
             for optimizer in self.optimizers:
                 self.schedulers.append(torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(
                     optimizer, **train_opt['scheduler']))
+        elif scheduler_type in {'OneCycleLR', 'onecyclelr'}:
+            for optimizer in self.optimizers:
+                self.schedulers.append(torch.optim.lr_scheduler.OneCycleLR(
+                    optimizer, **train_opt['scheduler']))
         else:
             raise NotImplementedError(
                 f'Scheduler {scheduler_type} is not implemented yet.')
@@ -493,7 +497,10 @@ class default():
         Args:
             net (nn.Module)
         """
-        net = net.to(self.device, non_blocking=True)
+        if self.opt['use_amp'] is True:
+            net = net.to(self.device, non_blocking=True, memory_format=torch.channels_last)
+        else:
+            net = net.to(self.device, non_blocking=True)
 
         if self.opt['compile'] is True:
             net = torch.compile(net, mode="reduce-overhead") 
