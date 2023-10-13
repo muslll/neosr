@@ -455,10 +455,11 @@ class dctlsa(nn.Module):
 
         out_B = self.c(torch.cat([out_B1, out_B2, out_B3, out_B4, out_B5, out_B6], dim=1))
         # out_B = self.dctb(out_fea)
-        out_lr = self.LR_conv(out_B) + out_fea
-        # dropout as proposed in Reflash Dropout research
-        out_lr = self.dropout(out_lr)
 
+        # dropout as proposed in Reflash Dropout research
+        #out_B = self.dropout(out_B)
+
+        out_lr = self.LR_conv(out_B) + out_fea
         output = self.upsampler(out_lr)
 
         return output

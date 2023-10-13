@@ -49,8 +49,8 @@ path:
   resume_state: ~
 
 network_g:
-  type: hat_s
-  #type: hat_m
+  type: hat_m
+  #type: hat_s
   #type: hat_l
 
 network_d:
