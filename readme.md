@@ -50,7 +50,6 @@ Please read the wiki [Configuration Walkthrough](https://github.com/muslll/neosr
 | [SRFormer](https://github.com/HVision-NKU/SRFormer)                                               | `srformer_light`, `srformer_medium`    		|
 | [DAT](https://github.com/zhengchen1999/dat)                                                       | `dat_light`, `dat_small`, `dat_medium`, `dat_2` 	|
 | [DITN](https://github.com/yongliuy/DITN)							    | `ditn`				     	      	|
-| [MDBN](https://github.com/thy960112/MDBN)							    | `mdbn`				     	      	|
 
 ### Supported Discriminators:
 
