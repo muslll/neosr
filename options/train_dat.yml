@@ -57,8 +57,6 @@ network_g:
 network_d:
   type: unet
 
-#print_network: true
-
 train:
   optim_g:
     type: adamw

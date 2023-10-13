@@ -1,5 +1,5 @@
 
-name: train_compact
+name: train_dctlsa
 model_type: default
 scale: 4
 num_gpu: 1
@@ -49,7 +49,7 @@ path:
   resume_state: ~
 
 network_g:
-  type: compact 
+  type: dctlsa
 
 network_d:
   type: unet
@@ -57,12 +57,12 @@ network_d:
 train:
   optim_g:
     type: adamw
-    lr: !!float 1e-4
+    lr: !!float 5e-4
     weight_decay: 0
     betas: [0.9, 0.99]
   optim_d:
     type: adamw
-    lr: !!float 1e-4
+    lr: !!float 5e-4
     weight_decay: 0
     betas: [0.9, 0.99]
 
