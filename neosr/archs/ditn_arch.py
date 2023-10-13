@@ -7,6 +7,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from einops import rearrange
+from torchvision.ops import stochastic_depth
 
 from neosr.utils.registry import ARCH_REGISTRY
 from neosr.utils.options import parse_options
@@ -233,6 +234,8 @@ class ditn(nn.Module):
         self.UFONE = nn.Sequential(*UFONE_body)
 
         self.conv_after_body = nn.Conv2d(dim, dim, 3, 1, 1)
+        #drop out
+        self.dropout = nn.Dropout2d(p=0.5)
         self.upsample = UpsampleOneStep(upscale, dim, 3)
         self.dim = dim
         self.patch_sizes = [8, 8]
@@ -257,6 +260,11 @@ class ditn(nn.Module):
         local_features = self.UFONE(sft)
 
         local_features = self.conv_after_body(local_features)
+
+        #stochastic depth
+        #stochastic_depth(local_features, p=0.5, mode="batch")
+        #dropout
+        #local_features = self.dropout(local_features)
         out_dec_level1 = self.upsample(local_features + sft)
 
         return out_dec_level1[:, :, 0:old_h*self.scale, 0:old_w*self.scale]
