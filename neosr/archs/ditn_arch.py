@@ -259,12 +259,13 @@ class ditn(nn.Module):
 
         local_features = self.UFONE(sft)
 
-        local_features = self.conv_after_body(local_features)
-
         #stochastic depth
         #stochastic_depth(local_features, p=0.5, mode="batch")
         #dropout
         #local_features = self.dropout(local_features)
+
+        local_features = self.conv_after_body(local_features)
+
         out_dec_level1 = self.upsample(local_features + sft)
 
         return out_dec_level1[:, :, 0:old_h*self.scale, 0:old_w*self.scale]
