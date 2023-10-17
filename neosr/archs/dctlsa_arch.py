@@ -457,7 +457,7 @@ class dctlsa(nn.Module):
         # out_B = self.dctb(out_fea)
 
         # dropout as proposed in Reflash Dropout research
-        #out_B = self.dropout(out_B)
+        out_B = self.dropout(out_B)
 
         out_lr = self.LR_conv(out_B) + out_fea
         output = self.upsampler(out_lr)

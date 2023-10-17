@@ -57,6 +57,8 @@ Please read the wiki [Configuration Walkthrough](https://github.com/muslll/neosr
 | net                               				  | option 		        |
 |-----------------------------------------------------------------|-----------------------------|
 | U-Net SN 							  | `unet` 		        |
+| [ELU-Net](https://github.com/FrexG/ELU-Net-pytorch) with SN	  | `elunet`			|
+| [A2-FPN](https://github.com/lironui/A2-FPN)			  | `a2fpn`			|
 
 ### Supported Optimizers:
 
