@@ -503,7 +503,7 @@ class default():
             net = net.to(self.device, non_blocking=True)
 
         if self.opt['compile'] is True:
-            net = torch.compile(net, mode="reduce-overhead") 
+            net = torch.compile(net)
 
         if self.opt['dist']:
             find_unused_parameters = self.opt.get(

@@ -19,5 +19,4 @@
 | [`DiffJPEG`](https://github.com/mlomnitz/DiffJPEG)                                                  | [MIT](https://github.com/mlomnitz/DiffJPEG/blob/master/LICENSE)                       |
 | `DropPath` from [`timm`](https://github.com/huggingface/pytorch-image-models)                       | [Apache 2.0](https://github.com/huggingface/pytorch-image-models/blob/main/LICENSE)   |
 | [`DCTLSA`](https://github.com/zengkun301/DCTLSA)						      | Unknown										      | 
-| [`ELU-Net`](https://github.com/FrexG/ELU-Net-pytorch)						      | Unknown										      |
 | [`A2-FPN`](https://github.com/lironui/A2-FPN)							      | [GPLv3](https://github.com/lironui/A2-FPN/blob/main/LICENSE)			      |	
