@@ -163,9 +163,9 @@ class default():
             for optimizer in self.optimizers:
                 self.schedulers.append(torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(
                     optimizer, **train_opt['scheduler']))
-        elif scheduler_type in {'OneCycleLR', 'onecyclelr'}:
+        elif scheduler_type in {'CosineAnnealing', 'cosineannealing'}:
             for optimizer in self.optimizers:
-                self.schedulers.append(torch.optim.lr_scheduler.OneCycleLR(
+                self.schedulers.append(torch.optim.lr_scheduler.CosineAnnealingLR(
                     optimizer, **train_opt['scheduler']))
         else:
             raise NotImplementedError(
