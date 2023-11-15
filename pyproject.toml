@@ -8,7 +8,6 @@ readme = "readme.md"
 
 [tool.poetry.dependencies]
 python = "^3.11,<3.12"
-opencv-python = "^4.8.0.74"
 numpy = "^1.25.2"
 lmdb = "^1.4.1"
 einops = "^0.6.1"
@@ -17,6 +16,7 @@ scipy = "^1.11.1"
 PyYAML = "^6.0.1"
 tb-nightly = "^2.14.0a20230802"
 tqdm = "^4.65.0"
+opencv-python-headless = "^4.8.1.78"
 
 [tool.ruff]
 select = ["E", "F", "B", "NPY"]
