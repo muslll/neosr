@@ -51,6 +51,7 @@ Please read the wiki [Configuration Walkthrough](https://github.com/muslll/neosr
 | [DAT](https://github.com/zhengchen1999/dat)                                                       | `dat_light`, `dat_small`, `dat_medium`, `dat_2` 	|
 | [DITN](https://github.com/yongliuy/DITN)							    | `ditn`				     	      	|
 | [DCTLSA](https://github.com/zengkun301/DCTLSA)						    | `dctlsa`						|
+| [SPAN](https://github.com/hongyuanyu/SPAN)							    | `span`						|
 
 ### Supported Discriminators:
 

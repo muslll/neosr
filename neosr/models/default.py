@@ -590,7 +590,7 @@ class default():
                 retry -= 1
         if retry == 0:
             logger.warning(f'Still cannot save {save_path}.')
-            #raise IOError(f'Cannot save {save_path}.')
+            raise IOError(f'Cannot save {save_path}.')
 
     def save(self, epoch, current_iter):
         """Save networks and training state."""
@@ -709,7 +709,7 @@ class default():
             if retry == 0:
                 logger.warning(
                     f'Still cannot save {save_path}. Just ignore it.')
-                # raise IOError(f'Cannot save {save_path}.')
+                raise IOError(f'Cannot save {save_path}.')
 
     def resume_training(self, resume_state):
         """Reload the optimizers and schedulers for resumed training.
