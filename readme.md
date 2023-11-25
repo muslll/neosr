@@ -117,6 +117,12 @@ These datasets have been tiled and manually curated across multiple sources, inc
 
 *Note: these are not intended for use in academic research*.
 
+### community datasets
+These are datasets produced by others that you may want to use with neosr. More info for most of these can be found in the [Enhance Everything discord server](https://discord.gg/cpAUpDK)
+| dataset                  | num images       | meta_info                                                                                                    | download                                                                                             | sha256                                                           |
+|--------------------------|------------------|--------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------|------------------------------------------------------------------|
+| Kim2091's 8k Dataset V2  | 672 (7680x4320px) |  | [GDrive (33.5GB)](https://drive.google.com/drive/folders/1z6-UFJPciU5ysTaRXUPTfC9QrqW517G6?usp=drive_link) |  |
+
 # resources
 
 - [OpenModelDB](https://openmodeldb.info/)
