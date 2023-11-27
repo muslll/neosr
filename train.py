@@ -101,6 +101,20 @@ def train_pipeline(root_path):
     opt, args = parse_options(root_path, is_train=True)
     opt['root_path'] = root_path
 
+    # Process Priority for Windows
+    try:
+        sys.getwindowsversion()
+    except AttributeError:
+        isWindows = False
+    else:
+        isWindows = True
+
+    if isWindows:
+        import win32api, win32process, win32con
+        pid = win32api.GetCurrentProcessId()
+        handle = win32api.OpenProcess(win32con.PROCESS_ALL_ACCESS, True, pid)
+        win32process.SetPriorityClass(handle, win32process.HIGH_PRIORITY_CLASS)
+
     # NOTE: temporary workaround because otf won't work if tensors are forced to cuda
     if 'paired' in opt['datasets']['train'].get('type'):
         torch.set_default_device('cuda')
