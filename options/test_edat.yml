@@ -1,0 +1,27 @@
+# Results will be saved to neosr/experiments/results/
+name: test_edat
+model_type: default
+scale: 4
+num_gpu: 1
+use_amp: false
+compile: false
+
+datasets:
+  test_1:  
+    name: val_1
+    type: single
+    dataroot_lq: 'datasets/val/'
+    io_backend:
+      type: disk
+
+network_g:
+  type: edat
+  #type: edat_light
+
+path:
+  pretrain_network_g: 'model.pth'
+  #param_key_g: ~
+
+val:
+  save_img: true
+  suffix: ~
