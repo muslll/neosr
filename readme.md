@@ -53,6 +53,13 @@ Please read the wiki [Configuration Walkthrough](https://github.com/muslll/neosr
 | [DCTLSA](https://github.com/zengkun301/DCTLSA)						    | `dctlsa`						|
 | [SPAN](https://github.com/hongyuanyu/SPAN)							    | `span`						|
 
+#### Under Testing
+
+| arch                         		       | option             		|
+|----------------------------------------------|--------------------------------|
+| [NLSAN](https://github.com/zengkun301/NLSAN) | `nlsan_medium`, `nlsan_light`  |
+
+
 ### Supported Discriminators:
 
 | net                               				  | option 		        |

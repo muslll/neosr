@@ -99,16 +99,55 @@ def _postprocess_yml_value(value):
 
 
 def parse_options(root_path, is_train=True):
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-opt', type=str, required=True,
+    parser = argparse.ArgumentParser(prog='neosr',
+                        usage=argparse.SUPPRESS,
+                        description='''-------- neosr command-line options --------''')
+
+    parser._optionals.title = 'training and inference'
+    
+    parser.add_argument('-opt', type=str, required=False,
                         help='Path to option YAML file.')
-    parser.add_argument(
-        '--launcher', choices=['none', 'pytorch', 'slurm'], default='none', help='job launcher')
+
+    parser.add_argument( '--launcher', choices=['none', 'pytorch', 'slurm'], default='none',
+                        help='job launcher')
+    
     parser.add_argument('--auto_resume', action='store_true', default=False)
+
     parser.add_argument('--debug', action='store_true')
+
     parser.add_argument('--local_rank', type=int, default=0)
-    parser.add_argument(
-        '--force_yml', nargs='+', default=None, help='Force to update yml files. Examples: train:total_iter=200000')
+
+    parser.add_argument('--force_yml', nargs='+', default=None,
+                        help='Force to update yml files. Examples: train:total_iter=200000')
+
+    '''
+    # For ONNX conversion
+   
+    group = parser.add_argument_group('onnx conversion')
+
+    group.add_argument('-i', '--input', type=str, required=False,
+                        help='Input Pytorch model path.')
+
+    group.add_argument('-net', '--network', type=str,
+                        required=False, help='Generator network.')
+
+    group.add_argument('-s', '--scale', type=int,
+                        help='Model scale ratio.', default=4)
+
+    group.add_argument('-opset', '--opset', type=int,
+                        help='ONNX opset. (default: 17)', default=17)
+
+    group.add_argument('-fp16', '--fp16' , action='store_true',
+                        help='Enable half-precision. (default: false)', default=False)
+
+    group.add_argument('-key', '--param_key' , type=str,
+                        help='Parameters key', default='params')
+
+    group.add_argument('-o', '--output', type=str, required=False,
+                        help='Output ONNX model path.', default=root_path)
+    '''
+
+
     args = parser.parse_args()
 
     # parse yml to dict

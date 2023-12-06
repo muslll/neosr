@@ -1,0 +1,159 @@
+
+name: train_nlsan_otf
+model_type: otf
+scale: 4
+num_gpu: 1
+use_amp: false
+bfloat16: false
+compile: false
+#manual_seed: 1024
+
+gt_size: 128
+queue_size: 180
+
+datasets:
+  train:
+    type: otf
+    dataroot_gt: 'datasets/gt/'
+    #meta_info: 'datasets/meta_info.txt'
+    io_backend:
+      type: disk
+
+    batch_size: 6
+    use_hflip: true
+    use_rot: true
+    num_worker_per_gpu: 4
+    dataset_enlarge_ratio: 5
+
+    blur_kernel_size: 7
+    kernel_list: ["iso", "aniso", "generalized_iso", "generalized_aniso", "plateau_iso", "plateau_aniso"]
+    kernel_prob: [0.45, 0.25, 0.12, 0.03, 0.12, 0.03]
+    sinc_prob: 0.1
+    blur_sigma: [0.2, 3]
+    betag_range: [0.5, 4]
+    betap_range: [1, 2]
+
+    blur_kernel_size2: 9
+    kernel_list2: ["iso", "aniso", "generalized_iso", "generalized_aniso", "plateau_iso", "plateau_aniso"]
+    kernel_prob2: [0.45, 0.25, 0.12, 0.03, 0.12, 0.03]
+    sinc_prob2: 0.1
+    blur_sigma2: [0.2, 1.5]
+    betag_range2: [0.5, 4]
+    betap_range2: [1, 2]
+
+    final_sinc_prob: 0.8
+
+#  val:
+#    name: val_1
+#    type: paired
+#    dataroot_gt: 'datasets/val/gt/'
+#    dataroot_lq: 'datasets/val/lq/'
+#    io_backend:
+#      type: disk
+
+#val:
+#  val_freq: 1000
+#  save_img: true
+#  metrics:
+#    psnr:
+#      type: calculate_psnr
+#      crop_border: 4
+#    ssim:
+#      type: calculate_ssim
+#      crop_border: 4
+
+resize_prob: [0.3, 0.4, 0.3] # up, down, keep
+resize_range: [0.5, 1.5]
+gaussian_noise_prob: 0.2
+noise_range: [0, 4]
+poisson_scale_range: [0.05, 0.5]
+gray_noise_prob: 0.1
+jpeg_range: [70, 95]
+
+# the second degradation process
+second_blur_prob: 0.8
+resize_prob2: [0.3, 0.4, 0.3] # up, down, keep
+resize_range2: [0.3, 1.5]
+gaussian_noise_prob2: 0.2
+noise_range2: [0, 4]
+poisson_scale_range2: [0.05, 0.25]
+gray_noise_prob2: 0.1
+jpeg_range2: [60, 95]
+
+path:
+  #pretrain_network_g: 'experiments/pretrain.pth'
+  #param_key_g: ~
+  #strict_load_g: false
+  resume_state: ~
+
+network_g:
+  type: nlsan_light
+  #type: nlsan_medium
+  #window_size: 16
+
+network_d:
+  type: unet
+
+train:
+  optim_g:
+    type: adamw
+    lr: !!float 1e-4
+    weight_decay: 0
+    betas: [0.9, 0.99]
+  optim_d:
+    type: adamw
+    lr: !!float 1e-4
+    weight_decay: 0
+    betas: [0.9, 0.99]
+
+  scheduler:
+    type: multisteplr
+    milestones: [60000, 120000]
+    gamma: 0.5
+
+  total_iter: 500000
+  warmup_iter: -1 # no warm up
+
+  # losses
+  pixel_opt:
+    type: HuberLoss
+    loss_weight: 1.0
+  perceptual_opt:
+    type: PerceptualLoss
+    layer_weights:
+      'conv1_2': 0.1
+      'conv2_2': 0.1
+      'conv3_4': 1
+      'conv4_4': 1
+      'conv5_4': 1
+    perceptual_weight: 1.0
+    style_weight: 0
+    criterion: huber
+  gan_opt:
+    type: GANLoss
+    gan_type: vanilla
+    loss_weight: 0.1
+  color_opt:
+    type: colorloss
+    loss_weight: 1.0
+    criterion: huber
+  #ldl_opt:
+  #  type: HuberLoss
+  #  loss_weight: 1.0
+  #  reduction: mean
+  #ff_opt:
+  #  type: focalfrequencyloss
+  #  loss_weight: 0.5
+
+logger:
+  print_freq: 100
+  save_checkpoint_freq: 1000
+  use_tb_logger: true
+  #wandb:
+  #  project: ~
+  #  resume_id: ~
+
+# dist training settings
+#dist_params:
+#  backend: nccl
+#  port: 29500

@@ -21,3 +21,4 @@
 | [`DCTLSA`](https://github.com/zengkun301/DCTLSA)						      | Unknown										      | 
 | [`A2-FPN`](https://github.com/lironui/A2-FPN)							      | [GPLv3](https://github.com/lironui/A2-FPN/blob/main/LICENSE)			      |	
 | [`SPAN`](https://github.com/hongyuanyu/SPAN)							      | [Apache 2.0](https://github.com/hongyuanyu/SPAN/blob/main/LICENSE.txt)		      |
+| [`NLSAN`](https://github.com/zengkun301/NLSAN)						      | [MIT](https://github.com/zengkun301/NLSAN/blob/main/LICENSE)			      | 
