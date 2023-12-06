@@ -58,6 +58,7 @@ Please read the wiki [Configuration Walkthrough](https://github.com/muslll/neosr
 | arch                         		       | option             		|
 |----------------------------------------------|--------------------------------|
 | [NLSAN](https://github.com/zengkun301/NLSAN) | `nlsan_medium`, `nlsan_light`  |
+| [DWT](https://github.com/soobin419/DWT)      | `dwt`				|
 
 
 ### Supported Discriminators:
