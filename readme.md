@@ -55,11 +55,12 @@ Please read the wiki [Configuration Walkthrough](https://github.com/muslll/neosr
 
 #### Under Testing
 
-| arch                         		       | option             		|
-|----------------------------------------------|--------------------------------|
-| [NLSAN](https://github.com/zengkun301/NLSAN) | `nlsan_medium`, `nlsan_light`  |
-| [DWT](https://github.com/soobin419/DWT)      | `dwt`				|
-| [EDAT](https://github.com/soobin419/EDAT)    | `edat`, `edat_light`		|
+| arch                         		          | option             		   |
+|-------------------------------------------------|--------------------------------|
+| [NLSAN](https://github.com/zengkun301/NLSAN)    | `nlsan_medium`, `nlsan_light`  |
+| [DWT](https://github.com/soobin419/DWT)         | `dwt`			   |
+| [EDAT](https://github.com/soobin419/EDAT)       | `edat`, `edat_light`	   |
+| [CRAFT](https://github.com/AVC2-UESTC/CRAFT-SR) | `craft`			   |
 
 
 ### Supported Discriminators:

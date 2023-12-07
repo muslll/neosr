@@ -24,3 +24,4 @@
 | [`NLSAN`](https://github.com/zengkun301/NLSAN)						      | [MIT](https://github.com/zengkun301/NLSAN/blob/main/LICENSE)			      | 
 | [`DWT`](https://github.com/soobin419/DWT)							      | [Apache 2.0](https://github.com/soobin419/DWT/blob/main/LICENSE)		      |
 | [`EDAT`](https://github.com/soobin419/EDAT)							      | [Apache 2.0](https://github.com/soobin419/EDAT/blob/main/LICENSE)		      |
+| [`CRAFT`](https://github.com/AVC2-UESTC/CRAFT-SR)						      | [Apache 2.0](https://github.com/AVC2-UESTC/CRAFT-SR/blob/main/LICENSE.txt)	      |
