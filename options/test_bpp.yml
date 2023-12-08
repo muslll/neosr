@@ -16,6 +16,7 @@ datasets:
 
 network_g:
   type: bpp
+  #type: bpp_l
 
 path:
   pretrain_network_g: 'model.pth'
