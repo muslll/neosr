@@ -61,7 +61,6 @@ Please read the wiki [Configuration Walkthrough](https://github.com/muslll/neosr
 | [DWT](https://github.com/soobin419/DWT)         				  | `dwt`			   |
 | [EDAT](https://github.com/soobin419/EDAT)       				  | `edat`, `edat_light`	   |
 | [CRAFT](https://github.com/AVC2-UESTC/CRAFT-SR) 				  | `craft`			   |
-| [Bicubic++](https://github.com/aselsan-research-imaging-team/bicubic-plusplus)  | `bpp`, `bpp_l`		   |
 
 
 ### Supported Discriminators:
