@@ -108,10 +108,12 @@ class otf(data.Dataset):
         while retry > 0:
             try:
                 img_bytes = self.file_client.get(gt_path, 'gt')
+                if img_bytes is None:
+                    raise ValueError(f'No data returned from path: {gt_path}')
             except (IOError, OSError) as e:
                 logger = get_root_logger()
                 logger.warn(
-                    f'File client error: {e}, remaining retry times: {retry - 1}')
+                    f'File client error: {e} in path {gt_path}, remaining retry times: {retry - 1}')
                 # change another file to read
                 index = random.randint(0, self.__len__())
                 gt_path = self.paths[index]

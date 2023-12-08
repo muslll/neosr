@@ -4,7 +4,7 @@ from torchvision.transforms.functional import normalize
 
 from neosr.data.data_util import paired_paths_from_folder, paired_paths_from_lmdb
 from neosr.data.transforms import basic_augment, paired_random_crop
-from neosr.utils import FileClient, bgr2ycbcr, imfrombytes, img2tensor
+from neosr.utils import get_root_logger, FileClient, bgr2ycbcr, imfrombytes, img2tensor
 from neosr.utils.registry import DATASET_REGISTRY
 
 
@@ -88,6 +88,24 @@ class paired(data.Dataset):
         lq_path = self.paths[index]['lq_path']
         img_bytes = self.file_client.get(lq_path, 'lq')
         img_lq = imfrombytes(img_bytes, float32=True)
+
+        # avoid errors caused by high latency in reading files
+        retry = 3
+        while retry > 0:
+            try:
+                if img_bytes is None:
+                    raise ValueError(f'No data returned from path: {gt_path}, {lq_path}')
+            except (IOError, OSError) as e:
+                logger = get_root_logger()
+                logger.warn(f'File client error: {e} in paths {gt_path}, {lq_path}, remaining retry times: {retry - 1}')
+                # change another file to read
+                index = random.randint(0, self.__len__())
+                gt_path = gt_path[index]
+                time.sleep(1)  # sleep 1s for occasional server congestion
+            else:
+                break
+            finally:
+                retry -= 1
 
         # augmentation for training
         if self.opt['phase'] == 'train':
