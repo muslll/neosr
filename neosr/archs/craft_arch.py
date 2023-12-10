@@ -159,12 +159,14 @@ class Attention_regular(nn.Module):
         B, L, C = q.shape
         assert L == H * W, "flatten img_tokens has wrong size"
 
-        self.N = L//(self.H_sp * self.W_sp)
+        #self.N = L//(self.H_sp * self.W_sp)
+
         # partition the q,k,v, image to window
         q = self.im2win(q, H, W)
         k = self.im2win(k, H, W)
         v = self.im2win(v, H, W)
 
+        '''
         q = q * self.scale
         attn = (q @ k.transpose(-2, -1))  # B head N C @ B head C N --> B head N N
 
@@ -184,9 +186,17 @@ class Attention_regular(nn.Module):
             attn = attn.view(B, nW, self.num_heads, N, N) + mask.unsqueeze(1).unsqueeze(0)
             attn = attn.view(-1, self.num_heads, N, N)
         attn = self.softmax(attn)
+        '''
 
+        # flash attention
+        x = torch.nn.functional.scaled_dot_product_attention(q, k, v, attn_mask=mask, scale=self.scale)
+        x = x.transpose(1, 2).reshape(-1, self.H_sp* self.W_sp, C)
+
+        '''
+        # original
         x = (attn @ v)
         x = x.transpose(1, 2).reshape(-1, self.H_sp* self.W_sp, C)  # B head N N @ B head N C
+        '''
 
         # merge the window, window to image
         x = windows2img(x, self.H_sp, self.W_sp, H, W)  # B H' W' C
@@ -353,6 +363,7 @@ class Attention(nn.Module):
         attn = (q @ k.transpose(-2, -1)) * self.temperature
         attn = self.softmax(attn)
         out = (attn @ v)
+
         return out
 
     def forward(self, low, high):
