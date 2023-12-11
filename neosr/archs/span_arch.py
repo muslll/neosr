@@ -3,17 +3,20 @@ from pathlib import Path
 
 import torch
 import torch.nn.functional as F
-from torch import nn as nn
+from torch import nn
 
 from neosr.utils.registry import ARCH_REGISTRY
 from neosr.utils.options import parse_options
-
 
 # initialize options parsing
 root_path = Path(__file__).parents[2]
 opt, args = parse_options(root_path, is_train=True)
 # set scale factor in network parameters
 upscale = opt['scale']
+# set phase to training mode
+for phase in opt['datasets']:
+    if 'train' in phase:
+        training = True
 
 
 def _make_pair(value):
@@ -114,6 +117,7 @@ class Conv3XC(nn.Module):
         self.stride = s
         self.has_relu = relu
         gain = gain1
+        self.training = training
 
         self.sk = nn.Conv2d(in_channels=c_in, out_channels=c_out, kernel_size=1, padding=0, stride=s, bias=bias)
         self.conv = nn.Sequential(
@@ -122,11 +126,50 @@ class Conv3XC(nn.Module):
             nn.Conv2d(in_channels=c_out * gain, out_channels=c_out, kernel_size=1, padding=0, bias=bias),
         )
 
+        self.eval_conv = nn.Conv2d(in_channels=c_in, out_channels=c_out, kernel_size=3, padding=1, stride=s, bias=bias)
+
+        if self.training is False:
+            self.eval_conv.weight.requires_grad = False
+            self.eval_conv.bias.requires_grad = False
+            self.update_params()
+
+    def update_params(self):
+        w1 = self.conv[0].weight.data.clone().detach()
+        b1 = self.conv[0].bias.data.clone().detach()
+        w2 = self.conv[1].weight.data.clone().detach()
+        b2 = self.conv[1].bias.data.clone().detach()
+        w3 = self.conv[2].weight.data.clone().detach()
+        b3 = self.conv[2].bias.data.clone().detach()
+
+        w = F.conv2d(w1.flip(2, 3).permute(1, 0, 2, 3), w2, padding=2, stride=1).flip(2, 3).permute(1, 0, 2, 3)
+        b = (w2 * b1.reshape(1, -1, 1, 1)).sum((1, 2, 3)) + b2
+
+        self.weight_concat = F.conv2d(w.flip(2, 3).permute(1, 0, 2, 3), w3, padding=0, stride=1).flip(2, 3).permute(1, 0, 2, 3)
+        self.bias_concat = (w3 * b.reshape(1, -1, 1, 1)).sum((1, 2, 3)) + b3
+
+        sk_w = self.sk.weight.data.clone().detach()
+        sk_b = self.sk.bias.data.clone().detach()
+        target_kernel_size = 3
+
+        H_pixels_to_pad = (target_kernel_size - 1) // 2
+        W_pixels_to_pad = (target_kernel_size - 1) // 2
+        sk_w = F.pad(sk_w, [H_pixels_to_pad, H_pixels_to_pad, W_pixels_to_pad, W_pixels_to_pad])
+
+        self.weight_concat = self.weight_concat + sk_w
+        self.bias_concat = self.bias_concat + sk_b
+
+        self.eval_conv.weight.data = self.weight_concat
+        self.eval_conv.bias.data = self.bias_concat
+
 
     def forward(self, x):
-        pad = 1
-        x_pad = F.pad(x, (pad, pad, pad, pad), "constant", 0)
-        out = self.conv(x_pad) + self.sk(x)
+        if self.training:
+            pad = 1
+            x_pad = F.pad(x, (pad, pad, pad, pad), "constant", 0)
+            out = self.conv(x_pad) + self.sk(x)
+        else:
+            self.update_params()
+            out = self.eval_conv(x)
 
         if self.has_relu:
             out = F.leaky_relu(out, negative_slope=0.05)
@@ -168,8 +211,7 @@ class SPAB(nn.Module):
 @ARCH_REGISTRY.register()
 class span(nn.Module):
     """
-    Residual Local Feature Network (RLFN)
-    Model definition of RLFN in NTIRE 2022 Efficient SR Challenge
+    Swift Parameter-free Attention Network for Efficient Super-Resolution
     """
 
     def __init__(self,
