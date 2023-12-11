@@ -1,6 +1,7 @@
 # Code adapted from: https://github.com/Francis0625/Omni-SR
 
 import math
+from pathlib import Path
 
 import torch
 import torch.nn as nn
@@ -11,6 +12,13 @@ from einops import rearrange
 from einops.layers.torch import Rearrange, Reduce
 
 from ..utils.registry import ARCH_REGISTRY
+from ..utils.options import parse_options
+
+
+# set phase to training mode
+for phase in opt['datasets']:
+    if 'train' in phase:
+        self.training = True
 
 
 class CA_layer(nn.Module):
