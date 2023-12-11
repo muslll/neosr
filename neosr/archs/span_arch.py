@@ -17,6 +17,8 @@ upscale = opt['scale']
 for phase in opt['datasets']:
     if 'train' in phase:
         training = True
+    else:
+        training = False
 
 
 def _make_pair(value):
