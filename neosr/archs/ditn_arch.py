@@ -1,23 +1,16 @@
 
 import math
 import numbers
-from pathlib import Path
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from einops import rearrange
-from torchvision.ops import stochastic_depth
 
 from neosr.utils.registry import ARCH_REGISTRY
-from neosr.utils.options import parse_options
+from .arch_util import net_opt
 
-
-# initialize options parsing
-root_path = Path(__file__).parents[2]
-opt, args = parse_options(root_path, is_train=True)
-# set scale factor in network parameters
-upscale = opt['scale']
+upscale, training = net_opt()
 
 
 def default_conv(in_channels, out_channels, kernel_size, bias=True):
@@ -259,8 +252,6 @@ class ditn(nn.Module):
 
         local_features = self.UFONE(sft)
 
-        #stochastic depth
-        #stochastic_depth(local_features, p=0.5, mode="batch")
         #dropout
         #local_features = self.dropout(local_features)
 

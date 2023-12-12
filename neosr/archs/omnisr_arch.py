@@ -1,7 +1,5 @@
-# Code adapted from: https://github.com/Francis0625/Omni-SR
 
 import math
-from pathlib import Path
 
 import torch
 import torch.nn as nn
@@ -12,15 +10,9 @@ from einops import rearrange
 from einops.layers.torch import Rearrange, Reduce
 
 from ..utils.registry import ARCH_REGISTRY
-from ..utils.options import parse_options
+from .arch_util import net_opt
 
-# initialize options parsing
-root_path = Path(__file__).parents[2]
-opt, args = parse_options(root_path, is_train=True)
-# set phase to training mode
-for phase in opt['datasets']:
-    if 'train' in phase:
-        training = True
+upscale, training = net_opt()
 
 
 class CA_layer(nn.Module):

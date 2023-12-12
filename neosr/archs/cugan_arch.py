@@ -1,19 +1,12 @@
 
-from pathlib import Path
-
 import torch
 from torch import nn as nn
 from torch.nn import functional as F
 
 from neosr.utils.registry import ARCH_REGISTRY
-from neosr.utils.options import parse_options
+from .arch_util import net_opt
 
-
-# initialize options parsing
-root_path = Path(__file__).parents[2]
-opt, args = parse_options(root_path, is_train=True)
-# set scale factor in network parameters
-upscale = opt['scale']
+upscale, training = net_opt()
 
 
 class SEBlock(nn.Module):

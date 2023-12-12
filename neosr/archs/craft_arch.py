@@ -1,22 +1,15 @@
 
-from pathlib import Path
-
+import numbers
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import numbers
 
 from torch.nn.init import trunc_normal_
 from einops import rearrange
 from neosr.utils.registry import ARCH_REGISTRY
-from neosr.utils.options import parse_options
+from .arch_util import net_opt
 
-
-# initialize options parsing
-root_path = Path(__file__).parents[2]
-opt, args = parse_options(root_path, is_train=True)
-# set scale factor in network parameters
-upscale = opt['scale']
+upscale, training = net_opt()
 
 
 def img2windows(img, H_sp, W_sp):

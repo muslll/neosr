@@ -1,7 +1,5 @@
-# Modified from https://github.com/JingyunLiang/SwinIR
 
 import math
-from pathlib import Path
 
 import torch
 import torch.utils.checkpoint as checkpoint
@@ -9,16 +7,10 @@ import torch.utils.checkpoint as checkpoint
 from torch import nn
 from torch.nn.init import trunc_normal_
 
-from .arch_util import to_2tuple, DropPath
 from neosr.utils.registry import ARCH_REGISTRY
-from neosr.utils.options import parse_options
+from .arch_util import to_2tuple, DropPath, net_opt
 
-
-# initialize options parsing
-root_path = Path(__file__).parents[2]
-opt, args = parse_options(root_path, is_train=True)
-# set scale factor in network parameters
-upscale = opt['scale']
+upscale, training = net_opt()
 
 
 class Mlp(nn.Module):

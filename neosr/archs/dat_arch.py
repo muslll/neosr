@@ -1,7 +1,5 @@
-# Code from: https://github.com/zhengchen1999/DAT
 
 import math
-from pathlib import Path
 
 import numpy as np
 import torch
@@ -11,19 +9,13 @@ import torch.utils.checkpoint as checkpoint
 from torch.nn import functional as F
 from torch.nn.init import trunc_normal_
 
-from .arch_util import DropPath
 from einops.layers.torch import Rearrange
 from einops import rearrange
 
 from neosr.utils.registry import ARCH_REGISTRY
-from neosr.utils.options import parse_options
+from .arch_util import DropPath, net_opt
 
-
-# initialize options parsing
-root_path = Path(__file__).parents[2]
-opt, args = parse_options(root_path, is_train=True)
-# set scale factor in network parameters
-upscale = opt['scale']
+upscale, training = net_opt()
 
 
 def img2windows(img, H_sp, W_sp):

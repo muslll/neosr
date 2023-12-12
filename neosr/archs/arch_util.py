@@ -1,12 +1,30 @@
 import collections.abc
 import math
 import warnings
-import torch
 from itertools import repeat
+from pathlib import Path
+
+import torch
 from torch import nn
 from torch.nn import init
 from torch.nn.modules.batchnorm import _BatchNorm
 
+from neosr.utils.options import parse_options
+
+
+def net_opt():
+    # initialize options parsing
+    root_path = Path(__file__).parents[2]
+    opt, args = parse_options(root_path, is_train=True)
+    # set variable for scale factor
+    upscale = opt['scale']
+    # set variable for training phase
+    if 'train' in opt['datasets']:
+        training = True
+    else:
+        training = False
+
+    return upscale, training
 
 @torch.no_grad()
 def default_init_weights(module_list, scale=1, bias_fill=0, **kwargs):
