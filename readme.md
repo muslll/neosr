@@ -10,7 +10,7 @@ Requires Python 3.11 and CUDA =>11.8
 git clone https://github.com/muslll/neosr
 cd neosr
 ```
-Install [Pytorch 2.1 and TorchVision](https://pytorch.org/get-started/locally/) (required).
+Install latest [Pytorch (=>2.1) and TorchVision](https://pytorch.org/get-started/locally/) (required).
 
 Then install other dependencies via `pip`:
 
@@ -21,10 +21,23 @@ pip install -e .
 Alternatively, use [**`poetry`**](https://python-poetry.org/docs/#installation) (*recommended on linux*):
 
 ```
-poetry install
-poetry add torch@latest torchvision@latest
+poetry install && poetry add torch@latest torchvision@latest
 ```
 Note: You must use `poetry shell` to enter the env after installation.
+
+***(optional)*** If you want to convert your models ([convert.py](convert.py)), you need to following dependencies:
+
+```
+pip install onnx onnxruntime-gpu onnxconverter-common onnxsim
+```
+
+You can also install using poetry (*recommended on linux*):
+
+```
+poetry add onnx onnxruntime-gpu onnxconverter-common onnxsim
+```
+
+Please read the [**wiki tutorial**](https://github.com/muslll/neosr/wiki/Model-Conversion) for converting your models.
 
 ## quick start
 
@@ -130,8 +143,15 @@ These datasets have been tiled and manually curated across multiple sources, inc
 *Note: these are not intended for use in academic research*.
 
 ### community datasets
-These are datasets produced by others that you may want to use with neosr. More info for most of these can be found in the [Enhance Everything discord server](https://discord.gg/cpAUpDK)
-| dataset                                                | num images        | meta_info      | download                                                                                                   | sha256          |
+These are datasets made by the upscaling community. More info can be found in the [Enhance Everything discord](https://discord.gg/cpAUpDK)
+| 
+- `kim's 8k Dataset V2`: Video Game Dataset
+
+- `FaceUp`: Curated version of [FFHQ](https://github.com/NVlabs/ffhq-dataset)
+
+- `SSDIR`: Curated version of [LSDIR](https://data.vision.ee.ethz.ch/yawli/).
+
+dataset                                                | num images        | meta_info      | download                                                                                                   | sha256          |
 |--------------------------------------------------------|-------------------|----------------|------------------------------------------------------------------------------------------------------------|-----------------|
 | [@Kim2091](https://github.com/Kim2091)'s 8k Dataset V2 | 672 (7680x4320px) | -              | [GDrive (33.5GB)](https://drive.google.com/drive/folders/1z6-UFJPciU5ysTaRXUPTfC9QrqW517G6?usp=drive_link) | -               |
 | [@Phhofm](https://github.com/Phhofm) FaceUp            | 10000 (512x512)   | -              | [GDrive (4GB)](https://drive.google.com/file/d/1WFY0siR_ERVSnE2p7ouiCfV3wQizpAKr/view)                     | -               |

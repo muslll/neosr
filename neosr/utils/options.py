@@ -120,12 +120,11 @@ def parse_options(root_path, is_train=True):
     parser.add_argument('--force_yml', nargs='+', default=None,
                         help='Force to update yml files. Examples: train:total_iter=200000')
 
-    '''
-    # For ONNX conversion
+    # Options for convert.py script
    
-    group = parser.add_argument_group('onnx conversion')
+    group = parser.add_argument_group('model conversion')
 
-    group.add_argument('-i', '--input', type=str, required=False,
+    group.add_argument('--input', type=str, required=False,
                         help='Input Pytorch model path.')
 
     group.add_argument('-net', '--network', type=str,
@@ -134,120 +133,131 @@ def parse_options(root_path, is_train=True):
     group.add_argument('-s', '--scale', type=int,
                         help='Model scale ratio.', default=4)
 
+    group.add_argument('-window', '--window', type=int,
+                        help='Model scale ratio.', default=None)
+
     group.add_argument('-opset', '--opset', type=int,
                         help='ONNX opset. (default: 17)', default=17)
 
     group.add_argument('-fp16', '--fp16' , action='store_true',
                         help='Enable half-precision. (default: false)', default=False)
 
-    group.add_argument('-key', '--param_key' , type=str,
-                        help='Parameters key', default='params')
+    group.add_argument('-optimize', '--optimize', action='store_true',
+                        help='Run ONNX optimizations', default=False)
 
-    group.add_argument('-o', '--output', type=str, required=False,
+    group.add_argument('-fulloptimization', '--fulloptimization', action='store_true',
+                        help='Run full ONNX optimizations', default=False)
+
+    group.add_argument('-nokey', '--nokey', action='store_true',
+                        help='Parameters key', default=False)
+
+    group.add_argument('--output', type=str, required=False,
                         help='Output ONNX model path.', default=root_path)
-    '''
 
 
     args = parser.parse_args()
 
-    # parse yml to dict
-    opt = yaml_load(args.opt)
+    if args.input is None:
+        # parse yml to dict
+        opt = yaml_load(args.opt)
 
-    # distributed settings
-    if args.launcher == 'none':
-        opt['dist'] = False
-    else:
-        opt['dist'] = True
-        if args.launcher == 'slurm' and 'dist_params' in opt:
-            init_dist(args.launcher, **opt['dist_params'])
+        # distributed settings
+        if args.launcher == 'none':
+            opt['dist'] = False
         else:
-            init_dist(args.launcher)
-    opt['rank'], opt['world_size'] = get_dist_info()
+            opt['dist'] = True
+            if args.launcher == 'slurm' and 'dist_params' in opt:
+                init_dist(args.launcher, **opt['dist_params'])
+            else:
+                init_dist(args.launcher)
+        opt['rank'], opt['world_size'] = get_dist_info()
 
-    # random seed
-    seed = opt.get('manual_seed')
-    if seed is None:
-        seed = random.randint(1024, 10000)
-        opt['manual_seed'] = seed
+        # random seed
+        seed = opt.get('manual_seed')
+        if seed is None:
+            seed = random.randint(1024, 10000)
+            opt['manual_seed'] = seed
+        else:
+            # Determinism
+            os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
+            os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":16:8"
+            torch.backends.cudnn.deterministic = True
+            torch.backends.cudnn.benchmark = False
+            torch.use_deterministic_algorithms(True, warn_only=True)
+        set_random_seed(seed + opt['rank'])
+
+        # force to update yml options
+        if args.force_yml is not None:
+            for entry in args.force_yml:
+                # now do not support creating new keys
+                keys, value = entry.split('=')
+                keys, value = keys.strip(), value.strip()
+                value = _postprocess_yml_value(value)
+                eval_str = 'opt'
+                for key in keys.split(':'):
+                    eval_str += f'["{key}"]'
+                eval_str += '=value'
+                # using exec function
+                exec(eval_str)
+
+        opt['auto_resume'] = args.auto_resume
+        opt['is_train'] = is_train
+
+        # debug setting
+        if args.debug and not opt['name'].startswith('debug'):
+            opt['name'] = 'debug_' + opt['name']
+
+        if opt['num_gpu'] == 'auto':
+            opt['num_gpu'] = torch.cuda.device_count()
+
+        # datasets
+        for phase, dataset in opt['datasets'].items():
+            # for multiple datasets, e.g., val_1, val_2; test_1, test_2
+            phase = phase.split('_')[0]
+            dataset['phase'] = phase
+            if 'scale' in opt:
+                dataset['scale'] = opt['scale']
+            if dataset.get('dataroot_gt') is not None:
+                dataset['dataroot_gt'] = osp.expanduser(dataset['dataroot_gt'])
+            if dataset.get('dataroot_lq') is not None:
+                dataset['dataroot_lq'] = osp.expanduser(dataset['dataroot_lq'])
+
+        # paths
+        for key, val in opt['path'].items():
+            if (val is not None) and ('resume_state' in key or 'pretrain_network' in key):
+                opt['path'][key] = osp.expanduser(val)
+
+        if is_train:
+            experiments_root = opt['path'].get('experiments_root')
+            if experiments_root is None:
+                experiments_root = osp.join(root_path, 'experiments')
+            experiments_root = osp.join(experiments_root, opt['name'])
+
+            opt['path']['experiments_root'] = experiments_root
+            opt['path']['models'] = osp.join(experiments_root, 'models')
+            opt['path']['training_states'] = osp.join(
+                experiments_root, 'training_states')
+            opt['path']['log'] = experiments_root
+            opt['path']['visualization'] = osp.join(
+                experiments_root, 'visualization')
+
+            # change some options for debug mode
+            if 'debug' in opt['name']:
+                if 'val' in opt:
+                    opt['val']['val_freq'] = 8
+                opt['logger']['print_freq'] = 1
+                opt['logger']['save_checkpoint_freq'] = 8
+        else:  # test
+            results_root = opt['path'].get('results_root')
+            if results_root is None:
+                results_root = osp.join(root_path, 'experiments', 'results')
+            results_root = osp.join(results_root, opt['name'])
+
+            opt['path']['results_root'] = results_root
+            opt['path']['log'] = results_root
+            opt['path']['visualization'] = results_root
     else:
-        # Determinism
-        os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
-        os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":16:8"
-        torch.backends.cudnn.deterministic = True
-        torch.backends.cudnn.benchmark = False
-        torch.use_deterministic_algorithms(True, warn_only=True)
-    set_random_seed(seed + opt['rank'])
-
-    # force to update yml options
-    if args.force_yml is not None:
-        for entry in args.force_yml:
-            # now do not support creating new keys
-            keys, value = entry.split('=')
-            keys, value = keys.strip(), value.strip()
-            value = _postprocess_yml_value(value)
-            eval_str = 'opt'
-            for key in keys.split(':'):
-                eval_str += f'["{key}"]'
-            eval_str += '=value'
-            # using exec function
-            exec(eval_str)
-
-    opt['auto_resume'] = args.auto_resume
-    opt['is_train'] = is_train
-
-    # debug setting
-    if args.debug and not opt['name'].startswith('debug'):
-        opt['name'] = 'debug_' + opt['name']
-
-    if opt['num_gpu'] == 'auto':
-        opt['num_gpu'] = torch.cuda.device_count()
-
-    # datasets
-    for phase, dataset in opt['datasets'].items():
-        # for multiple datasets, e.g., val_1, val_2; test_1, test_2
-        phase = phase.split('_')[0]
-        dataset['phase'] = phase
-        if 'scale' in opt:
-            dataset['scale'] = opt['scale']
-        if dataset.get('dataroot_gt') is not None:
-            dataset['dataroot_gt'] = osp.expanduser(dataset['dataroot_gt'])
-        if dataset.get('dataroot_lq') is not None:
-            dataset['dataroot_lq'] = osp.expanduser(dataset['dataroot_lq'])
-
-    # paths
-    for key, val in opt['path'].items():
-        if (val is not None) and ('resume_state' in key or 'pretrain_network' in key):
-            opt['path'][key] = osp.expanduser(val)
-
-    if is_train:
-        experiments_root = opt['path'].get('experiments_root')
-        if experiments_root is None:
-            experiments_root = osp.join(root_path, 'experiments')
-        experiments_root = osp.join(experiments_root, opt['name'])
-
-        opt['path']['experiments_root'] = experiments_root
-        opt['path']['models'] = osp.join(experiments_root, 'models')
-        opt['path']['training_states'] = osp.join(
-            experiments_root, 'training_states')
-        opt['path']['log'] = experiments_root
-        opt['path']['visualization'] = osp.join(
-            experiments_root, 'visualization')
-
-        # change some options for debug mode
-        if 'debug' in opt['name']:
-            if 'val' in opt:
-                opt['val']['val_freq'] = 8
-            opt['logger']['print_freq'] = 1
-            opt['logger']['save_checkpoint_freq'] = 8
-    else:  # test
-        results_root = opt['path'].get('results_root')
-        if results_root is None:
-            results_root = osp.join(root_path, 'experiments', 'results')
-        results_root = osp.join(results_root, opt['name'])
-
-        opt['path']['results_root'] = results_root
-        opt['path']['log'] = results_root
-        opt['path']['visualization'] = results_root
+        opt = None
 
     return opt, args
 

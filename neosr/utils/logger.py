@@ -186,4 +186,5 @@ def get_root_logger(logger_name='neosr', log_level=logging.INFO, log_file=None):
         file_handler.setLevel(log_level)
         logger.addHandler(file_handler)
     initialized_logger[logger_name] = True
+
     return logger

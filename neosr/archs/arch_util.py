@@ -16,12 +16,18 @@ def net_opt():
     # initialize options parsing
     root_path = Path(__file__).parents[2]
     opt, args = parse_options(root_path, is_train=True)
-    # set variable for scale factor
-    upscale = opt['scale']
-    # set variable for training phase
-    if 'train' in opt['datasets']:
-        training = True
+
+    # set variable for scale factor and training phase
+    # conditions needed due to convert.py
+
+    if args.input is None:
+        upscale = opt['scale']
+        if 'train' in opt['datasets']:
+            training = True
+        else:
+            training = False
     else:
+        upscale = args.scale
         training = False
 
     return upscale, training
