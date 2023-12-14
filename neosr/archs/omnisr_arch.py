@@ -815,10 +815,6 @@ class OSAG(nn.Module):
         window_size = kwargs.get("window_size", 0)
         pe          = kwargs.get("pe", False)
 
-        print("window_size: %d"%(window_size))
-        print('with_pe', pe)
-        print("ffn_bias: %d"%(ffn_bias))
-
         group_list = []
         for _ in range(block_num):
             temp_res = OSA_Block(channel_num,bias,ffn_bias=ffn_bias,window_size=window_size,with_pe=pe)
