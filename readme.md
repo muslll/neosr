@@ -143,14 +143,14 @@ These datasets have been tiled and manually curated across multiple sources, inc
 
 ### community datasets
 These are datasets made by the upscaling community. More info can be found in the [Enhance Everything discord](https://discord.gg/cpAUpDK)
-| 
+
 - `kim's 8k Dataset V2`: Video Game Dataset
 
 - `FaceUp`: Curated version of [FFHQ](https://github.com/NVlabs/ffhq-dataset)
 
 - `SSDIR`: Curated version of [LSDIR](https://data.vision.ee.ethz.ch/yawli/).
 
-dataset                                                | num images        | meta_info      | download                                                                                                   | sha256          |
+| dataset                                                | num images        | meta_info      | download                                                                                                   | sha256          |
 |--------------------------------------------------------|-------------------|----------------|------------------------------------------------------------------------------------------------------------|-----------------|
 | [@Kim2091](https://github.com/Kim2091)'s 8k Dataset V2 | 672 (7680x4320px) | -              | [GDrive (33.5GB)](https://drive.google.com/drive/folders/1z6-UFJPciU5ysTaRXUPTfC9QrqW517G6?usp=drive_link) | -               |
 | [@Phhofm](https://github.com/Phhofm) FaceUp            | 10000 (512x512)   | -              | [GDrive (4GB)](https://drive.google.com/file/d/1WFY0siR_ERVSnE2p7ouiCfV3wQizpAKr/view)                     | -               |

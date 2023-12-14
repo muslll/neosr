@@ -91,8 +91,10 @@ class otf(data.Dataset):
         self.kernel_range = [2 * v + 1 for v in range(3, 11)]
         # TODO: kernel range is now hard-coded, should be in the configure file
         # convolving with pulse tensor brings no blurry effect
-        # Note: this tensor must send to cpu, otherwise CUDAPrefetcher will fail
-        self.pulse_tensor = torch.zeros(21, 21, dtype=torch.float32)
+
+        # Note: this operation must run on cpu, otherwise CUDAPrefetcher will fail
+        with torch.device('cpu'):
+            self.pulse_tensor = torch.zeros(21, 21, dtype=torch.float32)
         self.pulse_tensor[10, 10] = 1
 
     def __getitem__(self, index):
