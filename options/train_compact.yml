@@ -3,7 +3,7 @@ name: train_compact
 model_type: default
 scale: 4
 num_gpu: 1
-use_amp: false
+use_amp: true 
 bfloat16: false
 compile: false
 #manual_seed: 1024
@@ -37,16 +37,13 @@ datasets:
 #  metrics:
 #    psnr:
 #      type: calculate_psnr
-#      crop_border: 4
 #    ssim:
 #      type: calculate_ssim
-#      crop_border: 4
 
 path:
   #pretrain_network_g: 'experiments/pretrain.pth'
-  #param_key_g: ~
-  #strict_load_g: false
   resume_state: ~
+  #strict_load_g: false # do not uncomment, read docs
 
 network_g:
   type: compact 
@@ -57,7 +54,7 @@ network_d:
 train:
   optim_g:
     type: adamw
-    lr: !!float 1e-4
+    lr: !!float 3e-4
     weight_decay: 0
     betas: [0.9, 0.99]
   optim_d:
@@ -100,7 +97,6 @@ train:
   #ldl_opt:
   #  type: HuberLoss
   #  loss_weight: 1.0
-  #  reduction: mean
   #ff_opt:
   #  type: focalfrequencyloss
   #  loss_weight: 0.5

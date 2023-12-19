@@ -18,6 +18,9 @@ These datasets have been tiled and manually curated across multiple sources, inc
 
 *Note: these are not intended for use in academic research*.
 
+See more datasets on the [**readme section about datasets**](https://github.com/muslll/neosr?tab=readme-ov-file#datasets).
+
+
 ## utils
 
 In the [utils](utils/) folder you can find some tools to help prepare datasets, such as generating meta info files and converting to LMDB.

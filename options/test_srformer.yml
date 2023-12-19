@@ -20,7 +20,7 @@ network_g:
 
 path:
   pretrain_network_g: 'model.pth'
-  #param_key_g: ~
+  #strict_load_g: false # do not uncomment, read docs
 
 val:
   save_img: true

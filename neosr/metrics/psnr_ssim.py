@@ -6,7 +6,7 @@ from neosr.utils.registry import METRIC_REGISTRY
 
 
 @METRIC_REGISTRY.register()
-def calculate_psnr(img, img2, crop_border=0, input_order='HWC', test_y_channel=False, **kwargs):
+def calculate_psnr(img, img2, crop_border=4, input_order='HWC', test_y_channel=False, **kwargs):
     """Calculate PSNR (Peak Signal-to-Noise Ratio).
 
     Reference: https://en.wikipedia.org/wiki/Peak_signal-to-noise_ratio
@@ -48,7 +48,7 @@ def calculate_psnr(img, img2, crop_border=0, input_order='HWC', test_y_channel=F
 
 
 @METRIC_REGISTRY.register()
-def calculate_ssim(img, img2, crop_border, input_order='HWC', test_y_channel=False, **kwargs):
+def calculate_ssim(img, img2, crop_border=4, input_order='HWC', test_y_channel=False, **kwargs):
     """Calculate SSIM (structural similarity).
 
     ``Paper: Image quality assessment: From error visibility to structural similarity``

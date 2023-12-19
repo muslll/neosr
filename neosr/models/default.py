@@ -47,16 +47,16 @@ class default():
         # load pretrained g
         load_path = self.opt['path'].get('pretrain_network_g', None)
         if load_path is not None:
-            param_key = self.opt['path'].get('param_key_g', 'params')
-            self.load_network(self.net_g, load_path, self.opt['path'].get(
-                'strict_load_g', True), param_key)
+            param_key = self.opt['path'].get('param_key_g')
+            self.load_network(self.net_g, load_path, param_key, self.opt['path'].get(
+                'strict_load_g', True))
 
         # load pretrained d
         load_path = self.opt['path'].get('pretrain_network_d', None)
         if load_path is not None:
-            param_key = self.opt['path'].get('param_key_d', 'params')
-            self.load_network(self.net_d, load_path, self.opt['path'].get(
-                'strict_load_d', True), param_key)
+            param_key = self.opt['path'].get('param_key_d')
+            self.load_network(self.net_d, load_path, param_key, self.opt['path'].get(
+                'strict_load_d', True))
 
         if self.is_train:
             self.init_training_settings()
@@ -636,7 +636,7 @@ class default():
                                    f'{crt_net[k].shape}; load_net: {load_net[k].shape}')
                     load_net[k + '.ignore'] = load_net.pop(k)
 
-    def load_network(self, net, load_path, strict=True, param_key='params'):
+    def load_network(self, net, load_path, param_key, strict=True):
         """Load network.
 
         Args:
@@ -645,23 +645,33 @@ class default():
             strict (bool): Whether strictly loaded.
             param_key (str): The parameter key of loaded network. If set to
                 None, use the root 'path'.
-                Default: 'params'.
+                Default: None.
         """
+        self.param_key = param_key
         logger = get_root_logger()
         net = self.get_bare_model(net)
         load_net = torch.load(load_path, map_location=torch.device('cuda'))
 
-        if param_key is not None:
-            if 'params_ema' in load_net:
-                param_key = 'params_ema'
-            elif 'params-ema' in load_net:
+        try:
+            if 'params-ema' in load_net:
                 param_key = 'params-ema'
             elif 'params' in load_net:
                 param_key = 'params'
+            elif 'params_ema' in load_net:
+                param_key = 'params_ema'
+            else:
+                param_key = self.param_key
             load_net = load_net[param_key]
+        except:
+            pass
 
-        logger.info(
-            f'Loading {net.__class__.__name__} model from {load_path}, with param key: [{param_key}].')
+        if param_key:
+            logger.info(
+                f'Loading {net.__class__.__name__} model from {load_path}, with param key: [{param_key}].')
+        else:
+            logger.info(
+                f'Loading {net.__class__.__name__} model from {load_path}.')
+
         # remove unnecessary 'module.'
         for k, v in deepcopy(load_net).items():
             if k.startswith('module.'):
