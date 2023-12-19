@@ -148,9 +148,6 @@ def parse_options(root_path, is_train=True):
     group.add_argument('-fulloptimization', '--fulloptimization', action='store_true',
                         help='Run full ONNX optimizations', default=False)
 
-    group.add_argument('-nokey', '--nokey', action='store_true',
-                        help='Parameters key', default=False)
-
     group.add_argument('--output', type=str, required=False,
                         help='Output ONNX model path.', default=root_path)
 

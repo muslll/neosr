@@ -68,6 +68,8 @@ Please read the wiki [Configuration Walkthrough](https://github.com/muslll/neosr
 | [SPAN](https://github.com/hongyuanyu/SPAN)							    | `span`						|
 | [Real-CUGAN](https://github.com/bilibili/ailab)				  		    | `cugan`			   			|
 
+For all arch-specific parameters, [read the wiki](https://github.com/muslll/neosr/wiki/Arch%E2%80%90specific-options).
+
 #### Under Testing
 
 | arch                         						          | option             		   |

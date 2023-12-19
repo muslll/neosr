@@ -38,16 +38,16 @@ def load_net():
     # find parameter key
     print('-------- Finding parameter key...')
 
-    if args.nokey:
-        pass
-    else:
-        if 'params_ema' in load_net:
-            param_key = 'params_ema'
-        elif 'params-ema' in load_net:
+    try:
+        if 'params-ema' in load_net:
             param_key = 'params-ema'
         elif 'params' in load_net:
             param_key = 'params'
+        elif 'params_ema' in load_net:
+            param_key = 'params_ema'
         load_net = load_net[param_key]
+    except:
+        pass
 
    # remove unnecessary 'module.'
     for k, v in deepcopy(load_net).items():
