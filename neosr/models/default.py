@@ -124,6 +124,8 @@ class default():
             optimizer = pytorch_optimizer.Lamb(params, lr, **kwargs)
         elif optim_type in {'Lion', 'lion'}:
             optimizer = pytorch_optimizer.Lion(params, lr, **kwargs)
+        elif optim_type in {'AdanLKDN', 'adanlkdn'}:
+            optimizer = build_optimizer(params=params, lr=lr, optim_type='AdanLKDN', **kwargs)             
         else:
             raise NotImplementedError(
                 f'optimizer {optim_type} is not supported yet.')
