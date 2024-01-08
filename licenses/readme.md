@@ -18,7 +18,7 @@
 | [`pytorch-optimizer`](https://github.com/kozistr/pytorch_optimizer)                                 | [Apache 2.0](https://github.com/kozistr/pytorch_optimizer/blob/main/LICENSE)          			|
 | [`DiffJPEG`](https://github.com/mlomnitz/DiffJPEG)                                                  | [MIT](https://github.com/mlomnitz/DiffJPEG/blob/master/LICENSE)                       			|
 | `DropPath` from [`timm`](https://github.com/huggingface/pytorch-image-models)                       | [Apache 2.0](https://github.com/huggingface/pytorch-image-models/blob/main/LICENSE)   			|
-| [`DCTLSA`](https://github.com/zengkun301/DCTLSA)						      | Unknown										      			|
+| [`DCTLSA`](https://github.com/zengkun301/DCTLSA)						      | [Apache 2.0](https://github.com/zengkun301/DCTLSA?tab=readme-ov-file#license)		      		|
 | [`A2-FPN`](https://github.com/lironui/A2-FPN)							      | [GPLv3](https://github.com/lironui/A2-FPN/blob/main/LICENSE)			      			|
 | [`SPAN`](https://github.com/hongyuanyu/SPAN)							      | [Apache 2.0](https://github.com/hongyuanyu/SPAN/blob/main/LICENSE.txt)		      			|
 | [`DWT`](https://github.com/soobin419/DWT)							      | [Apache 2.0](https://github.com/soobin419/DWT/blob/main/LICENSE)		      			|

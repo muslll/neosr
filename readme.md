@@ -67,8 +67,10 @@ Please read the wiki [Configuration Walkthrough](https://github.com/muslll/neosr
 | [DCTLSA](https://github.com/zengkun301/DCTLSA)						    | `dctlsa`						|
 | [SPAN](https://github.com/hongyuanyu/SPAN)							    | `span`						|
 | [Real-CUGAN](https://github.com/bilibili/ailab)				  		    | `cugan`			   			|
+| [CRAFT](https://github.com/AVC2-UESTC/CRAFT-SR)		 				    | `craft`			   			|
 
 For all arch-specific parameters, [read the wiki](https://github.com/muslll/neosr/wiki/Arch%E2%80%90specific-options).
+
 
 #### Under Testing
 
@@ -76,7 +78,6 @@ For all arch-specific parameters, [read the wiki](https://github.com/muslll/neos
 |---------------------------------------------------------------------------------|--------------------------------|
 | [DWT](https://github.com/soobin419/DWT)         				  | `dwt`			   |
 | [EDAT](https://github.com/soobin419/EDAT)       				  | `edat`, `edat_light`	   |
-| [CRAFT](https://github.com/AVC2-UESTC/CRAFT-SR) 				  | `craft`			   |
 
 
 ### Supported Discriminators:
