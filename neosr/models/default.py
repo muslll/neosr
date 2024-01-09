@@ -251,6 +251,7 @@ class default():
                     l_g_ff = self.cri_ff(self.output, self.gt)
                     l_g_total += l_g_ff
                     loss_dict['l_g_ff'] = l_g_ff
+                # GAN loss
                 if self.cri_gan:
                     fake_g_pred = self.net_d(self.output)
                     l_g_gan = self.cri_gan(fake_g_pred, True, is_disc=False)
