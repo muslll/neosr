@@ -10,7 +10,7 @@ upscale, training = net_opt()
 
 
 class LSAB(nn.Module):
-    def __init__(self,in_channels=55,num_head=5):
+    def __init__(self, in_channels=55,num_head=5):
         super(LSAB, self).__init__()
         m_body = []
         for i in range(2):
@@ -254,17 +254,12 @@ class WindowAttention(nn.Module):
 
         qkv = qkv.reshape(B_, N, 3, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4)
         q, k, v = qkv[0], qkv[1], qkv[2]  # make torchscript happy (cannot use tensor as tuple)
-        k = self.softmax(k)
 
+        k = self.softmax(k)
         q = q * self.scale
 
-        # flash attention
-        x = torch.nn.functional.scaled_dot_product_attention(q, k, v)
-        x = x.transpose(1, 2).reshape(B_, N, C)
-
-        # original
-        #attn = (k.transpose(-2, -1) @ v)
-        #x = (q @ attn).transpose(1, 2).reshape(B_, N, C)
+        attn = (k.transpose(-2, -1) @ v)
+        x = (q @ attn).transpose(1, 2).reshape(B_, N, C)
 
         x = self.proj(x)
 
