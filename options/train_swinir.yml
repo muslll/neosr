@@ -48,6 +48,7 @@ path:
 network_g:
   type: swinir_small
   #type: swinir_medium
+  #flash_attn: true
 
 network_d:
   type: unet

@@ -81,7 +81,7 @@ class WindowAttention(nn.Module):
         proj_drop (float, optional): Dropout ratio of output. Default: 0.0
     """
 
-    def __init__(self, dim, window_size, num_heads, qkv_bias=True, qk_scale=None, attn_drop=0., proj_drop=0.):
+    def __init__(self, dim, window_size, num_heads, flash_attn, qkv_bias=True, qk_scale=None, attn_drop=0., proj_drop=0.):
 
         super().__init__()
         self.dim = dim
@@ -112,7 +112,9 @@ class WindowAttention(nn.Module):
                              relative_position_index)
 
         self.qkv = nn.Linear(dim, dim * 3, bias=qkv_bias)
+        self.flash_attn = flash_attn
         self.attn_drop = nn.Dropout(attn_drop)
+        self.dropout_p = attn_drop
         self.proj = nn.Linear(dim, dim)
 
         self.proj_drop = nn.Dropout(proj_drop)
@@ -132,30 +134,34 @@ class WindowAttention(nn.Module):
         # make torchscript happy (cannot use tensor as tuple)
         q, k, v = qkv[0], qkv[1], qkv[2]
 
-        q = q * self.scale
-        attn = (q @ k.transpose(-2, -1))
+        if self.flash_attn is True:
+            # flash attention
+            with torch.backends.cuda.sdp_kernel(enable_math=False):
+                x = torch.nn.functional.scaled_dot_product_attention(q, k, v, scale=self.scale, dropout_p=self.dropout_p)
+            x = x.transpose(1, 2).reshape(b_, n, c)
 
-        relative_position_bias = self.relative_position_bias_table[self.relative_position_index.view(-1)].view(
-            self.window_size[0] * self.window_size[1], self.window_size[0] * self.window_size[1], -1)  # Wh*Ww,Wh*Ww,nH
-        relative_position_bias = relative_position_bias.permute(
-            2, 0, 1).contiguous()  # nH, Wh*Ww, Wh*Ww
-        attn = attn + relative_position_bias.unsqueeze(0)
-
-        if mask is not None:
-            nw = mask.shape[0]
-            attn = attn.view(b_ // nw, nw, self.num_heads, n,
-                             n) + mask.unsqueeze(1).unsqueeze(0)
-            attn = attn.view(-1, self.num_heads, n, n)
-            attn = self.softmax(attn)
         else:
-            attn = self.softmax(attn)
+            q = q * self.scale
+            attn = (q @ k.transpose(-2, -1))
 
-        attn = self.attn_drop(attn)
+            relative_position_bias = self.relative_position_bias_table[self.relative_position_index.view(-1)].view(
+                self.window_size[0] * self.window_size[1], self.window_size[0] * self.window_size[1], -1)  # Wh*Ww,Wh*Ww,nH
+            relative_position_bias = relative_position_bias.permute(
+                2, 0, 1).contiguous()  # nH, Wh*Ww, Wh*Ww
+            attn = attn + relative_position_bias.unsqueeze(0)
 
-        # Flash Attention, I guess
-        # x = torch.nn.functional.scaled_dot_product_attention(q, k, v)
-        # x = x.transpose(1, 2).reshape(b_, n, c)
-        x = (attn @ v).transpose(1, 2).reshape(b_, n, c)
+            if mask is not None:
+                nw = mask.shape[0]
+                attn = attn.view(b_ // nw, nw, self.num_heads, n,
+                                 n) + mask.unsqueeze(1).unsqueeze(0)
+                attn = attn.view(-1, self.num_heads, n, n)
+                attn = self.softmax(attn)
+            else:
+                attn = self.softmax(attn)
+
+            attn = self.attn_drop(attn)
+            x = (attn @ v).transpose(1, 2).reshape(b_, n, c)
+
         x = self.proj(x)
         x = self.proj_drop(x)
         return x
@@ -200,6 +206,7 @@ class SwinTransformerBlock(nn.Module):
                  dim,
                  input_resolution,
                  num_heads,
+                 flash_attn,
                  window_size=7,
                  shift_size=0,
                  mlp_ratio=4.,
@@ -226,6 +233,7 @@ class SwinTransformerBlock(nn.Module):
         self.norm1 = norm_layer(dim)
         self.attn = WindowAttention(
             dim,
+            flash_attn=flash_attn,
             window_size=to_2tuple(self.window_size),
             num_heads=num_heads,
             qkv_bias=qkv_bias,
@@ -414,6 +422,7 @@ class BasicLayer(nn.Module):
                  input_resolution,
                  depth,
                  num_heads,
+                 flash_attn,
                  window_size,
                  mlp_ratio=4.,
                  qkv_bias=True,
@@ -437,6 +446,7 @@ class BasicLayer(nn.Module):
                 dim=dim,
                 input_resolution=input_resolution,
                 num_heads=num_heads,
+                flash_attn=flash_attn,
                 window_size=window_size,
                 shift_size=0 if (i % 2 == 0) else window_size // 2,
                 mlp_ratio=mlp_ratio,
@@ -506,6 +516,7 @@ class RSTB(nn.Module):
                  input_resolution,
                  depth,
                  num_heads,
+                 flash_attn,
                  window_size,
                  mlp_ratio=4.,
                  qkv_bias=True,
@@ -529,6 +540,7 @@ class RSTB(nn.Module):
             input_resolution=input_resolution,
             depth=depth,
             num_heads=num_heads,
+            flash_attn=flash_attn,
             window_size=window_size,
             mlp_ratio=mlp_ratio,
             qkv_bias=qkv_bias,
@@ -732,6 +744,7 @@ class swinir(nn.Module):
                  embed_dim=60,
                  depths=(6, 6, 6, 6),
                  num_heads=(6, 6, 6, 6),
+                 flash_attn=False,
                  window_size=8,
                  mlp_ratio=2.,
                  qkv_bias=True,
@@ -812,6 +825,7 @@ class swinir(nn.Module):
                     patches_resolution[0], patches_resolution[1]),
                 depth=depths[i_layer],
                 num_heads=num_heads[i_layer],
+                flash_attn=flash_attn,
                 window_size=window_size,
                 mlp_ratio=self.mlp_ratio,
                 qkv_bias=qkv_bias,

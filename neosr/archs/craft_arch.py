@@ -162,7 +162,7 @@ class Attention_regular(nn.Module):
 
         if self.flash_attn is True:
             # flash attention
-            x = torch.nn.functional.scaled_dot_product_attention(q, k, v, attn_mask=mask, scale=self.scale)
+            x = F.scaled_dot_product_attention(q, k, v, attn_mask=mask, scale=self.scale)
             x = x.transpose(1, 2).reshape(-1, self.H_sp* self.W_sp, C)
         else:
             q = q * self.scale
