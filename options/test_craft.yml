@@ -16,6 +16,7 @@ datasets:
 
 network_g:
   type: craft
+  #flash_attn: false
 
 path:
   pretrain_network_g: 'model.pth'

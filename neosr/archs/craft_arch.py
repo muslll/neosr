@@ -110,10 +110,11 @@ class Attention_regular(nn.Module):
         qk_scale (float | None): Override default qk scale of head_dim ** -0.5 if set
         position_bias (bool): The dynamic relative position bias. Default: True
     """
-    def __init__(self, dim, idx, split_size=[2,4], dim_out=None, num_heads=6, qk_scale=None, position_bias=True):
+    def __init__(self, dim, idx, flash_attn, split_size=[2,4], dim_out=None, num_heads=6, qk_scale=None, position_bias=True):
         super().__init__()
         self.dim = dim
         self.dim_out = dim_out or dim
+        self.flash_attn = flash_attn
         self.split_size = split_size
         self.num_heads = num_heads
         self.idx = idx
@@ -159,37 +160,33 @@ class Attention_regular(nn.Module):
         k = self.im2win(k, H, W)
         v = self.im2win(v, H, W)
 
-        '''
-        q = q * self.scale
-        attn = (q @ k.transpose(-2, -1))  # B head N C @ B head C N --> B head N N
+        if self.flash_attn is True:
+            # flash attention
+            x = torch.nn.functional.scaled_dot_product_attention(q, k, v, attn_mask=mask, scale=self.scale)
+            x = x.transpose(1, 2).reshape(-1, self.H_sp* self.W_sp, C)
+        else:
+            q = q * self.scale
+            attn = (q @ k.transpose(-2, -1))  # B head N C @ B head C N --> B head N N
 
-        # calculate drpe
-        pos = self.pos(rpe_biases)
-        # select position bias
-        relative_position_bias = pos[rpi.view(-1)].view(
-            self.H_sp * self.W_sp, self.H_sp * self.W_sp, -1)
-        relative_position_bias = relative_position_bias.permute(2, 0, 1).contiguous()
-        attn = attn + relative_position_bias.unsqueeze(0)
+            # calculate drpe
+            pos = self.pos(rpe_biases)
+            # select position bias
+            relative_position_bias = pos[rpi.view(-1)].view(
+                self.H_sp * self.W_sp, self.H_sp * self.W_sp, -1)
+            relative_position_bias = relative_position_bias.permute(2, 0, 1).contiguous()
+            attn = attn + relative_position_bias.unsqueeze(0)
 
-        N = attn.shape[3]
+            N = attn.shape[3]
 
-        # use mask for shift window
-        if mask is not None:
-            nW = mask.shape[0]
-            attn = attn.view(B, nW, self.num_heads, N, N) + mask.unsqueeze(1).unsqueeze(0)
-            attn = attn.view(-1, self.num_heads, N, N)
-        attn = self.softmax(attn)
-        '''
+            # use mask for shift window
+            if mask is not None:
+                nW = mask.shape[0]
+                attn = attn.view(B, nW, self.num_heads, N, N) + mask.unsqueeze(1).unsqueeze(0)
+                attn = attn.view(-1, self.num_heads, N, N)
+            attn = self.softmax(attn)
 
-        # flash attention
-        x = torch.nn.functional.scaled_dot_product_attention(q, k, v, attn_mask=mask, scale=self.scale)
-        x = x.transpose(1, 2).reshape(-1, self.H_sp* self.W_sp, C)
-
-        '''
-        # original
-        x = (attn @ v)
-        x = x.transpose(1, 2).reshape(-1, self.H_sp* self.W_sp, C)  # B head N N @ B head N C
-        '''
+            x = (attn @ v)
+            x = x.transpose(1, 2).reshape(-1, self.H_sp* self.W_sp, C)  # B head N N @ B head N C
 
         # merge the window, window to image
         x = windows2img(x, self.H_sp, self.W_sp, H, W)  # B H' W' C
@@ -215,6 +212,7 @@ class SRWAB(nn.Module):
     def __init__(self,
                  dim,
                  num_heads,
+                 flash_attn,
                  split_size=(2,2),
                  shift_size=(0,0),
                  mlp_ratio=2.,
@@ -235,6 +233,7 @@ class SRWAB(nn.Module):
         self.attns = nn.ModuleList([
                 Attention_regular(
                     dim//2, idx = i,
+                    flash_attn=flash_attn,
                     split_size=split_size, num_heads=num_heads//2, dim_out=dim//2,
                     qk_scale=qk_scale, position_bias=True)
                 for i in range(self.branch_num)])
@@ -489,6 +488,7 @@ class CRFB(nn.Module):
                  dim,
                  depth,
                  num_heads,
+                 flash_attn,
                  split_size_0=7,
                  split_size_1=7,
                  mlp_ratio=2.,
@@ -505,6 +505,7 @@ class CRFB(nn.Module):
             SRWAB(
                 dim=dim,
                 num_heads=num_heads,
+                flash_attn=flash_attn,
                 split_size=[split_size_0,split_size_1],
                 shift_size=[0,0] if (i % 2 == 0) else [split_size_0//2, split_size_1//2],
                 mlp_ratio=mlp_ratio,
@@ -560,6 +561,7 @@ class RCRFG(nn.Module):
                  dim,
                  depth,
                  num_heads,
+                 flash_attn,
                  mlp_ratio=2.,
                  qkv_bias=True,
                  qk_scale=None,
@@ -572,6 +574,7 @@ class RCRFG(nn.Module):
         self.dim = dim
 
         self.residual_group = CRFB(
+            flash_attn=flash_attn,
             dim=dim,
             depth=depth,
             num_heads=num_heads,
@@ -639,6 +642,7 @@ class craft(nn.Module):
                  split_size_0 = 4,
                  split_size_1 = 16,
                  mlp_ratio=2.,
+                 flash_attn=True,
                  qkv_bias=True,
                  qk_scale=None,
                  norm_layer=nn.LayerNorm,
@@ -681,6 +685,7 @@ class craft(nn.Module):
             layer = RCRFG(
                 dim=embed_dim,
                 depth=depths[i_layer],
+                flash_attn=flash_attn,
                 num_heads=num_heads[i_layer],
                 mlp_ratio=self.mlp_ratio,
                 qkv_bias=qkv_bias,
