@@ -21,7 +21,5 @@
 | [`DCTLSA`](https://github.com/zengkun301/DCTLSA)						      | [Apache 2.0](https://github.com/zengkun301/DCTLSA?tab=readme-ov-file#license)		      		|
 | [`A2-FPN`](https://github.com/lironui/A2-FPN)							      | [GPLv3](https://github.com/lironui/A2-FPN/blob/main/LICENSE)			      			|
 | [`SPAN`](https://github.com/hongyuanyu/SPAN)							      | [Apache 2.0](https://github.com/hongyuanyu/SPAN/blob/main/LICENSE.txt)		      			|
-| [`DWT`](https://github.com/soobin419/DWT)							      | [Apache 2.0](https://github.com/soobin419/DWT/blob/main/LICENSE)		      			|
-| [`EDAT`](https://github.com/soobin419/EDAT)							      | [Apache 2.0](https://github.com/soobin419/EDAT/blob/main/LICENSE)		      			|
 | [`CRAFT`](https://github.com/AVC2-UESTC/CRAFT-SR)						      | [Apache 2.0](https://github.com/AVC2-UESTC/CRAFT-SR/blob/main/LICENSE.txt)	      			|
 | [`Real-CUGAN`](https://github.com/bilibili/ailab)						      | [MIT](https://github.com/bilibili/ailab/blob/main/Real-CUGAN/LICENSE)					|

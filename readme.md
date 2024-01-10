@@ -72,14 +72,6 @@ Please read the wiki [Configuration Walkthrough](https://github.com/muslll/neosr
 For all arch-specific parameters, [read the wiki](https://github.com/muslll/neosr/wiki/Arch%E2%80%90specific-options).
 
 
-#### Under Testing
-
-| arch                         						          | option             		   |
-|---------------------------------------------------------------------------------|--------------------------------|
-| [DWT](https://github.com/soobin419/DWT)         				  | `dwt`			   |
-| [EDAT](https://github.com/soobin419/EDAT)       				  | `edat`, `edat_light`	   |
-
-
 ### Supported Discriminators:
 
 | net                               				  | option 		        |
