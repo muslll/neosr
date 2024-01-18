@@ -9,6 +9,7 @@
 
 > [!IMPORTANT]
 > Requires Python 3.11 and CUDA =>11.8.
+
 Install latest [Pytorch (=>2.1) and TorchVision](https://pytorch.org/get-started/locally/) (required).
 
 Clone the repository:
