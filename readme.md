@@ -1,6 +1,9 @@
 # neosr
 
-**neosr** is a framework for training real-world single-image super-resolution networks. [**wiki**](https://github.com/muslll/neosr/wiki)
+**neosr** is a framework for training real-world single-image super-resolution networks. 
+
+> [!TIP]
+> For more information, read the [**wiki**](https://github.com/muslll/neosr/wiki)
 
 ## installation
 
@@ -38,7 +41,8 @@ You can also install using poetry (*recommended on linux*):
 poetry add onnx onnxruntime-gpu onnxconverter-common onnxsim
 ```
 
-Please read the [**wiki tutorial**](https://github.com/muslll/neosr/wiki/Model-Conversion) for converting your models.
+> [!TIP]
+> Please read the [**wiki tutorial**](https://github.com/muslll/neosr/wiki/Model-Conversion) for converting your models.
 
 ## quick start
 
@@ -69,7 +73,8 @@ Please read the wiki [Configuration Walkthrough](https://github.com/muslll/neosr
 | [Real-CUGAN](https://github.com/bilibili/ailab)				  		    | `cugan`			   			|
 | [CRAFT](https://github.com/AVC2-UESTC/CRAFT-SR)		 				    | `craft`			   			|
 
-For all arch-specific parameters, [read the wiki](https://github.com/muslll/neosr/wiki/Arch%E2%80%90specific-options).
+> [!NOTE]
+> For all arch-specific parameters, [read the wiki](https://github.com/muslll/neosr/wiki/Arch%E2%80%90specific-options).
 
 
 ### Supported Discriminators:
@@ -135,16 +140,17 @@ These datasets have been tiled and manually curated across multiple sources, inc
 | nomos8k                  | 8492 (512x512px) | [nomos8k_metainfo.txt](https://drive.google.com/file/d/1XCK82vVOoy7rfSHS8bNXKJSdTEmsLjnG/view?usp=sharing)   | [GDrive (3.4GB)](https://drive.google.com/file/d/1ppTpi1-FQEBp908CxfnbI5Gc9PPMiP3l/view?usp=sharing) | 89724f4adb651e1c17ebee9e4b2526f2513c9b060bc3fe16b317bbe9cd8dd138 |
 | hfa2k                    | 2568 (512x512px) | [hfa2k_metainfo.txt](https://drive.google.com/file/d/1X1EYSF4vjLzwckfkN-juzS9UBRI2HZky/view?usp=sharing)     | [GDrive (3.2GB)](https://drive.google.com/file/d/1PonJdHWwCtBdG4i1LwThm06t6RibnVu8/view?usp=sharing) | 3a3d2293a92fb60507ecd6dfacd636a21fd84b96f8f19f8c8a55ad63ca69037a |
 
-*Note: these are not intended for use in academic research*.
+> [!NOTE]
+> These are not intended for use in academic research.
 
 ### community datasets
 These are datasets made by the upscaling community. More info can be found in the [Enhance Everything discord](https://discord.gg/cpAUpDK)
 
-- `kim's 8k Dataset V2`: Video Game Dataset
-
 - `FaceUp`: Curated version of [FFHQ](https://github.com/NVlabs/ffhq-dataset)
 
 - `SSDIR`: Curated version of [LSDIR](https://data.vision.ee.ethz.ch/yawli/).
+
+- `kim's 8k Dataset V2`: Video Game Dataset
 
 | dataset                                                | num images        | meta_info      | download                                                                                                   | sha256          |
 |--------------------------------------------------------|-------------------|----------------|------------------------------------------------------------------------------------------------------------|-----------------|
