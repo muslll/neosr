@@ -505,6 +505,7 @@ class default():
 
         if self.opt['compile'] is True:
             net = torch.compile(net)
+            # see option fullgraph=True
 
         if self.opt['dist']:
             find_unused_parameters = self.opt.get(

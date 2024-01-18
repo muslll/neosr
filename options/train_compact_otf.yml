@@ -63,20 +63,20 @@ datasets:
 resize_prob: [0.3, 0.4, 0.3] # up, down, keep
 resize_range: [0.5, 1.5]
 gaussian_noise_prob: 0.2
-noise_range: [0, 4]
-poisson_scale_range: [0.05, 0.5]
+noise_range: [0, 2]
+poisson_scale_range: [0.05, 0.25]
 gray_noise_prob: 0.1
-jpeg_range: [70, 95]
+jpeg_range: [40, 95]
 
 # the second degradation process
-second_blur_prob: 0.8
+second_blur_prob: 0.4
 resize_prob2: [0.3, 0.4, 0.3] # up, down, keep
 resize_range2: [0.3, 1.5]
 gaussian_noise_prob2: 0.2
-noise_range2: [0, 4]
-poisson_scale_range2: [0.05, 0.25]
+noise_range2: [0, 2]
+poisson_scale_range2: [0.05, 0.1]
 gray_noise_prob2: 0.1
-jpeg_range2: [60, 95]
+jpeg_range2: [35, 95]
 
 path:
   #pretrain_network_g: 'experiments/pretrain.pth'
