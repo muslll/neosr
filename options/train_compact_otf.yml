@@ -139,6 +139,10 @@ train:
   #  type: focalfrequencyloss
   #  loss_weight: 0.5
 
+grad_clip:
+  use_agc: true
+  clip_factor: 0.06
+
 logger:
   print_freq: 100
   save_checkpoint_freq: 1000

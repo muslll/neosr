@@ -112,6 +112,22 @@ class default():
         # set up optimizers and schedulers
         self.setup_optimizers()
         self.setup_schedulers()
+        
+    def init_grad_clip(self):
+        clip_opt = self.opt['grad_clip']
+        if clip_opt is None:
+            logger.warning(f'Gradient Clipping not configured, disabling.')
+            use_agc = false
+            clip_factor = 0.0
+            eps = 1e-3
+        else:            
+            use_agc = clip_opt.get('use_agc')
+            clip_factor = clip_opt.get('clip_factor')
+            eps = clip_opt.get('eps')
+            if eps is None:
+                eps = 1e-3
+        
+        return use_agc, clip_factor, eps
 
     def get_optimizer(self, optim_type, params, lr, **kwargs):
         if optim_type in {'Adam', 'adam'}:
@@ -211,7 +227,7 @@ class default():
         if self.opt['bfloat16'] is True:
             amp_dtype = torch.bfloat16
         
-        scaler = torch.cuda.amp.GradScaler(enabled=use_amp, init_scale=2.**11)
+        scaler = torch.cuda.amp.GradScaler(enabled=use_amp, init_scale=2**11)
 
         with torch.autocast(device_type='cuda', dtype=amp_dtype, enabled=use_amp):
             self.output = self.net_g(self.lq)
@@ -259,6 +275,23 @@ class default():
                     loss_dict['l_g_gan'] = l_g_gan
 
         scaler.scale(l_g_total).backward()
+        
+        # clip gradients
+        """ based on https://arxiv.org/abs/2102.06171
+        and https://github.com/kozistr/pytorch_optimizer/blob/main/pytorch_optimizer/optimizer/agc.py
+        """
+        use_agc, clip_factor, eps = self.init_grad_clip()
+        if self.opt.get('use_agc') is True:
+            scaler.unscale_(self.optimizer_g)
+            for p in self.net_g.parameters():
+                if p.grad is not None:
+                    grad_norm = p.grad.data.norm(2)
+                    param_norm = p.data.norm(2).clamp_(eps)
+                    if param_norm > 0:
+                        max_norm = param_norm * clip_factor
+                        clip_value = max_norm / grad_norm.clamp_min_(eps)
+                        torch.nn.utils.clip_grad_norm_(p, max_norm=clip_value)
+                        
         scaler.step(self.optimizer_g)
 
         # optimize net_d
@@ -284,7 +317,23 @@ class default():
             if self.cri_gan:
                 scaler.scale(l_d_real).backward()
                 scaler.scale(l_d_fake).backward()
-
+            
+            # clip gradients
+            """ based on https://arxiv.org/abs/2102.06171
+            and https://github.com/kozistr/pytorch_optimizer/blob/main/pytorch_optimizer/optimizer/agc.py
+            """
+            use_agc, clip_factor, eps = self.init_grad_clip()
+            if self.opt.get('use_agc') is True:
+                scaler.unscale_(self.optimizer_d)
+                for p in self.net_d.parameters():
+                    if p.grad is not None:
+                        grad_norm = p.grad.data.norm(2)
+                        param_norm = p.data.norm(2).clamp_(eps)
+                        if param_norm > 0:
+                            max_norm = param_norm * clip_factor
+                            clip_value = max_norm / grad_norm.clamp_min_(eps)
+                            torch.nn.utils.clip_grad_norm_(p, max_norm=clip_value)
+                            
             scaler.step(self.optimizer_d)
 
         self.log_dict = self.reduce_loss_dict(loss_dict)
