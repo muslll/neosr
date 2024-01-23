@@ -19,10 +19,17 @@ tqdm = "^4.65.0"
 opencv-python-headless = "^4.8.1.78"
 
 [tool.ruff]
-select = ["E", "F", "B", "NPY"]
-fixable = ["ALL"]
+select = ["ALL"]
 ignore = ["E501"]
 target-version = "py311"
+preview = true
+
+[tool.ruff.format]
+skip-magic-trailing-comma = true
+line-ending = "lf"
+
+[tool.ruff.lint.mccabe]
+max-complexity = 5
 
 [build-system]
 requires = ["poetry-core"]
