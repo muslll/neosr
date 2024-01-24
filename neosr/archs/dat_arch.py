@@ -750,11 +750,6 @@ class dat(nn.Module):
         num_out_ch = in_chans
         num_feat = 64
         self.img_range = img_range
-        if in_chans == 3:
-            rgb_mean = (0.4488, 0.4371, 0.4040)
-            self.mean = torch.Tensor(rgb_mean).view(1, 3, 1, 1)
-        else:
-            self.mean = torch.zeros(1, 1, 1, 1)
         self.upscale = upscale
         self.upsampler = upsampler
 
@@ -845,8 +840,6 @@ class dat(nn.Module):
         """
         Input: x: (B, C, H, W)
         """
-        self.mean = self.mean.type_as(x)
-        x = (x - self.mean) * self.img_range
 
         if self.upsampler == 'pixelshuffle':
             # for image SR
@@ -859,8 +852,7 @@ class dat(nn.Module):
             x = self.conv_first(x)
             x = self.conv_after_body(self.forward_features(x)) + x
             x = self.upsample(x)
-
-        x = x / self.img_range + self.mean
+            
         return x
 
 
