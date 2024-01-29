@@ -221,10 +221,12 @@ class span(nn.Module):
         out_channels = num_out_ch
         self.img_range = img_range
         self.mean = torch.Tensor(rgb_mean).view(1, 3, 1, 1)
-        self.norm = norm
 
-        if self.norm:
-            self.register_buffer("isnorm", torch.zeros(1))
+        self.norm: Tensor | None
+        if norm:
+            self.register_buffer("norm", torch.zeros(1))
+        else:
+            self.norm = None
 
         self.conv_1 = Conv3XC(in_channels, feature_channels, gain1=2, s=1)
         self.block_1 = SPAB(feature_channels, bias=bias)
@@ -239,10 +241,17 @@ class span(nn.Module):
 
         self.upsampler = pixelshuffle_block(feature_channels, out_channels, upscale_factor=upscale)
 
+    @property
+    def is_norm(self):
+        return self.norm is not None
+
     def forward(self, x):
-        if self.norm:
+        if self.is_norm:
             self.mean = self.mean.type_as(x)
             x = (x - self.mean) * self.img_range
+            print("norm enabled")
+        else:
+            print("norm disabled")
 
         out_feature = self.conv_1(x)
 
