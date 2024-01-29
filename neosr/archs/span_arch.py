@@ -222,11 +222,11 @@ class span(nn.Module):
         self.img_range = img_range
         self.mean = torch.Tensor(rgb_mean).view(1, 3, 1, 1)
 
-        self.norm: Tensor | None
-        if norm:
-            self.register_buffer("norm", torch.zeros(1))
+        self.no_norm: torch.Tensor | None
+        if not norm:
+            self.register_buffer("no_norm", torch.zeros(1))
         else:
-            self.norm = None
+            self.no_norm = None
 
         self.conv_1 = Conv3XC(in_channels, feature_channels, gain1=2, s=1)
         self.block_1 = SPAB(feature_channels, bias=bias)
@@ -243,7 +243,7 @@ class span(nn.Module):
 
     @property
     def is_norm(self):
-        return self.norm is not None
+        return self.no_norm is None
 
     def forward(self, x):
         if self.is_norm:
