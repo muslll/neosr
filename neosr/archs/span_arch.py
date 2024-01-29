@@ -238,7 +238,7 @@ class span(nn.Module):
 
     def forward(self, x):
         if self.norm:
-            self.register_buffer("norm", torch.zeros(1))
+            self.register_buffer("isnorm", torch.zeros(1))
             self.mean = self.mean.type_as(x)
             x = (x - self.mean) * self.img_range
 
