@@ -4,17 +4,17 @@ from collections import OrderedDict
 from copy import deepcopy
 from os import path as osp
 
-import torch
 import pytorch_optimizer
-from tqdm import tqdm
-from torch.nn.parallel import DataParallel, DistributedDataParallel
+import torch
 from torch.nn import functional as F
+from torch.nn.parallel import DataParallel, DistributedDataParallel
+from tqdm import tqdm
 
 from neosr.archs import build_network
 from neosr.losses import build_loss
 from neosr.losses.loss_util import get_refined_artifact_map
 from neosr.metrics import calculate_metric
-
+from neosr.optimizers import build_optimizer
 from neosr.utils import get_root_logger, imwrite, tensor2img
 from neosr.utils.dist_util import master_only
 from neosr.utils.registry import MODEL_REGISTRY
@@ -79,9 +79,6 @@ class default():
         else:
             self.cri_perceptual = None
 
-        if self.cri_pix is None and self.cri_perceptual is None:
-            raise ValueError('Both pixel and perceptual losses are None.')
-
         # GAN loss
         if train_opt.get('gan_opt'):
             self.cri_gan = build_loss(train_opt['gan_opt']).to(self.device, memory_format=torch.channels_last, non_blocking=True)
@@ -106,6 +103,31 @@ class default():
         else:
             self.cri_ff = None
 
+        # Patch Loss
+        if train_opt.get('patch_opt'):
+            self.cri_patch = build_loss(train_opt['patch_opt']).to(self.device, memory_format=torch.channels_last, non_blocking=True)
+        else:
+            self.cri_patch = None
+
+        if train_opt.get('patch_opt_3d'):
+            self.cri_patch_3d = build_loss(train_opt['patch_opt_3d']).to(self.device, memory_format=torch.channels_last, non_blocking=True)
+        else:
+            self.cri_patch_3d = None
+
+        if train_opt.get('patch_opt_3d_xd'):
+            self.cri_patch_3d_xd = build_loss(train_opt['patch_opt_3d_xd']).to(self.device, memory_format=torch.channels_last, non_blocking=True)
+        else:
+            self.cri_patch_3d_xd = None
+
+        # Gradient Variance Loss
+        if train_opt.get('gradvar_opt'):
+            self.cri_gradvar = build_loss(train_opt['gradvar_opt']).to(self.device, memory_format=torch.channels_last, non_blocking=True)
+        else:
+            self.cri_gradvar = None
+
+        if self.cri_pix is None and self.cri_perceptual is None and self.cri_patch is None and self.cri_patch_3d is None and self.cri_patch_3d_xd is None:
+            raise ValueError('Both pixel and perceptual losses are None.')
+
         self.net_d_iters = train_opt.get('net_d_iters', 1)
         self.net_d_init_iters = train_opt.get('net_d_init_iters', 0)
 
@@ -124,6 +146,10 @@ class default():
             optimizer = pytorch_optimizer.Lamb(params, lr, **kwargs)
         elif optim_type in {'Lion', 'lion'}:
             optimizer = pytorch_optimizer.Lion(params, lr, **kwargs)
+        elif optim_type in {'prodigy', 'Prodigy'}:
+            optimizer = pytorch_optimizer.Prodigy(params, lr, **kwargs)
+        elif optim_type in {'AdamL', 'adaml'}:
+            optimizer = build_optimizer('AdamL', params, lr, **kwargs)
         else:
             raise NotImplementedError(
                 f'optimizer {optim_type} is not supported yet.')
@@ -154,22 +180,27 @@ class default():
         """Set up schedulers."""
         train_opt = self.opt['train']
         scheduler_type = train_opt['scheduler'].pop('type')
+        self.scheduler_type = scheduler_type
 
-        if scheduler_type in {'MultiStepLR', 'multisteplr'}:
-            for optimizer in self.optimizers:
-                self.schedulers.append(torch.optim.lr_scheduler.MultiStepLR(
-                    optimizer, **train_opt['scheduler']))
-        elif scheduler_type in {'CAWR', 'cawr'}:
-            for optimizer in self.optimizers:
-                self.schedulers.append(torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(
-                    optimizer, **train_opt['scheduler']))
-        elif scheduler_type in {'CosineAnnealing', 'cosineannealing'}:
-            for optimizer in self.optimizers:
-                self.schedulers.append(torch.optim.lr_scheduler.CosineAnnealingLR(
-                    optimizer, **train_opt['scheduler']))
+        if scheduler_type not in {'none', 'disabled'}:
+            if scheduler_type in {'MultiStepLR', 'multisteplr'}:
+                for optimizer in self.optimizers:
+                    self.schedulers.append(torch.optim.lr_scheduler.MultiStepLR(
+                        optimizer, **train_opt['scheduler']))
+            elif scheduler_type in {'CAWR', 'cawr'}:
+                for optimizer in self.optimizers:
+                    self.schedulers.append(torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(
+                        optimizer, **train_opt['scheduler']))
+            elif scheduler_type in {'CosineAnnealing', 'cosineannealing'}:
+                for optimizer in self.optimizers:
+                    self.schedulers.append(torch.optim.lr_scheduler.CosineAnnealingLR(
+                        optimizer, **train_opt['scheduler']))
+            else:
+                raise NotImplementedError(
+                    f'Scheduler {scheduler_type} is not implemented yet.')
         else:
-            raise NotImplementedError(
-                f'Scheduler {scheduler_type} is not implemented yet.')
+            self.scheduler_type = None
+            print("INFO: No scheduler in use.")
 
     def _get_init_lr(self):
         """Get the initial lr, which is set by the scheduler.
@@ -227,13 +258,30 @@ class default():
                     loss_dict['l_g_pix'] = l_g_pix
                 # perceptual loss
                 if self.cri_perceptual:
-                    l_g_percep, l_g_style = self.cri_perceptual(self.output, self.gt)
+                    l_g_percep,l_g_style,l_resnet,l_vgg = self.cri_perceptual(self.output, self.gt)
                     if l_g_percep is not None:
                         l_g_total += l_g_percep
-                        loss_dict['l_percep'] = l_g_percep
+                        loss_dict['l_g_percep'] = l_g_percep
                     if l_g_style is not None:
                         l_g_total += l_g_style
-                        loss_dict['l_style'] = l_g_style
+                        loss_dict['l_g_style'] = l_g_style
+                    if l_resnet is not None:
+                        loss_dict['l_resnet'] = l_resnet
+                    if l_vgg is not None:
+                        loss_dict['l_vgg'] = l_vgg
+                # patch loss
+                if self.cri_patch:
+                    l_g_patch = self.cri_patch(self.output, self.gt)
+                    l_g_total += l_g_patch
+                    loss_dict['l_g_patch'] = l_g_patch
+                if self.cri_patch_3d:
+                    l_g_patch_3d = self.cri_patch_3d(self.output, self.gt)
+                    l_g_total += l_g_patch_3d
+                    loss_dict['l_g_patch_3d'] = l_g_patch_3d
+                if self.cri_patch_3d_xd:
+                    l_g_patch_3d_xd = self.cri_patch_3d_xd(self.output, self.gt)
+                    l_g_total += l_g_patch_3d_xd
+                    loss_dict['l_g_patch_3d_xd'] = l_g_patch_3d_xd
                 # ldl loss
                 if self.cri_ldl:
                     pixel_weight = get_refined_artifact_map(self.gt, self.output, 7)
@@ -251,6 +299,11 @@ class default():
                     l_g_ff = self.cri_ff(self.output, self.gt)
                     l_g_total += l_g_ff
                     loss_dict['l_g_ff'] = l_g_ff
+                # Gradient Variance Loss
+                if self.cri_gradvar:
+                    l_g_gradvar = self.cri_gradvar(self.output, self.gt)
+                    l_g_total += l_g_gradvar
+                    loss_dict['l_g_gradvar'] = l_g_gradvar
                 # GAN loss
                 if self.cri_gan:
                     fake_g_pred = self.net_d(self.output)
@@ -300,21 +353,22 @@ class default():
             warmup_iter (int)： Warm-up iter numbers. -1 for no warm-up.
                 Default： -1.
         """
-        if current_iter > 0:
-            for scheduler in self.schedulers:
-                scheduler.step()
-        # set up warm-up learning rate
-        if current_iter < warmup_iter:
-            # get initial lr for each group
-            init_lr_g_l = self._get_init_lr()
-            # modify warming-up learning rates
-            # currently only support linearly warm up
-            warm_up_lr_l = []
-            for init_lr_g in init_lr_g_l:
-                warm_up_lr_l.append(
-                    [v / warmup_iter * current_iter for v in init_lr_g])
-            # set learning rate
-            self._set_lr(warm_up_lr_l)
+        if self.scheduler_type is not None:
+            if current_iter > 0:
+                for scheduler in self.schedulers:
+                    scheduler.step()
+            # set up warm-up learning rate
+            if current_iter < warmup_iter:
+                # get initial lr for each group
+                init_lr_g_l = self._get_init_lr()
+                # modify warming-up learning rates
+                # currently only support linearly warm up
+                warm_up_lr_l = []
+                for init_lr_g in init_lr_g_l:
+                    warm_up_lr_l.append(
+                        [v / warmup_iter * current_iter for v in init_lr_g])
+                # set learning rate
+                self._set_lr(warm_up_lr_l)
 
     def test(self):
         # pad to multiplication of window_size

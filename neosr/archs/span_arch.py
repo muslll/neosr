@@ -211,8 +211,8 @@ class span(nn.Module):
                  feature_channels=48,
                  upscale=upscale,
                  bias=True,
-                 img_range=255.,
-                 rgb_mean=(0.4488, 0.4371, 0.4040)
+                 img_range=1.,
+                 rgb_mean=(0.485, 0.456, 0.406)
                  ):
         super(span, self).__init__()
 

@@ -1,5 +1,6 @@
 import torch
 import torch.fft
+import torchvision.models
 from torch import nn
 from torch.nn import functional as F
 
@@ -115,6 +116,43 @@ class HuberLoss(nn.Module):
         return self.loss_weight * huber_loss(pred, target, weight, delta=self.delta, reduction=self.reduction)
 
 
+class Resnet_loss(nn.Module):
+    def __init__(self, cnn, feature_layers=3):
+        super(Resnet_loss, self).__init__()
+        self.conv1 = cnn.conv1
+        self.bn1 = cnn.bn1
+        self.relu = cnn.relu
+        self.maxpool = cnn.maxpool
+        self.feature_layers = feature_layers
+        assert feature_layers <= 4
+        self.blocks = nn.ModuleList()
+        for _, layer in zip(range(4 + feature_layers), cnn.children()):
+            if isinstance(layer, nn.Sequential):
+                self.blocks.append(layer)
+
+    def forward(self, predict_features, target_features, weights=[1]):
+        if len(weights) == 1:
+            weights = weights * self.feature_layers
+        x = predict_features
+        x = self.bn1(self.conv1(x))
+        x = self.maxpool(self.relu(x))
+
+        y = target_features
+        y = self.bn1(self.conv1(y))
+        y = self.maxpool(self.relu(y))
+
+        losses = []
+        L1_loss = nn.L1Loss().cuda()
+        for block in self.blocks:
+            x = block(x)
+            y = block(y)
+            losses.append(L1_loss(x, y))
+        total_loss = 0
+        for weight, loss in zip(weights, losses):
+            total_loss += loss * weight
+        return total_loss
+
+
 @LOSS_REGISTRY.register()
 class PerceptualLoss(nn.Module):
     """Perceptual loss with commonly used style loss.
@@ -142,20 +180,32 @@ class PerceptualLoss(nn.Module):
     def __init__(self,
                  layer_weights,
                  vgg_type='vgg19',
+                 perceptual_type='dual',
                  use_input_norm=True,
                  range_norm=False,
                  perceptual_weight=1.0,
+                 perceptual_patch_weight=1.0,
                  style_weight=0.,
-                 criterion='l1'):
+                 criterion='patch',
+                 perceptual_kernels=[4,8],
+                 use_std_to_force=True):
         super(PerceptualLoss, self).__init__()
         self.perceptual_weight = perceptual_weight
+        self.patch_weights = perceptual_patch_weight
         self.style_weight = style_weight
         self.layer_weights = layer_weights
+        self.perceptual_kernels = perceptual_kernels
+        self.use_std_to_force = use_std_to_force
+        self.perceptual_type = perceptual_type
         self.vgg = VGGFeatureExtractor(
             layer_name_list=list(layer_weights.keys()),
             vgg_type=vgg_type,
             use_input_norm=use_input_norm,
             range_norm=range_norm)
+
+        if self.perceptual_type == 'dual':
+            resnet = torchvision.models.resnet50(weights=torchvision.models.ResNet50_Weights.DEFAULT)
+            self.resnet_loss = Resnet_loss(resnet).cuda()
 
         self.criterion_type = criterion
         if self.criterion_type == 'l1':
@@ -166,6 +216,8 @@ class PerceptualLoss(nn.Module):
             self.criterion = torch.nn.HuberLoss()
         elif self.criterion_type == 'fro':
             self.criterion = None
+        elif self.criterion_type == 'patch':
+            self.criterion = torch.nn.L1Loss()
         else:
             raise NotImplementedError(
                 f'{criterion} criterion has not been supported.')
@@ -180,23 +232,68 @@ class PerceptualLoss(nn.Module):
         Returns:
             Tensor: Forward results.
         """
+
+        if self.perceptual_type == 'dual':
+            percep_loss1 = self.resnet_loss(x, gt.detach())
+
         # extract vgg features
         x_features = self.vgg(x)
         gt_features = self.vgg(gt.detach())
 
-        # calculate perceptual loss
-        if self.perceptual_weight > 0:
-            percep_loss = 0
-            for k in x_features.keys():
-                if self.criterion_type == 'fro':
-                    percep_loss += torch.norm(
-                        x_features[k] - gt_features[k], p='fro') * self.layer_weights[k]
-                else:
-                    percep_loss += self.criterion(
-                        x_features[k], gt_features[k]) * self.layer_weights[k]
-            percep_loss *= self.perceptual_weight
+        if self.perceptual_type != 'dual':
+            # calculate perceptual loss
+            if self.perceptual_weight > 0:
+                percep_loss = 0
+                for k in x_features.keys():
+                    if self.criterion_type == 'fro':
+                        percep_loss += torch.norm(
+                            x_features[k] - gt_features[k], p='fro') * self.layer_weights[k]
+                    elif self.criterion_type == 'patch':
+                        if self.patch_weights == 0:
+                            percep_loss += self.criterion(x_features[k], gt_features[k]) * self.layer_weights[k]
+                        else:
+                            percep_loss += self.patch(x_features[k], gt_features[k], self.use_std_to_force) * \
+                                            self.layer_weights[k] * self.patch_weights + self.criterion(x_features[k],
+                                                                                                        gt_features[
+                                                                                                            k]) * \
+                                            self.layer_weights[k]
+                    else:
+                        percep_loss += self.criterion(
+                            x_features[k], gt_features[k]) * self.layer_weights[k]
+                percep_loss *= self.perceptual_weight
+            else:
+                percep_loss = None
+        elif self.perceptual_type == 'dual':
+            if self.perceptual_weight > 0:
+                percep_loss2 = 0
+                for k in x_features.keys():
+                    if self.criterion_type == 'fro':
+                        percep_loss2 += torch.norm(
+                            x_features[k] - gt_features[k],
+                            p='fro') * self.layer_weights[k]
+                    elif self.criterion_type == 'patch':
+                        if self.patch_weights == 0:
+                            percep_loss2 += self.criterion(x_features[k], gt_features[k]) * self.layer_weights[k]
+                        else:
+                            percep_loss2 += self.patch(x_features[k], gt_features[k], self.use_std_to_force) * \
+                                           self.layer_weights[k] * self.patch_weights + self.criterion(x_features[k],
+                                                                                                       gt_features[k]) * \
+                                           self.layer_weights[k]
+                    else:
+                        percep_loss2 += self.criterion(
+                            x_features[k], gt_features[k]) * self.layer_weights[k]
+                percep_loss2 *= self.perceptual_weight
+            else:
+                percep_loss2 = None
+
+            a = percep_loss1.item()
+            b = percep_loss2.item()
+            mu = (1 / 0.5)
+            DP_loss = mu * (b / a) * percep_loss1 + percep_loss2
         else:
             percep_loss = None
+            percep_loss1 = None
+            percep_loss2 = None
 
         # calculate style loss
         if self.style_weight > 0:
@@ -212,7 +309,12 @@ class PerceptualLoss(nn.Module):
         else:
             style_loss = None
 
-        return percep_loss, style_loss
+        if self.perceptual_type != 'dual':
+            percep_loss1 = None
+            percep_loss2 = None
+            return percep_loss, style_loss, percep_loss1, percep_loss2
+        else:
+            return DP_loss, style_loss, percep_loss1, percep_loss2
 
     def _gram_mat(self, x):
         """Calculate Gram matrix.
@@ -228,6 +330,49 @@ class PerceptualLoss(nn.Module):
         features_t = features.transpose(1, 2)
         gram = features.bmm(features_t) / (c * h * w)
         return gram
+
+    def patch(self, x, gt, use_std_to_force):
+        loss = 0.
+        for _kernel in self.perceptual_kernels:
+            _patchkernel3d = PatchesKernel3D(_kernel, _kernel//2).to('cuda:0')   # create instance
+            x_trans = _patchkernel3d(x)
+            gt_trans = _patchkernel3d(gt)
+            x_trans = x_trans.reshape(-1, x_trans.shape[-1])
+            gt_trans = gt_trans.reshape(-1, gt_trans.shape[-1])
+            dot_x_y = torch.einsum('ik,ik->i', x_trans, gt_trans)
+            if use_std_to_force == False:
+                cosine0_x_y = torch.div(torch.div(dot_x_y, torch.sqrt(torch.sum(x_trans ** 2, dim=1))), torch.sqrt(torch.sum(gt_trans ** 2, dim=1)))
+                loss = loss + torch.mean(1-cosine0_x_y) # y = 1-x
+            else:
+                dy = torch.std(gt_trans, dim=1)
+                cosine_x_y = torch.div(torch.div(dot_x_y, torch.sqrt(torch.sum(x_trans ** 2, dim=1))), torch.sqrt(torch.sum(gt_trans ** 2, dim=1)))
+                cosine_x_y_d = torch.mul((1-cosine_x_y), dy) # y = (1-x)dy
+                loss = loss + torch.mean(cosine_x_y_d)
+        return loss
+
+
+class PatchesKernel3D(nn.Module):
+    def __init__(self, kernelsize, kernelstride, kernelpadding=0):
+        super(PatchesKernel3D, self).__init__()
+        kernel = torch.eye(kernelsize ** 2).\
+            view(kernelsize ** 2, 1, kernelsize, kernelsize)
+        kernel = kernel.clone().detach()
+        self.weight = nn.Parameter(data=kernel,
+                                   requires_grad=False)
+        self.bias = nn.Parameter(torch.zeros(kernelsize ** 2),
+                                 requires_grad=False)
+        self.kernelsize = kernelsize
+        self.stride = kernelstride
+        self.padding = kernelpadding
+
+    def forward(self, x):
+        batchsize = x.shape[0]
+        channels = x.shape[1]
+        x = x.reshape(batchsize*channels, x.shape[-2], x.shape[-1]).unsqueeze(1)
+        x = F.conv2d(x, self.weight, self.bias, self.stride, self.padding)
+        x = x.permute(0, 2, 3, 1).reshape(batchsize, channels, -1, self.kernelsize ** 2).permute(0, 2, 1, 3)
+        return x
+
 
 @LOSS_REGISTRY.register()
 class colorloss(nn.Module):
@@ -356,3 +501,222 @@ class focalfrequencyloss(nn.Module):
         # calculate focal frequency loss
         return self.loss_formulation(pred_freq, target_freq, matrix) * self.loss_weight
 
+
+@LOSS_REGISTRY.register()
+class patchloss(nn.Module):
+    """Define patch loss
+
+    Args:
+        kernel_sizes (list): add (x, y) in the list.
+        loss_weight (float): Loss weight. Default: 1.0.
+    """
+    def __init__(self, kernel_sizes=[2, 4], loss_weight=1.0):
+        super(patchloss, self).__init__()
+        self.kernels = kernel_sizes
+        self.loss_weight = loss_weight
+
+    def forward(self, preds, labels):
+        """
+        Args:
+            pred (Tensor): of shape (N, C, H, W). Predicted tensor.
+            labels (Tensor): of shape (N, C, H, W). Ground truth tensor.
+        """
+        # from basicsr.utils.matlab_functions import rgb2ycbcr
+
+        # PIL proves that the data format is RGB
+        # from PIL import Image
+        # for i_ in range(16):
+        #     label = labels[i_,:,:,:] # torch [3, 96, 96]
+        #     label9 = (label * 255).detach().cpu().numpy().astype(np.uint8).transpose(1,2,0) # [96, 96, 3]
+        #     im = Image.fromarray(label9)
+        #     im.save(str(i_)+'.png')
+
+        # for j_ in range(16):
+        #     label = labels[j_,:,:,:]
+        #     label9 = (label * 255).detach().cpu().numpy().astype(np.uint8).transpose(1,2,0) # [96, 96, 3]
+        #     _a  =  np.expand_dims(label9[:,:,2],axis=-1)
+        #     _b  =  np.expand_dims(label9[:,:,1],axis=-1)
+        #     _c  =  np.expand_dims(label9[:,:,0],axis=-1)
+        #     labelx = np.concatenate([_a,_b,_c], axis = -1)
+        #     im = Image.fromarray(labelx)
+        #     im.save(str(j_)+'xx.png')
+
+        # labels -> [16,3,96,96]
+        # label0 = labels[1,:,:,:] # label0 -> [3,96,96]
+        # label3 = label0.unsqueeze(-1).permute(3,1,2,0).squeeze() # label3 -> [96,96,3]
+        # label4 = label0.unsqueeze(-1).transpose(0,3).squeeze() # label4 -> [96,96,3]
+        # label6 = (16. + (65.481 * label3[:, :, 0] + 128.553 * label3[:, :, 1] + 24.966 * label3[:, :, 2]))/255.  # [96, 96]
+
+        # label1 = label0.detach().cpu().numpy().astype(np.float32) # [3, 96, 96]
+        # label2 = reorder_image(label1, input_order='CHW')  # [96, 96, 3]
+        # label5 = rgb2ycbcr(label2, y_only=True)  # [96, 96]
+        # # Label5 and Label6 are equal in value.
+
+        # labels7 = (16. + (65.481 * labels[:, 0, :, :] + 128.553 * labels[:, 1, :, :] + 24.966 * labels[:, 2, :, :]))/255. # [16, 96, 96]
+        # # Only one line can do this:
+        # # labels7[1] == label6 == label5
+
+        preds = (16. + (65.481 * preds[:, 0, :, :] + 128.553 * preds[:, 1, :, :] + 24.966 * preds[:, 2, :, :]))/255.
+        labels = (16. + (65.481 * labels[:, 0, :, :] + 128.553 * labels[:, 1, :, :] + 24.966 * labels[:, 2, :, :]))/255.
+        preds = preds.unsqueeze(1)
+        labels = labels.unsqueeze(1)
+        loss = 0.
+
+        for _kernel in self.kernels:
+            _patchkernel = PatchesKernel(_kernel, _kernel//2 + 1).to('cuda:0')           # create instance
+            preds_trans = _patchkernel(preds)                                          # [N, patch_num, patch_len ** 2]
+            labels_trans = _patchkernel(labels)                                        # [N, patch_num, patch_len ** 2]
+            preds_trans = preds_trans.reshape(-1, preds_trans.shape[-1])               # [N * patch_num, patch_len ** 2]
+            labels_trans = labels_trans.reshape(-1, labels_trans.shape[-1])            # [N * patch_num, patch_len ** 2]
+            x = torch.clamp(preds_trans, 0.000001, 0.999999)
+            y = torch.clamp(labels_trans, 0.000001, 0.999999)
+            dot_x_y = torch.einsum('ik,ik->i',x,y)                                     # [N * patch_num]
+            pearson_x_y = torch.mean(torch.div(torch.div(dot_x_y, torch.sqrt(torch.sum(x ** 2, dim=1))), torch.sqrt(torch.sum(y ** 2, dim=1))))
+            loss = loss + torch.exp(-pearson_x_y) # y = e^(-x)
+            # loss = loss - pearson_x_y # y = - x
+
+        return loss * self.loss_weight
+
+class PatchesKernel(nn.Module):
+    def __init__(self, kernelsize, kernelstride, kernelpadding=0):
+        super(PatchesKernel, self).__init__()
+        kernel = torch.eye(kernelsize ** 2).\
+            view(kernelsize ** 2, 1, kernelsize, kernelsize)
+        kernel = kernel.clone().detach()
+        self.weight = nn.Parameter(data=kernel,
+                                   requires_grad=False)
+        self.bias = nn.Parameter(torch.zeros(kernelsize ** 2),
+                                 requires_grad=False)
+        self.kernelsize = kernelsize
+        self.stride = kernelstride
+        self.padding = kernelpadding
+
+    def forward(self, x):
+        batchsize = x.shape[0]
+        x = F.conv2d(x, self.weight, self.bias, self.stride, self.padding)
+        x = x.permute(0, 2, 3, 1).reshape(batchsize, -1, self.kernelsize ** 2)
+        return x
+
+
+@LOSS_REGISTRY.register()
+class patchloss3d(nn.Module):
+    """Define patch loss
+
+    Args:
+        kernel_sizes (list): add (4,2), (8,4), (16,8), (32,16) or (64,32) in the list.
+        loss_weight (float): Loss weight. Default: 1.0.
+    """
+    def __init__(self, kernel_sizes=[2, 4], loss_weight=1.0):
+        super(patchloss3d, self).__init__()
+        self.kernels = kernel_sizes
+        self.loss_weight = loss_weight
+
+    def forward(self, preds, labels):
+        """
+        Args:
+            pred (Tensor): of shape (N, C, H, W). Predicted tensor.
+            labels (Tensor): of shape (N, C, H, W). Ground truth tensor.
+        """
+        loss = 0.
+        for _kernel in self.kernels:
+            _patchkernel = PatchesKernel3D(_kernel, _kernel//2 + 1).to('cuda:0') # create instance
+            preds_trans = _patchkernel(preds)                                  # [N, patch_num, channels, patch_len ** 2]
+            labels_trans = _patchkernel(labels)                                # [N, patch_num, channels, patch_len ** 2]
+            preds_trans = preds_trans.reshape(-1, preds_trans.shape[-1])       # [N * patch_num * channels, patch_len ** 2]
+            labels_trans = labels_trans.reshape(-1, labels_trans.shape[-1])    # [N * patch_num * channels, patch_len ** 2]
+            x = torch.clamp(preds_trans, 0.000001, 0.999999)
+            y = torch.clamp(labels_trans, 0.000001, 0.999999)
+            dot_x_y = torch.einsum('ik,ik->i',x,y)                             # [N * patch_num]
+            cosine0_x_y = torch.mean(torch.div(torch.div(dot_x_y, torch.sqrt(torch.sum(x ** 2, dim=1))), torch.sqrt(torch.sum(y ** 2, dim=1))))
+            loss = loss + (1 - cosine0_x_y) # y = 1 - x
+        return loss * self.loss_weight
+
+@LOSS_REGISTRY.register()
+class patchloss3dxd(nn.Module):
+    """Define patch loss
+
+    Args:
+        kernel_sizes (list): add (x, y) in the list.
+        loss_weight (float): Loss weight. Default: 1.0.
+    """
+    def __init__(self, kernel_sizes=[2, 4], loss_weight=1.0, use_std_to_force=True):
+        super(patchloss3dxd, self).__init__()
+        self.kernels = kernel_sizes
+        self.loss_weight = loss_weight
+        self.use_std_to_force = use_std_to_force
+
+    def forward(self, preds, labels):
+        """
+        Args:
+            pred (Tensor): of shape (N, C, H, W). Predicted tensor.
+            labels (Tensor): of shape (N, C, H, W). Ground truth tensor.
+        """
+        loss = 0.
+        for _kernel in self.kernels:
+            _patchkernel = PatchesKernel3D(_kernel, _kernel//2 + 1).to('cuda:0') # create instance
+            preds_trans = _patchkernel(preds)                                  # [N, patch_num, channels, patch_len ** 2]
+            labels_trans = _patchkernel(labels)                                # [N, patch_num, channels, patch_len ** 2]
+            preds_trans = preds_trans.reshape(-1, preds_trans.shape[-1])       # [N * patch_num * channels, patch_len ** 2]
+            labels_trans = labels_trans.reshape(-1, labels_trans.shape[-1])    # [N * patch_num * channels, patch_len ** 2]
+            x = torch.clamp(preds_trans, 0.000001, 0.999999)
+            y = torch.clamp(labels_trans, 0.000001, 0.999999)
+            dot_x_y = torch.einsum('ik,ik->i',x,y)
+            if self.use_std_to_force == False:
+                cosine0_x_y = torch.div(torch.div(dot_x_y, torch.sqrt(torch.sum(x ** 2, dim=1))), torch.sqrt(torch.sum(y ** 2, dim=1)))
+                loss = loss + torch.mean((1-cosine0_x_y)) # y = 1-x
+            else:
+                dy = torch.std(labels_trans*10, dim=1)
+                cosine_x_y = torch.div(torch.div(dot_x_y, torch.sqrt(torch.sum(x ** 2, dim=1))), torch.sqrt(torch.sum(y ** 2, dim=1)))
+                cosine_x_y_d = torch.mul((1-cosine_x_y), dy) # y = (1-x) dy
+                loss = loss + torch.mean(cosine_x_y_d)
+        return loss * self.loss_weight
+
+
+@LOSS_REGISTRY.register()
+class gradientvarianceloss(nn.Module):
+    """Class for calculating GV loss between two RGB images
+       :parameter
+       patch_size : int, scalar, size of the patches extracted from the gt and predicted images
+       cpu : bool,  whether to run calculation on cpu or gpu
+        """
+    def __init__(self, patch_size=8, cpu=False, loss_weight=1.0):
+        super(gradientvarianceloss, self).__init__()
+        self.patch_size = patch_size
+        self.loss_weight = loss_weight
+        # Sobel kernel for the gradient map calculation
+        self.kernel_x = torch.FloatTensor([[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]]).unsqueeze(0).unsqueeze(0)
+        self.kernel_y = torch.FloatTensor([[1, 2, 1], [0, 0, 0], [-1, -2, -1]]).unsqueeze(0).unsqueeze(0)
+        if not cpu:
+            self.kernel_x = self.kernel_x.cuda()
+            self.kernel_y = self.kernel_y.cuda()
+        # operation for unfolding image into non overlapping patches
+        self.unfold = torch.nn.Unfold(kernel_size=(self.patch_size, self.patch_size), stride=self.patch_size)
+
+    def forward(self, output, target):
+        # converting RGB image to grayscale
+        gray_output = 0.2989 * output[:, 0:1, :, :] + 0.5870 * output[:, 1:2, :, :] + 0.1140 * output[:, 2:, :, :]
+        gray_target = 0.2989 * target[:, 0:1, :, :] + 0.5870 * target[:, 1:2, :, :] + 0.1140 * target[:, 2:, :, :]
+
+        # calculation of the gradient maps of x and y directions
+        gx_target = F.conv2d(gray_target, self.kernel_x, stride=1, padding=1)
+        gy_target = F.conv2d(gray_target, self.kernel_y, stride=1, padding=1)
+        gx_output = F.conv2d(gray_output, self.kernel_x, stride=1, padding=1)
+        gy_output = F.conv2d(gray_output, self.kernel_y, stride=1, padding=1)
+
+        # unfolding image to patches
+        gx_target_patches = self.unfold(gx_target)
+        gy_target_patches = self.unfold(gy_target)
+        gx_output_patches = self.unfold(gx_output)
+        gy_output_patches = self.unfold(gy_output)
+
+        # calculation of variance of each patch
+        var_target_x = torch.var(gx_target_patches, dim=1)
+        var_output_x = torch.var(gx_output_patches, dim=1)
+        var_target_y = torch.var(gy_target_patches, dim=1)
+        var_output_y = torch.var(gy_output_patches, dim=1)
+
+        # loss function as a MSE between variances of patches extracted from gradient maps
+        gradvar_loss = F.mse_loss(var_target_x, var_output_x) + F.mse_loss(var_target_y, var_output_y)
+        loss = gradvar_loss * self.loss_weight
+
+        return loss
