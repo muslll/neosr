@@ -223,6 +223,9 @@ class span(nn.Module):
         self.mean = torch.Tensor(rgb_mean).view(1, 3, 1, 1)
         self.norm = norm
 
+        if self.norm:
+            self.register_buffer("isnorm", torch.zeros(1))
+
         self.conv_1 = Conv3XC(in_channels, feature_channels, gain1=2, s=1)
         self.block_1 = SPAB(feature_channels, bias=bias)
         self.block_2 = SPAB(feature_channels, bias=bias)
@@ -238,7 +241,6 @@ class span(nn.Module):
 
     def forward(self, x):
         if self.norm:
-            self.register_buffer("isnorm", torch.zeros(1))
             self.mean = self.mean.type_as(x)
             x = (x - self.mean) * self.img_range
 
