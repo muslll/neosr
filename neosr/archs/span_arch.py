@@ -241,6 +241,7 @@ class span(nn.Module):
 
         self.upsampler = pixelshuffle_block(feature_channels, out_channels, upscale_factor=upscale)
 
+    @property
     def is_norm(self):
         return self.norm is not None
 
