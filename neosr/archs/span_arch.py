@@ -249,9 +249,6 @@ class span(nn.Module):
         if self.is_norm:
             self.mean = self.mean.type_as(x)
             x = (x - self.mean) * self.img_range
-            print("norm enabled")
-        else:
-            print("norm disabled")
 
         out_feature = self.conv_1(x)
 
