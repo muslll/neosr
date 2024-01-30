@@ -1,6 +1,8 @@
-# neosr
+# neosr by [muslll](https://github.com/muslll/) - (amateurly) edited by terrainer
 
-**neosr** is a framework for training real-world single-image super-resolution networks. 
+**neosr** is a framework for training real-world single-image super-resolution networks.
+this is my personal playground for code edits and additions.
+
 
 > [!TIP]
 > For more information, read the [**wiki**](https://github.com/muslll/neosr/wiki)
@@ -91,13 +93,15 @@ Please read the wiki [Configuration Walkthrough](https://github.com/muslll/neosr
 
 ### Supported Optimizers:
 
-| optimizer                                                                 | option             |
-|---------------------------------------------------------------------------|--------------------|
-| [Adam](https://pytorch.org/docs/stable/generated/torch.optim.Adam.html)   | `Adam` or `adam`   |
-| [AdamW](https://pytorch.org/docs/stable/generated/torch.optim.AdamW.html) | `AdamW` or `adamw` |
-| [Lion](https://arxiv.org/abs/2302.06675)                                  | `Lion` or `lion`   |
-| [LAMB](https://arxiv.org/abs/1904.00962)                                  | `Lamb` or `lamb`   |
-| [Adan](https://github.com/sail-sg/Adan)                                   | `Adan` or `adan`   |
+| optimizer                                                                 | option                 |
+|---------------------------------------------------------------------------|------------------------|
+| [Adam](https://pytorch.org/docs/stable/generated/torch.optim.Adam.html)   | `Adam` or `adam`       |
+| [AdamW](https://pytorch.org/docs/stable/generated/torch.optim.AdamW.html) | `AdamW` or `adamw`     |
+| [Lion](https://arxiv.org/abs/2302.06675)                                  | `Lion` or `lion`       |
+| [LAMB](https://arxiv.org/abs/1904.00962)                                  | `Lamb` or `lamb`       |
+| [Adan](https://github.com/sail-sg/Adan)                                   | `Adan` or `adan`       |
+| [AdamL](https://github.com/andrewjc/PyTorch-AdamL)        | `AdamL` or `adaml`     |
+| [Prodigy](https://github.com/konstmish/prodigy)                           | `Prodigy` or `prodigy` |
 
 ### Supported models:
 
@@ -116,16 +120,18 @@ Please read the wiki [Configuration Walkthrough](https://github.com/muslll/neosr
 
 ### Supported losses:
 
-| loss                                                                   | option               		     |
+| loss                                                                   | option               		                 |
 |------------------------------------------------------------------------|-------------------------------------------|
-| L1 Loss                                                                | `L1Loss`, `l1`       		     |
-| L2 Loss                                                                | `MSELoss`, `l2`      		     |
-| Huber Loss                                                             | `HuberLoss`, `huber` 		     |
-| Perceptual Loss                                                        | `perceptual_opt`, `PerceptualLoss`        |
+| L1 Loss                                                                | `L1Loss`, `l1`       		                 |
+| L2 Loss                                                                | `MSELoss`, `l2`      		                 |
+| Huber Loss                                                             | `HuberLoss`, `huber` 		                 |
+| Perceptual Loss / [Dual Adaptive Perceptual Loss](https://github.com/Sunny6-6-6/ESRGAN-DP) | `perceptual_opt`, `PerceptualLoss` |
 | GAN                                                                    | `gan_opt`, `GANLoss`, `MultiScaleGANLoss` |
 | YUV Color Loss                                                         | `color_opt`, `colorloss`                  |
-| [LDL Loss](https://github.com/csjliang/LDL)                            | `ldl_opt`  			             |
+| [LDL Loss](https://github.com/csjliang/LDL)                            | `ldl_opt`  			                         |
 | [Focal Frequency](https://github.com/EndlessSora/focal-frequency-loss) | `ff_opt`, `focalfrequencyloss`            |
+| [Patch Loss](https://github.com/Suanmd/Patch-Loss-for-Super-Resolution) | `patch_opt`, `patch_opt_3d`, `patch_opt_3d_xd`|
+| [Gradient Variance Loss](https://github.com/lusinlu/gradient-variance-loss) | `gradvar_opt`                        |
 
 ## datasets
 

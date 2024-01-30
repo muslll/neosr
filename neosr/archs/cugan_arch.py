@@ -262,6 +262,9 @@ class cugan(nn.Module):
         if self.scale == 1:
             raise ValueError(f'1x scale ratio is unsupported. Please use 2x, 3x or 4x.')
 
+        if pro_mode:
+            self.register_buffer("pro", torch.zeros(1))
+
         if self.scale == 2:
             self.unet1 = UNet1(in_channels, out_channels, deconv=True)
             self.unet2 = UNet2(in_channels, out_channels, deconv=False)
