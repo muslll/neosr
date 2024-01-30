@@ -1,6 +1,8 @@
-# neosr
+# neosr by [muslll](https://github.com/muslll/) - (amateurly) edited by terrainer
 
-**neosr** is a framework for training real-world single-image super-resolution networks. 
+**neosr** is a framework for training real-world single-image super-resolution networks.
+this is my personal playground for code edits and additions.
+
 
 > [!TIP]
 > For more information, read the [**wiki**](https://github.com/muslll/neosr/wiki)
