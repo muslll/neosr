@@ -44,6 +44,8 @@ def load_net():
         elif "params_ema" in load_net:
             param_key = "params_ema"
         load_net = load_net[param_key]
+    except:
+        pass
 
     # remove unnecessary 'module.'
     for k, v in deepcopy(load_net).items():
