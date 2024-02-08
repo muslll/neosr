@@ -1,9 +1,12 @@
 from os import path as osp
+import numpy as np
+
+from PIL import Image
 from torch.utils import data
-from torchvision.transforms.functional import normalize
+from torchvision.transforms.functional import normalize, rgb_to_grayscale
 
 from neosr.data.data_util import paths_from_lmdb
-from neosr.utils import FileClient, imfrombytes, img2tensor, rgb2ycbcr, scandir
+from neosr.utils import FileClient, imfrombytes, img2tensor, scandir
 from neosr.utils.registry import DATASET_REGISTRY
 
 
@@ -57,7 +60,10 @@ class single(data.Dataset):
 
         # color space transform
         if 'color' in self.opt and self.opt['color'] == 'y':
-            img_lq = rgb2ycbcr(img_lq, y_only=True)[..., None]
+            img_lq = Image.fromarray(img_lq.astype(np.uint8))
+            img_lq = rgb_to_grayscale(img_lq)
+            img_lq = np.array(img_lq, dtype=np.float32)
+            img_lq = np.expand_dims(img_lq, axis=-1)
 
         # BGR to RGB, HWC to CHW, numpy to tensor
         img_lq = img2tensor(img_lq, bgr2rgb=True, float32=True)
