@@ -24,3 +24,4 @@
 | [`CRAFT`](https://github.com/AVC2-UESTC/CRAFT-SR)						      | [Apache 2.0](https://github.com/AVC2-UESTC/CRAFT-SR/blob/main/LICENSE.txt)	      			|
 | [`Real-CUGAN`](https://github.com/bilibili/ailab)						      | [MIT](https://github.com/bilibili/ailab/blob/main/Real-CUGAN/LICENSE)					|
 | [`SAFMN`](https://github.com/sunny2109/SAFMN)							      | Unknown													|
+| [`RGT`](https://github.com/zhengchen1999/RGT)							      | [Apache 2.0](https://github.com/zhengchen1999/RGT/blob/main/LICENSE)					|

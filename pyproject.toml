@@ -20,7 +20,9 @@ opencv-python-headless = "^4.8.1.78"
 
 [tool.ruff]
 select = ["ALL"]
-ignore = [ "E501", "T201", "D100", "D103", "CPY001", "TD002", "TD003", "COM812", "ISC001" ]
+ignore = [ "E501", "T201", "D", "CPY001",
+	   "TD002", "TD003", "COM812", "ISC001",
+	   "N8", "ANN" ]
 target-version = "py311"
 preview = true
 
