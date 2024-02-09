@@ -60,9 +60,10 @@ class single(data.Dataset):
 
         # color space transform
         if 'color' in self.opt and self.opt['color'] == 'y':
-            img_lq = Image.fromarray(img_lq.astype(np.uint8))
+            img_lq = np.round(img_lq * 255.0).astype(np.uint8)
+            img_lq = Image.fromarray(img_lq)
             img_lq = rgb_to_grayscale(img_lq)
-            img_lq = np.array(img_lq, dtype=np.float32)
+            img_lq = np.array(img_lq, dtype=np.float32) / 255.
             img_lq = np.expand_dims(img_lq, axis=-1)
 
         # BGR to RGB, HWC to CHW, numpy to tensor

@@ -125,14 +125,16 @@ class paired(data.Dataset):
             # TODO: currently torchvision v2.Grayscale doesn't output one channel
             # Switch to it once fixed, to avoid such conversions
 
-            img_gt = Image.fromarray(img_gt.astype(np.uint8))
+            img_gt = np.round(img_gt * 255.0).astype(np.uint8)
+            img_gt = Image.fromarray(img_gt)
             img_gt = rgb_to_grayscale(img_gt)
-            img_gt = np.array(img_gt, dtype=np.float32)
+            img_gt = np.array(img_gt, dtype=np.float32) / 255.
             img_gt = np.expand_dims(img_gt, axis=-1)
 
-            img_lq = Image.fromarray(img_lq.astype(np.uint8))
+            img_lq = np.round(img_lq * 255.0).astype(np.uint8)
+            img_lq = Image.fromarray(img_lq)
             img_lq = rgb_to_grayscale(img_lq)
-            img_lq = np.array(img_lq, dtype=np.float32)
+            img_lq = np.array(img_lq, dtype=np.float32) / 255.
             img_lq = np.expand_dims(img_lq, axis=-1)
 
         # crop the unmatched GT images during validation or testing, especially for SR benchmark datasets
