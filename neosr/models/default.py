@@ -241,6 +241,7 @@ class default():
         # increment accumulation counter and check if accumulation limit has been reached
         self.accum_count += 1
         accum_reached = self.accum_count >= self.accum_limit
+        n_x, _, _, _ = self.lq.size()
         
         # assign loss_weights to variables to use later
         wgt_gan = 0 if self.cri_gan is None else self.cri_gan.loss_weight
@@ -295,7 +296,7 @@ class default():
                     loss_dict['l_g_gan'] = l_g_gan / wgt_gan
                     
         loss_dict['l_g_total'] = l_g_total
-        self.scaler_g.scale(l_g_total / self.accum_limit).backward()
+        self.scaler_g.scale(l_g_total / n_x).backward()
         
         if accum_reached:
             self.scaler_g.step(self.optimizer_g)
@@ -323,8 +324,8 @@ class default():
                     loss_dict['out_d_fake'] = torch.mean(fake_d_pred.detach())                    
 
             if self.cri_gan:
-                self.scaler_d.scale(l_d_real / self.accum_limit).backward()
-                self.scaler_d.scale(l_d_fake / self.accum_limit).backward()
+                self.scaler_d.scale(l_d_real / n_x).backward()
+                self.scaler_d.scale(l_d_fake / n_x).backward()
 
             if accum_reached:
                 self.scaler_d.step(self.optimizer_d)
