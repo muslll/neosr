@@ -67,9 +67,11 @@ class compact(nn.Module):
         out = x
         for i in range(0, len(self.body)):
             out = self.body[i](out)
-
-        out = self.upsampler(out)
+            
+        if self.upscale != 1:
+            out = self.upsampler(out)
+            
         # add the nearest upsampled image, so that the network learns the residual
-        base = F.interpolate(x, scale_factor=self.upscale, mode='nearest')
+        base = x if self.upscale == 1 else F.interpolate(x, scale_factor=self.upscale, mode='nearest')
         out += base
         return out

@@ -5,12 +5,7 @@ from copy import deepcopy
 from os import path as osp
 
 import torch
-
-# pytorch_optimizer may also be named as torch_optimizer in some versions
-try:
-    import pytorch_optimizer
-except ModuleNotFoundError:
-    import torch_optimizer as pytorch_optimizer
+import pytorch_optimizer
     
 from tqdm import tqdm
 from torch.nn.parallel import DataParallel, DistributedDataParallel
@@ -34,6 +29,7 @@ class default():
         self.opt = opt
         self.device = torch.device('cuda')
         self.is_train = opt['is_train']
+        self.use_amp = self.opt['use_amp'] is True
         self.optimizers = []
         self.schedulers = []
 
@@ -72,6 +68,23 @@ class default():
         self.net_g.train()
         if self.opt.get('network_d', None) is not None:
             self.net_d.train()
+        
+        self.update_sch = False # Update schedulers on after a gradient update has been performed
+        self.grad_updates = 0
+        # define accumulation counter and limit. Default to 1 if not found
+        if train_opt.get('accum_iter'):
+            self.accum_limit = train_opt.get('accum_iter')
+        else:
+            self.accum_limit = 1
+        
+        # Track number of losses and summed loss accumulated so far
+        self.accum_count = 0
+        self.accum_l_g = 0
+        self.accum_l_d_real = 0
+        self.accum_l_d_fake = 0
+        
+        self.scaler_g = torch.cuda.amp.GradScaler(enabled=self.use_amp, init_scale=2.**5)
+        self.scaler_d = torch.cuda.amp.GradScaler(enabled=self.use_amp, init_scale=2.**5)
 
         # define losses
         if train_opt.get('pixel_opt'):
@@ -228,17 +241,22 @@ class default():
         self.optimizer_g.zero_grad(set_to_none=True)
 
         # for amp
-        use_amp = False
         amp_dtype = torch.float16
 
-        if self.opt['use_amp'] is True:
-            use_amp = True
         if self.opt['bfloat16'] is True:
             amp_dtype = torch.bfloat16
-        
-        scaler = torch.cuda.amp.GradScaler(enabled=use_amp, init_scale=2.**5)
 
-        with torch.autocast(device_type='cuda', dtype=amp_dtype, enabled=use_amp):
+        # Increment accumulation counter and check if accumulation limit has been reached
+        self.accum_count += 1
+        accum_reached = self.accum_count >= self.accum_limit
+        wgt_gan = 0 if self.cri_gan is None else self.cri_gan.loss_weight
+        wgt_pix = 0 if self.cri_pix is None else self.cri_pix.loss_weight
+        wgt_perc, wgt_styl = (0, 0) if self.cri_perceptual is None else (self.cri_perceptual.perceptual_weight, self.cri_perceptual.style_weight)
+        wgt_ldl = 0 if self.cri_ldl is None else self.cri_ldl.loss_weight
+        wgt_color = 0 if self.cri_color is None else self.cri_color.loss_weight
+        wgt_ff = 0 if self.cri_ff is None else self.cri_ff.loss_weight
+        
+        with torch.autocast(device_type='cuda', dtype=amp_dtype, enabled=self.use_amp):
             self.output = self.net_g(self.lq)
 
             l_g_total = 0
@@ -246,76 +264,90 @@ class default():
 
             if (current_iter % self.net_d_iters == 0 and current_iter > self.net_d_init_iters):
                 # pixel loss
-                if self.cri_pix:
+                if self.cri_pix and wgt_pix != 0:
                     l_g_pix = self.cri_pix(self.output, self.gt)
                     l_g_total += l_g_pix
-                    loss_dict['l_g_pix'] = l_g_pix
+                    loss_dict['l_g_pix'] = l_g_pix / wgt_pix
                 # perceptual loss
-                if self.cri_perceptual:
+                if self.cri_perceptual and (wgt_perc != 0 or wgt_styl != 0):
                     l_g_percep, l_g_style = self.cri_perceptual(self.output, self.gt)
-                    if l_g_percep is not None:
+                    if l_g_percep is not None and wgt_perc != 0:
                         l_g_total += l_g_percep
-                        loss_dict['l_percep'] = l_g_percep
-                    if l_g_style is not None:
+                        loss_dict['l_percep'] = l_g_percep / wgt_perc
+                    if l_g_style is not None and wgt_styl != 0:
                         l_g_total += l_g_style
-                        loss_dict['l_style'] = l_g_style
+                        loss_dict['l_style'] = l_g_style / wgt_styl
                 # ldl loss
-                if self.cri_ldl:
+                if self.cri_ldl and wgt_ldl != 0:
                     pixel_weight = get_refined_artifact_map(self.gt, self.output, 7)
                     l_g_ldl = self.cri_ldl(
                         torch.mul(pixel_weight, self.output), torch.mul(pixel_weight, self.gt))
                     l_g_total += l_g_ldl
-                    loss_dict['l_g_ldl'] = l_g_ldl
+                    loss_dict['l_g_ldl'] = l_g_ldl / wgt_ldl
                 # color loss
-                if self.cri_color:
+                if self.cri_color and wgt_color != 0:
                     l_g_color = self.cri_color(self.output, self.gt)
                     l_g_total += l_g_color
-                    loss_dict['l_g_color'] = l_g_color
+                    loss_dict['l_g_color'] = l_g_color / wgt_color
                 # Focal Frequency Loss
-                if self.cri_ff:
+                if self.cri_ff and wgt_ff != 0:
                     l_g_ff = self.cri_ff(self.output, self.gt)
                     l_g_total += l_g_ff
-                    loss_dict['l_g_ff'] = l_g_ff
+                    loss_dict['l_g_ff'] = l_g_ff / wgt_ff
                 # GAN loss
-                if self.cri_gan:
+                if self.cri_gan and wgt_gan != 0:
                     fake_g_pred = self.net_d(self.output)
                     l_g_gan = self.cri_gan(fake_g_pred, True, is_disc=False)
                     l_g_total += l_g_gan
-                    loss_dict['l_g_gan'] = l_g_gan
-
-        scaler.scale(l_g_total).backward()
-        scaler.step(self.optimizer_g)
+                    loss_dict['l_g_gan'] = l_g_gan / wgt_gan
+                    
+        loss_dict['l_g_total'] = l_g_total
+        self.accum_l_g += l_g_total
+        
+        if accum_reached:
+            self.scaler_g.scale(self.accum_l_g / self.accum_count).backward()
+            self.scaler_g.step(self.optimizer_g)
+            self.scaler_g.update()
 
         # optimize net_d
-        if self.opt.get('network_d', None) is not None:
+        if self.opt.get('network_d', None) is not None and wgt_gan != 0:
             for p in self.net_d.parameters():
                 p.requires_grad = True
 
             self.optimizer_d.zero_grad(set_to_none=True)
 
-            with torch.autocast(device_type='cuda', dtype=amp_dtype, enabled=use_amp):
+            with torch.autocast(device_type='cuda', dtype=amp_dtype, enabled=self.use_amp):
                 # real
                 if self.cri_gan:
                     real_d_pred = self.net_d(self.gt)
                     l_d_real = self.cri_gan(real_d_pred, True, is_disc=True)
-                    loss_dict['l_d_real'] = l_d_real
+                    self.accum_l_d_real += l_d_real
+                    loss_dict['l_d_real'] = l_d_real / wgt_gan
                     loss_dict['out_d_real'] = torch.mean(real_d_pred.detach())
                 # fake
                     fake_d_pred = self.net_d(self.output.detach().clone())
                     l_d_fake = self.cri_gan(fake_d_pred, False, is_disc=True)
-                    loss_dict['l_d_fake'] = l_d_fake
-                    loss_dict['out_d_fake'] = torch.mean(fake_d_pred.detach())
+                    self.accum_l_d_fake += l_d_fake
+                    loss_dict['l_d_fake'] = l_d_fake / wgt_gan
+                    loss_dict['out_d_fake'] = torch.mean(fake_d_pred.detach())                    
 
-            if self.cri_gan:
-                scaler.scale(l_d_real).backward()
-                scaler.scale(l_d_fake).backward()
+            if self.cri_gan and accum_reached:
+                self.scaler_d.scale(self.accum_l_d_real / self.accum_count).backward()
+                self.scaler_d.scale(self.accum_l_d_fake / self.accum_count).backward()
 
-            scaler.step(self.optimizer_d)
-
-        self.log_dict = self.reduce_loss_dict(loss_dict)
-
-        # update gradscaler
-        scaler.update()
+            if accum_reached:
+                self.scaler_d.step(self.optimizer_d)
+                self.scaler_d.update()
+        
+        if accum_reached:
+            self.update_sch = True
+            self.grad_updates += 1
+            self.accum_count = 0
+            self.accum_l_g = 0
+            self.accum_l_d_real = 0
+            self.accum_l_d_fake = 0
+            
+        self.log_dict = self.reduce_loss_dict(loss_dict)        
 
     def update_learning_rate(self, current_iter, warmup_iter=-1):
         """Update learning rate.
@@ -325,9 +357,10 @@ class default():
             warmup_iter (int)： Warm-up iter numbers. -1 for no warm-up.
                 Default： -1.
         """
-        if current_iter > 0:
+        if self.update_sch:
             for scheduler in self.schedulers:
                 scheduler.step()
+            self.update_sch = False
         # set up warm-up learning rate
         if current_iter < warmup_iter:
             # get initial lr for each group
@@ -436,6 +469,7 @@ class default():
             if use_pbar:
                 pbar.update(1)
                 pbar.set_description(f'Test {img_name}')
+                
         if use_pbar:
             pbar.close()
 

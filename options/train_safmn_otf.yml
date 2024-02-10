@@ -109,6 +109,7 @@ train:
     gamma: 0.5
 
   total_iter: 500000
+  accum_iter: 1 # number of batches to iterate before applying gradient
   warmup_iter: -1 # no warm up
 
   # losses
