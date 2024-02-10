@@ -4,3 +4,4 @@ __pycache__/
 .ruff_cache/
 neosr/archs/custom_arch.py
 options/train_custom.yml
+output.pstats

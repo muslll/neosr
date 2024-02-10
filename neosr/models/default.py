@@ -71,17 +71,12 @@ class default():
         
         self.update_sch = False # Update schedulers on after a gradient update has been performed
         self.grad_updates = 0
+        self.accum_count = 0
         # define accumulation counter and limit. Default to 1 if not found
         if train_opt.get('accum_iter'):
             self.accum_limit = train_opt.get('accum_iter')
         else:
             self.accum_limit = 1
-        
-        # Track number of losses and summed loss accumulated so far
-        self.accum_count = 0
-        self.accum_l_g = 0
-        self.accum_l_d_real = 0
-        self.accum_l_d_fake = 0
         
         self.scaler_g = torch.cuda.amp.GradScaler(enabled=self.use_amp, init_scale=2.**5)
         self.scaler_d = torch.cuda.amp.GradScaler(enabled=self.use_amp, init_scale=2.**5)
@@ -237,18 +232,17 @@ class default():
             for p in self.net_d.parameters():
                 p.requires_grad = False
 
-        # optimize net_g
-        self.optimizer_g.zero_grad(set_to_none=True)
-
         # for amp
         amp_dtype = torch.float16
 
         if self.opt['bfloat16'] is True:
             amp_dtype = torch.bfloat16
 
-        # Increment accumulation counter and check if accumulation limit has been reached
+        # increment accumulation counter and check if accumulation limit has been reached
         self.accum_count += 1
         accum_reached = self.accum_count >= self.accum_limit
+        
+        # assign loss_weights to variables to use later
         wgt_gan = 0 if self.cri_gan is None else self.cri_gan.loss_weight
         wgt_pix = 0 if self.cri_pix is None else self.cri_pix.loss_weight
         wgt_perc, wgt_styl = (0, 0) if self.cri_perceptual is None else (self.cri_perceptual.perceptual_weight, self.cri_perceptual.style_weight)
@@ -258,7 +252,6 @@ class default():
         
         with torch.autocast(device_type='cuda', dtype=amp_dtype, enabled=self.use_amp):
             self.output = self.net_g(self.lq)
-
             l_g_total = 0
             loss_dict = OrderedDict()
 
@@ -302,19 +295,17 @@ class default():
                     loss_dict['l_g_gan'] = l_g_gan / wgt_gan
                     
         loss_dict['l_g_total'] = l_g_total
-        self.accum_l_g += l_g_total
+        self.scaler_g.scale(l_g_total / self.accum_limit).backward()
         
         if accum_reached:
-            self.scaler_g.scale(self.accum_l_g / self.accum_count).backward()
             self.scaler_g.step(self.optimizer_g)
             self.scaler_g.update()
+            self.optimizer_g.zero_grad(set_to_none=True)
 
         # optimize net_d
         if self.opt.get('network_d', None) is not None and wgt_gan != 0:
             for p in self.net_d.parameters():
                 p.requires_grad = True
-
-            self.optimizer_d.zero_grad(set_to_none=True)
 
             with torch.autocast(device_type='cuda', dtype=amp_dtype, enabled=self.use_amp):
                 # real
@@ -331,21 +322,19 @@ class default():
                     loss_dict['l_d_fake'] = l_d_fake / wgt_gan
                     loss_dict['out_d_fake'] = torch.mean(fake_d_pred.detach())                    
 
-            if self.cri_gan and accum_reached:
-                self.scaler_d.scale(self.accum_l_d_real / self.accum_count).backward()
-                self.scaler_d.scale(self.accum_l_d_fake / self.accum_count).backward()
+            if self.cri_gan:
+                self.scaler_d.scale(l_d_real / self.accum_limit).backward()
+                self.scaler_d.scale(l_d_fake / self.accum_limit).backward()
 
             if accum_reached:
                 self.scaler_d.step(self.optimizer_d)
                 self.scaler_d.update()
+                self.optimizer_d.zero_grad(set_to_none=True)
         
         if accum_reached:
             self.update_sch = True
             self.grad_updates += 1
             self.accum_count = 0
-            self.accum_l_g = 0
-            self.accum_l_d_real = 0
-            self.accum_l_d_fake = 0
             
         self.log_dict = self.reduce_loss_dict(loss_dict)        
 
