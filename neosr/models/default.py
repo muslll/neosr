@@ -273,7 +273,7 @@ class default():
                     l_g_percep, l_g_style = self.cri_perceptual(self.output, self.gt)
                     if l_g_percep is not None and wgt_perc != 0:
                         l_g_total += l_g_percep
-                        loss_dict['l_percep'] = l_g_percep / wgt_perc
+                        loss_dict['l_g_percep'] = l_g_percep / wgt_perc
                     if l_g_style is not None and wgt_styl != 0:
                         l_g_total += l_g_style
                         loss_dict['l_style'] = l_g_style / wgt_styl
