@@ -5,7 +5,13 @@ from copy import deepcopy
 from os import path as osp
 
 import torch
-import pytorch_optimizer
+
+# pytorch_optimizer may also be named as torch_optimizer in some versions
+try:
+    import pytorch_optimizer
+except ModuleNotFoundError:
+    import torch_optimizer as pytorch_optimizer
+    
 from tqdm import tqdm
 from torch.nn.parallel import DataParallel, DistributedDataParallel
 from torch.nn import functional as F
@@ -114,16 +120,27 @@ class default():
         self.setup_schedulers()
 
     def get_optimizer(self, optim_type, params, lr, **kwargs):
-        if optim_type in {'Adam', 'adam'}:
-            optimizer = torch.optim.Adam(params, lr, **kwargs)
-        elif optim_type in {'AdamW', 'adamw'}:
-            optimizer = torch.optim.AdamW(params, lr, **kwargs)
-        elif optim_type in {'Adan', 'adan'}:
-            optimizer = pytorch_optimizer.Adan(params, lr, **kwargs)
-        elif optim_type in {'Lamb', 'lamb'}:
-            optimizer = pytorch_optimizer.Lamb(params, lr, **kwargs)
-        elif optim_type in {'Lion', 'lion'}:
-            optimizer = pytorch_optimizer.Lion(params, lr, **kwargs)
+        # uppercase optim_type to make it case insensitive
+        optim_type_upper = optim_type.upper()
+        optim_map = {"ADADELTA"   : torch.optim.Adadelta,
+                     "ADAGRAD"    : torch.optim.Adagrad,
+                     "ADAM"       : torch.optim.Adam,
+                     "ADAMW"      : torch.optim.AdamW,
+                     "SPARSEADAM" : torch.optim.SparseAdam,
+                     "ADAMAX"     : torch.optim.Adamax,
+                     "ASGD"       : torch.optim.ASGD,
+                     "SGD"        : torch.optim.SGD,
+                     "RADAM"      : torch.optim.RAdam,
+                     "RPROP"      : torch.optim.Rprop,
+                     "RMSPROP"    : torch.optim.RMSprop,
+                     "NADAM"      : torch.optim.NAdam,
+                     "LBFGS"      : torch.optim.LBFGS,
+                     "ADAN"       : pytorch_optimizer.Adan,
+                     "LAMB"       : pytorch_optimizer.Lamb,
+                     "LION"       : pytorch_optimizer.Lion,
+                    }
+        if optim_type_upper in optim_map:
+            optimizer = optim_map[optim_type_upper](params, lr, **kwargs)
         else:
             raise NotImplementedError(
                 f'optimizer {optim_type} is not supported yet.')
@@ -154,19 +171,27 @@ class default():
         """Set up schedulers."""
         train_opt = self.opt['train']
         scheduler_type = train_opt['scheduler'].pop('type')
-
-        if scheduler_type in {'MultiStepLR', 'multisteplr'}:
+        # uppercase scheduler_type to make it case insensitive
+        sch_typ_upper = scheduler_type.upper()
+        sch_map = {"CONSTANTLR"        : torch.optim.lr_scheduler.ConstantLR,
+                   "LINEARLR"          : torch.optim.lr_scheduler.LinearLR,
+                   "EXPONENTIALLR"     : torch.optim.lr_scheduler.ExponentialLR,
+                   "CYCLICLR"          : torch.optim.lr_scheduler.CyclicLR,
+                   "STEPLR"            : torch.optim.lr_scheduler.StepLR,
+                   "MULTISTEPLR"       : torch.optim.lr_scheduler.MultiStepLR,
+                   "LAMBDALR"          : torch.optim.lr_scheduler.LambdaLR,
+                   "MULTIPLICATIVELR"  : torch.optim.lr_scheduler.MultiplicativeLR,
+                   "SEQUENTIALLR"      : torch.optim.lr_scheduler.SequentialLR,
+                   "CHAINEDSCHEDULER"  : torch.optim.lr_scheduler.ChainedScheduler,
+                   "ONECYCLELR"        : torch.optim.lr_scheduler.OneCycleLR,
+                   "POLYNOMIALLR"      : torch.optim.lr_scheduler.PolynomialLR,
+                   "CAWR"              : torch.optim.lr_scheduler.CosineAnnealingWarmRestarts,
+                   "COSINEANNEALING"   : torch.optim.lr_scheduler.CosineAnnealingLR,
+                   "REDUCELRONPLATEAU" : torch.optim.lr_scheduler.ReduceLROnPlateau,
+                  }
+        if sch_typ_upper in sch_map:
             for optimizer in self.optimizers:
-                self.schedulers.append(torch.optim.lr_scheduler.MultiStepLR(
-                    optimizer, **train_opt['scheduler']))
-        elif scheduler_type in {'CAWR', 'cawr'}:
-            for optimizer in self.optimizers:
-                self.schedulers.append(torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(
-                    optimizer, **train_opt['scheduler']))
-        elif scheduler_type in {'CosineAnnealing', 'cosineannealing'}:
-            for optimizer in self.optimizers:
-                self.schedulers.append(torch.optim.lr_scheduler.CosineAnnealingLR(
-                    optimizer, **train_opt['scheduler']))
+                self.schedulers.append(sch_map[sch_typ_upper](optimizer, **train_opt['scheduler']))
         else:
             raise NotImplementedError(
                 f'Scheduler {scheduler_type} is not implemented yet.')
@@ -335,7 +360,7 @@ class default():
         img = F.pad(self.lq, (0, mod_pad_w, 0, mod_pad_h), 'reflect')
 
         self.net_g.eval()
-        with torch.no_grad():
+        with torch.inference_mode():
             self.output = self.net_g(img)
         self.net_g.train()
 
@@ -748,7 +773,7 @@ class default():
         Args:
             loss_dict (OrderedDict): Loss dict.
         """
-        with torch.no_grad():
+        with torch.inference_mode():
             if self.opt['dist']:
                 keys = []
                 losses = []
