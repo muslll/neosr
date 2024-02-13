@@ -243,3 +243,37 @@ def rgb_to_uv(img: torch.Tensor) -> torch.Tensor:
     out_img = torch.stack((u, v), -3)
 
     return out_img
+    
+def rgb_to_y(img: torch.Tensor) -> torch.Tensor:
+    '''
+    RGB to YUV. Outputs tensor with only Y channel. 
+    '''
+
+    if not isinstance(img, torch.Tensor):
+        raise TypeError(f"Input type is not a Tensor. Got {type(image)}")
+
+    if len(img.shape) < 3 or img.shape[-3] != 3:
+        raise ValueError(f"Input size must have a shape of (*, 3, H, W). Got {image.shape}")
+
+    # define separate rgb channels
+    r: torch.Tensor = img[..., 0, :, :]
+    g: torch.Tensor = img[..., 1, :, :]
+    b: torch.Tensor = img[..., 2, :, :]
+
+    # bt.709 values
+    Wr = 0.2126
+    Wb = 0.0722
+    Wg = 1 - Wr - Wb  # 0.7152
+    Uc = 0.539
+    Vc = 0.635
+    delta: float = 0.5
+
+    # convert to yuv
+    y: torch.Tensor = Wr * r + Wg * g + Wb * b
+    #u: torch.Tensor = (b - y) * Uc + delta  # cb
+    #v: torch.Tensor = (r - y) * Vc + delta  # cr
+
+    # return only y (luma)
+    out_img = torch.stack((y,), -3)
+
+    return out_img

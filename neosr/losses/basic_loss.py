@@ -6,7 +6,7 @@ from torch.nn import functional as F
 from neosr.archs.vgg_arch import VGGFeatureExtractor
 from neosr.utils.registry import LOSS_REGISTRY
 from .loss_util import weighted_loss
-from neosr.utils.color_util import rgb_to_uv
+from neosr.utils.color_util import rgb_to_uv, rgb_to_y
 
 _reduction_modes = ['none', 'mean', 'sum']
 
@@ -249,6 +249,27 @@ class colorloss(nn.Module):
         input_uv = rgb_to_uv(input)
         target_uv = rgb_to_uv(target)
         return self.criterion(input_uv, target_uv) * self.loss_weight
+
+@LOSS_REGISTRY.register()
+class lumaloss(nn.Module):
+    def __init__(self, criterion='l1', loss_weight=1.0):
+        super(lumaloss, self).__init__()
+        self.loss_weight = loss_weight
+        self.criterion_type = criterion
+        if self.criterion_type == 'l1':
+            self.criterion = torch.nn.L1Loss()
+        elif self.criterion_type == 'l2':
+            self.criterion = torch.nn.MSELoss()
+        elif self.criterion_type == 'huber':
+            self.criterion = torch.nn.HuberLoss()
+        else:
+            raise NotImplementedError(
+                f'{criterion} criterion has not been supported.')
+
+    def forward(self, input, target):
+        input_y = rgb_to_y(input)
+        target_y = rgb_to_y(target)
+        return self.criterion(input_y, target_y) * self.loss_weight
 
 @LOSS_REGISTRY.register()
 class focalfrequencyloss(nn.Module):

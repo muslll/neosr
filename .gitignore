@@ -5,3 +5,6 @@ __pycache__/
 neosr/archs/custom_arch.py
 options/train_custom.yml
 output.pstats
+options/test_custom.yml
+*.pth
+tb_cmd.bat

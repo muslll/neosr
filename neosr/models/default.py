@@ -1,5 +1,6 @@
 import os
 import time
+import numpy as np
 from collections import OrderedDict
 from copy import deepcopy
 from os import path as osp
@@ -77,19 +78,23 @@ class default():
             self.accum_limit = train_opt.get('accum_iter')
         else:
             self.accum_limit = 1
-        
-        self.scaler_g = torch.cuda.amp.GradScaler(enabled=self.use_amp, init_scale=2.**5)
-        self.scaler_d = torch.cuda.amp.GradScaler(enabled=self.use_amp, init_scale=2.**5)
+            
+        self.scalers = {}
+        self.scaler_g = torch.cuda.amp.GradScaler(enabled=True, init_scale=2.**5)
+        self.scaler_d = torch.cuda.amp.GradScaler(enabled=True, init_scale=2.**5)
 
         # define losses
         if train_opt.get('pixel_opt'):
             self.cri_pix = build_loss(train_opt['pixel_opt']).to(self.device, memory_format=torch.channels_last, non_blocking=True)
+            self.scalers[self.cri_pix] = torch.cuda.amp.GradScaler(enabled=self.use_amp, init_scale=2.**5)
         else:
             self.cri_pix = None
 
         if train_opt.get('perceptual_opt'):
             self.cri_perceptual = build_loss(
                 train_opt['perceptual_opt']).to(self.device, memory_format=torch.channels_last, non_blocking=True)
+            self.scalers['percep'] = torch.cuda.amp.GradScaler(enabled=self.use_amp, init_scale=2.**5)
+            self.scalers['style'] = torch.cuda.amp.GradScaler(enabled=self.use_amp, init_scale=2.**5)
         else:
             self.cri_perceptual = None
 
@@ -99,26 +104,40 @@ class default():
         # GAN loss
         if train_opt.get('gan_opt'):
             self.cri_gan = build_loss(train_opt['gan_opt']).to(self.device, memory_format=torch.channels_last, non_blocking=True)
+            self.scalers[self.cri_gan] = torch.cuda.amp.GradScaler(enabled=self.use_amp, init_scale=2.**5)
         else:
             self.cri_gan = None
 
         # LDL loss
         if train_opt.get('ldl_opt'):
             self.cri_ldl = build_loss(train_opt['ldl_opt']).to(self.device, memory_format=torch.channels_last, non_blocking=True)
+            self.scalers[self.cri_ldl] = torch.cuda.amp.GradScaler(enabled=self.use_amp, init_scale=2.**5)
         else:
             self.cri_ldl = None
 
         # Color Loss
         if train_opt.get('color_opt'):
             self.cri_color = build_loss(train_opt['color_opt']).to(self.device, memory_format=torch.channels_last, non_blocking=True)
+            self.scalers[self.cri_color] = torch.cuda.amp.GradScaler(enabled=self.use_amp, init_scale=2.**5)
         else:
             self.cri_color = None
+            
+        # Luma Loss
+        if train_opt.get('luma_opt'):
+            self.cri_luma = build_loss(train_opt['luma_opt']).to(self.device, memory_format=torch.channels_last, non_blocking=True)
+            self.scalers[self.cri_luma] = torch.cuda.amp.GradScaler(enabled=self.use_amp, init_scale=2.**5)
+        else:
+            self.cri_luma = None
 
         # Focal Frequency Loss
         if train_opt.get('ff_opt'):
             self.cri_ff = build_loss(train_opt['ff_opt']).to(self.device, memory_format=torch.channels_last, non_blocking=True)
+            self.scalers[self.cri_ff] = torch.cuda.amp.GradScaler(enabled=self.use_amp, init_scale=2.**5)
         else:
             self.cri_ff = None
+            
+        self.scalers['d_real'] = torch.cuda.amp.GradScaler(enabled=self.use_amp, init_scale=2.**5)
+        self.scalers['d_fake'] = torch.cuda.amp.GradScaler(enabled=self.use_amp, init_scale=2.**5)
 
         self.net_d_iters = train_opt.get('net_d_iters', 1)
         self.net_d_init_iters = train_opt.get('net_d_init_iters', 0)
@@ -248,7 +267,11 @@ class default():
         wgt_perc, wgt_styl = (0, 0) if self.cri_perceptual is None else (self.cri_perceptual.perceptual_weight, self.cri_perceptual.style_weight)
         wgt_ldl = 0 if self.cri_ldl is None else self.cri_ldl.loss_weight
         wgt_color = 0 if self.cri_color is None else self.cri_color.loss_weight
+        wgt_luma = 0 if self.cri_luma is None else self.cri_luma.loss_weight
         wgt_ff = 0 if self.cri_ff is None else self.cri_ff.loss_weight
+        
+        g_losses_for_backward = {}
+        d_losses_for_backward = {}
         
         with torch.autocast(device_type='cuda', dtype=amp_dtype, enabled=self.use_amp):
             self.output = self.net_g(self.lq)
@@ -261,15 +284,18 @@ class default():
                     l_g_pix = self.cri_pix(self.output, self.gt)
                     l_g_total += l_g_pix
                     loss_dict['l_g_pix'] = l_g_pix / wgt_pix
+                    g_losses_for_backward[self.cri_pix] = l_g_pix
                 # perceptual loss
                 if self.cri_perceptual and (wgt_perc != 0 or wgt_styl != 0):
                     l_g_percep, l_g_style = self.cri_perceptual(self.output, self.gt)
                     if l_g_percep is not None and wgt_perc != 0:
                         l_g_total += l_g_percep
                         loss_dict['l_g_percep'] = l_g_percep / wgt_perc
+                        g_losses_for_backward['percep'] = l_g_percep
                     if l_g_style is not None and wgt_styl != 0:
                         l_g_total += l_g_style
-                        loss_dict['l_style'] = l_g_style / wgt_styl
+                        loss_dict['l_g_style'] = l_g_style / wgt_styl
+                        g_losses_for_backward['style'] = l_g_style
                 # ldl loss
                 if self.cri_ldl and wgt_ldl != 0:
                     pixel_weight = get_refined_artifact_map(self.gt, self.output, 7)
@@ -277,25 +303,39 @@ class default():
                         torch.mul(pixel_weight, self.output), torch.mul(pixel_weight, self.gt))
                     l_g_total += l_g_ldl
                     loss_dict['l_g_ldl'] = l_g_ldl / wgt_ldl
+                    g_losses_for_backward[self.cri_ldl] = l_g_ldl
                 # color loss
                 if self.cri_color and wgt_color != 0:
                     l_g_color = self.cri_color(self.output, self.gt)
                     l_g_total += l_g_color
                     loss_dict['l_g_color'] = l_g_color / wgt_color
+                    g_losses_for_backward[self.cri_color] = l_g_color
+                # luma loss
+                if self.cri_luma and wgt_luma != 0:
+                    l_g_luma = self.cri_luma(self.output, self.gt)
+                    l_g_total += l_g_luma
+                    loss_dict['l_g_luma'] = l_g_luma / wgt_luma
+                    g_losses_for_backward[self.cri_luma] = l_g_luma
                 # Focal Frequency Loss
                 if self.cri_ff and wgt_ff != 0:
                     l_g_ff = self.cri_ff(self.output, self.gt)
                     l_g_total += l_g_ff
                     loss_dict['l_g_ff'] = l_g_ff / wgt_ff
+                    g_losses_for_backward[self.cri_ff] = l_g_ff
                 # GAN loss
                 if self.cri_gan and wgt_gan != 0:
                     fake_g_pred = self.net_d(self.output)
                     l_g_gan = self.cri_gan(fake_g_pred, True, is_disc=False)
                     l_g_total += l_g_gan
                     loss_dict['l_g_gan'] = l_g_gan / wgt_gan
+                    g_losses_for_backward[self.cri_gan] = l_g_gan
                     
         loss_dict['l_g_total'] = l_g_total
-        self.scaler_g.scale(l_g_total / self.accum_limit).backward()
+        
+        for i, (_, loss) in enumerate(g_losses_for_backward.items()):
+            is_last_loss = i == len(g_losses_for_backward) - 1
+            self.scaler_g.scale(loss / self.accum_limit).backward(retain_graph = not is_last_loss)
+        #self.scaler_g.scale(l_g_total / self.accum_limit).backward()
         
         if accum_reached:
             self.scaler_g.step(self.optimizer_g)
@@ -314,16 +354,18 @@ class default():
                     l_d_real = self.cri_gan(real_d_pred, True, is_disc=True)
                     loss_dict['l_d_real'] = l_d_real
                     loss_dict['out_d_real'] = torch.mean(real_d_pred.detach())
+                    d_losses_for_backward['real'] = l_d_real
                 # fake
                     fake_d_pred = self.net_d(self.output.detach().clone())
                     l_d_fake = self.cri_gan(fake_d_pred, False, is_disc=True)
                     loss_dict['l_d_fake'] = l_d_fake
-                    loss_dict['out_d_fake'] = torch.mean(fake_d_pred.detach())                    
-
-            if self.cri_gan:
-                self.scaler_d.scale(l_d_real / self.accum_limit).backward()
-                self.scaler_d.scale(l_d_fake / self.accum_limit).backward()
-
+                    loss_dict['out_d_fake'] = torch.mean(fake_d_pred.detach())
+                    d_losses_for_backward['fake'] = l_d_fake
+            
+            for i, (_, loss) in enumerate(d_losses_for_backward.items()):
+                is_last_loss = i == len(d_losses_for_backward) - 1
+                self.scaler_d.scale(loss / self.accum_limit).backward(retain_graph = not is_last_loss)
+                
             if accum_reached:
                 self.scaler_d.step(self.optimizer_d)
                 self.scaler_d.update()
@@ -333,6 +375,9 @@ class default():
             self.update_sch = True
             self.grad_updates += 1
             self.accum_count = 0
+            
+        loss_dict['scale_g'] = np.array([self.scaler_g.get_scale()])
+        loss_dict['scale_d'] = np.array([self.scaler_d.get_scale()])
             
         self.log_dict = self.reduce_loss_dict(loss_dict)        
 
