@@ -56,7 +56,11 @@ class single(data.Dataset):
         # load lq image
         lq_path = self.paths[index]
         img_bytes = self.file_client.get(lq_path, 'lq')
-        img_lq = imfrombytes(img_bytes, float32=True)
+
+        try:
+            img_lq = imfrombytes(img_bytes, float32=True)
+        except AttributeError:
+            raise AttributeError(lq_path)
 
         # color space transform
         if 'color' in self.opt and self.opt['color'] == 'y':
