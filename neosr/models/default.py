@@ -66,6 +66,14 @@ class default():
         self.net_g.train()
         if self.opt.get('network_d', None) is not None:
             self.net_d.train()
+            
+        # for amp
+        self.use_amp = self.opt.get('use_amp', False) is True
+        self.amp_dtype = torch.bfloat16 if self.opt.get('bfloat16', False) is True else torch.float16
+            
+        # initialise GradScale object for Generator and Discriminator
+        self.scaler_g = torch.cuda.amp.GradScaler(enabled = self.use_amp, init_scale=2.**5)
+        self.scaler_d = torch.cuda.amp.GradScaler(enabled = self.use_amp, init_scale=2.**5)
 
         # define losses
         if train_opt.get('pixel_opt'):
@@ -201,19 +209,13 @@ class default():
 
         # optimize net_g
         self.optimizer_g.zero_grad(set_to_none=True)
-
-        # for amp
-        use_amp = False
-        amp_dtype = torch.float16
-
-        if self.opt['use_amp'] is True:
-            use_amp = True
-        if self.opt['bfloat16'] is True:
-            amp_dtype = torch.bfloat16
         
-        scaler = torch.cuda.amp.GradScaler(enabled=use_amp, init_scale=2.**5)
+        # Define list of losses to apply. We need this list because we need to retain the graph for all backward() 
+        # calls except the last one. Each individual loss needs to have the scaler applied seperately. See docs:
+        # https://pytorch.org/docs/stable/notes/amp_examples.html#working-with-multiple-models-losses-and-optimizers
+        losses_for_backward_g = []
 
-        with torch.autocast(device_type='cuda', dtype=amp_dtype, enabled=use_amp):
+        with torch.autocast(device_type='cuda', dtype=self.amp_dtype, enabled=self.use_amp):
             self.output = self.net_g(self.lq)
 
             l_g_total = 0
@@ -225,15 +227,18 @@ class default():
                     l_g_pix = self.cri_pix(self.output, self.gt)
                     l_g_total += l_g_pix
                     loss_dict['l_g_pix'] = l_g_pix
+                    losses_for_backward_g.append(l_g_pix)
                 # perceptual loss
                 if self.cri_perceptual:
                     l_g_percep, l_g_style = self.cri_perceptual(self.output, self.gt)
                     if l_g_percep is not None:
                         l_g_total += l_g_percep
                         loss_dict['l_percep'] = l_g_percep
+                        losses_for_backward_g.append(l_g_percep)
                     if l_g_style is not None:
                         l_g_total += l_g_style
                         loss_dict['l_style'] = l_g_style
+                        losses_for_backward_g.append(l_g_style)
                 # ldl loss
                 if self.cri_ldl:
                     pixel_weight = get_refined_artifact_map(self.gt, self.output, 7)
@@ -241,56 +246,69 @@ class default():
                         torch.mul(pixel_weight, self.output), torch.mul(pixel_weight, self.gt))
                     l_g_total += l_g_ldl
                     loss_dict['l_g_ldl'] = l_g_ldl
+                    losses_for_backward_g.append(l_g_ldl)
                 # color loss
                 if self.cri_color:
                     l_g_color = self.cri_color(self.output, self.gt)
                     l_g_total += l_g_color
                     loss_dict['l_g_color'] = l_g_color
+                    losses_for_backward_g.append(l_g_color)
                 # Focal Frequency Loss
                 if self.cri_ff:
                     l_g_ff = self.cri_ff(self.output, self.gt)
                     l_g_total += l_g_ff
                     loss_dict['l_g_ff'] = l_g_ff
+                    losses_for_backward_g.append(l_g_ff)
                 # GAN loss
                 if self.cri_gan:
                     fake_g_pred = self.net_d(self.output)
                     l_g_gan = self.cri_gan(fake_g_pred, True, is_disc=False)
                     l_g_total += l_g_gan
                     loss_dict['l_g_gan'] = l_g_gan
+                    losses_for_backward_g.append(l_g_gan)
 
-        scaler.scale(l_g_total).backward()
-        scaler.step(self.optimizer_g)
+        # Iterate through the losses, retaining graph on all but the last
+        for loss_idx, loss_g in enumerate(losses_for_backward_g):
+            is_last_loss = loss_idx == len(losses_for_backward_g) - 1
+            self.scaler_g.scale(loss_g).backward(retain_graph = not is_last_loss)
 
+        # Perform Gradient Update on generator
+        self.scaler_g.step(self.optimizer_g)
+        self.scaler_g.update()
+        
         # optimize net_d
         if self.opt.get('network_d', None) is not None:
             for p in self.net_d.parameters():
                 p.requires_grad = True
 
             self.optimizer_d.zero_grad(set_to_none=True)
+            losses_for_backward_d = []
 
-            with torch.autocast(device_type='cuda', dtype=amp_dtype, enabled=use_amp):
+            with torch.autocast(device_type='cuda', dtype=self.amp_dtype, enabled=self.use_amp):
                 # real
                 if self.cri_gan:
                     real_d_pred = self.net_d(self.gt)
                     l_d_real = self.cri_gan(real_d_pred, True, is_disc=True)
                     loss_dict['l_d_real'] = l_d_real
                     loss_dict['out_d_real'] = torch.mean(real_d_pred.detach())
+                    losses_for_backward_d.append(l_d_real)
                 # fake
                     fake_d_pred = self.net_d(self.output.detach().clone())
                     l_d_fake = self.cri_gan(fake_d_pred, False, is_disc=True)
                     loss_dict['l_d_fake'] = l_d_fake
                     loss_dict['out_d_fake'] = torch.mean(fake_d_pred.detach())
+                    losses_for_backward_d.append(l_d_fake)
 
-            if self.cri_gan:
-                scaler.scale(l_d_real).backward()
-                scaler.scale(l_d_fake).backward()
-
-            scaler.step(self.optimizer_d)
+            # Iterate through the losses, retaining graph on all but the last
+            for loss_idx, loss_d in enumerate(losses_for_backward_d):
+                is_last_loss = loss_idx == len(losses_for_backward_d) - 1
+                self.scaler_d.scale(loss_d).backward(retain_graph = not is_last_loss)
+                
+            # Perform Gradient Update on discriminator
+            self.scaler_d.step(self.optimizer_d)
+            self.scaler_d.update()
 
         self.log_dict = self.reduce_loss_dict(loss_dict)
-
-        # update gradscaler
-        scaler.update()
 
     def update_learning_rate(self, current_iter, warmup_iter=-1):
         """Update learning rate.
