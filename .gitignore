@@ -2,3 +2,7 @@ experiments/*
 options/tmp/
 __pycache__/
 .ruff_cache/
+*.pth
+neosr/archs/custom_arch.py
+options/train_custom.yml
+tb_cmd.bat
