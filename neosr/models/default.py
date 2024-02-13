@@ -335,7 +335,7 @@ class default():
         img = F.pad(self.lq, (0, mod_pad_w, 0, mod_pad_h), 'reflect')
 
         self.net_g.eval()
-        with torch.no_grad():
+        with torch.inference_mode():
             self.output = self.net_g(img)
         self.net_g.train()
 
@@ -748,7 +748,7 @@ class default():
         Args:
             loss_dict (OrderedDict): Loss dict.
         """
-        with torch.no_grad():
+        with torch.inference_mode():
             if self.opt['dist']:
                 keys = []
                 losses = []
