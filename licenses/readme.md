@@ -25,4 +25,3 @@
 | [`Real-CUGAN`](https://github.com/bilibili/ailab)						      | [MIT](https://github.com/bilibili/ailab/blob/main/Real-CUGAN/LICENSE)					|
 | [`SAFMN`](https://github.com/sunny2109/SAFMN)							      | Unknown													|
 | [`RGT`](https://github.com/zhengchen1999/RGT)							      | [Apache 2.0](https://github.com/zhengchen1999/RGT/blob/main/LICENSE)					|
-| [`HADN`](https://github.com/Yuii666/HADN)							      | Unknown													|

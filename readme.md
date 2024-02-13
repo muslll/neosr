@@ -81,7 +81,6 @@ Please read the wiki [Configuration Walkthrough](https://github.com/muslll/neosr
 | arch                                          | option         |
 |-----------------------------------------------|----------------|
 | [RGT](https://github.com/zhengchen1999/RGT)	| `rgt`, `rgt_s` |
-| [HADN](https://github.com/Yuii666/HADN)	| `hadn`	 |
 
 
 ### Supported Discriminators:
