@@ -13,7 +13,7 @@ datasets:
     type: paired
     dataroot_gt: 'datasets/gt/'
     dataroot_lq: 'datasets/lq/'
-    #meta_info: 'datasets/nomos_uni/meta_info.txt'
+    #meta_info: 'datasets/meta_info.txt'
     io_backend:
       type: disk
 
