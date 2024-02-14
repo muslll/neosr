@@ -408,7 +408,7 @@ class focalfrequencyloss(nn.Module):
         log_matrix (bool): whether to adjust the spectrum weight matrix by logarithm. Default: False
         batch_matrix (bool): whether to calculate the spectrum weight matrix using batch-based statistics. Default: False
     """
-    def __init__(self, loss_weight=1.0, alpha=1.0, patch_factor=1, ave_spectrum=False,
+    def __init__(self, loss_weight=1.0, alpha=1.0, patch_factor=1, ave_spectrum=True,
                  log_matrix=False, batch_matrix=False):
         super(focalfrequencyloss, self).__init__()
         self.loss_weight = loss_weight
@@ -418,6 +418,7 @@ class focalfrequencyloss(nn.Module):
         self.log_matrix = log_matrix
         self.batch_matrix = batch_matrix
 
+    @torch.cuda.amp.custom_fwd(cast_inputs=torch.float32)
     def tensor2freq(self, x):
 
         # for amp dtype
@@ -445,6 +446,7 @@ class focalfrequencyloss(nn.Module):
 
         return freq
 
+    @torch.cuda.amp.custom_fwd(cast_inputs=torch.float32)
     def loss_formulation(self, recon_freq, real_freq, matrix=None):
         # spectrum weight matrix
         if matrix is not None:
@@ -481,6 +483,7 @@ class focalfrequencyloss(nn.Module):
         loss = weight_matrix * freq_distance
         return torch.mean(loss)
 
+    @torch.cuda.amp.custom_fwd(cast_inputs=torch.float32)
     def forward(self, pred, target, matrix=None, **kwargs):
         """Forward function to calculate focal frequency loss.
 

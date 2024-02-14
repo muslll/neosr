@@ -18,7 +18,8 @@ def load_net():
     print(f"\n-------- Attempting to build network [{args.network}].")
 
     if args.network is None:
-        raise ValueError("Please select a network using the -net option")
+        msg = "Please select a network using the -net option"
+        raise ValueError(msg)
     net_opt = {"type": args.network}
 
     if args.network == "omnisr":
@@ -43,8 +44,8 @@ def load_net():
         elif "params_ema" in load_net:
             param_key = "params_ema"
         load_net = load_net[param_key]
-    except Exception:
-        raise RuntimeError("Could not find param key.")
+    except:
+        pass
 
     # remove unnecessary 'module.'
     for k, v in deepcopy(load_net).items():
@@ -65,11 +66,12 @@ def load_net():
     return net
 
 
-def to_onnx():
+def to_onnx() -> None:
     # error if network can't be converted
     net_error = ["craft", "ditn"]
     if args.network in net_error:
-        raise RuntimeError(f"Network [{args.network}] cannot be converted to ONNX.")
+        msg = f"Network [{args.network}] cannot be converted to ONNX."
+        raise RuntimeError(msg)
 
     # load network and send to device
     model = load_net()
@@ -168,8 +170,9 @@ def to_onnx():
         # error if network can't run through onnxsim
         opt_error = ["omnisr"]
         if args.network in opt_error:
+            msg = f"Network [{args.network}] doesnt support full optimization."
             raise RuntimeError(
-                f"Network [{args.network}] doesnt support full optimization."
+                msg
             )
 
         print("-------- Running full optimization (this can take a while)...")

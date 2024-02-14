@@ -4,12 +4,8 @@
 this is my personal playground for code edits and additions.
 
 
-> [!TIP]
-> For more information, read the [**wiki**](https://github.com/muslll/neosr/wiki)
-
 ## installation
 
-> [!IMPORTANT]
 > Requires Python 3.11 and CUDA =>11.8.
 
 Install latest [Pytorch (=>2.1) and TorchVision](https://pytorch.org/get-started/locally/) (required).
@@ -79,6 +75,8 @@ Please read the wiki [Configuration Walkthrough](https://github.com/muslll/neosr
 | [Real-CUGAN](https://github.com/bilibili/ailab)				  		    | `cugan`			   			|
 | [CRAFT](https://github.com/AVC2-UESTC/CRAFT-SR)		 				    | `craft`			   			|
 | [SAFMN](https://github.com/sunny2109/SAFMN)							    | `safmn`, `safmn_l`				|
+| [RGT](https://github.com/zhengchen1999/RGT)	| `rgt`, `rgt_s` |
+| [HADN](https://github.com/Yuii666/HADN)	| `hadn`	 |
 
 > [!NOTE]
 > For all arch-specific parameters, [read the wiki](https://github.com/muslll/neosr/wiki/Arch%E2%80%90specific-options).
