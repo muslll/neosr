@@ -70,8 +70,8 @@ class default():
         # for amp
         self.use_amp = self.opt.get('use_amp', False) is True
         self.amp_dtype = torch.bfloat16 if self.opt.get('bfloat16', False) is True else torch.float16
-            
-        # initialise GradScale object for Generator and Discriminator
+
+        # initialise GradScaler for G and D
         self.scaler_g = torch.cuda.amp.GradScaler(enabled = self.use_amp, init_scale=2.**5)
         self.scaler_d = torch.cuda.amp.GradScaler(enabled = self.use_amp, init_scale=2.**5)
 
@@ -210,9 +210,7 @@ class default():
         # optimize net_g
         self.optimizer_g.zero_grad(set_to_none=True)
         
-        # Define list of losses to apply. We need this list because we need to retain the graph for all backward() 
-        # calls except the last one. Each individual loss needs to have the scaler applied seperately. See docs:
-        # https://pytorch.org/docs/stable/notes/amp_examples.html#working-with-multiple-models-losses-and-optimizers
+        # define list of losses, each individual loss needs to have the scaler applied seperately.
         losses_for_backward_g = []
 
         with torch.autocast(device_type='cuda', dtype=self.amp_dtype, enabled=self.use_amp):
@@ -267,12 +265,12 @@ class default():
                     loss_dict['l_g_gan'] = l_g_gan
                     losses_for_backward_g.append(l_g_gan)
 
-        # Iterate through the losses, retaining graph on all but the last
+        # iterate through the losses, retaining graph on all but the last
         for loss_idx, loss_g in enumerate(losses_for_backward_g):
             is_last_loss = loss_idx == len(losses_for_backward_g) - 1
             self.scaler_g.scale(loss_g).backward(retain_graph = not is_last_loss)
 
-        # Perform Gradient Update on generator
+        # update on generator
         self.scaler_g.step(self.optimizer_g)
         self.scaler_g.update()
         
@@ -299,12 +297,12 @@ class default():
                     loss_dict['out_d_fake'] = torch.mean(fake_d_pred.detach())
                     losses_for_backward_d.append(l_d_fake)
 
-            # Iterate through the losses, retaining graph on all but the last
+            # iterate through the losses, retaining graph on all but the last
             for loss_idx, loss_d in enumerate(losses_for_backward_d):
                 is_last_loss = loss_idx == len(losses_for_backward_d) - 1
                 self.scaler_d.scale(loss_d).backward(retain_graph = not is_last_loss)
                 
-            # Perform Gradient Update on discriminator
+            # update on discriminator
             self.scaler_d.step(self.optimizer_d)
             self.scaler_d.update()
 
