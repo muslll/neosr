@@ -1,10 +1,13 @@
 import os
+import numpy as np
+
+from PIL import Image
 from torch.utils import data
-from torchvision.transforms.functional import normalize
+from torchvision.transforms.functional import normalize, rgb_to_grayscale
 
 from neosr.data.data_util import paired_paths_from_folder, paired_paths_from_lmdb
 from neosr.data.transforms import basic_augment, paired_random_crop
-from neosr.utils import get_root_logger, FileClient, bgr2ycbcr, imfrombytes, img2tensor
+from neosr.utils import get_root_logger, FileClient, imfrombytes, img2tensor
 from neosr.utils.registry import DATASET_REGISTRY
 
 
@@ -119,8 +122,20 @@ class paired(data.Dataset):
 
         # color space transform
         if 'color' in self.opt and self.opt['color'] == 'y':
-            img_gt = bgr2ycbcr(img_gt, y_only=True)[..., None]
-            img_lq = bgr2ycbcr(img_lq, y_only=True)[..., None]
+            # TODO: currently torchvision v2.Grayscale doesn't output one channel
+            # Switch to it once fixed, to avoid such conversions
+
+            img_gt = np.round(img_gt * 255.0).astype(np.uint8)
+            img_gt = Image.fromarray(img_gt)
+            img_gt = rgb_to_grayscale(img_gt)
+            img_gt = np.array(img_gt, dtype=np.float32) / 255.
+            img_gt = np.expand_dims(img_gt, axis=-1)
+
+            img_lq = np.round(img_lq * 255.0).astype(np.uint8)
+            img_lq = Image.fromarray(img_lq)
+            img_lq = rgb_to_grayscale(img_lq)
+            img_lq = np.array(img_lq, dtype=np.float32) / 255.
+            img_lq = np.expand_dims(img_lq, axis=-1)
 
         # crop the unmatched GT images during validation or testing, especially for SR benchmark datasets
         # TODO: It is better to update the datasets, rather than force to crop

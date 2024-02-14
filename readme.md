@@ -81,6 +81,13 @@ Please read the wiki [Configuration Walkthrough](https://github.com/muslll/neosr
 > [!NOTE]
 > For all arch-specific parameters, [read the wiki](https://github.com/muslll/neosr/wiki/Arch%E2%80%90specific-options).
 
+#### Under Testing
+
+| arch                                          | option         |
+|-----------------------------------------------|----------------|
+| [RGT](https://github.com/zhengchen1999/RGT)	| `rgt`, `rgt_s` |
+| [HADN](https://github.com/Yuii666/HADN)	| `hadn`	 |
+
 
 ### Supported Discriminators:
 
