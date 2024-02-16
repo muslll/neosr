@@ -70,10 +70,14 @@ class default():
         # for amp
         self.use_amp = self.opt.get('use_amp', False) is True
         self.amp_dtype = torch.bfloat16 if self.opt.get('bfloat16', False) is True else torch.float16
-
-        # initialise GradScaler for G and D
+            
+        # initialise GradScale object for Generator and Discriminator
         self.scaler_g = torch.cuda.amp.GradScaler(enabled = self.use_amp, init_scale=2.**5)
         self.scaler_d = torch.cuda.amp.GradScaler(enabled = self.use_amp, init_scale=2.**5)
+        
+        # Initialise counter of how many gradients have been accumulated. accum_iters will default to 1 if not provided
+        self.n_accumulated = 0
+        self.accum_iters   = self.opt.get("accum_iters", 1)
 
         # define losses
         if train_opt.get('pixel_opt'):
@@ -206,11 +210,18 @@ class default():
         if self.opt.get('network_d', None) is not None:
             for p in self.net_d.parameters():
                 p.requires_grad = False
-
-        # optimize net_g
-        self.optimizer_g.zero_grad(set_to_none=True)
+                
+        # increment accumulation counter and check if accumulation limit has been reached
+        self.n_accumulated += 1
+        apply_gradient = self.n_accumulated >= self.accum_iters
         
-        # define list of losses, each individual loss needs to have the scaler applied seperately.
+        # after setting the flag for applying gradients, reset the counter back to zero
+        if apply_gradient:
+            self.n_accumulated = 0
+        
+        # Define list of losses to apply. We need this list because we need to retain the graph for all backward() 
+        # calls except the last one. Each individual loss needs to have the scaler applied seperately. See docs:
+        # https://pytorch.org/docs/stable/notes/amp_examples.html#working-with-multiple-models-losses-and-optimizers
         losses_for_backward_g = []
 
         with torch.autocast(device_type='cuda', dtype=self.amp_dtype, enabled=self.use_amp):
@@ -231,11 +242,11 @@ class default():
                     l_g_percep, l_g_style = self.cri_perceptual(self.output, self.gt)
                     if l_g_percep is not None:
                         l_g_total += l_g_percep
-                        loss_dict['l_percep'] = l_g_percep
+                        loss_dict['l_g_percep'] = l_g_percep
                         losses_for_backward_g.append(l_g_percep)
                     if l_g_style is not None:
                         l_g_total += l_g_style
-                        loss_dict['l_style'] = l_g_style
+                        loss_dict['l_g_style'] = l_g_style
                         losses_for_backward_g.append(l_g_style)
                 # ldl loss
                 if self.cri_ldl:
@@ -264,22 +275,26 @@ class default():
                     l_g_total += l_g_gan
                     loss_dict['l_g_gan'] = l_g_gan
                     losses_for_backward_g.append(l_g_gan)
+                    
+        # add total loss to loss_dict for tensorboard tracking
+        loss_dict['l_g_total'] = l_g_total
 
-        # iterate through the losses, retaining graph on all but the last
+        # Iterate through the losses, retaining graph on all but the last
         for loss_idx, loss_g in enumerate(losses_for_backward_g):
             is_last_loss = loss_idx == len(losses_for_backward_g) - 1
-            self.scaler_g.scale(loss_g).backward(retain_graph = not is_last_loss)
+            self.scaler_g.scale(loss_g / self.accum_iters).backward(retain_graph = not is_last_loss)
 
-        # update on generator
-        self.scaler_g.step(self.optimizer_g)
-        self.scaler_g.update()
+        if apply_gradient:
+            # Perform Gradient Update on generator
+            self.scaler_g.step(self.optimizer_g)
+            self.scaler_g.update()
+            self.optimizer_g.zero_grad(set_to_none=True)
         
         # optimize net_d
         if self.opt.get('network_d', None) is not None:
             for p in self.net_d.parameters():
                 p.requires_grad = True
-
-            self.optimizer_d.zero_grad(set_to_none=True)
+            
             losses_for_backward_d = []
 
             with torch.autocast(device_type='cuda', dtype=self.amp_dtype, enabled=self.use_amp):
@@ -297,14 +312,16 @@ class default():
                     loss_dict['out_d_fake'] = torch.mean(fake_d_pred.detach())
                     losses_for_backward_d.append(l_d_fake)
 
-            # iterate through the losses, retaining graph on all but the last
+            # Iterate through the losses, retaining graph on all but the last
             for loss_idx, loss_d in enumerate(losses_for_backward_d):
                 is_last_loss = loss_idx == len(losses_for_backward_d) - 1
-                self.scaler_d.scale(loss_d).backward(retain_graph = not is_last_loss)
+                self.scaler_d.scale(loss_d / self.accum_iters).backward(retain_graph = not is_last_loss)
                 
-            # update on discriminator
-            self.scaler_d.step(self.optimizer_d)
-            self.scaler_d.update()
+            if apply_gradient:
+                # Perform Gradient Update on discriminator
+                self.scaler_d.step(self.optimizer_d)
+                self.scaler_d.update()
+                self.optimizer_d.zero_grad(set_to_none=True)
 
         self.log_dict = self.reduce_loss_dict(loss_dict)
 
@@ -316,7 +333,7 @@ class default():
             warmup_iter (int)： Warm-up iter numbers. -1 for no warm-up.
                 Default： -1.
         """
-        if current_iter > 0:
+        if current_iter > 0 and self.n_accumulated == 0:
             for scheduler in self.schedulers:
                 scheduler.step()
         # set up warm-up learning rate
