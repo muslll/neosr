@@ -77,7 +77,7 @@ class default():
         
         # Initialise counter of how many gradients have been accumulated. accum_iters will default to 1 if not provided
         self.n_accumulated = 0
-        self.accum_iters   = self.opt.get("accum_iters", 1)
+        self.accum_iters   = train_opt.get("accum_iters", 1)
 
         # define losses
         if train_opt.get('pixel_opt'):
