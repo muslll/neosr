@@ -46,18 +46,20 @@ def create_train_val_dataloader(opt, logger):
                 sampler=train_sampler,
                 seed=opt['manual_seed'])
 
+            accumulate = opt['datasets']['train'].get('accumulate', 1)
             num_iter_per_epoch = math.ceil(
-                len(train_set) * dataset_enlarge_ratio / (dataset_opt['batch_size'] * opt['world_size']))
-            total_iters = int(opt['train']['total_iter'])
+                len(train_set) * dataset_enlarge_ratio / (dataset_opt['batch_size'] * accumulate * opt['world_size']))
+            total_iters = int(opt['train']['total_iter'] * accumulate)
             total_epochs = math.ceil(total_iters / (num_iter_per_epoch))
             logger.info('Training statistics:'
                         f'\n\tStarting model: {opt["name"]}'
                         f'\n\tNumber of train images: {len(train_set)}'
                         f'\n\tDataset enlarge ratio: {dataset_enlarge_ratio}'
                         f'\n\tBatch size per gpu: {dataset_opt["batch_size"]}'
+                        f'\n\tAccumulated batches: {dataset_opt["batch_size"] * accumulate}'
                         f'\n\tWorld size (gpu number): {opt["world_size"]}'
                         f'\n\tRequired iters per epoch: {num_iter_per_epoch}'
-                        f'\n\tTotal epochs: {total_epochs}; iters: {total_iters}.')
+                        f'\n\tTotal epochs: {total_epochs}; iters: {total_iters}')
         elif phase.split('_')[0] == 'val':
             val_set = build_dataset(dataset_opt)
             val_loader = build_dataloader(
@@ -137,6 +139,7 @@ def train_pipeline(root_path):
 
     # create model
     model = build_model(opt)
+
     if resume_state:  # resume training
         model.resume_training(resume_state)  # handle optimizers and schedulers
         logger.info(
@@ -187,9 +190,20 @@ def train_pipeline(root_path):
                     # reset start time in msg_logger for more accurate eta_time
                     # not work in resume mode
                     msg_logger.reset_start_time()
+
                 # log
-                if current_iter % opt['logger']['print_freq'] == 0:
-                    log_vars = {'epoch': epoch, 'iter': current_iter}
+                accumulate = opt['datasets']['train'].get('accumulate', 1)
+                print_freq = opt['logger']['print_freq']
+                save_checkpoint_freq = opt['logger']['save_checkpoint_freq']
+                val_freq = opt['val']['val_freq']
+
+                if current_iter >= accumulate:
+                    current_iter_log = current_iter / accumulate
+                else:
+                    current_iter_log = current_iter
+
+                if current_iter_log % print_freq == 0:
+                    log_vars = {'epoch': epoch, 'iter': current_iter_log}
                     log_vars.update({'lrs': model.get_current_learning_rate()})
                     log_vars.update(
                         {'time': iter_timer.get_avg_time(), 'data_time': data_timer.get_avg_time()})
@@ -197,17 +211,17 @@ def train_pipeline(root_path):
                     msg_logger(log_vars)
 
                 # save models and training states
-                if current_iter % opt['logger']['save_checkpoint_freq'] == 0:
+                if current_iter_log % save_checkpoint_freq == 0:
                     logger.info('Saving models and training states.')
-                    model.save(epoch, current_iter)
+                    model.save(epoch, current_iter_log)
 
                 # validation
-                if opt.get('val') is not None and (current_iter % opt['val']['val_freq'] == 0):
+                if opt.get('val') is not None and (current_iter_log % val_freq == 0):
                     if len(val_loaders) > 1:
                         logger.warning(
                             'Multiple validation datasets are *only* supported by SRModel.')
                     for val_loader in val_loaders:
-                        model.validation(val_loader, current_iter,
+                        model.validation(val_loader, int(current_iter_log),
                                          tb_logger, opt['val']['save_img'])
 
                 data_timer.start()
@@ -230,7 +244,7 @@ def train_pipeline(root_path):
 
     if opt.get('val') is not None:
         for val_loader in val_loaders:
-            model.validation(val_loader, current_iter,
+            model.validation(val_loader, int(current_iter_log),
                              tb_logger, opt['val']['save_img'])
     if tb_logger:
         tb_logger.close()

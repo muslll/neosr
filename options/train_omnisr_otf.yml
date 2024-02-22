@@ -20,6 +20,7 @@ datasets:
       type: disk
 
     batch_size: 6
+    accumulate: 1
     use_hflip: true
     use_rot: true
     num_worker_per_gpu: 4

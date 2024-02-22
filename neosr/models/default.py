@@ -70,14 +70,14 @@ class default():
         # for amp
         self.use_amp = self.opt.get('use_amp', False) is True
         self.amp_dtype = torch.bfloat16 if self.opt.get('bfloat16', False) is True else torch.float16
-            
+
         # initialise GradScale object for Generator and Discriminator
         self.scaler_g = torch.cuda.amp.GradScaler(enabled = self.use_amp, init_scale=2.**5)
         self.scaler_d = torch.cuda.amp.GradScaler(enabled = self.use_amp, init_scale=2.**5)
         
-        # Initialise counter of how many gradients have been accumulated. accum_iters will default to 1 if not provided
+        # initialise counter of how many gradients has to be accumulated
         self.n_accumulated = 0
-        self.accum_iters   = self.opt.get("accum_iters", 1)
+        self.accum_iters = self.opt["datasets"]["train"].get("accumulate", 1) 
 
         # define losses
         if train_opt.get('pixel_opt'):
@@ -214,14 +214,12 @@ class default():
         # increment accumulation counter and check if accumulation limit has been reached
         self.n_accumulated += 1
         apply_gradient = self.n_accumulated >= self.accum_iters
-        
-        # after setting the flag for applying gradients, reset the counter back to zero
+
+        # reset the counter back to zero
         if apply_gradient:
             self.n_accumulated = 0
         
-        # Define list of losses to apply. We need this list because we need to retain the graph for all backward() 
-        # calls except the last one. Each individual loss needs to have the scaler applied seperately. See docs:
-        # https://pytorch.org/docs/stable/notes/amp_examples.html#working-with-multiple-models-losses-and-optimizers
+        # define list of losses, each individual loss needs to have the scaler applied separately
         losses_for_backward_g = []
 
         with torch.autocast(device_type='cuda', dtype=self.amp_dtype, enabled=self.use_amp):
@@ -279,10 +277,11 @@ class default():
         # add total loss to loss_dict for tensorboard tracking
         loss_dict['l_g_total'] = l_g_total
 
-        # Iterate through the losses, retaining graph on all but the last
+        # iterate through the losses, retaining graph on all but the last
         for loss_idx, loss_g in enumerate(losses_for_backward_g):
             is_last_loss = loss_idx == len(losses_for_backward_g) - 1
-            self.scaler_g.scale(loss_g / self.accum_iters).backward(retain_graph = not is_last_loss)
+            loss_g = loss_g / self.accum_iters
+            self.scaler_g.scale(loss_g).backward(retain_graph = not is_last_loss)
 
         if apply_gradient:
             # Perform Gradient Update on generator
@@ -315,8 +314,9 @@ class default():
             # Iterate through the losses, retaining graph on all but the last
             for loss_idx, loss_d in enumerate(losses_for_backward_d):
                 is_last_loss = loss_idx == len(losses_for_backward_d) - 1
-                self.scaler_d.scale(loss_d / self.accum_iters).backward(retain_graph = not is_last_loss)
-                
+                loss_d = loss_d / self.accum_iters
+                self.scaler_d.scale(loss_d).backward(retain_graph = not is_last_loss)
+
             if apply_gradient:
                 # Perform Gradient Update on discriminator
                 self.scaler_d.step(self.optimizer_d)

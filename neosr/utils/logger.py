@@ -61,6 +61,7 @@ class MessageLogger():
         self.start_iter = start_iter
         self.max_iters = opt['train']['total_iter']
         self.use_tb_logger = opt['logger']['use_tb_logger']
+        self.accumulate = opt['datasets']['train'].get('accumulate', 1)
         self.tb_logger = tb_logger
         self.start_time = time.time()
         self.logger = get_root_logger()
@@ -82,19 +83,20 @@ class MessageLogger():
         """
         # epoch, iter, learning rates
         epoch = log_vars.pop('epoch')
-        current_iter = log_vars.pop('iter')
+        current_iter = int(log_vars.pop('iter'))
         lrs = log_vars.pop('lrs')
 
         message = (
-            f'[epoch:{epoch:3d}] [iter:{current_iter:8,d}]')
+            #f'[epoch:{epoch:3d}] [iter:{current_iter:8,d}]')
+            f'[epoch:{epoch:3d}] [iter:{current_iter:7,d}]')
 
         # time and estimated time
         if 'time' in log_vars.keys():
             iter_time = log_vars.pop('time')
             # iters per second
-            #iter_time = math.sqrt(iter_time) * 10
             iter_time = iter_time * 100
             iter_time = 100 / iter_time
+            iter_time = iter_time / self.accumulate
 
             total_time = time.time() - self.start_time
             time_sec_avg = total_time / (current_iter - self.start_iter + 1)
