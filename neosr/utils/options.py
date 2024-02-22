@@ -204,7 +204,7 @@ def parse_options(root_path, is_train=True):
         if args.debug and not opt['name'].startswith('debug'):
             opt['name'] = 'debug_' + opt['name']
 
-        if opt['num_gpu'] == 'auto':
+        if opt.get('num_gpu', 'auto') == 'auto':
             opt['num_gpu'] = torch.cuda.device_count()
 
         # datasets

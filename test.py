@@ -27,8 +27,9 @@ def test_pipeline(root_path):
     test_loaders = []
     for _, dataset_opt in sorted(opt['datasets'].items()):
         test_set = build_dataset(dataset_opt)
+        num_gpu = opt.get('num_gpu', 'auto')
         test_loader = build_dataloader(
-            test_set, dataset_opt, num_gpu=opt['num_gpu'], dist=opt['dist'], sampler=None, seed=opt['manual_seed'])
+            test_set, dataset_opt, num_gpu=num_gpu, dist=opt['dist'], sampler=None, seed=opt['manual_seed'])
         logger.info(
             f"Number of test images in {dataset_opt['name']}: {len(test_set)}")
         test_loaders.append(test_loader)

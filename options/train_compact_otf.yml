@@ -2,7 +2,6 @@
 name: train_compact_otf
 model_type: otf
 scale: 4
-num_gpu: 1
 use_amp: true
 bfloat16: false
 compile: false

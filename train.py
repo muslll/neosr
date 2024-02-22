@@ -38,10 +38,12 @@ def create_train_val_dataloader(opt, logger):
             dataset_enlarge_ratio = dataset_opt.get('dataset_enlarge_ratio', 1)
             train_set = build_dataset(dataset_opt)
             train_sampler = EnlargedSampler(train_set, opt['world_size'], opt['rank'], dataset_enlarge_ratio)
+            num_gpu = opt.get('num_gpu', 'auto')
+            print(f'num_gpu is: {num_gpu}')
             train_loader = build_dataloader(
                 train_set,
                 dataset_opt,
-                num_gpu=opt['num_gpu'],
+                num_gpu=num_gpu,
                 dist=opt['dist'],
                 sampler=train_sampler,
                 seed=opt['manual_seed'])
