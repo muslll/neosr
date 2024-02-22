@@ -109,7 +109,27 @@ def train_pipeline(root_path):
 
     torch.backends.cudnn.benchmark = True
 
-    if opt['bfloat16'] is True:
+    fast_matmul = opt.get('fast_matmul', None)
+    print(f'fast_matmul is: {fast_matmul}')
+    if fast_matmul == 1:
+        print('Running option 1')
+        torch.backends.cuda.matmul.allow_tf32 = True
+        torch.backends.cudnn.allow_tf32 = True
+    elif fast_matmul == 2:
+        print('Running option 2')
+        torch.set_float32_matmul_precision("medium")
+    elif fast_matmul == 3:
+        print('Running option 3')
+        torch.set_float32_matmul_precision("medium")
+        torch.backends.cudnn.allow_tf32 = True
+    elif fast_matmul == 4:
+        print('Running option 4')
+        torch.set_float32_matmul_precision("medium")
+        torch.backends.cuda.matmul.allow_tf32 = True
+        torch.backends.cudnn.allow_tf32 = True
+    elif fast_matmul == 5:
+        print('Running option 5')
+        torch.set_float32_matmul_precision("high")
         torch.backends.cuda.matmul.allow_tf32 = True
         torch.backends.cudnn.allow_tf32 = True
 
