@@ -58,7 +58,6 @@ def build_dataloader(dataset, dataset_opt, num_gpu=1, dist=False, sampler=None, 
     phase = dataset_opt['phase']
     rank, _ = get_dist_info()
 
-
     # train
     if phase == 'train':
         if dataset_opt.get('num_worker_per_gpu', 'auto') == 'auto' or None:
