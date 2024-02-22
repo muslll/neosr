@@ -21,7 +21,6 @@ datasets:
     accumulate: 1
     use_hflip: true
     use_rot: true
-    num_worker_per_gpu: 4
     dataset_enlarge_ratio: 5
 
 #  val:
