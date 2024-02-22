@@ -284,7 +284,11 @@ class default():
             self.scaler_g.scale(loss_g).backward(retain_graph = not is_last_loss)
 
         if apply_gradient:
-            # Perform Gradient Update on generator
+            # gradient clipping on generator
+            if self.opt["train"].get("grad_clip", True):
+                self.scaler_g.unscale_(self.optimizer_g)
+                torch.nn.utils.clip_grad_norm_(self.net_g.parameters(), 1.0, error_if_nonfinite=True)
+
             self.scaler_g.step(self.optimizer_g)
             self.scaler_g.update()
             self.optimizer_g.zero_grad(set_to_none=True)
@@ -318,7 +322,11 @@ class default():
                 self.scaler_d.scale(loss_d).backward(retain_graph = not is_last_loss)
 
             if apply_gradient:
-                # Perform Gradient Update on discriminator
+                # gradient clipping on discriminator
+                if self.opt["train"].get("grad_clip", True):
+                    self.scaler_d.unscale_(self.optimizer_d)
+                    torch.nn.utils.clip_grad_norm_(self.net_d.parameters(), 1.0, error_if_nonfinite=True)
+
                 self.scaler_d.step(self.optimizer_d)
                 self.scaler_d.update()
                 self.optimizer_d.zero_grad(set_to_none=True)
