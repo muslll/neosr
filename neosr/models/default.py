@@ -78,6 +78,8 @@ class default():
         # initialise counter of how many gradients has to be accumulated
         self.n_accumulated = 0
         self.accum_iters = self.opt["datasets"]["train"].get("accumulate", 1) 
+        if self.accum_iters == 0 or self.accum_iters == None:
+            self.accum_ters = 1
 
         # define losses
         if train_opt.get('pixel_opt'):
@@ -106,11 +108,18 @@ class default():
         else:
             self.cri_ldl = None
 
-        # Color Loss
+        # Color loss
         if train_opt.get('color_opt'):
             self.cri_color = build_loss(train_opt['color_opt']).to(self.device, memory_format=torch.channels_last, non_blocking=True)
         else:
             self.cri_color = None
+
+        # Luma loss
+        if train_opt.get('luma_opt'):
+            self.cri_luma = build_loss(train_opt['luma_opt']).to(self.device, memory_format=torch.channels_last, non_blocking=True)
+        else:
+            self.cri_luma = None
+
 
         # Focal Frequency Loss
         if train_opt.get('ff_opt'):
@@ -206,6 +215,10 @@ class default():
         if self.opt.get('network_d', None) is not None:
             for p in self.net_d.parameters():
                 p.requires_grad = False
+
+        # LQ matching for Color/Luma losses
+        self.match_lq = self.opt['train'].get('match_lq', False)
+        self.lq_interp = F.interpolate(self.lq, scale_factor=self.opt['scale'], mode='bicubic')
                 
         # increment accumulation counter and check if accumulation limit has been reached
         self.n_accumulated += 1
@@ -252,10 +265,22 @@ class default():
                     losses_for_backward_g.append(l_g_ldl)
                 # color loss
                 if self.cri_color:
-                    l_g_color = self.cri_color(self.output, self.gt)
+                    if self.match_lq:
+                        l_g_color = self.cri_color(self.output, self.lq_interp)
+                    else:
+                        l_g_color = self.cri_color(self.output, self.gt)
                     l_g_total += l_g_color
                     loss_dict['l_g_color'] = l_g_color
                     losses_for_backward_g.append(l_g_color)
+                # luma loss
+                if self.cri_luma:
+                    if self.match_lq:
+                        l_g_luma = self.cri_luma(self.output, self.lq_interp)
+                    else:
+                        l_g_luma = self.cri_luma(self.output, self.gt)
+                    l_g_total += l_g_luma
+                    loss_dict['l_g_luma'] = l_g_luma
+                    losses_for_backward_g.append(l_g_luma)
                 # Focal Frequency Loss
                 if self.cri_ff:
                     l_g_ff = self.cri_ff(self.output, self.gt)
@@ -283,7 +308,7 @@ class default():
             # gradient clipping on generator
             if self.opt["train"].get("grad_clip", True):
                 self.scaler_g.unscale_(self.optimizer_g)
-                torch.nn.utils.clip_grad_norm_(self.net_g.parameters(), 1.0, error_if_nonfinite=True)
+                torch.nn.utils.clip_grad_norm_(self.net_g.parameters(), 1.0, error_if_nonfinite=False)
 
             self.scaler_g.step(self.optimizer_g)
             self.scaler_g.update()
@@ -321,7 +346,7 @@ class default():
                 # gradient clipping on discriminator
                 if self.opt["train"].get("grad_clip", True):
                     self.scaler_d.unscale_(self.optimizer_d)
-                    torch.nn.utils.clip_grad_norm_(self.net_d.parameters(), 1.0, error_if_nonfinite=True)
+                    torch.nn.utils.clip_grad_norm_(self.net_d.parameters(), 1.0, error_if_nonfinite=False)
 
                 self.scaler_d.step(self.optimizer_d)
                 self.scaler_d.update()

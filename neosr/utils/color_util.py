@@ -210,9 +210,15 @@ def rgb2ycbcr_pt(img, y_only=False):
     return out_img
 
 
-def rgb_to_uv(img: torch.Tensor) -> torch.Tensor:
+def rgb_to_cbcr(img: torch.Tensor) -> torch.Tensor:
     '''
-    RGB to YUV. Outputs tensor with only UV channels. 
+    RGB to *CbCr. Outputs tensor with only CbCr channels. 
+    ITU-R BT.601 primaries are used in this converison.
+
+    Args:
+        img (Tensor): Images with shape (n, 3, h, w), the range [0, 1], float, RGB format.
+    Returns:
+        (Tensor): converted images with the shape (n, 3/1, h, w), the range [0, 1], float.
     '''
 
     if not isinstance(img, torch.Tensor):
@@ -221,25 +227,49 @@ def rgb_to_uv(img: torch.Tensor) -> torch.Tensor:
     if len(img.shape) < 3 or img.shape[-3] != 3:
         raise ValueError(f"Input size must have a shape of (*, 3, H, W). Got {image.shape}")
 
-    # define separate rgb channels
-    r: torch.Tensor = img[..., 0, :, :]
-    g: torch.Tensor = img[..., 1, :, :]
-    b: torch.Tensor = img[..., 2, :, :]
+    # bt.601 matrices in 16-240 range
+    weight = torch.tensor([[65.481, -37.797, 112.0], [128.553, -74.203, -93.786], [24.966, 112.0, -18.214]]).to(img)
+    # limited to full range
+    bias = torch.tensor([16, 128, 128]).view(1, 3, 1, 1).to(img)
+    out_img = torch.matmul(img.permute(0, 2, 3, 1), weight).permute(0, 3, 1, 2) + bias
+    # 0-1 normalization
+    out_img = out_img / 255.
+    # CbCr-only
+    out_img = out_img[:, 1:, :, :]
 
-    # bt.709 values
-    Wr = 0.2126
-    Wb = 0.0722
-    Wg = 1 - Wr - Wb  # 0.7152
-    Uc = 0.539
-    Vc = 0.635
-    delta: float = 0.5
+    return out_img
 
-    # convert to yuv
-    y: torch.Tensor = Wr * r + Wg * g + Wb * b
-    u: torch.Tensor = (b - y) * Uc + delta  # cb
-    v: torch.Tensor = (r - y) * Vc + delta  # cr
+def rgb_to_luma(img: torch.Tensor) -> torch.Tensor:
+    ''' RGB to CIELAB L* '''
 
-    # return only uv (colors)
-    out_img = torch.stack((u, v), -3)
+    if not isinstance(img, torch.Tensor):
+        raise TypeError(f"Input type is not a Tensor. Got {type(image)}")
+
+    if len(img.shape) < 3 or img.shape[-3] != 3:
+        raise ValueError(f"Input size must have a shape of (*, 3, H, W). Got {image.shape}")
+
+    # permute
+    out_img = img.permute(0, 2, 3, 1)
+
+    # linearize rgb
+    linear = out_img <= 0.04045
+    if torch.any(linear):
+        out_img = out_img / 12.92
+    else:
+        out_img = torch.pow((( out_img + 0.055)/1.055),2.4)
+
+    # convert to luma - Y axis of sRGB > XYZ standard
+    out_img = out_img @ torch.tensor([0.2126, 0.7152, 0.0722])
+
+    # convert Y to L* (from CIELAB L*a*b*)
+    # NOTE: will convert from range [0, 1] to range [0,100]
+    condition = out_img <= (216/24389)
+    if torch.any(condition):
+        out_img = out_img * (24389/27)
+    else:
+        out_img = torch.pow(out_img, (1/3)) * 116 - 16
+
+    # normalize to [0, 1] range again
+    out_img = torch.clamp((out_img / 100), 0, 1)
 
     return out_img

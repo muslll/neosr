@@ -107,29 +107,19 @@ def train_pipeline(root_path):
     # default device
     torch.set_default_device('cuda')
 
-    torch.backends.cudnn.benchmark = True
+    # manual seed is set automatically, so we can't do a "is not None"
+    # condition. Hardcoding 1024 for now.
+    manual_seed_opt = opt.get('manual_seed', None)
 
-    fast_matmul = opt.get('fast_matmul', None)
-    print(f'fast_matmul is: {fast_matmul}')
-    if fast_matmul == 1:
-        print('Running option 1')
-        torch.backends.cuda.matmul.allow_tf32 = True
-        torch.backends.cudnn.allow_tf32 = True
-    elif fast_matmul == 2:
-        print('Running option 2')
+    if manual_seed_opt == '1024':
+        torch.backends.cudnn.benchmark = False 
+    else:
+        torch.backends.cudnn.benchmark = True
+
+    # enable tensorfloat32 and possibly bfloat16 matmul
+    fast_matmul = opt.get('fast_matmul', False)
+    if fast_matmul:
         torch.set_float32_matmul_precision("medium")
-    elif fast_matmul == 3:
-        print('Running option 3')
-        torch.set_float32_matmul_precision("medium")
-        torch.backends.cudnn.allow_tf32 = True
-    elif fast_matmul == 4:
-        print('Running option 4')
-        torch.set_float32_matmul_precision("medium")
-        torch.backends.cuda.matmul.allow_tf32 = True
-        torch.backends.cudnn.allow_tf32 = True
-    elif fast_matmul == 5:
-        print('Running option 5')
-        torch.set_float32_matmul_precision("high")
         torch.backends.cuda.matmul.allow_tf32 = True
         torch.backends.cudnn.allow_tf32 = True
 

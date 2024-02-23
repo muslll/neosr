@@ -6,7 +6,7 @@ from torch.nn import functional as F
 from neosr.archs.vgg_arch import VGGFeatureExtractor
 from neosr.utils.registry import LOSS_REGISTRY
 from .loss_util import weighted_loss
-from neosr.utils.color_util import rgb_to_uv
+from neosr.utils.color_util import rgb_to_cbcr, rgb_to_luma
 
 _reduction_modes = ['none', 'mean', 'sum']
 
@@ -93,7 +93,7 @@ class HuberLoss(nn.Module):
         reduction (str): Specifies the reduction to apply to the output.
             Supported choices are 'none' | 'mean' | 'sum'. Default: 'mean'.
         delta (float): Specifies the threshold at which to change between
-        delta-scaled L1 and L2 loss. The value must be positive. Default: 1.0
+            delta-scaled L1 and L2 loss. The value must be positive. Default: 1.0
     """
 
     def __init__(self, loss_weight=1.0, reduction='mean', delta=1.0):
@@ -113,6 +113,68 @@ class HuberLoss(nn.Module):
             weight (Tensor, optional): of shape (N, C, H, W). Element-wise weights. Default: None.
         """
         return self.loss_weight * huber_loss(pred, target, weight, delta=self.delta, reduction=self.reduction)
+
+@LOSS_REGISTRY.register()
+class chc(nn.Module):
+    """Clipped Huber with Cosine Similarity Loss
+
+       For reference on research, see:
+       https://github.com/HolmesShuan/AIM2020-Real-Super-Resolution
+       https://github.com/dmarnerides/hdr-expandnet
+
+    Args:
+        loss_weight (float): Loss weight. Default: 1.0.
+        reduction (str): Specifies the reduction to apply to the output.
+            Supported choices are 'none' | 'mean' | 'sum'. Default: 'mean'.
+        delta (float): Specifies the threshold at which to change between
+            delta-scaled L1 and L2 loss. The value must be positive. Default: 1.0
+        loss_lambda (float):  constant factor that adjusts the contribution of the cosine similarity term
+        clip_min (float): threshold that sets the gradients of well-trained pixels to zeros
+        clip_max (float): max clip limit, can act as a noise filter
+    """
+
+    def __init__(self, loss_weight=1.0, reduction='mean', delta=1.0, criterion='huber',
+                 loss_lambda=3, clip_min=0.003921, clip_max=0.998):
+        super(chc, self).__init__()
+
+        if reduction not in ['none', 'mean', 'sum']:
+            raise ValueError(f'Unsupported reduction mode: {reduction}. Supported ones are: {_reduction_modes}')
+
+        # Loss Values
+        self.criterion = criterion
+        self.loss_weight = loss_weight
+        self.reduction = reduction
+        self.delta = delta
+
+        # CoSim
+        self.similarity = nn.CosineSimilarity(dim=1, eps=1e-20)
+        self.loss_lambda = loss_lambda
+
+        # Clip
+        self.clip_min = clip_min
+        self.clip_max = clip_max
+
+    def forward(self, pred, target, weight=None, **kwargs):
+        """
+        Args:
+            pred (Tensor): of shape (N, C, H, W). Predicted tensor.
+            target (Tensor): of shape (N, C, H, W). Ground truth tensor.
+            weight (Tensor, optional): of shape (N, C, H, W). Element-wise weights. Default: None.
+        """
+        cosine_term = (1 - self.similarity(pred, target)).mean()
+
+        if self.criterion == 'huber':
+            loss = torch.mean(torch.clamp(huber_loss(pred, target, weight, delta=self.delta, reduction=self.reduction),
+                                          self.clip_min, self.clip_max))
+        elif self.criterion == 'l2':
+            loss = torch.mean(torch.clamp(mse_loss(pred, target, weight, reduction=self.reduction),
+                                          self.clip_min, self.clip_max))
+        else:
+            raise NotImplementedError(f'{self.criterion} not implemented.')
+
+        loss = loss + self.loss_lambda * cosine_term
+
+        return self.loss_weight * loss
 
 
 @LOSS_REGISTRY.register()
@@ -146,7 +208,7 @@ class PerceptualLoss(nn.Module):
                  range_norm=False,
                  perceptual_weight=1.0,
                  style_weight=0.,
-                 criterion='l1'):
+                 criterion='huber'):
         super(PerceptualLoss, self).__init__()
         self.perceptual_weight = perceptual_weight
         self.style_weight = style_weight
@@ -159,11 +221,13 @@ class PerceptualLoss(nn.Module):
 
         self.criterion_type = criterion
         if self.criterion_type == 'l1':
-            self.criterion = torch.nn.L1Loss()
+            self.criterion = nn.L1Loss()
         elif self.criterion_type == 'l2':
-            self.criterion = torch.nn.MSELoss()
+            self.criterion = nn.MSELoss()
         elif self.criterion_type == 'huber':
-            self.criterion = torch.nn.HuberLoss()
+            self.criterion = nn.HuberLoss()
+        elif self.criterion_type == 'chc':
+            self.criterion = chc()
         elif self.criterion_type == 'fro':
             self.criterion = None
         else:
@@ -231,24 +295,81 @@ class PerceptualLoss(nn.Module):
 
 @LOSS_REGISTRY.register()
 class colorloss(nn.Module):
-    def __init__(self, criterion='l1', loss_weight=1.0):
+    """Color Consistency Loss.
+    Converts images to chroma-only and compares both.
+
+    Args:
+        criterion (str): loss type. Default: 'huber'
+        avgpool (bool): apply downscaling after conversion. Default: False
+        scale (int): value used by avgpool. Default: 4
+        loss_weight: weight for colorloss. Default: 1.0 
+    """
+    def __init__(self, criterion='huber', avgpool=False, scale=4, loss_weight=1.0):
         super(colorloss, self).__init__()
         self.loss_weight = loss_weight
         self.criterion_type = criterion
+        self.avgpool = avgpool
+        self.scale = scale
+
         if self.criterion_type == 'l1':
-            self.criterion = torch.nn.L1Loss()
+            self.criterion = nn.L1Loss()
         elif self.criterion_type == 'l2':
-            self.criterion = torch.nn.MSELoss()
+            self.criterion = nn.MSELoss()
         elif self.criterion_type == 'huber':
-            self.criterion = torch.nn.HuberLoss()
+            self.criterion = nn.HuberLoss()
+        elif self.criterion_type == 'chc':
+            self.criterion = chc()
+        elif self.criterion_type == 'chc_l2':
+            self.criterion = chc(criterion='l2')
         else:
             raise NotImplementedError(
                 f'{criterion} criterion has not been supported.')
 
     def forward(self, input, target):
-        input_uv = rgb_to_uv(input)
-        target_uv = rgb_to_uv(target)
+        input_uv = rgb_to_cbcr(input)
+        target_uv = rgb_to_cbcr(target)
+        
+        # TODO: test downscale operation 
+        if self.avgpool:
+            input_uv = torch.nn.AvgPool2d(kernel_size=int(self.scale))(input_uv)
+            target_uv = torch.nn.AvgPool2d(kernel_size=int(self.scale))(target_uv)
+
         return self.criterion(input_uv, target_uv) * self.loss_weight
+
+@LOSS_REGISTRY.register()
+class lumaloss(nn.Module):
+    """
+    """
+    def __init__(self, criterion='huber', avgpool=False, scale=4, loss_weight=1.0):
+        super(lumaloss, self).__init__()
+        self.loss_weight = loss_weight
+        self.criterion_type = criterion
+        self.avgpool = avgpool
+        self.scale = scale
+
+        if self.criterion_type == 'l1':
+            self.criterion = nn.L1Loss() 
+        elif self.criterion_type == 'l2':
+            self.criterion = nn.MSELoss() 
+        elif self.criterion_type == 'huber':
+            self.criterion = nn.HuberLoss() 
+        elif self.criterion_type == 'chc':
+            self.criterion = chc() 
+        elif self.criterion_type == 'chc_l2':
+            self.criterion = chc(criterion='l2') 
+        else:
+            raise NotImplementedError(
+                f'{criterion} criterion has not been supported.')
+
+    def forward(self, input, target):
+        input_luma = rgb_to_luma(input)
+        target_luma = rgb_to_luma(target)
+
+        if self.avgpool:
+            input_luma = torch.nn.AvgPool2d(kernel_size=int(self.scale))(input_luma)
+            target_luma = torch.nn.AvgPool2d(kernel_size=int(self.scale))(target_luma)
+
+        return self.criterion(input_luma, target_luma) * self.loss_weight
 
 @LOSS_REGISTRY.register()
 class focalfrequencyloss(nn.Module):
