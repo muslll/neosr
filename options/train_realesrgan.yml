@@ -4,6 +4,7 @@ model_type: default
 scale: 4
 use_amp: true
 bfloat16: false
+fast_matmul: false
 compile: false
 #manual_seed: 1024
 
@@ -91,10 +92,6 @@ train:
     type: GANLoss
     gan_type: vanilla
     loss_weight: 0.1
-  color_opt:
-    type: colorloss
-    loss_weight: 1.0
-    criterion: huber
   #ldl_opt:
   #  type: HuberLoss
   #  loss_weight: 1.0
@@ -102,15 +99,17 @@ train:
   #  type: focalfrequencyloss
   #  loss_weight: 0.5
 
+  match_lq: false
+  color_opt:
+    type: colorloss
+    loss_weight: 1.0
+    criterion: l1
+  luma_opt:
+    type: lumaloss
+    loss_weight: 1.0
+    criterion: l1
+
 logger:
   print_freq: 100
   save_checkpoint_freq: 1000
   use_tb_logger: true
-  #wandb:
-  #  project: ~
-  #  resume_id: ~
-
-# dist training settings
-#dist_params:
-#  backend: nccl
-#  port: 29500
