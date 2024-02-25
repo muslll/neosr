@@ -175,7 +175,7 @@ These are datasets made by the upscaling community. More info can be found in th
 
 # support me
 
-&#9749; Consider supporting me on [**KoFi**](https://ko-fi.com/muslll). &#9749;
+Consider supporting me on [**Patreon**](https://www.patreon.com/neosr) or [**KoFi**](https://ko-fi.com/muslll). &#9749;
 
 ## license and acknowledgements
 

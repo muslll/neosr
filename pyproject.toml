@@ -33,9 +33,6 @@ line-ending = "lf"
 [tool.ruff.lint.isort]
 split-on-trailing-comma = false
 
-[tool.ruff.lint.mccabe]
-max-complexity = 5
-
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
