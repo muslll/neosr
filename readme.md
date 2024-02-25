@@ -122,9 +122,11 @@ Please read the wiki [Configuration Walkthrough](https://github.com/muslll/neosr
 | L1 Loss                                                                | `L1Loss`, `l1`       		     |
 | L2 Loss                                                                | `MSELoss`, `l2`      		     |
 | Huber Loss                                                             | `HuberLoss`, `huber` 		     |
+| CHC (Clipped Huber with Cosine Similarity Loss)			 | `chc`, `chc_l2`			     |
 | Perceptual Loss                                                        | `perceptual_opt`, `PerceptualLoss`        |
 | GAN                                                                    | `gan_opt`, `GANLoss`, `MultiScaleGANLoss` |
-| YUV Color Loss                                                         | `color_opt`, `colorloss`                  |
+| Y**CbCr** Color Loss (bt601)                                           | `color_opt`, `colorloss`                  |
+| Luma Loss (CIE X**Y**Z)						 | `luma_opt` `lumaloss`		     |
 | [LDL Loss](https://github.com/csjliang/LDL)                            | `ldl_opt`  			             |
 | [Focal Frequency](https://github.com/EndlessSora/focal-frequency-loss) | `ff_opt`, `focalfrequencyloss`            |
 

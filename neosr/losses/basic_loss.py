@@ -112,11 +112,12 @@ class HuberLoss(nn.Module):
             target (Tensor): of shape (N, C, H, W). Ground truth tensor.
             weight (Tensor, optional): of shape (N, C, H, W). Element-wise weights. Default: None.
         """
+
         return self.loss_weight * huber_loss(pred, target, weight, delta=self.delta, reduction=self.reduction)
 
 @LOSS_REGISTRY.register()
 class chc(nn.Module):
-    """Clipped Huber with Cosine Similarity Loss
+    """Clipped pseudo-Huber with Cosine Similarity Loss
 
        For reference on research, see:
        https://github.com/HolmesShuan/AIM2020-Real-Super-Resolution
@@ -126,33 +127,29 @@ class chc(nn.Module):
         loss_weight (float): Loss weight. Default: 1.0.
         reduction (str): Specifies the reduction to apply to the output.
             Supported choices are 'none' | 'mean' | 'sum'. Default: 'mean'.
-        delta (float): Specifies the threshold at which to change between
-            delta-scaled L1 and L2 loss. The value must be positive. Default: 1.0
         loss_lambda (float):  constant factor that adjusts the contribution of the cosine similarity term
         clip_min (float): threshold that sets the gradients of well-trained pixels to zeros
         clip_max (float): max clip limit, can act as a noise filter
     """
 
-    def __init__(self, loss_weight=1.0, reduction='mean', delta=1.0, criterion='huber',
-                 loss_lambda=3, clip_min=0.003921, clip_max=0.998):
+    def __init__(self, loss_weight=1.0, reduction='mean', criterion='huber',
+                 loss_lambda=0.019607, clip_min=0.003921, clip_max=0.996078):
         super(chc, self).__init__()
 
         if reduction not in ['none', 'mean', 'sum']:
             raise ValueError(f'Unsupported reduction mode: {reduction}. Supported ones are: {_reduction_modes}')
 
-        # Loss Values
-        self.criterion = criterion
+        # Loss params
         self.loss_weight = loss_weight
-        self.reduction = reduction
-        self.delta = delta
+        self.criterion = criterion
 
         # CoSim
         self.similarity = nn.CosineSimilarity(dim=1, eps=1e-20)
-        self.loss_lambda = loss_lambda
+        self.loss_lambda = loss_lambda # 5/255 = 0.019607
 
         # Clip
-        self.clip_min = clip_min
-        self.clip_max = clip_max
+        self.clip_min = clip_min # 1/255 = 0.03921
+        self.clip_max = clip_max 
 
     def forward(self, pred, target, weight=None, **kwargs):
         """
@@ -163,16 +160,16 @@ class chc(nn.Module):
         """
         cosine_term = (1 - self.similarity(pred, target)).mean()
 
-        if self.criterion == 'huber':
-            loss = torch.mean(torch.clamp(huber_loss(pred, target, weight, delta=self.delta, reduction=self.reduction),
+        # absolute mean
+        if self.criterion == 'l1':
+            loss = torch.mean(torch.clamp((torch.abs(pred - target) + self.loss_lambda * cosine_term),
                                           self.clip_min, self.clip_max))
-        elif self.criterion == 'l2':
-            loss = torch.mean(torch.clamp(mse_loss(pred, target, weight, reduction=self.reduction),
+        # pseudo-huber (charbonnier)
+        elif self.criterion == 'huber':
+            loss = torch.mean(torch.clamp((torch.sqrt((pred - target)**2 + 1e-12) + self.loss_lambda * cosine_term),
                                           self.clip_min, self.clip_max))
         else:
             raise NotImplementedError(f'{self.criterion} not implemented.')
-
-        loss = loss + self.loss_lambda * cosine_term
 
         return self.loss_weight * loss
 
@@ -302,7 +299,7 @@ class colorloss(nn.Module):
         criterion (str): loss type. Default: 'huber'
         avgpool (bool): apply downscaling after conversion. Default: False
         scale (int): value used by avgpool. Default: 4
-        loss_weight: weight for colorloss. Default: 1.0 
+        loss_weight (float): weight for colorloss. Default: 1.0 
     """
     def __init__(self, criterion='huber', avgpool=False, scale=4, loss_weight=1.0):
         super(colorloss, self).__init__()
@@ -338,7 +335,14 @@ class colorloss(nn.Module):
 
 @LOSS_REGISTRY.register()
 class lumaloss(nn.Module):
-    """
+    """Luminance Loss.
+    Converts images to Y from CIE XYZ and then to CIE L* (from L*a*b*)
+
+    Args:
+        criterion (str): loss type. Default: 'huber'
+        avgpool (bool): apply downscaling after conversion. Default: False
+        scale (int): value used by avgpool. Default: 4
+        loss_weight (float): weight for colorloss. Default: 1.0
     """
     def __init__(self, criterion='huber', avgpool=False, scale=4, loss_weight=1.0):
         super(lumaloss, self).__init__()

@@ -127,6 +127,12 @@ def parse_options(root_path, is_train=True):
     group.add_argument('--input', type=str, required=False,
                         help='Input Pytorch model path.')
 
+    group.add_argument('-onnx', '--onnx', action='store_true',
+                        help='Enables ONNX conversion.', default=False)
+
+    group.add_argument('-safetensor', '--safetensor', action='store_true',
+                        help='Enables safetensor conversion.', default=False)
+
     group.add_argument('-net', '--network', type=str,
                         required=False, help='Generator network.')
 
@@ -138,6 +144,12 @@ def parse_options(root_path, is_train=True):
 
     group.add_argument('-opset', '--opset', type=int,
                         help='ONNX opset. (default: 17)', default=17)
+
+    group.add_argument('-static', '--static', type=str,
+                        help='Set static shape for ONNX conversion. Example: -static "3,640,640".', default=None)
+
+    group.add_argument('-nocheck', '--nocheck', action='store_true',
+                        help='Disables checking against original pytorch model on ONNX conversion.', default=False)
 
     group.add_argument('-fp16', '--fp16' , action='store_true',
                         help='Enable half-precision. (default: false)', default=False)

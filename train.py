@@ -206,7 +206,8 @@ def train_pipeline(root_path):
                 accumulate = opt['datasets']['train'].get('accumulate', 1)
                 print_freq = opt['logger']['print_freq']
                 save_checkpoint_freq = opt['logger']['save_checkpoint_freq']
-                val_freq = opt['val']['val_freq']
+                if opt.get('val') is not None:
+                    val_freq = opt['val']['val_freq']
 
                 if current_iter >= accumulate:
                     current_iter_log = current_iter / accumulate

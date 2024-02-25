@@ -2,7 +2,7 @@
 name: train_compact
 model_type: default
 scale: 4
-use_amp: true 
+use_amp: false
 bfloat16: false
 fast_matmul: false
 compile: false
@@ -70,6 +70,7 @@ train:
 
   total_iter: 500000
   warmup_iter: -1  # no warm up
+  grad_clip: false
 
   # losses
   pixel_opt:
@@ -97,15 +98,15 @@ train:
   #  type: focalfrequencyloss
   #  loss_weight: 0.5
 
-  match_lq: false
-  color_opt:
-    type: colorloss
-    loss_weight: 1.0
-    criterion: l1
-  luma_opt:
-    type: lumaloss
-    loss_weight: 1.0
-    criterion: l1
+#  match_lq: false
+#  color_opt:
+#    type: colorloss
+#    loss_weight: 1.0
+#    criterion: l1
+#  luma_opt:
+#    type: lumaloss
+#    loss_weight: 1.0
+#    criterion: l1
 
 logger:
   print_freq: 100
