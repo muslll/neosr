@@ -120,7 +120,7 @@ class HuberLoss(nn.Module):
         self.delta = delta
 
     def forward(
-        self, pred: torch.Tensor, target: torch.Tensor, weight: None = None, **kwargs
+        self, pred: torch.Tensor, target: torch.Tensor, weight: float = None, **kwargs
     ) -> torch.Tensor:
         """
         Args:
@@ -182,13 +182,11 @@ class chc(nn.Module):
         self.clip_max = clip_max
 
     def forward(
-        self, pred: torch.Tensor, target: torch.Tensor, weight: None = None, **kwargs
-    ) -> torch.Tensor:
+        self, pred: torch.Tensor, target: torch.Tensor, **kwargs) -> torch.Tensor:
         """
         Args:
             pred (Tensor): of shape (N, C, H, W). Predicted tensor.
             target (Tensor): of shape (N, C, H, W). Ground truth tensor.
-            weight (Tensor, optional): of shape (N, C, H, W). Element-wise weights. Default: None.
         """
         cosine_term = (1 - self.similarity(pred, target)).mean()
 
@@ -250,7 +248,7 @@ class PerceptualLoss(nn.Module):
         use_input_norm: bool = True,
         range_norm: bool = False,
         perceptual_weight: float = 1.0,
-        style_weight: int = 0.0,
+        style_weight: float = 0.0,
         criterion: str = "huber",
     ) -> None:
         super(PerceptualLoss, self).__init__()
@@ -518,7 +516,7 @@ class focalfrequencyloss(nn.Module):
 
     @torch.cuda.amp.custom_fwd(cast_inputs=torch.float32)
     def loss_formulation(
-        self, recon_freq: torch.Tensor, real_freq: torch.Tensor, matrix: None = None
+        self, recon_freq: torch.Tensor, real_freq: torch.Tensor, matrix: torch.Tensor = None
     ) -> torch.Tensor:
         # spectrum weight matrix
         if matrix is not None:
@@ -564,7 +562,7 @@ class focalfrequencyloss(nn.Module):
 
     @torch.cuda.amp.custom_fwd(cast_inputs=torch.float32)
     def forward(
-        self, pred: torch.Tensor, target: torch.Tensor, matrix: None = None, **kwargs
+        self, pred: torch.Tensor, target: torch.Tensor, matrix: torch.Tensor = None, **kwargs
     ) -> torch.Tensor:
         """Forward function to calculate focal frequency loss.
 
