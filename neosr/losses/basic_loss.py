@@ -915,7 +915,7 @@ class bbl(nn.Module):
         elif criterion == "huber":
             self.criterion = nn.HuberLoss(reduction="mean")
         elif criterion == "chc":
-            self.criterion = chc()
+            self.criterion = chc(reduction="mean")
         else:
             raise NotImplementedError("%s criterion has not been supported." % criterion)
 
