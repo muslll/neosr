@@ -100,17 +100,17 @@ def _postprocess_yml_value(value):
 
 def parse_options(root_path, is_train=True):
     parser = argparse.ArgumentParser(prog='neosr',
-                                     usage=argparse.SUPPRESS,
-                                     description='''-------- neosr command-line options --------''')
+                        usage=argparse.SUPPRESS,
+                        description='''-------- neosr command-line options --------''')
 
     parser._optionals.title = 'training and inference'
-
+    
     parser.add_argument('-opt', type=str, required=False,
                         help='Path to option YAML file.')
 
-    parser.add_argument('--launcher', choices=['none', 'pytorch', 'slurm'], default='none',
+    parser.add_argument( '--launcher', choices=['none', 'pytorch', 'slurm'], default='none',
                         help='job launcher')
-
+    
     parser.add_argument('--auto_resume', action='store_true', default=False)
 
     parser.add_argument('--debug', action='store_true')
@@ -121,47 +121,48 @@ def parse_options(root_path, is_train=True):
                         help='Force to update yml files. Examples: train:total_iter=200000')
 
     # Options for convert.py script
-
+   
     group = parser.add_argument_group('model conversion')
 
     group.add_argument('--input', type=str, required=False,
-                       help='Input Pytorch model path.')
+                        help='Input Pytorch model path.')
 
     group.add_argument('-onnx', '--onnx', action='store_true',
-                       help='Enables ONNX conversion.', default=False)
+                        help='Enables ONNX conversion.', default=False)
 
     group.add_argument('-safetensor', '--safetensor', action='store_true',
-                       help='Enables safetensor conversion.', default=False)
+                        help='Enables safetensor conversion.', default=False)
 
     group.add_argument('-net', '--network', type=str,
-                       required=False, help='Generator network.')
+                        required=False, help='Generator network.')
 
     group.add_argument('-s', '--scale', type=int,
-                       help='Model scale ratio.', default=4)
+                        help='Model scale ratio.', default=4)
 
     group.add_argument('-window', '--window', type=int,
-                       help='Model scale ratio.', default=None)
+                        help='Model scale ratio.', default=None)
 
     group.add_argument('-opset', '--opset', type=int,
-                       help='ONNX opset. (default: 17)', default=17)
+                        help='ONNX opset. (default: 17)', default=17)
 
     group.add_argument('-static', '--static', type=str,
-                       help='Set static shape for ONNX conversion. Example: -static "3,640,640".', default=None)
+                        help='Set static shape for ONNX conversion. Example: -static "3,640,640".', default=None)
 
     group.add_argument('-nocheck', '--nocheck', action='store_true',
-                       help='Disables checking against original pytorch model on ONNX conversion.', default=False)
+                        help='Disables checking against original pytorch model on ONNX conversion.', default=False)
 
-    group.add_argument('-fp16', '--fp16', action='store_true',
-                       help='Enable half-precision. (default: false)', default=False)
+    group.add_argument('-fp16', '--fp16' , action='store_true',
+                        help='Enable half-precision. (default: false)', default=False)
 
     group.add_argument('-optimize', '--optimize', action='store_true',
-                       help='Run ONNX optimizations', default=False)
+                        help='Run ONNX optimizations', default=False)
 
     group.add_argument('-fulloptimization', '--fulloptimization', action='store_true',
-                       help='Run full ONNX optimizations', default=False)
+                        help='Run full ONNX optimizations', default=False)
 
     group.add_argument('--output', type=str, required=False,
-                       help='Output ONNX model path.', default=root_path)
+                        help='Output ONNX model path.', default=root_path)
+
 
     args = parser.parse_args()
 

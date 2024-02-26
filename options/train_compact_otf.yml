@@ -2,9 +2,9 @@
 name: train_compact_otf
 model_type: otf
 scale: 4
-num_gpu: 1
-use_amp: true
+use_amp: false
 bfloat16: false
+fast_matmul: false
 compile: false
 #manual_seed: 1024
 
@@ -20,9 +20,9 @@ datasets:
       type: disk
 
     batch_size: 6
+    accumulate: 1
     use_hflip: true
     use_rot: true
-    num_worker_per_gpu: 4
     dataset_enlarge_ratio: 5
 
     blur_kernel_size: 7
@@ -92,7 +92,7 @@ network_d:
 train:
   optim_g:
     type: adamw
-    lr: !!float 3e-4
+    lr: !!float 5e-4
     weight_decay: 0
     betas: [0.9, 0.99]
   optim_d:
@@ -108,6 +108,7 @@ train:
 
   total_iter: 500000
   warmup_iter: -1 # no warm up
+  grad_clip: false
 
   # losses
   pixel_opt:
@@ -128,10 +129,6 @@ train:
     type: GANLoss
     gan_type: vanilla
     loss_weight: 0.1
-  color_opt:
-    type: colorloss
-    loss_weight: 1.0
-    criterion: huber
   #ldl_opt:
   #  type: HuberLoss
   #  loss_weight: 1.0
@@ -139,15 +136,17 @@ train:
   #  type: focalfrequencyloss
   #  loss_weight: 0.5
 
+#  match_lq: false
+#  color_opt:
+#    type: colorloss
+#    loss_weight: 1.0
+#    criterion: l1
+#  luma_opt:
+#    type: lumaloss
+#    loss_weight: 1.0
+#    criterion: l1
+
 logger:
   print_freq: 100
   save_checkpoint_freq: 1000
   use_tb_logger: true
-  #wandb:
-  #  project: ~
-  #  resume_id: ~
-
-# dist training settings
-#dist_params:
-#  backend: nccl
-#  port: 29500

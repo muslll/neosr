@@ -297,7 +297,7 @@ class cugan(nn.Module):
 
         if self.scale == 3:
             ph = ((h0 - 1) // 4 + 1) * 4
-            pw = ((w0 - 1) // 4 + 1) * 4
+            pw = ((w0 - 1) // 4 + 1) * 4 
         else:
             ph = ((h0 - 1) // 2 + 1) * 2
             pw = ((w0 - 1) // 2 + 1) * 2
