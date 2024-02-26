@@ -17,6 +17,7 @@ PyYAML = "^6.0.1"
 tb-nightly = "^2.14.0a20230802"
 tqdm = "^4.65.0"
 opencv-python-headless = "^4.8.1.78"
+psutil = "^5.9.8"
 
 [tool.ruff]
 select = ["ALL"]
