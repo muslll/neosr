@@ -247,11 +247,11 @@ class Resnet_loss(nn.Module):
         y = self.maxpool(self.relu(y))
 
         losses = []
-        L1_loss = nn.L1Loss().cuda()
+        huber_loss = nn.HuberLoss().cuda()
         for block in self.blocks:
             x = block(x)
             y = block(y)
-            losses.append(L1_loss(x, y))
+            losses.append(huber_loss(x, y))
         total_loss = 0
         for weight, loss in zip(weights, losses):
             total_loss += loss * weight
@@ -293,6 +293,7 @@ class PerceptualLoss(nn.Module):
         perceptual_patch_weight: float = 0.1,
         style_weight: int = 0.0,
         criterion: str = "patch",
+        patch_criterion: str = "l1",
         perceptual_kernels: str = None,
         use_std_to_force: bool = True
     ) -> None:
@@ -315,6 +316,7 @@ class PerceptualLoss(nn.Module):
             resnet = torchvision.models.resnet50(weights=torchvision.models.ResNet50_Weights.DEFAULT)
             self.resnet_loss = Resnet_loss(resnet).cuda()
 
+        self.patch_criterion = patch_criterion
         self.criterion_type = criterion
         if self.criterion_type == "l1":
             self.criterion = nn.L1Loss()
@@ -325,7 +327,14 @@ class PerceptualLoss(nn.Module):
         elif self.criterion_type == "chc":
             self.criterion = chc()
         elif self.criterion_type == "patch":
-            self.criterion = chc()
+            if self.patch_criterion == "l1":
+                self.criterion = nn.L1Loss()
+            elif self.patch_ == "l2":
+                self.criterion = nn.MSELoss()
+            elif self.patch_criterion == "huber":
+                self.criterion = nn.HuberLoss()
+            elif self.patch_criterion == "chc":
+                self.criterion = chc()
         elif self.criterion_type == "fro":
             self.criterion = None
         else:
@@ -905,6 +914,8 @@ class bbl(nn.Module):
             self.criterion = nn.MSEloss(reduction="mean")
         elif self.criterion_type == "huber":
             self.criterion = nn.HuberLoss()
+        elif criterion == "chc":
+            self.criterion = chc()
         else:
             raise NotImplementedError("%s criterion has not been supported." % criterion)
 
