@@ -913,7 +913,7 @@ class bbl(nn.Module):
         elif criterion == "l2":
             self.criterion = nn.MSEloss(reduction="mean")
         elif criterion == "huber":
-            self.criterion = nn.HuberLoss()
+            self.criterion = nn.HuberLoss(reduction="mean")
         elif criterion == "chc":
             self.criterion = chc()
         else:
