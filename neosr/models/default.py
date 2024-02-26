@@ -837,7 +837,7 @@ class default():
                 state['optimizers'].append(o.state_dict())
             for s in self.schedulers:
                 state['schedulers'].append(s.state_dict())
-            save_filename = f'{current_iter}.state'
+            save_filename = f'{int(current_iter)}.state'
             save_path = os.path.join(
                 self.opt['path']['training_states'], save_filename)
 

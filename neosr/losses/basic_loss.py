@@ -8,7 +8,6 @@ from torch.nn import functional as F
 
 from neosr.archs.vgg_arch import VGGFeatureExtractor
 from neosr.losses.loss_util import weighted_loss
-
 from neosr.utils.color_util import rgb_to_cbcr, rgb_to_luma
 from neosr.utils.registry import LOSS_REGISTRY
 
@@ -39,14 +38,15 @@ class L1Loss(nn.Module):
     Args:
         loss_weight (float): Loss weight for L1 loss. Default: 1.0.
         reduction (str): Specifies the reduction to apply to the output.
-            Supported choices are "none" | "mean" | "sum". Default: "mean".
+            Supported choices are 'none' | 'mean' | 'sum'. Default: 'mean'.
     """
 
     def __init__(self, loss_weight=1.0, reduction="mean"):
         super(L1Loss, self).__init__()
         if reduction not in ["none", "mean", "sum"]:
             raise ValueError(
-                f"Unsupported reduction mode: {reduction}. Supported ones are: {_reduction_modes}")
+                f"Unsupported reduction mode: {reduction}. Supported ones are: {_reduction_modes}"
+            )
 
         self.loss_weight = loss_weight
         self.reduction = reduction
@@ -70,14 +70,15 @@ class MSELoss(nn.Module):
     Args:
         loss_weight (float): Loss weight for MSE loss. Default: 1.0.
         reduction (str): Specifies the reduction to apply to the output.
-            Supported choices are "none" | "mean" | "sum". Default: "mean".
+            Supported choices are 'none' | 'mean' | 'sum'. Default: 'mean'.
     """
 
     def __init__(self, loss_weight=1.0, reduction="mean"):
         super(MSELoss, self).__init__()
         if reduction not in ["none", "mean", "sum"]:
             raise ValueError(
-                f"Unsupported reduction mode: {reduction}. Supported ones are: {_reduction_modes}")
+                f"Unsupported reduction mode: {reduction}. Supported ones are: {_reduction_modes}"
+            )
 
         self.loss_weight = loss_weight
         self.reduction = reduction
@@ -101,13 +102,13 @@ class HuberLoss(nn.Module):
     Args:
         loss_weight (float): Loss weight. Default: 1.0.
         reduction (str): Specifies the reduction to apply to the output.
-            Supported choices are "none" | "mean" | "sum". Default: "mean".
+            Supported choices are 'none' | 'mean' | 'sum'. Default: 'mean'.
         delta (float): Specifies the threshold at which to change between
             delta-scaled L1 and L2 loss. The value must be positive. Default: 1.0
     """
 
     def __init__(
-            self, loss_weight: float = 1.0, reduction: str = "mean", delta: float = 1.0
+        self, loss_weight: float = 1.0, reduction: str = "mean", delta: float = 1.0
     ) -> None:
         super(HuberLoss, self).__init__()
         if reduction not in ["none", "mean", "sum"]:
@@ -120,7 +121,7 @@ class HuberLoss(nn.Module):
         self.delta = delta
 
     def forward(
-            self, pred: torch.Tensor, target: torch.Tensor, weight: None = None, **kwargs
+        self, pred: torch.Tensor, target: torch.Tensor, weight: float = None, **kwargs
     ) -> torch.Tensor:
         """
         Args:
@@ -137,9 +138,11 @@ class HuberLoss(nn.Module):
 @LOSS_REGISTRY.register()
 class chc(nn.Module):
     """Clipped pseudo-Huber with Cosine Similarity Loss
+
        For reference on research, see:
        https://github.com/HolmesShuan/AIM2020-Real-Super-Resolution
        https://github.com/dmarnerides/hdr-expandnet
+
     Args:
         loss_weight (float): Loss weight. Default: 1.0.
         reduction (str): Specifies the reduction to apply to the output.
@@ -180,13 +183,11 @@ class chc(nn.Module):
         self.clip_max = clip_max
 
     def forward(
-        self, pred: torch.Tensor, target: torch.Tensor, weight: None = None, **kwargs
-    ) -> torch.Tensor:
+        self, pred: torch.Tensor, target: torch.Tensor, **kwargs) -> torch.Tensor:
         """
         Args:
             pred (Tensor): of shape (N, C, H, W). Predicted tensor.
             target (Tensor): of shape (N, C, H, W). Ground truth tensor.
-            weight (Tensor, optional): of shape (N, C, H, W). Element-wise weights. Default: None.
         """
         cosine_term = (1 - self.similarity(pred, target)).mean()
 
@@ -264,11 +265,13 @@ class PerceptualLoss(nn.Module):
 
     Args:
         layer_weights (dict): The weight for each layer of vgg feature.
-            Here is an example: {"conv5_4": 1.}, which means the conv5_4
+            Here is an example: {'conv5_4': 1.}, which means the conv5_4
             feature layer (before relu5_4) will be extracted with weight
             1.0 in calculating losses.
         vgg_type (str): The type of vgg network used as feature extractor.
-            Default: "vgg19".
+            Default: 'vgg19'.
+        perceptual_type (str): The type of perceptual loss to use.
+            Default: 'vanilla'.
         use_input_norm (bool):  If True, normalize the input image in vgg.
             Default: True.
         range_norm (bool): If True, norm images with range [-1, 1] to [0, 1].
@@ -279,22 +282,31 @@ class PerceptualLoss(nn.Module):
         style_weight (float): If `style_weight > 0`, the style loss will be
             calculated and the loss will multiplied by the weight.
             Default: 0.
-        criterion (str): Criterion used for perceptual loss. Default: "l1".
+        criterion (str): Criterion used for perceptual loss.
+            Default: 'l1'.
+        patch_criterion: Criterion used for VGG loss when using patch criterion.
+            Default: 'l1'.
+        perceptual_kernels: The size of the kernels used for patches. It is unclear
+        to me whether the default for 4x should be [4, 8] or [8, 16].
+            Default: [8, 16].
+        use_std_to_force: Unknown. Used for Patch. Default changes between the
+            options file and losses file in the source repo.
+            Default: True.
     """
 
     def __init__(
         self,
         layer_weights: OrderedDict,
         vgg_type: str = "vgg19",
-        perceptual_type: str = "dual",
+        perceptual_type: str = "vanilla",
         use_input_norm: bool = True,
         range_norm: bool = False,
         perceptual_weight: float = 1.0,
         perceptual_patch_weight: float = 0.1,
-        style_weight: int = 0.0,
-        criterion: str = "patch",
+        style_weight: float = 0.0,
+        criterion: str = "huber",
         patch_criterion: str = "l1",
-        perceptual_kernels: str = None,
+        perceptual_kernels: list = [8, 16],
         use_std_to_force: bool = True
     ) -> None:
         super(PerceptualLoss, self).__init__()
@@ -445,7 +457,7 @@ class PerceptualLoss(nn.Module):
         gram = features.bmm(features_t) / (c * h * w)
         return gram
 
-    def patch(self, x, gt, use_std_to_force):
+    def patch(self, x: torch.Tensor, gt: torch.Tensor, use_std_to_force: bool):
         loss = 0.
         for _kernel in self.perceptual_kernels:
             _patchkernel3d = PatchesKernel3D(_kernel, _kernel//2).to("cuda:0")   # create instance
@@ -466,7 +478,12 @@ class PerceptualLoss(nn.Module):
 
 
 class PatchesKernel3D(nn.Module):
-    def __init__(self, kernelsize, kernelstride, kernelpadding=0):
+    def __init__(
+        self,
+        kernelsize,
+        kernelstride,
+        kernelpadding: int = 0
+    ) -> None:
         super(PatchesKernel3D, self).__init__()
         kernel = torch.eye(kernelsize ** 2).\
             view(kernelsize ** 2, 1, kernelsize, kernelsize)
@@ -479,7 +496,7 @@ class PatchesKernel3D(nn.Module):
         self.stride = kernelstride
         self.padding = kernelpadding
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor):
         batchsize = x.shape[0]
         channels = x.shape[1]
         x = x.reshape(batchsize*channels, x.shape[-2], x.shape[-1]).unsqueeze(1)
@@ -492,6 +509,7 @@ class PatchesKernel3D(nn.Module):
 class colorloss(nn.Module):
     """Color Consistency Loss.
     Converts images to chroma-only and compares both.
+
     Args:
         criterion (str): loss type. Default: 'huber'
         avgpool (bool): apply downscaling after conversion. Default: False
@@ -539,6 +557,7 @@ class colorloss(nn.Module):
 class lumaloss(nn.Module):
     """Luminance Loss.
     Converts images to Y from CIE XYZ and then to CIE L* (from L*a*b*)
+
     Args:
         criterion (str): loss type. Default: 'huber'
         avgpool (bool): apply downscaling after conversion. Default: False
@@ -585,6 +604,7 @@ class lumaloss(nn.Module):
 class focalfrequencyloss(nn.Module):
     """Focal Frequency Loss.
        From: https://github.com/EndlessSora/focal-frequency-loss
+
     Args:
         loss_weight (float): weight for focal frequency loss. Default: 1.0
         alpha (float): the scaling factor alpha of the spectrum weight matrix for flexibility. Default: 1.0
@@ -648,7 +668,7 @@ class focalfrequencyloss(nn.Module):
 
     @torch.cuda.amp.custom_fwd(cast_inputs=torch.float32)
     def loss_formulation(
-        self, recon_freq: torch.Tensor, real_freq: torch.Tensor, matrix: None = None
+        self, recon_freq: torch.Tensor, real_freq: torch.Tensor, matrix: torch.Tensor = None
     ) -> torch.Tensor:
         # spectrum weight matrix
         if matrix is not None:
@@ -664,6 +684,7 @@ class focalfrequencyloss(nn.Module):
             # whether to adjust the spectrum weight matrix by logarithm
             if self.log_matrix:
                 matrix_tmp = torch.log(matrix_tmp + 1.0)
+
             # whether to calculate the spectrum weight matrix using batch-based statistics
             if self.batch_matrix:
                 matrix_tmp = matrix_tmp / matrix_tmp.max()
@@ -686,15 +707,17 @@ class focalfrequencyloss(nn.Module):
         # frequency distance using (squared) Euclidean distance
         tmp = (recon_freq - real_freq) ** 2
         freq_distance = tmp[..., 0] + tmp[..., 1]
+
         # dynamic spectrum weighting (Hadamard product)
         loss = weight_matrix * freq_distance
         return torch.mean(loss)
 
     @torch.cuda.amp.custom_fwd(cast_inputs=torch.float32)
     def forward(
-        self, pred: torch.Tensor, target: torch.Tensor, matrix: None = None, **kwargs
+        self, pred: torch.Tensor, target: torch.Tensor, matrix: torch.Tensor = None, **kwargs
     ) -> torch.Tensor:
         """Forward function to calculate focal frequency loss.
+
         Args:
             pred (torch.Tensor): of shape (N, C, H, W). Predicted tensor.
             target (torch.Tensor): of shape (N, C, H, W). Target tensor.
@@ -703,6 +726,7 @@ class focalfrequencyloss(nn.Module):
         """
         pred_freq = self.tensor2freq(pred)
         target_freq = self.tensor2freq(target)
+
         # whether to use minibatch average spectrum
         if self.ave_spectrum:
             pred_freq = torch.mean(pred_freq, 0, keepdim=True)
@@ -720,12 +744,16 @@ class patchloss(nn.Module):
         kernel_sizes (list): add (x, y) in the list.
         loss_weight (float): Loss weight. Default: 1.0.
     """
-    def __init__(self, kernel_sizes=[2, 4], loss_weight=1.0):
+    def __init__(
+        self,
+        kernel_sizes: list = [2, 4],
+        loss_weight: float = 1.0
+    ) -> None:
         super(patchloss, self).__init__()
         self.kernels = kernel_sizes
         self.loss_weight = loss_weight
 
-    def forward(self, preds, labels):
+    def forward(self, preds: torch.Tensor, labels: torch.Tensor):
         """
         Args:
             pred (Tensor): of shape (N, C, H, W). Predicted tensor.
@@ -753,7 +781,12 @@ class patchloss(nn.Module):
         return loss * self.loss_weight
 
 class PatchesKernel(nn.Module):
-    def __init__(self, kernelsize, kernelstride, kernelpadding=0):
+    def __init__(
+        self,
+        kernelsize,
+        kernelstride,
+        kernelpadding: int = 0
+    ) -> None:
         super(PatchesKernel, self).__init__()
         kernel = torch.eye(kernelsize ** 2).\
             view(kernelsize ** 2, 1, kernelsize, kernelsize)
@@ -766,7 +799,7 @@ class PatchesKernel(nn.Module):
         self.stride = kernelstride
         self.padding = kernelpadding
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor):
         batchsize = x.shape[0]
         x = F.conv2d(x, self.weight, self.bias, self.stride, self.padding)
         x = x.permute(0, 2, 3, 1).reshape(batchsize, -1, self.kernelsize ** 2)
@@ -781,12 +814,16 @@ class patchloss3d(nn.Module):
         kernel_sizes (list): add (4,2), (8,4), (16,8), (32,16) or (64,32) in the list.
         loss_weight (float): Loss weight. Default: 1.0.
     """
-    def __init__(self, kernel_sizes=[2, 4], loss_weight=1.0):
+    def __init__(
+        self,
+        kernel_sizes: list = [2, 4],
+        loss_weight: float = 1.0
+    ) -> None:
         super(patchloss3d, self).__init__()
         self.kernels = kernel_sizes
         self.loss_weight = loss_weight
 
-    def forward(self, preds, labels):
+    def forward(self, preds: torch.Tensor, labels: torch.Tensor):
         """
         Args:
             pred (Tensor): of shape (N, C, H, W). Predicted tensor.
@@ -814,13 +851,18 @@ class patchloss3dxd(nn.Module):
         kernel_sizes (list): add (x, y) in the list.
         loss_weight (float): Loss weight. Default: 1.0.
     """
-    def __init__(self, kernel_sizes=[2, 4], loss_weight=1.0, use_std_to_force=True):
+    def __init__(
+        self,
+        kernel_sizes: list = [2, 4],
+        loss_weight: float = 1.0,
+        use_std_to_force: bool = False
+    ) -> None:
         super(patchloss3dxd, self).__init__()
         self.kernels = kernel_sizes
         self.loss_weight = loss_weight
         self.use_std_to_force = use_std_to_force
 
-    def forward(self, preds, labels):
+    def forward(self, preds: torch.Tensor, labels: torch.Tensor):
         """
         Args:
             pred (Tensor): of shape (N, C, H, W). Predicted tensor.
@@ -854,7 +896,12 @@ class gradientvarianceloss(nn.Module):
        patch_size : int, scalar, size of the patches extracted from the gt and predicted images
        cpu : bool,  whether to run calculation on cpu or gpu
         """
-    def __init__(self, patch_size=8, cpu=False, loss_weight=1.0):
+    def __init__(
+        self,
+        patch_size: int = 8,
+        cpu: bool = False,
+        loss_weight: float = 1.0
+    ) -> None:
         super(gradientvarianceloss, self).__init__()
         self.patch_size = patch_size
         self.loss_weight = loss_weight
@@ -867,7 +914,7 @@ class gradientvarianceloss(nn.Module):
         # operation for unfolding image into non overlapping patches
         self.unfold = nn.Unfold(kernel_size=(self.patch_size, self.patch_size), stride=self.patch_size)
 
-    def forward(self, output, target):
+    def forward(self, output: torch.Tensor, target: torch.Tensor):
         # converting RGB image to grayscale
         gray_output = 0.2989 * output[:, 0:1, :, :] + 0.5870 * output[:, 1:2, :, :] + 0.1140 * output[:, 2:, :, :]
         gray_target = 0.2989 * target[:, 0:1, :, :] + 0.5870 * target[:, 1:2, :, :] + 0.1140 * target[:, 2:, :, :]
@@ -898,7 +945,17 @@ class gradientvarianceloss(nn.Module):
 
 @LOSS_REGISTRY.register()
 class bbl(nn.Module):
-    def __init__(self, alpha=1.0, beta=1.0, ksize=3, pad=0, stride=3, dist_norm="l2", criterion="l1", loss_weight=1.0):
+    def __init__(
+        self,
+        alpha: float = 1.0,
+        beta: float = 1.0,
+        ksize: int = 3,
+        pad: int = 0,
+        stride: int = 3,
+        dist_norm: str = "l2",
+        criterion: str = "l1",
+        loss_weight: float = 1.0
+    ) -> None:
         super(bbl, self).__init__()
         self.alpha = alpha
         self.beta = beta
@@ -979,7 +1036,7 @@ class bbl(nn.Module):
 
         return dist
 
-    def forward(self, x, gt):
+    def forward(self, x: torch.Tensor, gt: torch.Tensor):
         p1 = F.unfold(x, kernel_size=self.ksize, padding=self.pad, stride=self.stride)
         B, C, H = p1.size()
         p1 = p1.permute(0, 2, 1).contiguous() # [B, H, C]
