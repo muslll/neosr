@@ -125,6 +125,12 @@ class default():
         else:
             self.cri_gradvar = None
 
+        # Best Buddy GANs Loss (https://github.com/dvlab-research/Simple-SR) (MIT License https://github.com/dvlab-research/Simple-SR?tab=MIT-1-ov-file#readme)
+        if train_opt.get('bbl_opt'):
+            self.cri_bbl = build_loss(train_opt['bbl_opt']).to(self.device, memory_format=torch.channels_last, non_blocking=True)
+        else:
+            self.cri_bbl = None
+
         if self.cri_pix is None and self.cri_perceptual is None and self.cri_patch is None and self.cri_patch_3d is None and self.cri_patch_3d_xd is None:
             raise ValueError('Both pixel and perceptual losses are None.')
 
@@ -304,6 +310,11 @@ class default():
                     l_g_gradvar = self.cri_gradvar(self.output, self.gt)
                     l_g_total += l_g_gradvar
                     loss_dict['l_g_gradvar'] = l_g_gradvar
+                # pixel loss
+                if self.cri_bbl:
+                    l_g_bbl = self.cri_bbl(self.output, self.gt)
+                    l_g_total += l_g_bbl
+                    loss_dict['l_g_bbl'] = l_g_bbl
                 # GAN loss
                 if self.cri_gan:
                     fake_g_pred = self.net_d(self.output)
