@@ -329,7 +329,7 @@ class PerceptualLoss(nn.Module):
         elif self.criterion_type == "patch":
             if self.patch_criterion == "l1":
                 self.criterion = nn.L1Loss()
-            elif self.patch_ == "l2":
+            elif self.patch_criterion == "l2":
                 self.criterion = nn.MSELoss()
             elif self.patch_criterion == "huber":
                 self.criterion = nn.HuberLoss()
