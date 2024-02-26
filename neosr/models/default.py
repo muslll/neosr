@@ -272,6 +272,10 @@ class default():
         losses_for_backward_g = []
 
         with torch.autocast(device_type='cuda', dtype=self.amp_dtype, enabled=self.use_amp):
+            if self.opt['train'].get('type', 'otf') is 'otf':
+                self.gt = self.gt.clone().requires_grad_()
+                self.lq = self.lq.clone().requires_grad_()
+
             self.output = self.net_g(self.lq)
 
             l_g_total = 0
