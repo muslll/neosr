@@ -30,8 +30,8 @@ preview = true
 skip-magic-trailing-comma = true
 line-ending = "lf"
 
-[tool.ruff.lint.mccabe]
-max-complexity = 5
+[tool.ruff.lint.isort]
+split-on-trailing-comma = false
 
 [build-system]
 requires = ["poetry-core"]

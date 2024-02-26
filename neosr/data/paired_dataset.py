@@ -87,10 +87,19 @@ class paired(data.Dataset):
         # image range: [0, 1], float32.
         gt_path = self.paths[index]['gt_path']
         img_bytes = self.file_client.get(gt_path, 'gt')
-        img_gt = imfrombytes(img_bytes, float32=True)
+
+        try:
+            img_gt = imfrombytes(img_bytes, float32=True)
+        except AttributeError:
+            raise AttributeError(gt_path)
+
         lq_path = self.paths[index]['lq_path']
         img_bytes = self.file_client.get(lq_path, 'lq')
-        img_lq = imfrombytes(img_bytes, float32=True)
+
+        try:
+            img_lq = imfrombytes(img_bytes, float32=True)
+        except AttributeError:
+            raise AttributeError(lq_path)
 
         # avoid errors caused by high latency in reading files
         retry = 3

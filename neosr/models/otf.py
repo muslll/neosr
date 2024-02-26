@@ -22,7 +22,7 @@ class otf(default):
         self.queue_size = opt.get('queue_size', 180)
         self.device = torch.device('cuda')
 
-    @torch.no_grad()
+    @torch.inference_mode()
     def _dequeue_and_enqueue(self):
         """It is the training pair pool for increasing the diversity in a batch.
 
@@ -61,7 +61,7 @@ class otf(default):
                           b, :, :, :] = self.gt.clone()
             self.queue_ptr = self.queue_ptr + b
 
-    @torch.no_grad()
+    @torch.inference_mode()
     def feed_data(self, data):
         """Accept data from dataloader, and then add two-order degradations to obtain LQ images.
         """

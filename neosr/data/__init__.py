@@ -1,5 +1,6 @@
 import importlib
 import random
+import psutil
 from copy import deepcopy
 from functools import partial
 from os import path as osp
@@ -56,14 +57,19 @@ def build_dataloader(dataset, dataset_opt, num_gpu=1, dist=False, sampler=None, 
     """
     phase = dataset_opt['phase']
     rank, _ = get_dist_info()
+
+    # train
     if phase == 'train':
+        if dataset_opt.get('num_worker_per_gpu', 'auto') == 'auto' or None:
+            num_workers = psutil.cpu_count(logical=False)
+        else:
+            num_workers = dataset_opt['num_worker_per_gpu']
         if dist:  # distributed training
             batch_size = dataset_opt['batch_size']
-            num_workers = dataset_opt['num_worker_per_gpu']
         else:  # non-distributed training
             multiplier = 1 if num_gpu == 0 else num_gpu
             batch_size = dataset_opt['batch_size'] * multiplier
-            num_workers = dataset_opt['num_worker_per_gpu'] * multiplier
+            num_workers = num_workers * multiplier
         dataloader_args = dict(
             dataset=dataset,
             batch_size=batch_size,
@@ -76,7 +82,9 @@ def build_dataloader(dataset, dataset_opt, num_gpu=1, dist=False, sampler=None, 
             dataloader_args['shuffle'] = True
         dataloader_args['worker_init_fn'] = partial(
             worker_init_fn, num_workers=num_workers, rank=rank, seed=seed) if seed is not None else None
-    elif phase in ['val', 'test']:  # validation
+
+    # val
+    elif phase in ['val', 'test']:
         dataloader_args = dict(dataset=dataset, batch_size=1, shuffle=False, num_workers=4)
     else:
         raise ValueError(

@@ -76,7 +76,6 @@ Please read the wiki [Configuration Walkthrough](https://github.com/muslll/neosr
 | [CRAFT](https://github.com/AVC2-UESTC/CRAFT-SR)		 				    | `craft`			   			|
 | [SAFMN](https://github.com/sunny2109/SAFMN)							    | `safmn`, `safmn_l`				|
 | [RGT](https://github.com/zhengchen1999/RGT)	| `rgt`, `rgt_s` |
-| [HADN](https://github.com/Yuii666/HADN)	| `hadn`	 |
 
 > [!NOTE]
 > For all arch-specific parameters, [read the wiki](https://github.com/muslll/neosr/wiki/Arch%E2%80%90specific-options).
@@ -86,7 +85,6 @@ Please read the wiki [Configuration Walkthrough](https://github.com/muslll/neosr
 | arch                                          | option         |
 |-----------------------------------------------|----------------|
 | [RGT](https://github.com/zhengchen1999/RGT)	| `rgt`, `rgt_s` |
-| [HADN](https://github.com/Yuii666/HADN)	| `hadn`	 |
 
 
 ### Supported Discriminators:
@@ -130,13 +128,16 @@ Please read the wiki [Configuration Walkthrough](https://github.com/muslll/neosr
 | L1 Loss                                                                | `L1Loss`, `l1`       		                 |
 | L2 Loss                                                                | `MSELoss`, `l2`      		                 |
 | Huber Loss                                                             | `HuberLoss`, `huber` 		                 |
+| CHC (Clipped Huber with Cosine Similarity Loss) | `chc`, `chc_l2` |
 | Perceptual Loss / [Dual Adaptive Perceptual Loss](https://github.com/Sunny6-6-6/ESRGAN-DP) | `perceptual_opt`, `PerceptualLoss` |
 | GAN                                                                    | `gan_opt`, `GANLoss`, `MultiScaleGANLoss` |
-| YUV Color Loss                                                         | `color_opt`, `colorloss`                  |
+| Y**CbCr** Color Loss (bt601)                                           | `color_opt`, `colorloss`                  |
+| Luma Loss (CIE X**Y**Z)						 | `luma_opt` `lumaloss`		     |
 | [LDL Loss](https://github.com/csjliang/LDL)                            | `ldl_opt`  			                         |
 | [Focal Frequency](https://github.com/EndlessSora/focal-frequency-loss) | `ff_opt`, `focalfrequencyloss`            |
 | [Patch Loss](https://github.com/Suanmd/Patch-Loss-for-Super-Resolution) | `patch_opt`, `patch_opt_3d`, `patch_opt_3d_xd`|
 | [Gradient Variance Loss](https://github.com/lusinlu/gradient-variance-loss) | `gradvar_opt`                        |
+| [Best Buddy GANs Loss](https://github.com/dvlab-research/Simple-SR) | `bbl_opt` |
 
 ## datasets
 
@@ -181,16 +182,18 @@ These are datasets made by the upscaling community. More info can be found in th
 - [Training Guide](https://github.com/Sirosky/Upscale-Hub/wiki/%F0%9F%93%88-Training-a-Model-in-NeoSR) from [@Sirosky](https://github.com/Sirosky) 
 - [Training Info](https://github.com/Kim2091/training-info) from [@Kim](https://github.com/Kim2091)
 
-# support me
+# support Musl
 
-&#9749; Consider supporting me on [**KoFi**](https://ko-fi.com/muslll). &#9749;
+Consider supporting Musl on [**Patreon**](https://www.patreon.com/neosr) or [**KoFi**](https://ko-fi.com/muslll). &#9749;
 
 ## license and acknowledgements
 
 Released under the [Apache license](license.txt).
 This code was originally based on [BasicSR](https://github.com/XPixelGroup/BasicSR). See other licenses in [license/readme](license/readme.md).
 
+Thanks to [musl](https://github.com/muslll/) for creating [neosr](https://github.com/muslll/neosr). 
+
 Thanks to [victorca25/traiNNer](https://github.com/victorca25/traiNNer), [styler00dollar/Colab-traiNNer](https://github.com/styler00dollar/Colab-traiNNer/) and [timm](https://github.com/huggingface/pytorch-image-models) for providing helpful insights into some problems.
 
-Thanks to contributors [@Phhofm](https://github.com/Phhofm), [@Sirosky](https://github.com/Sirosky), [@Kim2091](https://github.com/Kim2091) and [@terrainer](https://github.com/terrainer) for helping with tests and bug reporting. 
+Thanks to contributors [@Phhofm](https://github.com/Phhofm), [@Sirosky](https://github.com/Sirosky), [@Kim2091](https://github.com/Kim2091), and [@Corpsecreate](https://github.com/Corpsecreate) for helping with tests and bug reporting.
 

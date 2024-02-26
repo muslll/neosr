@@ -29,3 +29,4 @@
 | [`ESRGAN-DP`](https://github.com/Sunny6-6-6/ESRGAN-DP/)							                                | Unknown													                                                             |
 | [`Patch Loss`](https://github.com/Suanmd/Patch-Loss-for-Super-Resolution/)							            | Unknown													                                                             |
 | [`Gradient Variance Loss`](https://github.com/lusinlu/gradient-variance-loss/)							        | Unknown													                                                             |
+| [`Best Buddy GANs Loss`(https://github.com/dvlab-research/Simple-SR) | [MIT](https://github.com/dvlab-research/Simple-SR?tab=MIT-1-ov-file#readme) |
