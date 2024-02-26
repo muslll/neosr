@@ -145,7 +145,7 @@ class default():
         else:
             self.cri_gradvar = None
 
-        # Best Buddy GANs Loss (https://github.com/dvlab-research/Simple-SR) (MIT License https://github.com/dvlab-research/Simple-SR?tab=MIT-1-ov-file#readme)
+        # Best Buddy GANs Loss
         if train_opt.get('bbl_opt'):
             self.cri_bbl = build_loss(train_opt['bbl_opt']).to(self.device, memory_format=torch.channels_last, non_blocking=True)
         else:
