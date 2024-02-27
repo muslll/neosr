@@ -47,10 +47,7 @@ class paired(data.Dataset):
         # mean and std for normalizing the input images
         self.mean = opt['mean'] if 'mean' in opt else None
         self.std = opt['std'] if 'std' in opt else None
-        flag = 'color'
-        if 'color' in opt and opt['color'] == 'y':
-            flag = 'grayscale'
-        self.flag = flag
+
         self.gt_folder, self.lq_folder = opt['dataroot_gt'], opt['dataroot_lq']
         self.filename_tmpl = opt['filename_tmpl'] if 'filename_tmpl' in opt else '{}'
 
@@ -77,7 +74,7 @@ class paired(data.Dataset):
             # it will scan the whole folder to get meta info
             # it will be time-consuming for folders with too many files. It is recommended using an extra meta txt file
             self.paths = paired_paths_from_folder([self.lq_folder, self.gt_folder], [
-                'lq', 'gt'], self.filename_tmpl)
+                                                  'lq', 'gt'], self.filename_tmpl)
 
     def __getitem__(self, index):
         if self.file_client is None:
@@ -92,7 +89,7 @@ class paired(data.Dataset):
         img_bytes = self.file_client.get(gt_path, 'gt')
 
         try:
-            img_gt = imfrombytes(img_bytes, flag=self.flag, float32=True)
+            img_gt = imfrombytes(img_bytes, float32=True)
         except AttributeError:
             raise AttributeError(gt_path)
 
@@ -100,7 +97,7 @@ class paired(data.Dataset):
         img_bytes = self.file_client.get(lq_path, 'lq')
 
         try:
-            img_lq = imfrombytes(img_bytes, flag=self.flag, float32=True)
+            img_lq = imfrombytes(img_bytes, float32=True)
         except AttributeError:
             raise AttributeError(lq_path)
 
@@ -132,11 +129,19 @@ class paired(data.Dataset):
             img_gt, img_lq = basic_augment(
                 [img_gt, img_lq], self.opt['use_hflip'], self.opt['use_rot'])
 
+        # color space transform
+        if 'color' in self.opt and self.opt['color'] == 'y':
+            # Switch to it once fixed, to avoid such conversions
+
+            img_gt = np.dot(img_gt[..., :3], [0.114, 0.587,0.299])
+            img_lq = np.dot(img_lq[..., :3], [0.114, 0.587,0.299])
+
+
         # crop the unmatched GT images during validation or testing, especially for SR benchmark datasets
         # TODO: It is better to update the datasets, rather than force to crop
         if self.opt['phase'] != 'train':
             img_gt = img_gt[0:img_lq.shape[0] *
-                              scale, 0:img_lq.shape[1] * scale, :]
+                            scale, 0:img_lq.shape[1] * scale, :]
 
         # BGR to RGB, HWC to CHW, numpy to tensor
         img_gt, img_lq = img2tensor(

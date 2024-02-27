@@ -36,10 +36,6 @@ class single(data.Dataset):
         self.mean = opt['mean'] if 'mean' in opt else None
         self.std = opt['std'] if 'std' in opt else None
         self.lq_folder = opt['dataroot_lq']
-        flag = 'color'
-        if 'color' in self.opt and self.opt['color'] == 'y':
-            flag = 'grayscale'
-        self.flag = flag
 
         if self.io_backend_opt['type'] == 'lmdb':
             self.io_backend_opt['db_paths'] = [self.lq_folder]
@@ -62,17 +58,13 @@ class single(data.Dataset):
         img_bytes = self.file_client.get(lq_path, 'lq')
 
         try:
-            img_lq = imfrombytes(img_bytes, flag=self.flag, float32=True)
+            img_lq = imfrombytes(img_bytes, float32=True)
         except AttributeError:
             raise AttributeError(lq_path)
 
         # color space transform
         if 'color' in self.opt and self.opt['color'] == 'y':
-            img_lq = np.round(img_lq * 255.0).astype(np.uint8)
-            img_lq = Image.fromarray(img_lq)
-            img_lq = rgb_to_grayscale(img_lq)
-            img_lq = np.array(img_lq, dtype=np.float32) / 255.
-            img_lq = np.expand_dims(img_lq, axis=-1)
+            img_lq = np.dot(img_lq[..., :3], [0.114, 0.587,0.299])
 
         # BGR to RGB, HWC to CHW, numpy to tensor
         img_lq = img2tensor(img_lq, bgr2rgb=True, float32=True)
