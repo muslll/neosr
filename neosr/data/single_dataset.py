@@ -36,6 +36,10 @@ class single(data.Dataset):
         self.mean = opt['mean'] if 'mean' in opt else None
         self.std = opt['std'] if 'std' in opt else None
         self.lq_folder = opt['dataroot_lq']
+        flag = 'color'
+        if 'color' in self.opt and self.opt['color'] == 'y':
+            flag = 'grayscale'
+        self.flag = flag
 
         if self.io_backend_opt['type'] == 'lmdb':
             self.io_backend_opt['db_paths'] = [self.lq_folder]
@@ -58,7 +62,7 @@ class single(data.Dataset):
         img_bytes = self.file_client.get(lq_path, 'lq')
 
         try:
-            img_lq = imfrombytes(img_bytes, float32=True)
+            img_lq = imfrombytes(img_bytes, flag=self.flag, float32=True)
         except AttributeError:
             raise AttributeError(lq_path)
 
