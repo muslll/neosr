@@ -6,11 +6,12 @@ import torch
 from torchvision.utils import make_grid
 
 
-def img2tensor(imgs, bgr2rgb=True, float32=True):
+def img2tensor(imgs, color, bgr2rgb=True, float32=True):
     """Numpy array to tensor.
 
     Args:
         imgs (list[ndarray] | ndarray): Input images.
+        color (bool)
         bgr2rgb (bool): Whether to change bgr to rgb.
         float32 (bool): Whether to change to float32.
 
@@ -19,22 +20,27 @@ def img2tensor(imgs, bgr2rgb=True, float32=True):
             one element, just return tensor.
     """
 
-    def _totensor(img, bgr2rgb, float32):
-        if len(img.shape) > 2 and img.shape[2] == 3 and bgr2rgb:
-            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-
-        if len(img.shape) == 2:
-            img = torch.from_numpy(img[None, ...])
-        else:
+    def _totensor(img, color, bgr2rgb, float32):
+        if color:
+            if img.shape[2] == 3 and bgr2rgb:
+                img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
             img = torch.from_numpy(img.transpose(2, 0, 1))
+        else:
+            if img.shape[2] == 3 and bgr2rgb:
+                img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            else:
+                img = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+            img = torch.from_numpy(img[None, ...])
+
+
         if float32:
             img = img.float()
         return img
 
     if isinstance(imgs, list):
-        return [_totensor(img, bgr2rgb, float32) for img in imgs]
+        return [_totensor(img, color, bgr2rgb, float32) for img in imgs]
     else:
-        return _totensor(imgs, bgr2rgb, float32)
+        return _totensor(imgs, color, bgr2rgb, float32)
 
 
 def tensor2img(tensor, rgb2bgr=True, out_type=np.uint8, min_max=(0, 1)):
