@@ -1,7 +1,6 @@
 from os import path as osp
 import numpy as np
 
-from PIL import Image
 from torch.utils import data
 from torchvision.transforms.functional import normalize, rgb_to_grayscale
 

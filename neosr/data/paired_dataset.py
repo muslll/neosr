@@ -1,7 +1,6 @@
 import os
 import numpy as np
 
-from PIL import Image
 from torch.utils import data
 from torchvision.transforms.functional import normalize, rgb_to_grayscale
 
@@ -131,8 +130,6 @@ class paired(data.Dataset):
 
         # color space transform
         if 'color' in self.opt and self.opt['color'] == 'y':
-            # Switch to it once fixed, to avoid such conversions
-
             img_gt = np.dot(img_gt[..., :3], [0.114, 0.587,0.299])
             img_lq = np.dot(img_lq[..., :3], [0.114, 0.587,0.299])
 
