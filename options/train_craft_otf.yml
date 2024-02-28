@@ -7,8 +7,6 @@ bfloat16: false
 fast_matmul: false
 compile: false
 #manual_seed: 1024
-
-gt_size: 128
 queue_size: 180
 
 datasets:
@@ -19,6 +17,7 @@ datasets:
     io_backend:
       type: disk
 
+    gt_size: 128
     batch_size: 6
     accumulate: 1
     use_hflip: true
