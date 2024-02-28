@@ -25,9 +25,7 @@ def mse_loss(pred, target):
 
 
 @weighted_loss
-def huber_loss(
-    pred: torch.Tensor, target: torch.Tensor, delta: float = 1.0
-) -> torch.Tensor:
+def huber_loss(pred: torch.Tensor, target: torch.Tensor, delta: float = 1.0) -> torch.Tensor:
     return F.huber_loss(pred, target, delta=1.0)
 
 

@@ -4,11 +4,11 @@ from collections import OrderedDict
 from copy import deepcopy
 from os import path as osp
 
-import pytorch_optimizer
 import torch
-from torch.nn import functional as F
-from torch.nn.parallel import DataParallel, DistributedDataParallel
+import pytorch_optimizer
 from tqdm import tqdm
+from torch.nn.parallel import DataParallel, DistributedDataParallel
+from torch.nn import functional as F
 
 from neosr.archs import build_network
 from neosr.losses import build_loss
@@ -66,7 +66,7 @@ class default():
         self.net_g.train()
         if self.opt.get('network_d', None) is not None:
             self.net_d.train()
-
+            
         # for amp
         self.use_amp = self.opt.get('use_amp', False) is True
         self.amp_dtype = torch.bfloat16 if self.opt.get('bfloat16', False) is True else torch.float16
@@ -74,10 +74,10 @@ class default():
         # initialise GradScale object for Generator and Discriminator
         self.scaler_g = torch.cuda.amp.GradScaler(enabled = self.use_amp, init_scale=2.**5)
         self.scaler_d = torch.cuda.amp.GradScaler(enabled = self.use_amp, init_scale=2.**5)
-
+        
         # initialise counter of how many gradients has to be accumulated
         self.n_accumulated = 0
-        self.accum_iters = self.opt["datasets"]["train"].get("accumulate", 1)
+        self.accum_iters = self.opt["datasets"]["train"].get("accumulate", 1) 
         if self.accum_iters == 0 or self.accum_iters == None:
             self.accum_ters = 1
 
@@ -116,6 +116,7 @@ class default():
             self.cri_luma = build_loss(train_opt['luma_opt']).to(self.device, memory_format=torch.channels_last, non_blocking=True)
         else:
             self.cri_luma = None
+
 
         # Focal Frequency Loss
         if train_opt.get('ff_opt'):
@@ -259,7 +260,7 @@ class default():
         # LQ matching for Color/Luma losses
         self.match_lq = self.opt['train'].get('match_lq', False)
         self.lq_interp = F.interpolate(self.lq, scale_factor=self.opt['scale'], mode='bicubic')
-
+                
         # increment accumulation counter and check if accumulation limit has been reached
         self.n_accumulated += 1
         apply_gradient = self.n_accumulated >= self.accum_iters
@@ -272,9 +273,6 @@ class default():
         losses_for_backward_g = []
 
         with torch.autocast(device_type='cuda', dtype=self.amp_dtype, enabled=self.use_amp):
-            if self.opt['train'].get('type', 'otf') is 'otf':
-                self.gt = self.gt.clone().requires_grad_()
-                self.lq = self.lq.clone().requires_grad_()
 
             self.output = self.net_g(self.lq)
 
@@ -370,7 +368,7 @@ class default():
                     l_g_total += l_g_gan
                     loss_dict['l_g_gan'] = l_g_gan
                     losses_for_backward_g.append(l_g_gan)
-
+                    
         # add total loss to loss_dict for tensorboard tracking
         loss_dict['l_g_total'] = l_g_total
 
@@ -389,12 +387,12 @@ class default():
             self.scaler_g.step(self.optimizer_g)
             self.scaler_g.update()
             self.optimizer_g.zero_grad(set_to_none=True)
-
+        
         # optimize net_d
         if self.opt.get('network_d', None) is not None:
             for p in self.net_d.parameters():
                 p.requires_grad = True
-
+            
             losses_for_backward_d = []
 
             with torch.autocast(device_type='cuda', dtype=self.amp_dtype, enabled=self.use_amp):
@@ -412,23 +410,21 @@ class default():
                     loss_dict['out_d_fake'] = torch.mean(fake_d_pred.detach())
                     losses_for_backward_d.append(l_d_fake)
 
-                # Iterate through the losses, retaining graph on all but the last
-                for loss_idx, loss_d in enumerate(losses_for_backward_d):
-                    is_last_loss = loss_idx == len(losses_for_backward_d) - 1
-                    loss_d = loss_d / self.accum_iters
-                    self.scaler_d.scale(loss_d).backward(retain_graph=not is_last_loss)
+            # Iterate through the losses, retaining graph on all but the last
+            for loss_idx, loss_d in enumerate(losses_for_backward_d):
+                is_last_loss = loss_idx == len(losses_for_backward_d) - 1
+                loss_d = loss_d / self.accum_iters
+                self.scaler_d.scale(loss_d).backward(retain_graph = not is_last_loss)
 
-                if apply_gradient:
-                    # gradient clipping on discriminator
-                    if self.opt["train"].get("grad_clip", True):
-                        self.scaler_d.unscale_(self.optimizer_d)
-                        torch.nn.utils.clip_grad_norm_(self.net_d.parameters(), 1.0, error_if_nonfinite=False)
+            if apply_gradient:
+                # gradient clipping on discriminator
+                if self.opt["train"].get("grad_clip", True):
+                    self.scaler_d.unscale_(self.optimizer_d)
+                    torch.nn.utils.clip_grad_norm_(self.net_d.parameters(), 1.0, error_if_nonfinite=False)
 
-                    self.scaler_d.step(self.optimizer_d)
-                    self.scaler_d.update()
-                    self.optimizer_d.zero_grad(set_to_none=True)
-
-            self.log_dict = self.reduce_loss_dict(loss_dict)
+                self.scaler_d.step(self.optimizer_d)
+                self.scaler_d.update()
+                self.optimizer_d.zero_grad(set_to_none=True)
 
         self.log_dict = self.reduce_loss_dict(loss_dict)
 
