@@ -213,7 +213,7 @@ def train_pipeline(root_path):
         logger.info("AMP enabled.")
 
     # training
-    logger.info(f"Start training from epoch: {start_epoch}, iter: {int(resume_state['iter'])}")
+    logger.info(f"Start training from epoch: {start_epoch}, iter: {int(current_iter)}")
     data_timer, iter_timer = AvgTimer(), AvgTimer()
     start_time = time.time()
 
