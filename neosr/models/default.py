@@ -12,6 +12,7 @@ from torch.nn import functional as F
 
 from neosr.archs import build_network
 from neosr.losses import build_loss
+from neosr.optimizers import build_optimizer
 from neosr.losses.loss_util import get_refined_artifact_map
 from neosr.metrics import calculate_metric
 
