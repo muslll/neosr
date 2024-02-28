@@ -212,12 +212,11 @@ class otf(data.Dataset):
 
         # crop or pad
         if self.is_paired:
-            h, w = img_lq.shape[0:2]
             img_pad = img_lq
         else:
-            h, w = img_gt.shape[0:2]
             img_pad = img_gt
 
+        h, w = img_pad.shape[0:2]
         crop_pad_size = max(h, w)
         if (crop_pad_size) > 512 and not self.is_paired:
             crop_pad_size = 512
