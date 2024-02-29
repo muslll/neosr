@@ -311,7 +311,6 @@ class default():
                 torch.nn.utils.clip_grad_norm_(self.net_g.parameters(), 1.0, error_if_nonfinite=False)
 
             self.scaler.step(self.optimizer_g)
-            self.scaler.update()
             self.optimizer_g.zero_grad(set_to_none=True)
         
         # optimize net_d
@@ -349,9 +348,8 @@ class default():
                     torch.nn.utils.clip_grad_norm_(self.net_d.parameters(), 1.0, error_if_nonfinite=False)
 
                 self.scaler.step(self.optimizer_d)
-                self.scaler.update()
                 self.optimizer_d.zero_grad(set_to_none=True)
-
+        self.scaler.update()
         self.log_dict = self.reduce_loss_dict(loss_dict)
 
     def update_learning_rate(self, current_iter, warmup_iter=-1):
