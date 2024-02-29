@@ -195,7 +195,7 @@ def train_pipeline(root_path):
             f"Resuming training from epoch: {resume_state['epoch']}, iter: {int(resume_state['iter'])}."
         )
         start_epoch = resume_state["epoch"]
-        current_iter = int(resume_state["iter"] * opt["datasets"]["train"].get("accumulate", 1))
+        current_iter = int(resume_state["iter"])
         #current_iter = resume_state["iter"]
         torch.cuda.empty_cache()
     else:
