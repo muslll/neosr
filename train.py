@@ -297,6 +297,7 @@ def train_pipeline(root_path):
 
     except KeyboardInterrupt:
         logger.info("Interrupted, saving latest models.")
+        model.save(epoch, current_iter_log)
         model.save(epoch=-1, current_iter=-1)
         sys.exit(0)
 
