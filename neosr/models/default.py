@@ -227,9 +227,6 @@ class default():
         # reset the counter back to zero
         if apply_gradient:
             self.n_accumulated = 0
-        
-        # define list of losses, each individual loss needs to have the scaler applied separately
-        losses_for_backward_g = []
 
         with torch.autocast(device_type='cuda', dtype=self.amp_dtype, enabled=self.use_amp):
 
@@ -244,18 +241,15 @@ class default():
                     l_g_pix = self.cri_pix(self.output, self.gt)
                     l_g_total += l_g_pix
                     loss_dict['l_g_pix'] = l_g_pix
-                    losses_for_backward_g.append(l_g_pix)
                 # perceptual loss
                 if self.cri_perceptual:
                     l_g_percep, l_g_style = self.cri_perceptual(self.output, self.gt)
                     if l_g_percep is not None:
                         l_g_total += l_g_percep
                         loss_dict['l_g_percep'] = l_g_percep
-                        losses_for_backward_g.append(l_g_percep)
                     if l_g_style is not None:
                         l_g_total += l_g_style
                         loss_dict['l_g_style'] = l_g_style
-                        losses_for_backward_g.append(l_g_style)
                 # ldl loss
                 if self.cri_ldl:
                     pixel_weight = get_refined_artifact_map(self.gt, self.output, 7)
@@ -263,7 +257,6 @@ class default():
                         torch.mul(pixel_weight, self.output), torch.mul(pixel_weight, self.gt))
                     l_g_total += l_g_ldl
                     loss_dict['l_g_ldl'] = l_g_ldl
-                    losses_for_backward_g.append(l_g_ldl)
                 # color loss
                 if self.cri_color:
                     if self.match_lq:
@@ -272,7 +265,6 @@ class default():
                         l_g_color = self.cri_color(self.output, self.gt)
                     l_g_total += l_g_color
                     loss_dict['l_g_color'] = l_g_color
-                    losses_for_backward_g.append(l_g_color)
                 # luma loss
                 if self.cri_luma:
                     if self.match_lq:
@@ -281,29 +273,23 @@ class default():
                         l_g_luma = self.cri_luma(self.output, self.gt)
                     l_g_total += l_g_luma
                     loss_dict['l_g_luma'] = l_g_luma
-                    losses_for_backward_g.append(l_g_luma)
                 # Focal Frequency Loss
                 if self.cri_ff:
                     l_g_ff = self.cri_ff(self.output, self.gt)
                     l_g_total += l_g_ff
                     loss_dict['l_g_ff'] = l_g_ff
-                    losses_for_backward_g.append(l_g_ff)
                 # GAN loss
                 if self.cri_gan:
                     fake_g_pred = self.net_d(self.output)
                     l_g_gan = self.cri_gan(fake_g_pred, True, is_disc=False)
                     l_g_total += l_g_gan
                     loss_dict['l_g_gan'] = l_g_gan
-                    losses_for_backward_g.append(l_g_gan)
                     
         # add total loss to loss_dict for tensorboard tracking
         loss_dict['l_g_total'] = l_g_total
 
-        # iterate through the losses, retaining graph on all but the last
-        for loss_idx, loss_g in enumerate(losses_for_backward_g):
-            is_last_loss = loss_idx == len(losses_for_backward_g) - 1
-            loss_g = loss_g / self.accum_iters
-            self.scaler_g.scale(loss_g).backward(retain_graph = not is_last_loss)
+        loss_g = l_g_total / self.accum_iters
+        self.scaler_g.scale(loss_g).backward(retain_graph = not is_last_loss)
 
         if apply_gradient:
             # gradient clipping on generator
