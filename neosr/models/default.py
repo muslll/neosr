@@ -80,6 +80,7 @@ class default():
         self.accum_iters = self.opt["datasets"]["train"].get("accumulate", 1) 
         if self.accum_iters == 0 or self.accum_iters == None:
             self.accum_ters = 1
+        self.accum_factor = 1 / self.accum_iters
 
         # define losses
         if train_opt.get('pixel_opt'):
@@ -302,7 +303,7 @@ class default():
         # iterate through the losses, retaining graph on all but the last
         for loss_idx, loss_g in enumerate(losses_for_backward_g):
             is_last_loss = loss_idx == len(losses_for_backward_g) - 1
-            loss_g = loss_g / self.accum_iters
+            loss_g = loss_g * self.accum_factor
             self.scaler_g.scale(loss_g).backward(retain_graph = not is_last_loss)
 
         if apply_gradient:
@@ -340,7 +341,7 @@ class default():
             # Iterate through the losses, retaining graph on all but the last
             for loss_idx, loss_d in enumerate(losses_for_backward_d):
                 is_last_loss = loss_idx == len(losses_for_backward_d) - 1
-                loss_d = loss_d / self.accum_iters
+                loss_d = loss_d * self.accum_factor
                 self.scaler_d.scale(loss_d).backward(retain_graph = not is_last_loss)
 
             if apply_gradient:
