@@ -195,7 +195,7 @@ def train_pipeline(root_path):
             f"Resuming training from epoch: {resume_state['epoch']}, iter: {int(resume_state['iter'])}."
         )
         start_epoch = resume_state["epoch"]
-        current_iter = int(resume_state["iter"])
+        current_iter = int(resume_state["iter"] * opt["datasets"]["train"].get("accumulate", 1))
         #current_iter = resume_state["iter"]
         torch.cuda.empty_cache()
     else:
@@ -213,7 +213,7 @@ def train_pipeline(root_path):
         logger.info("AMP enabled.")
 
     # training
-    logger.info(f"Start training from epoch: {start_epoch}, iter: {int(current_iter)}")
+    logger.info(f"Start training from epoch: {start_epoch}, iter: {int(resume_state['iter'])}")
     data_timer, iter_timer = AvgTimer(), AvgTimer()
     start_time = time.time()
 
