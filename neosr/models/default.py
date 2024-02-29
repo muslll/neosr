@@ -82,50 +82,36 @@ class default():
             self.accum_ters = 1
 
         # define losses
+        self.loss_functions = {}
+
         if train_opt.get('pixel_opt'):
-            self.cri_pix = build_loss(train_opt['pixel_opt']).to(self.device, memory_format=torch.channels_last, non_blocking=True)
-        else:
-            self.cri_pix = None
+            self.loss_functions['l_g_pix'] = build_loss(train_opt['pixel_opt']).to(self.device, memory_format=torch.channels_last, non_blocking=True)
 
         if train_opt.get('perceptual_opt'):
-            self.cri_perceptual = build_loss(
-                train_opt['perceptual_opt']).to(self.device, memory_format=torch.channels_last, non_blocking=True)
-        else:
-            self.cri_perceptual = None
+            self.loss_functions['l_g_percep'] = build_loss(train_opt['perceptual_opt']).to(self.device, memory_format=torch.channels_last, non_blocking=True)
 
-        if self.cri_pix is None and self.cri_perceptual is None:
-            raise ValueError('Both pixel and perceptual losses are None.')
+        for loss_name in self.loss_functions:
+            if loss_name is None:
+                raise ValueError('Both pixel and perceptual losses are None.')
 
         # GAN loss
         if train_opt.get('gan_opt'):
-            self.cri_gan = build_loss(train_opt['gan_opt']).to(self.device, memory_format=torch.channels_last, non_blocking=True)
-        else:
-            self.cri_gan = None
+            self.loss_functions['l_g_gan'] = build_loss(train_opt['gan_opt']).to(self.device, memory_format=torch.channels_last, non_blocking=True)
 
         # LDL loss
         if train_opt.get('ldl_opt'):
-            self.cri_ldl = build_loss(train_opt['ldl_opt']).to(self.device, memory_format=torch.channels_last, non_blocking=True)
-        else:
-            self.cri_ldl = None
+            self.loss_functions['l_g_ldl'] = build_loss(train_opt['ldl_opt']).to(self.device, memory_format=torch.channels_last, non_blocking=True)
 
         # Color loss
         if train_opt.get('color_opt'):
-            self.cri_color = build_loss(train_opt['color_opt']).to(self.device, memory_format=torch.channels_last, non_blocking=True)
-        else:
-            self.cri_color = None
+            self.loss_functions['l_g_color'] = build_loss(train_opt['color_opt']).to(self.device, memory_format=torch.channels_last, non_blocking=True)
 
-        # Luma loss
         if train_opt.get('luma_opt'):
-            self.cri_luma = build_loss(train_opt['luma_opt']).to(self.device, memory_format=torch.channels_last, non_blocking=True)
-        else:
-            self.cri_luma = None
-
+            self.loss_functions['l_g_luma'] = build_loss(train_opt['luma_opt']).to(self.device, memory_format=torch.channels_last, non_blocking=True)
 
         # Focal Frequency Loss
         if train_opt.get('ff_opt'):
-            self.cri_ff = build_loss(train_opt['ff_opt']).to(self.device, memory_format=torch.channels_last, non_blocking=True)
-        else:
-            self.cri_ff = None
+            self.loss_functions['l_g_ff'] = build_loss(train_opt['ff_opt']).to(self.device, memory_format=torch.channels_last, non_blocking=True)
 
         self.net_d_iters = train_opt.get('net_d_iters', 1)
         self.net_d_init_iters = train_opt.get('net_d_init_iters', 0)
@@ -239,62 +225,36 @@ class default():
             loss_dict = OrderedDict()
 
             if (current_iter % self.net_d_iters == 0 and current_iter > self.net_d_init_iters):
-                # pixel loss
-                if self.cri_pix:
-                    l_g_pix = self.cri_pix(self.output, self.gt)
-                    l_g_total += l_g_pix
-                    loss_dict['l_g_pix'] = l_g_pix
-                    losses_for_backward_g.append(l_g_pix)
-                # perceptual loss
-                if self.cri_perceptual:
-                    l_g_percep, l_g_style = self.cri_perceptual(self.output, self.gt)
-                    if l_g_percep is not None:
-                        l_g_total += l_g_percep
-                        loss_dict['l_g_percep'] = l_g_percep
-                        losses_for_backward_g.append(l_g_percep)
-                    if l_g_style is not None:
-                        l_g_total += l_g_style
-                        loss_dict['l_g_style'] = l_g_style
-                        losses_for_backward_g.append(l_g_style)
-                # ldl loss
-                if self.cri_ldl:
-                    pixel_weight = get_refined_artifact_map(self.gt, self.output, 7)
-                    l_g_ldl = self.cri_ldl(
-                        torch.mul(pixel_weight, self.output), torch.mul(pixel_weight, self.gt))
-                    l_g_total += l_g_ldl
-                    loss_dict['l_g_ldl'] = l_g_ldl
-                    losses_for_backward_g.append(l_g_ldl)
-                # color loss
-                if self.cri_color:
-                    if self.match_lq:
-                        l_g_color = self.cri_color(self.output, self.lq_interp)
-                    else:
-                        l_g_color = self.cri_color(self.output, self.gt)
-                    l_g_total += l_g_color
-                    loss_dict['l_g_color'] = l_g_color
-                    losses_for_backward_g.append(l_g_color)
-                # luma loss
-                if self.cri_luma:
-                    if self.match_lq:
-                        l_g_luma = self.cri_luma(self.output, self.lq_interp)
-                    else:
-                        l_g_luma = self.cri_luma(self.output, self.gt)
-                    l_g_total += l_g_luma
-                    loss_dict['l_g_luma'] = l_g_luma
-                    losses_for_backward_g.append(l_g_luma)
-                # Focal Frequency Loss
-                if self.cri_ff:
-                    l_g_ff = self.cri_ff(self.output, self.gt)
-                    l_g_total += l_g_ff
-                    loss_dict['l_g_ff'] = l_g_ff
-                    losses_for_backward_g.append(l_g_ff)
-                # GAN loss
-                if self.cri_gan:
-                    fake_g_pred = self.net_d(self.output)
-                    l_g_gan = self.cri_gan(fake_g_pred, True, is_disc=False)
-                    l_g_total += l_g_gan
-                    loss_dict['l_g_gan'] = l_g_gan
-                    losses_for_backward_g.append(l_g_gan)
+                for loss_name, loss_function in self.loss_functions.items():
+                    if loss_function is not None:
+                        if loss_name == 'l_g_ldl':
+                            pixel_weight = get_refined_artifact_map(self.output, self.gt, 7)
+                            loss_value = loss_function(
+                            torch.mul(pixel_weight, self.output), torch.mul(pixel_weight, self.gt))
+                        elif loss_name in ['l_g_color', 'l_g_luma']:
+                            if self.match_lq:
+                                loss_value = loss_function(self.output, self.lq_interp)
+                            else:
+                                loss_value = loss_function(self.output, self.gt)
+                        elif loss_name == 'l_g_gan':
+                            fake_g_pred = self.net_d(self.output)
+                            loss_value = loss_function(fake_g_pred, True, is_disc=False)
+                        elif loss_name == 'l_g_percep':
+                            l_g_percep, l_g_style, l_resnet, l_vgg = loss_function(self.output, self.gt)
+                            if l_g_percep is not None:
+                                l_g_total += l_g_percep
+                                loss_dict['l_g_percep'] = l_g_percep
+                                losses_for_backward_g.append(l_g_percep)
+                            if l_g_style is not None:
+                                l_g_total += l_g_style
+                                loss_dict['l_g_style'] = l_g_style
+                                losses_for_backward_g.append(l_g_style)
+                            continue
+                        else:
+                            loss_value = loss_function(self.output, self.gt)
+                        l_g_total += loss_value
+                        loss_dict[loss_name] = loss_value
+                        losses_for_backward_g.append(loss_dict[loss_name])
                     
         # add total loss to loss_dict for tensorboard tracking
         loss_dict['l_g_total'] = l_g_total
@@ -323,19 +283,21 @@ class default():
             losses_for_backward_d = []
 
             with torch.autocast(device_type='cuda', dtype=self.amp_dtype, enabled=self.use_amp):
-                # real
-                if self.cri_gan:
-                    real_d_pred = self.net_d(self.gt)
-                    l_d_real = self.cri_gan(real_d_pred, True, is_disc=True)
-                    loss_dict['l_d_real'] = l_d_real
-                    loss_dict['out_d_real'] = torch.mean(real_d_pred.detach())
-                    losses_for_backward_d.append(l_d_real)
-                # fake
-                    fake_d_pred = self.net_d(self.output.detach().clone())
-                    l_d_fake = self.cri_gan(fake_d_pred, False, is_disc=True)
-                    loss_dict['l_d_fake'] = l_d_fake
-                    loss_dict['out_d_fake'] = torch.mean(fake_d_pred.detach())
-                    losses_for_backward_d.append(l_d_fake)
+                for loss_name, loss_function in self.loss_functions.items():
+                    if loss_name == 'l_g_gan':
+                        # real
+                        if loss_function is not None:
+                            real_d_pred = self.net_d(self.gt)
+                            l_d_real = loss_function(real_d_pred, True, is_disc=True)
+                            loss_dict['l_d_real'] = l_d_real
+                            loss_dict['out_d_real'] = torch.mean(real_d_pred.detach())
+                            losses_for_backward_d.append(l_d_real)
+                            # fake
+                            fake_d_pred = self.net_d(self.output.detach().clone())
+                            l_d_fake = loss_function(fake_d_pred, False, is_disc=True)
+                            loss_dict['l_d_fake'] = l_d_fake
+                            loss_dict['out_d_fake'] = torch.mean(fake_d_pred.detach())
+                            losses_for_backward_d.append(l_d_fake)
 
             # Iterate through the losses, retaining graph on all but the last
             for loss_idx, loss_d in enumerate(losses_for_backward_d):
