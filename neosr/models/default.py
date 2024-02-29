@@ -232,6 +232,7 @@ class default():
         losses_for_backward_g = []
 
         with torch.autocast(device_type='cuda', dtype=self.amp_dtype, enabled=self.use_amp):
+
             self.output = self.net_g(self.lq)
 
             l_g_total = 0
