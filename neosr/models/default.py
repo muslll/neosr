@@ -289,7 +289,7 @@ class default():
         loss_dict['l_g_total'] = l_g_total
 
         loss_g = l_g_total / self.accum_iters
-        self.scaler_g.scale(loss_g).backward(retain_graph = not is_last_loss)
+        self.scaler_g.scale(loss_g).backward
 
         if apply_gradient:
             # gradient clipping on generator
