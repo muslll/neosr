@@ -242,17 +242,13 @@ class default():
                             fake_g_pred = self.net_d(self.output)
                             loss_value = loss_function(fake_g_pred, True, is_disc=False)
                         elif loss_name == 'l_g_percep':
-                            l_g_percep, l_g_style, l_resnet, l_vgg = loss_function(self.output, self.gt)
+                            l_g_percep, l_g_style = loss_function(self.output, self.gt)
                             if l_g_percep is not None:
                                 l_g_total += l_g_percep
                                 loss_dict['l_g_percep'] = l_g_percep
                             if l_g_style is not None:
                                 l_g_total += l_g_style
                                 loss_dict['l_g_style'] = l_g_style
-                            if l_resnet is not None:
-                                loss_dict['l_resnet'] = l_resnet
-                            if l_vgg is not None:
-                                loss_dict['l_vgg'] = l_vgg
                             continue
                         else:
                             loss_value = loss_function(self.output, self.gt)
