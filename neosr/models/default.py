@@ -528,9 +528,10 @@ class default():
 
     def _initialize_best_metric_results(self, dataset_name):
         """Initialize the best metric results dict for recording the best metric value and iteration."""
-        if hasattr(self, 'best_metric_results') and dataset_name in self.best_metric_results:
-            return
-        elif not hasattr(self, 'best_metric_results'):
+        if hasattr(self, 'best_metric_results') and self.best_metric_results is not None:
+            if dataset_name in self.best_metric_results:
+                return
+        elif not hasattr(self, 'best_metric_results') or hasattr(self, 'best_metric_results') and self.best_metric_results is None:
             self.best_metric_results = dict()
 
         # add a dataset record
@@ -757,8 +758,10 @@ class default():
         """
 
         if current_iter != -1:
+            if not hasattr(self, 'best_metric_results'):
+                self.best_metric_results = None
             state = {'epoch': epoch, 'iter': current_iter,
-                    'optimizers': [], 'schedulers': []}
+                    'optimizers': [], 'schedulers': [], 'best_metric_results': self.best_metric_results}
             for o in self.optimizers:
                 state['optimizers'].append(o.state_dict())
             for s in self.schedulers:
@@ -794,6 +797,9 @@ class default():
         """
         resume_optimizers = resume_state['optimizers']
         resume_schedulers = resume_state['schedulers']
+        if 'best_metric_results' in resume_state:
+            if resume_state['best_metric_results'] is not None:
+                self.best_metric_results = resume_state['best_metric_results']
         assert len(resume_optimizers) == len(
             self.optimizers), 'Wrong lengths of optimizers'
         assert len(resume_schedulers) == len(
