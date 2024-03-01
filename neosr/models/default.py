@@ -91,9 +91,8 @@ class default():
         if train_opt.get('perceptual_opt'):
             self.loss_functions['l_g_percep'] = build_loss(train_opt['perceptual_opt']).to(self.device, memory_format=torch.channels_last, non_blocking=True)
 
-        for loss_name in self.loss_functions:
-            if loss_name is None:
-                raise ValueError('Both pixel and perceptual losses are None.')
+        if not self.loss_functions:
+            raise ValueError('Both pixel and perceptual losses are None.')
 
         # GAN loss
         if train_opt.get('gan_opt'):
