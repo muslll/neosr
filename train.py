@@ -122,7 +122,8 @@ def load_resume_state(opt):
             resume_state_path = opt["path"]["resume_state"]
 
     if resume_state_path is None:
-        resume_state = None
+        resume_state = {'epoch': 0, 'iter': 0,
+                    'optimizers': [], 'schedulers': []}
     else:
         resume_state = torch.load(resume_state_path, map_location=torch.device("cuda"))
         check_resume(opt, resume_state["iter"])
@@ -156,7 +157,7 @@ def train_pipeline(root_path):
     # load resume states if necessary
     resume_state = load_resume_state(opt)
     # mkdir for experiments and logger
-    if resume_state is None:
+    if resume_state["iter"] == 0:
         make_exp_dirs(opt)
         if (
             opt["logger"].get("use_tb_logger")
@@ -189,7 +190,7 @@ def train_pipeline(root_path):
     # create model
     model = build_model(opt)
 
-    if resume_state:  # resume training
+    if resume_state["iter"] != 0:  # resume training
         model.resume_training(resume_state)  # handle optimizers and schedulers
         logger.info(
             f"Resuming training from epoch: {resume_state['epoch']}, iter: {int(resume_state['iter'])}."
