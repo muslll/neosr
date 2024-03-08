@@ -267,7 +267,7 @@ def train_pipeline(root_path):
                 # save models and training states
                 if current_iter_log % save_checkpoint_freq == 0:
                     logger.info("Saving models and training states.")
-                    model.save(epoch, current_iter_log)
+                    model.save(epoch, int(current_iter_log))
 
                 # validation
                 if opt.get("val") is not None and (current_iter_log % val_freq == 0):
@@ -297,8 +297,7 @@ def train_pipeline(root_path):
 
     except KeyboardInterrupt:
         logger.info("Interrupted, saving latest models.")
-        model.save(epoch, current_iter_log)
-        model.save(epoch=-1, current_iter=-1)
+        model.save(epoch, int(current_iter_log))
         sys.exit(0)
 
     if opt.get("val") is not None:
