@@ -72,9 +72,8 @@ class default():
         self.use_amp = self.opt.get('use_amp', False) is True
         self.amp_dtype = torch.bfloat16 if self.opt.get('bfloat16', False) is True else torch.float16
 
-        # initialise GradScale object for Generator and Discriminator
-        self.scaler_g = torch.cuda.amp.GradScaler(enabled = self.use_amp, init_scale=2.**5)
-        self.scaler_d = torch.cuda.amp.GradScaler(enabled = self.use_amp, init_scale=2.**5)
+        # initialise GradScale object
+        self.scaler = torch.cuda.amp.GradScaler(enabled = self.use_amp, init_scale=2.**5)
         
         # initialise counter of how many gradients has to be accumulated
         self.n_accumulated = 0
@@ -304,16 +303,15 @@ class default():
         for loss_idx, loss_g in enumerate(losses_for_backward_g):
             is_last_loss = loss_idx == len(losses_for_backward_g) - 1
             loss_g = loss_g / self.accum_iters
-            self.scaler_g.scale(loss_g).backward(retain_graph = not is_last_loss)
+            self.scaler.scale(loss_g).backward(retain_graph = not is_last_loss)
 
         if apply_gradient:
             # gradient clipping on generator
             if self.opt["train"].get("grad_clip", True):
-                self.scaler_g.unscale_(self.optimizer_g)
+                self.scaler.unscale_(self.optimizer_g)
                 torch.nn.utils.clip_grad_norm_(self.net_g.parameters(), 1.0, error_if_nonfinite=False)
 
-            self.scaler_g.step(self.optimizer_g)
-            self.scaler_g.update()
+            self.scaler.step(self.optimizer_g)
             self.optimizer_g.zero_grad(set_to_none=True)
         
         # optimize net_d
@@ -342,7 +340,7 @@ class default():
             for loss_idx, loss_d in enumerate(losses_for_backward_d):
                 is_last_loss = loss_idx == len(losses_for_backward_d) - 1
                 loss_d = loss_d / self.accum_iters
-                self.scaler_d.scale(loss_d).backward(retain_graph = not is_last_loss)
+                self.scaler.scale(loss_d).backward(retain_graph = not is_last_loss)
 
             if apply_gradient:
                 # gradient clipping on discriminator
@@ -350,10 +348,9 @@ class default():
                     self.scaler_d.unscale_(self.optimizer_d)
                     torch.nn.utils.clip_grad_norm_(self.net_d.parameters(), 1.0, error_if_nonfinite=False)
 
-                self.scaler_d.step(self.optimizer_d)
-                self.scaler_d.update()
+                self.scaler.step(self.optimizer_d)
                 self.optimizer_d.zero_grad(set_to_none=True)
-
+        self.scaler.update()
         self.log_dict = self.reduce_loss_dict(loss_dict)
 
     def update_learning_rate(self, current_iter, warmup_iter=-1):
