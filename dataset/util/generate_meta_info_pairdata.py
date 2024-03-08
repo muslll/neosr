@@ -1,13 +1,20 @@
+import itertools
 import argparse
-import glob
 import os
+
+from pathlib import Path
+
+
+def scan_images(input_path):
+    root = Path(input_path)
+    globs = (root.glob(f"*.{ext}") for ext in ("png", "jpg", "jpeg", "webp"))
+    return sorted(itertools.chain.from_iterable(globs))
 
 
 def main(args):
     txt_file = open(args.meta_info, 'w')
-    # sca images
-    img_paths_gt = sorted(glob.glob(os.path.join(args.input[0], '*')))
-    img_paths_lq = sorted(glob.glob(os.path.join(args.input[1], '*')))
+    img_paths_gt = scan_images(args.input[0])
+    img_paths_lq = scan_images(args.input[1])
 
     assert len(img_paths_gt) == len(img_paths_lq), ('GT folder and LQ folder should have the same length, but got '
                                                     f'{len(img_paths_gt)} and {len(img_paths_lq)}.')
