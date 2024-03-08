@@ -16,7 +16,6 @@ from neosr.utils.options import parse_options
 def load_net():
     # build_network
     print(f"\n-------- Attempting to build network [{args.network}].")
-
     if args.network is None:
         msg = "Please select a network using the -net option"
         raise ValueError(msg)
@@ -30,12 +29,9 @@ def load_net():
         net_opt["window_size"] = args.window
 
     net = build_network(net_opt)
-
     load_net = torch.load(args.input, map_location=torch.device("cuda"))
-
     # find parameter key
     print("-------- Finding parameter key...")
-
     try:
         if "params-ema" in load_net:
             param_key = "params-ema"
@@ -53,17 +49,34 @@ def load_net():
             load_net[k[7:]] = v
             load_net.pop(k)
 
-    # load_network
+    # load_network and send to device
     net.load_state_dict(load_net, strict=True)
-
-    # send to device
     net = net.to(device="cuda", non_blocking=True, memory_format=torch.channels_last)
     print(f"-------- Successfully loaded network [{args.network}].")
-
-    # empty cache
     torch.cuda.empty_cache()
 
     return net
+
+
+def assert_verify(onnx_model, torch_model) -> None:
+    dummy_input = torch.randn(1, 3, 20, 20, requires_grad=True)
+    # onnxruntime output prediction
+    # NOTE: "CUDAExecutionProvider" errors if some nvidia libs
+    # are not found, defaulting to cpu
+    ort_session = onnxruntime.InferenceSession(
+        onnx_model, providers=["CPUExecutionProvider"]
+    )
+    ort_inputs = {ort_session.get_inputs()[0].name: dummy_input.detach().cpu().numpy()}
+    ort_outs = ort_session.run(None, ort_inputs)
+
+    # torch outputs
+    torch_outputs = torch_model(dummy_input)
+
+    # final assert - default tolerance values - rtol=1e-03, atol=1e-05
+    np.testing.assert_allclose(
+        torch_outputs.detach().cpu().numpy(), ort_outs[0], rtol=0.01, atol=0.001
+    )
+    print(f"-------- Model successfully verified.")
 
 
 def to_onnx() -> None:
@@ -75,16 +88,13 @@ def to_onnx() -> None:
 
     # load network and send to device
     model = load_net()
-
     # set model to eval mode
     model.eval()
-
+    #if args.static:
     dummy_input = torch.randn(1, 3, 20, 20, requires_grad=True)
-
     # add _fp32 suffix to output str
     filename, extension = osp.splitext(args.output)
     output_fp32 = filename + "_fp32" + extension
-
     # begin conversion
     print("-------- Starting ONNX conversion (this can take a while)...")
 
@@ -108,36 +118,20 @@ def to_onnx() -> None:
         )
 
     print("-------- Conversion was successful. Verifying...")
-
     # verify onnx
     load_onnx = onnx.load(output_fp32)
     torch.cuda.empty_cache()
     onnx.checker.check_model(load_onnx)
+    print(f"-------- Model successfully converted to ONNX format. Saved at: {output_fp32}.")
+    # verify outputs
+    if args.nocheck is False:
+        assert_verify(output_fp32, model)
 
-    # onnxruntime output prediction
-    # NOTE: "CUDAExecutionProvider" errors if some nvidia libs are not found, defaulting to cpu
-    ort_session = onnxruntime.InferenceSession(
-        output_fp32, providers=["CPUExecutionProvider"]
-    )
-    ort_inputs = {ort_session.get_inputs()[0].name: dummy_input.detach().cpu().numpy()}
-    ort_outs = ort_session.run(None, ort_inputs)
-
-    # torch output prediction
-    torch_out = model(dummy_input)
-
-    # final verification
-    # NOTE: default tolerance values - rtol=1e-03, atol=1e-05
-    np.testing.assert_allclose(
-        torch_out.detach().cpu().numpy(), ort_outs[0], rtol=0.01, atol=0.001
-    )
-
-    print(
-        f"-------- Model successfully converted to ONNX format. Saved at: {output_fp32}."
-    )
 
     if args.optimize:
         print("-------- Running ONNX optimization...")
-        output_optimized = filename + "_fp32_optimized" + extension
+        #filename, extension = osp.splitext(args.output)
+        #output_optimized = filename + "_fp32_optimized" + extension
         session_opt = onnxruntime.SessionOptions()
         # ENABLE_ALL can cause compatibility issues, leaving EXTENDED as default
         session_opt.graph_optimization_level = (
@@ -171,9 +165,7 @@ def to_onnx() -> None:
         opt_error = ["omnisr"]
         if args.network in opt_error:
             msg = f"Network [{args.network}] doesnt support full optimization."
-            raise RuntimeError(
-                msg
-            )
+            raise RuntimeError(msg)
 
         print("-------- Running full optimization (this can take a while)...")
         output_fp32_fulloptimized = filename + "_fp32_fullyoptimized" + extension

@@ -192,7 +192,7 @@ def train_pipeline(root_path):
     if resume_state:  # resume training
         model.resume_training(resume_state)  # handle optimizers and schedulers
         logger.info(
-            f"Resuming training from epoch: {resume_state['epoch']}, iter: {int(resume_state['iter'])}."
+            f"Resuming training from epoch: {resume_state['epoch']}, iter: {int(resume_state['iter'])}"
         )
         start_epoch = resume_state["epoch"]
         current_iter = int(resume_state["iter"] * opt["datasets"]["train"].get("accumulate", 1))
