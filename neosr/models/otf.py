@@ -67,17 +67,24 @@ class otf(default):
         """
         if self.is_train:
             # training data synthesis
-            self.gt = data['gt'].to(device=self.device, memory_format=torch.channels_last, non_blocking=True)
+            is_paired = False
+            if 'lq' in data:
+                self.pad = data['lq'].to(device=self.device, memory_format=torch.channels_last, non_blocking=True)
+                self.gt = data['gt'].to(device=self.device, memory_format=torch.channels_last, non_blocking=True)
+                is_paired = True
+            else:
+                self.pad = data['gt'].to(device=self.device, memory_format=torch.channels_last, non_blocking=True)
+                self.gt = self.pad
 
             self.kernel1 = data['kernel1'].to(device=self.device, non_blocking=True)
             self.kernel2 = data['kernel2'].to(device=self.device, non_blocking=True)
             self.sinc_kernel = data['sinc_kernel'].to(device=self.device, non_blocking=True)
 
-            ori_h, ori_w = self.gt.size()[2:4]
+            ori_h, ori_w = self.pad.size()[2:4]
 
             # ----------------------- The first degradation process ----------------------- #
             # blur
-            out = filter2D(self.gt, self.kernel1)
+            out = filter2D(self.pad, self.kernel1)
             # random resize
             updown_type = random.choices(
                 ['up', 'down', 'keep'], self.opt['resize_prob'])[0]
@@ -122,8 +129,12 @@ class otf(default):
             else:
                 scale = 1
             mode = random.choice(['area', 'bilinear', 'bicubic'])
-            out = F.interpolate(
-                out, size=(int(ori_h / self.opt['scale'] * scale), int(ori_w / self.opt['scale'] * scale)), mode=mode)
+            if not is_paired:
+                out = F.interpolate(
+                    out, size=(int(ori_h / self.opt['scale'] * scale), int(ori_w / self.opt['scale'] * scale)), mode=mode)
+            else:
+                out = F.interpolate(
+                    out, size=(int(ori_h * scale), int(ori_w * scale)), mode=mode)
             # add noise
             gray_noise_prob = self.opt['gray_noise_prob2']
             if np.random.default_rng().uniform() < self.opt['gaussian_noise_prob2']:
@@ -147,8 +158,11 @@ class otf(default):
             if np.random.default_rng().uniform() < 0.5:
                 # resize back + the final sinc filter
                 mode = random.choice(['area', 'bilinear', 'bicubic'])
-                out = F.interpolate(out, size=(
-                    ori_h // self.opt['scale'], ori_w // self.opt['scale']), mode=mode)
+                if not is_paired:
+                    out = F.interpolate(out, size=(
+                        ori_h // self.opt['scale'], ori_w // self.opt['scale']), mode=mode)
+                else:
+                    out = F.interpolate(out, size=(ori_h, ori_w), mode=mode)
                 out = filter2D(out, self.sinc_kernel)
                 # JPEG compression
                 jpeg_p = out.new_zeros(out.size(0)).uniform_(
@@ -163,15 +177,19 @@ class otf(default):
                 out = self.jpeger(out, quality=jpeg_p)
                 # resize back + the final sinc filter
                 mode = random.choice(['area', 'bilinear', 'bicubic'])
-                out = F.interpolate(out, size=(
-                    ori_h // self.opt['scale'], ori_w // self.opt['scale']), mode=mode)
+                if not is_paired:
+                    out = F.interpolate(out, size=(
+                        ori_h // self.opt['scale'], ori_w // self.opt['scale']), mode=mode)
+                else:
+                    out = F.interpolate(out, size=(
+                        ori_h, ori_w), mode=mode)
                 out = filter2D(out, self.sinc_kernel)
 
             # clamp and round
             self.lq = torch.clamp((out * 255.0).round(), 0, 255) / 255.
 
             # random crop
-            gt_size = self.opt['gt_size']
+            gt_size = self.opt["datasets"]["train"].get('gt_size')
             (self.gt), self.lq = paired_random_crop([self.gt], self.lq, gt_size,
                                                     self.opt['scale'])
 
