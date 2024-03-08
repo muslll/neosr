@@ -72,15 +72,16 @@ Please read the wiki [Configuration Walkthrough](https://github.com/muslll/neosr
 | [Real-CUGAN](https://github.com/bilibili/ailab)				  		    | `cugan`			   			|
 | [CRAFT](https://github.com/AVC2-UESTC/CRAFT-SR)		 				    | `craft`			   			|
 | [SAFMN](https://github.com/sunny2109/SAFMN)							    | `safmn`, `safmn_l`				|
+| [RGT](https://github.com/zhengchen1999/RGT)							    | `rgt`, `rgt_s` 					|
 
 > [!NOTE]
 > For all arch-specific parameters, [read the wiki](https://github.com/muslll/neosr/wiki/Arch%E2%80%90specific-options).
 
 #### Under Testing
 
-| arch                                          | option         |
-|-----------------------------------------------|----------------|
-| [RGT](https://github.com/zhengchen1999/RGT)	| `rgt`, `rgt_s` |
+| arch                                          		     | option               |
+|--------------------------------------------------------------------|----------------------|
+| [ATD](https://github.com/LabShuHangGU/Adaptive-Token-Dictionary)   | `atd`, `atd_light`   |
 
 
 ### Supported Discriminators:

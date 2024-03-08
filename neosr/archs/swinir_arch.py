@@ -143,7 +143,7 @@ class WindowAttention(nn.Module):
 
             #with torch.inference_mode():
             with torch.no_grad():
-                with torch.torch.backends.cuda.sdp_kernel(enable_math=False):
+                with torch.backends.cuda.sdp_kernel(enable_math=False):
                     x = torch.nn.functional.scaled_dot_product_attention(q, k, v, scale=self.scale, dropout_p=self.dropout_p)
                     x = x.transpose(1, 2).reshape(b_, n, c)
 
