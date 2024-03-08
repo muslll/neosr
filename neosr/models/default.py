@@ -417,6 +417,31 @@ class default():
             self.nondist_validation(
                 dataloader, current_iter, tb_logger, save_img)
 
+    def _initialize_best_metric_results(self, dataset_name):
+        """Initialize the best metric results dict for recording the best metric value and iteration."""
+        if hasattr(self, 'best_metric_results') and dataset_name in self.best_metric_results:
+            return
+        elif not hasattr(self, 'best_metric_results'):
+            self.best_metric_results = dict()
+
+        # add a dataset record
+        record = dict()
+        for metric, content in self.opt['val']['metrics'].items():
+            better = content.get('better', 'higher')
+            init_val = float('-inf') if better == 'higher' else float('inf')
+            record[metric] = dict(better=better, val=init_val, iter=-1)
+        self.best_metric_results[dataset_name] = record
+
+    def _update_best_metric_result(self, dataset_name, metric, val, current_iter):
+        if self.best_metric_results[dataset_name][metric]['better'] == 'higher':
+            if val >= self.best_metric_results[dataset_name][metric]['val']:
+                self.best_metric_results[dataset_name][metric]['val'] = val
+                self.best_metric_results[dataset_name][metric]['iter'] = current_iter
+        else:
+            if val <= self.best_metric_results[dataset_name][metric]['val']:
+                self.best_metric_results[dataset_name][metric]['val'] = val
+                self.best_metric_results[dataset_name][metric]['iter'] = current_iter
+
     def nondist_validation(self, dataloader, current_iter, tb_logger, save_img):
         dataset_name = dataloader.dataset.opt['name']
         with_metrics = self.opt['val'].get('metrics') is not None
@@ -489,11 +514,11 @@ class default():
                 current_iter, dataset_name, tb_logger)
 
     def _log_validation_metric_values(self, current_iter, dataset_name, tb_logger):
-        log_str = f'Validation {dataset_name}\n'
+        log_str = f'Validation {dataset_name}\n\n'
         for metric, value in self.metric_results.items():
             log_str += f'\t # {metric}: {value:.4f}'
             if hasattr(self, 'best_metric_results'):
-                log_str += (f'\tBest: {self.best_metric_results[dataset_name][metric]["val"]:.4f} @ '
+                log_str += (f'........ Best: {self.best_metric_results[dataset_name][metric]["val"]:.4f} @ '
                             f'{self.best_metric_results[dataset_name][metric]["iter"]} iter')
             log_str += '\n'
 
@@ -526,31 +551,6 @@ class default():
         else:
             self.nondist_validation(
                 dataloader, current_iter, tb_logger, save_img)
-
-    def _initialize_best_metric_results(self, dataset_name):
-        """Initialize the best metric results dict for recording the best metric value and iteration."""
-        if hasattr(self, 'best_metric_results') and dataset_name in self.best_metric_results:
-            return
-        elif not hasattr(self, 'best_metric_results'):
-            self.best_metric_results = dict()
-
-        # add a dataset record
-        record = dict()
-        for metric, content in self.opt['val']['metrics'].items():
-            better = content.get('better', 'higher')
-            init_val = float('-inf') if better == 'higher' else float('inf')
-            record[metric] = dict(better=better, val=init_val, iter=-1)
-        self.best_metric_results[dataset_name] = record
-
-    def _update_best_metric_result(self, dataset_name, metric, val, current_iter):
-        if self.best_metric_results[dataset_name][metric]['better'] == 'higher':
-            if val >= self.best_metric_results[dataset_name][metric]['val']:
-                self.best_metric_results[dataset_name][metric]['val'] = val
-                self.best_metric_results[dataset_name][metric]['iter'] = current_iter
-        else:
-            if val <= self.best_metric_results[dataset_name][metric]['val']:
-                self.best_metric_results[dataset_name][metric]['val'] = val
-                self.best_metric_results[dataset_name][metric]['iter'] = current_iter
 
     def get_current_log(self):
         return self.log_dict
