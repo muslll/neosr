@@ -72,10 +72,13 @@ class default():
         self.use_amp = self.opt.get('use_amp', False) is True
         self.amp_dtype = torch.bfloat16 if self.opt.get('bfloat16', False) is True else torch.float16
 
-        # initialise GradScale object
+        # initialise GradScaler
         self.scaler = torch.cuda.amp.GradScaler(enabled = self.use_amp, init_scale=2.**5)
+
+        # LQ matching for Color/Luma losses
+        self.match_lq = self.opt['train'].get('match_lq', False)
         
-        # initialise counter of how many gradients has to be accumulated
+        # initialise counter of how many batches has to be accumulated
         self.n_accumulated = 0
         self.accum_iters = self.opt["datasets"]["train"].get("accumulate", 1) 
         if self.accum_iters == 0 or self.accum_iters == None:
@@ -216,10 +219,6 @@ class default():
             for p in self.net_d.parameters():
                 p.requires_grad = False
 
-        # LQ matching for Color/Luma losses
-        self.match_lq = self.opt['train'].get('match_lq', False)
-        self.lq_interp = F.interpolate(self.lq, scale_factor=self.opt['scale'], mode='bicubic')
-                
         # increment accumulation counter and check if accumulation limit has been reached
         self.n_accumulated += 1
         apply_gradient = self.n_accumulated >= self.accum_iters
@@ -234,6 +233,9 @@ class default():
         with torch.autocast(device_type='cuda', dtype=self.amp_dtype, enabled=self.use_amp):
 
             self.output = self.net_g(self.lq)
+
+            # lq match
+            self.lq_interp = F.interpolate(self.lq, scale_factor=self.opt['scale'], mode='bicubic')
 
             l_g_total = 0
             loss_dict = OrderedDict()
@@ -345,11 +347,12 @@ class default():
             if apply_gradient:
                 # gradient clipping on discriminator
                 if self.opt["train"].get("grad_clip", True):
-                    self.scaler_d.unscale_(self.optimizer_d)
+                    self.scaler.unscale_(self.optimizer_d)
                     torch.nn.utils.clip_grad_norm_(self.net_d.parameters(), 1.0, error_if_nonfinite=False)
 
                 self.scaler.step(self.optimizer_d)
                 self.optimizer_d.zero_grad(set_to_none=True)
+
         self.scaler.update()
         self.log_dict = self.reduce_loss_dict(loss_dict)
 
