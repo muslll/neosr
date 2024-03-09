@@ -219,6 +219,7 @@ class default():
             for p in self.net_d.parameters():
                 p.requires_grad = False
 
+
         # increment accumulation counter
         self.n_accumulated += 1
         # reset accumulation counter
@@ -291,6 +292,7 @@ class default():
         l_g_total = l_g_total / self.accum_iters
         self.scaler.scale(l_g_total).backward()
 
+        # clip and step() generator 
         if (self.n_accumulated) % self.accum_iters == 0:
             # gradient clipping on generator
             if self.opt["train"].get("grad_clip", True):
@@ -298,9 +300,6 @@ class default():
                 torch.nn.utils.clip_grad_norm_(self.net_g.parameters(), 1.0, error_if_nonfinite=False)
 
             self.scaler.step(self.optimizer_g)
-            # update gradscaler
-            self.scaler.update()
-            self.optimizer_g.zero_grad(set_to_none=True)
 
         # optimize net_d
         if self.opt.get('network_d', None) is not None:
@@ -326,6 +325,7 @@ class default():
                 self.scaler.scale(l_d_real).backward()
                 self.scaler.scale(l_d_fake).backward()
 
+            # clip and step() discriminator
             if (self.n_accumulated) % self.accum_iters == 0:
                 # gradient clipping on discriminator
                 if self.opt["train"].get("grad_clip", True):
@@ -333,11 +333,14 @@ class default():
                     torch.nn.utils.clip_grad_norm_(self.net_d.parameters(), 1.0, error_if_nonfinite=False)
 
                 self.scaler.step(self.optimizer_d)
-                # update gradscaler
-                self.scaler.update()
+
+        # update gradscaler and zero grads
+        if (self.n_accumulated) % self.accum_iters == 0:
+            self.scaler.update()
+            self.optimizer_g.zero_grad(set_to_none=True)
+            if self.opt.get('network_d', None) is not None:
                 self.optimizer_d.zero_grad(set_to_none=True)
 
-        #self.scaler.update()
         self.log_dict = self.reduce_loss_dict(loss_dict)
 
 

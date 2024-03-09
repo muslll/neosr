@@ -212,8 +212,15 @@ def train_pipeline(root_path):
     if opt["use_amp"] is True:
         logger.info("AMP enabled.")
 
+    # training log vars
+    accumulate = opt["datasets"]["train"].get("accumulate", 1)
+    print_freq = opt["logger"]["print_freq"]
+    save_checkpoint_freq = opt["logger"]["save_checkpoint_freq"]
+    if opt.get("val") is not None:
+        val_freq = opt["val"]["val_freq"]
+
     # training
-    logger.info(f"Start training from epoch: {start_epoch}, iter: {int(current_iter)}")
+    logger.info(f"Start training from epoch: {start_epoch}, iter: {int(current_iter / accumulate)}")
     data_timer, iter_timer = AvgTimer(), AvgTimer()
     start_time = time.time()
 
@@ -243,12 +250,6 @@ def train_pipeline(root_path):
                     msg_logger.reset_start_time()
 
                 # log
-                accumulate = opt["datasets"]["train"].get("accumulate", 1)
-                print_freq = opt["logger"]["print_freq"]
-                save_checkpoint_freq = opt["logger"]["save_checkpoint_freq"]
-                if opt.get("val") is not None:
-                    val_freq = opt["val"]["val_freq"]
-
                 if current_iter >= accumulate:
                     current_iter_log = current_iter / accumulate
                 else:

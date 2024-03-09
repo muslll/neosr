@@ -37,6 +37,7 @@ class otf(data.Dataset):
         self.opt = opt
         self.file_client = None
         self.io_backend_opt = opt['io_backend']
+        self.color = False if 'color' in self.opt and self.opt['color'] == 'y' else True
         self.gt_folder = opt['dataroot_gt']
 
         if opt.get('dataroot_lq', None) is not None:
@@ -213,7 +214,7 @@ class otf(data.Dataset):
             sinc_kernel = self.pulse_tensor
 
         # BGR to RGB, HWC to CHW, numpy to tensor
-        img_gt = img2tensor([img_gt], bgr2rgb=True, float32=True)[0]
+        img_gt = img2tensor([img_gt], bgr2rgb=True, float32=True, color=self.color)[0]
         # NOTE: using torch.tensor(device='cuda') won't work.
         # Keeping old constructor for now.
         kernel = torch.FloatTensor(kernel)
