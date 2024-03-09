@@ -1,7 +1,6 @@
 import os
 import numpy as np
 
-from PIL import Image
 from torch.utils import data
 from torchvision.transforms.functional import normalize, rgb_to_grayscale
 
@@ -47,6 +46,7 @@ class paired(data.Dataset):
         # mean and std for normalizing the input images
         self.mean = opt['mean'] if 'mean' in opt else None
         self.std = opt['std'] if 'std' in opt else None
+        self.color = False if 'color' in self.opt and self.opt['color'] == 'y' else True
 
         self.gt_folder, self.lq_folder = opt['dataroot_gt'], opt['dataroot_lq']
         self.filename_tmpl = opt['filename_tmpl'] if 'filename_tmpl' in opt else '{}'
@@ -129,22 +129,6 @@ class paired(data.Dataset):
             img_gt, img_lq = basic_augment(
                 [img_gt, img_lq], self.opt['use_hflip'], self.opt['use_rot'])
 
-        # color space transform
-        if 'color' in self.opt and self.opt['color'] == 'y':
-            # TODO: currently torchvision v2.Grayscale doesn't output one channel
-            # Switch to it once fixed, to avoid such conversions
-
-            img_gt = np.round(img_gt * 255.0).astype(np.uint8)
-            img_gt = Image.fromarray(img_gt)
-            img_gt = rgb_to_grayscale(img_gt)
-            img_gt = np.array(img_gt, dtype=np.float32) / 255.
-            img_gt = np.expand_dims(img_gt, axis=-1)
-
-            img_lq = np.round(img_lq * 255.0).astype(np.uint8)
-            img_lq = Image.fromarray(img_lq)
-            img_lq = rgb_to_grayscale(img_lq)
-            img_lq = np.array(img_lq, dtype=np.float32) / 255.
-            img_lq = np.expand_dims(img_lq, axis=-1)
 
         # crop the unmatched GT images during validation or testing, especially for SR benchmark datasets
         # TODO: It is better to update the datasets, rather than force to crop
@@ -154,7 +138,7 @@ class paired(data.Dataset):
 
         # BGR to RGB, HWC to CHW, numpy to tensor
         img_gt, img_lq = img2tensor(
-            [img_gt, img_lq], bgr2rgb=True, float32=True)
+            [img_gt, img_lq], color= self.color, bgr2rgb=True, float32=True)
         # normalize
         if self.mean is not None or self.std is not None:
             normalize(img_lq, self.mean, self.std, inplace=True)

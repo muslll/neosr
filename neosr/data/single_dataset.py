@@ -1,7 +1,6 @@
 from os import path as osp
 import numpy as np
 
-from PIL import Image
 from torch.utils import data
 from torchvision.transforms.functional import normalize, rgb_to_grayscale
 
@@ -36,6 +35,7 @@ class single(data.Dataset):
         self.mean = opt['mean'] if 'mean' in opt else None
         self.std = opt['std'] if 'std' in opt else None
         self.lq_folder = opt['dataroot_lq']
+        self.color = False if 'color' in self.opt and self.opt['color'] == 'y' else True
 
         if self.io_backend_opt['type'] == 'lmdb':
             self.io_backend_opt['db_paths'] = [self.lq_folder]
@@ -62,16 +62,8 @@ class single(data.Dataset):
         except AttributeError:
             raise AttributeError(lq_path)
 
-        # color space transform
-        if 'color' in self.opt and self.opt['color'] == 'y':
-            img_lq = np.round(img_lq * 255.0).astype(np.uint8)
-            img_lq = Image.fromarray(img_lq)
-            img_lq = rgb_to_grayscale(img_lq)
-            img_lq = np.array(img_lq, dtype=np.float32) / 255.
-            img_lq = np.expand_dims(img_lq, axis=-1)
-
         # BGR to RGB, HWC to CHW, numpy to tensor
-        img_lq = img2tensor(img_lq, bgr2rgb=True, float32=True)
+        img_lq = img2tensor(img_lq, color=self.color, bgr2rgb=True, float32=True)
         # normalize
         if self.mean is not None or self.std is not None:
             normalize(img_lq, self.mean, self.std, inplace=True)
