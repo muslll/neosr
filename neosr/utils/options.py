@@ -193,11 +193,8 @@ def parse_options(root_path, is_train=True):
             opt['manual_seed'] = seed
         else:
             # Determinism
-            cublas_workspace_config = os.environ.get('CUBLAS_WORKSPACE_CONFIG', None)
-            if cublas_workspace_config is None:
-                os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8,:16:8"
-            else:
-                os.environ["CUBLAS_WORKSPACE_CONFIG"] += ",:4096:8,:16:8"
+            os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
+            os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":16:8"
             torch.backends.cudnn.deterministic = True
             torch.backends.cudnn.benchmark = False
             torch.use_deterministic_algorithms(True, warn_only=True)
