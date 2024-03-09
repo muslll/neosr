@@ -17,7 +17,7 @@ class GANLoss(nn.Module):
             for discriminators.
     """
 
-    def __init__(self, gan_type, real_label_val=1.0, fake_label_val=0.0, loss_weight=1.0):
+    def __init__(self, gan_type="vanilla", real_label_val=1.0, fake_label_val=0.0, loss_weight=0.1):
         super(GANLoss, self).__init__()
         self.gan_type = gan_type
         self.loss_weight = loss_weight
