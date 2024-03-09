@@ -26,3 +26,4 @@
 | [`SAFMN`](https://github.com/sunny2109/SAFMN)							      | Unknown													|
 | [`RGT`](https://github.com/zhengchen1999/RGT)							      | [Apache 2.0](https://github.com/zhengchen1999/RGT/blob/main/LICENSE)					|
 | [`ATD`](https://github.com/LabShuHangGU/Adaptive-Token-Dictionary)				      | [Apache 2.0](https://github.com/LabShuHangGU/Adaptive-Token-Dictionary/blob/main/LICENSE.txt)		|
+| [`patchgan`](https://github.com/NVIDIA/pix2pixHD) discriminator (pix2pixHD)			      | [BSD](https://github.com/NVIDIA/pix2pixHD/blob/master/LICENSE.txt)					|

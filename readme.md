@@ -90,6 +90,7 @@ Please read the wiki [Configuration Walkthrough](https://github.com/muslll/neosr
 |-----------------------------------------------------------------|-----------------------------|
 | U-Net SN 							  | `unet` 		        |
 | [A2-FPN](https://github.com/lironui/A2-FPN)			  | `a2fpn`			|
+| [PatchGAN w/ SN](https://github.com/NVIDIA/pix2pixHD)		  | `patchgan`			|
 
 ### Supported Optimizers:
 
