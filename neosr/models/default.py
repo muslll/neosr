@@ -243,13 +243,10 @@ class default():
                     loss_dict['l_g_pix'] = l_g_pix
                 # perceptual loss
                 if self.cri_perceptual:
-                    l_g_percep, l_g_style = self.cri_perceptual(self.output, self.gt)
+                    l_g_percep = self.cri_perceptual(self.output, self.gt)
                     if l_g_percep is not None:
                         l_g_total += l_g_percep
                         loss_dict['l_g_percep'] = l_g_percep
-                    if l_g_style is not None:
-                        l_g_total += l_g_style
-                        loss_dict['l_g_style'] = l_g_style
                 # ldl loss
                 if self.cri_ldl:
                     pixel_weight = get_refined_artifact_map(self.gt, self.output, 7)

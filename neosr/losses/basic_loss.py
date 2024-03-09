@@ -217,7 +217,7 @@ class chc(nn.Module):
 
 @LOSS_REGISTRY.register()
 class PerceptualLoss(nn.Module):
-    """Perceptual loss with commonly used style loss.
+    """Perceptual loss with VGG19
 
     Args:
         layer_weights (dict): The weight for each layer of vgg feature.
@@ -233,9 +233,6 @@ class PerceptualLoss(nn.Module):
         perceptual_weight (float): If `perceptual_weight > 0`, the perceptual
             loss will be calculated and the loss will multiplied by the
             weight. Default: 1.0.
-        style_weight (float): If `style_weight > 0`, the style loss will be
-            calculated and the loss will multiplied by the weight.
-            Default: 0.
         criterion (str): Criterion used for perceptual loss. Default: 'l1'.
     """
 
@@ -246,13 +243,13 @@ class PerceptualLoss(nn.Module):
         use_input_norm: bool = True,
         range_norm: bool = False,
         perceptual_weight: float = 1.0,
-        style_weight: float = 0.0,
         criterion: str = "huber",
+        **kwargs,
     ) -> None:
         super(PerceptualLoss, self).__init__()
         self.perceptual_weight = perceptual_weight
-        self.style_weight = style_weight
         self.layer_weights = layer_weights
+
         self.vgg = VGGFeatureExtractor(
             layer_name_list=list(layer_weights.keys()),
             vgg_type=vgg_type,
@@ -308,47 +305,7 @@ class PerceptualLoss(nn.Module):
         else:
             percep_loss = None
 
-        # calculate style loss
-        if self.style_weight > 0:
-            style_loss = 0
-            for k in x_features.keys():
-                if self.criterion_type == "fro":
-                    style_loss += (
-                        torch.norm(
-                            self._gram_mat(x_features[k])
-                            - self._gram_mat(gt_features[k]),
-                            p="fro",
-                        )
-                        * self.layer_weights[k]
-                    )
-                else:
-                    style_loss += (
-                        self.criterion(
-                            self._gram_mat(x_features[k]),
-                            self._gram_mat(gt_features[k]),
-                        )
-                        * self.layer_weights[k]
-                    )
-            style_loss *= self.style_weight
-        else:
-            style_loss = None
-
-        return percep_loss, style_loss
-
-    def _gram_mat(self, x):
-        """Calculate Gram matrix.
-
-        Args:
-            x (torch.Tensor): Tensor with shape of (n, c, h, w).
-
-        Returns:
-            torch.Tensor: Gram matrix.
-        """
-        n, c, h, w = x.size()
-        features = x.view(n, c, w * h)
-        features_t = features.transpose(1, 2)
-        gram = features.bmm(features_t) / (c * h * w)
-        return gram
+        return percep_loss
 
 
 @LOSS_REGISTRY.register()
@@ -367,7 +324,7 @@ class colorloss(nn.Module):
         self,
         criterion: str = "huber",
         avgpool: bool = False,
-        scale: int = 4,
+        scale: int = 2,
         loss_weight: float = 1.0,
     ) -> None:
         super(colorloss, self).__init__()
@@ -415,7 +372,7 @@ class lumaloss(nn.Module):
         self,
         criterion: str = "huber",
         avgpool: bool = False,
-        scale: int = 4,
+        scale: int = 2,
         loss_weight: float = 1.0,
     ) -> None:
         super(lumaloss, self).__init__()

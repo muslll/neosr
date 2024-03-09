@@ -22,7 +22,7 @@ datasets:
     accumulate: 1
     use_hflip: true
     use_rot: true
-    dataset_enlarge_ratio: 5
+    dataset_enlarge_ratio: 1
 
 #  val:
 #    name: val_1
@@ -73,7 +73,7 @@ train:
 
   # losses
   pixel_opt:
-    type: HuberLoss
+    type: chc
     loss_weight: 1.0
   perceptual_opt:
     type: PerceptualLoss
@@ -84,8 +84,7 @@ train:
       'conv4_4': 1
       'conv5_4': 1
     perceptual_weight: 1.0
-    style_weight: 0
-    criterion: huber
+    criterion: chc
   gan_opt:
     type: GANLoss
     gan_type: vanilla

@@ -3,6 +3,8 @@ import logging
 import math
 import sys
 import time
+import os
+
 from os import path as osp
 
 import torch
@@ -145,6 +147,7 @@ def train_pipeline(root_path):
         torch.backends.cudnn.benchmark = False
     else:
         torch.backends.cudnn.benchmark = True
+        torch.backends.cudnn.benchmark_limit = 0
 
     # enable tensorfloat32 and possibly bfloat16 matmul
     fast_matmul = opt.get("fast_matmul", False)
