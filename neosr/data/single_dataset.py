@@ -2,7 +2,7 @@ from os import path as osp
 import numpy as np
 
 from torch.utils import data
-from torchvision.transforms.functional import normalize, rgb_to_grayscale
+from torchvision.transforms.functional import normalize
 
 from neosr.data.data_util import paths_from_lmdb
 from neosr.utils import FileClient, imfrombytes, img2tensor, scandir

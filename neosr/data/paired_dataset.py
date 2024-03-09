@@ -2,7 +2,7 @@ import os
 import numpy as np
 
 from torch.utils import data
-from torchvision.transforms.functional import normalize, rgb_to_grayscale
+from torchvision.transforms.functional import normalize
 
 from neosr.data.data_util import paired_paths_from_folder, paired_paths_from_lmdb
 from neosr.data.transforms import basic_augment, paired_random_crop

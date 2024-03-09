@@ -11,7 +11,8 @@ def img2tensor(imgs, color, bgr2rgb=True, float32=True):
 
     Args:
         imgs (list[ndarray] | ndarray): Input images.
-        color (bool)
+        color (bool): use RGB if true, transform to Grayscale
+            if False. Default: True
         bgr2rgb (bool): Whether to change bgr to rgb.
         float32 (bool): Whether to change to float32.
 
@@ -20,7 +21,7 @@ def img2tensor(imgs, color, bgr2rgb=True, float32=True):
             one element, just return tensor.
     """
 
-    def _totensor(img, color, bgr2rgb, float32):
+    def _totensor(img, color=True, bgr2rgb, float32):
         if color:
             if img.shape[2] == 3 and bgr2rgb:
                 img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
@@ -31,8 +32,6 @@ def img2tensor(imgs, color, bgr2rgb=True, float32=True):
             else:
                 img = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
             img = torch.from_numpy(img[None, ...])
-
-
         if float32:
             img = img.float()
         return img
