@@ -616,11 +616,7 @@ class gradvarloss(nn.Module):
         var_target_y = torch.var(gy_target_patches, dim=1)
         var_output_y = torch.var(gy_output_patches, dim=1)
 
-        # loss function as a MSE between variances of patches extracted from gradient maps
-        #gradvar_loss = F.mse_loss(var_target_x, var_output_x) + F.mse_loss(
-        #    var_target_y, var_output_y
-        #)
-
+        # loss function as a "criterion" between variances of patches extracted from gradient maps
         gradvar_loss = self.criterion(var_target_x, var_output_x) + self.criterion(
             var_target_y, var_output_y
         )

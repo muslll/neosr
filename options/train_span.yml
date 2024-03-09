@@ -95,7 +95,7 @@ train:
   #ff_opt:
   #  type: focalfrequencyloss
   #  loss_weight: 0.25
-  #gd_opt:
+  #gv_opt:
   #  type: gradvarloss
   #  loss_weight: 0.5
   #  criterion: huber
