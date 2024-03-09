@@ -111,6 +111,18 @@ class default():
         else:
             self.cri_ldl = None
 
+        # Focal Frequency Loss
+        if train_opt.get('ff_opt'):
+            self.cri_ff = build_loss(train_opt['ff_opt']).to(self.device, memory_format=torch.channels_last, non_blocking=True)
+        else:
+            self.cri_ff = None
+
+        # Gradient Variance Loss
+        if train_opt.get('gd_opt'):
+            self.cri_gd = build_loss(train_opt['gd_opt']).to(self.device, memory_format=torch.channels_last, non_blocking=True)
+        else:
+            self.cri_gd = None
+
         # Color loss
         if train_opt.get('color_opt'):
             self.cri_color = build_loss(train_opt['color_opt']).to(self.device, memory_format=torch.channels_last, non_blocking=True)
@@ -122,13 +134,6 @@ class default():
             self.cri_luma = build_loss(train_opt['luma_opt']).to(self.device, memory_format=torch.channels_last, non_blocking=True)
         else:
             self.cri_luma = None
-
-
-        # Focal Frequency Loss
-        if train_opt.get('ff_opt'):
-            self.cri_ff = build_loss(train_opt['ff_opt']).to(self.device, memory_format=torch.channels_last, non_blocking=True)
-        else:
-            self.cri_ff = None
 
         self.net_d_iters = train_opt.get('net_d_iters', 1)
         self.net_d_init_iters = train_opt.get('net_d_init_iters', 0)
@@ -254,6 +259,16 @@ class default():
                         torch.mul(pixel_weight, self.output), torch.mul(pixel_weight, self.gt))
                     l_g_total += l_g_ldl
                     loss_dict['l_g_ldl'] = l_g_ldl
+                # Focal Frequency Loss
+                if self.cri_ff:
+                    l_g_ff = self.cri_ff(self.output, self.gt)
+                    l_g_total += l_g_ff
+                    loss_dict['l_g_ff'] = l_g_ff
+                # Gradient Variance Loss
+                if self.cri_gd:
+                    l_g_gd = self.cri_gd(self.output, self.gt)
+                    l_g_total += l_g_gd
+                    loss_dict['l_g_gd'] = l_g_gd
                 # color loss
                 if self.cri_color:
                     if self.match_lq:
@@ -270,11 +285,6 @@ class default():
                         l_g_luma = self.cri_luma(self.output, self.gt)
                     l_g_total += l_g_luma
                     loss_dict['l_g_luma'] = l_g_luma
-                # Focal Frequency Loss
-                if self.cri_ff:
-                    l_g_ff = self.cri_ff(self.output, self.gt)
-                    l_g_total += l_g_ff
-                    loss_dict['l_g_ff'] = l_g_ff
                 # GAN loss
                 if self.cri_gan:
                     fake_g_pred = self.net_d(self.output)

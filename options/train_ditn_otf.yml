@@ -134,6 +134,10 @@ train:
   #ff_opt:
   #  type: focalfrequencyloss
   #  loss_weight: 0.5
+  #gd_opt:
+  #  type: gradvarloss
+  #  loss_weight: 0.5
+  #  criterion: huber
 
   match_lq: false
   color_opt:

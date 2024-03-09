@@ -131,6 +131,7 @@ Please read the wiki [Configuration Walkthrough](https://github.com/muslll/neosr
 | Luma Loss (CIE X**Y**Z)						 | `luma_opt` `lumaloss`		     |
 | [LDL Loss](https://github.com/csjliang/LDL)                            | `ldl_opt`  			             |
 | [Focal Frequency](https://github.com/EndlessSora/focal-frequency-loss) | `ff_opt`, `focalfrequencyloss`            |
+| [Gradient Variance](https://github.com/lusinlu/gradient-variance-loss) | `gd_opt`, `gradvarloss`		     |
 
 ## datasets
 
