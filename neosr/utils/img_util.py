@@ -21,7 +21,7 @@ def img2tensor(imgs, color, bgr2rgb=True, float32=True):
             one element, just return tensor.
     """
 
-    def _totensor(img, color=True, bgr2rgb, float32):
+    def _totensor(img, bgr2rgb, float32, color=True):
         if color:
             if img.shape[2] == 3 and bgr2rgb:
                 img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
