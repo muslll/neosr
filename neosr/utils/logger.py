@@ -87,8 +87,7 @@ class MessageLogger():
         lrs = log_vars.pop('lrs')
 
         message = (
-            #f'[epoch:{epoch:3d}] [iter:{current_iter:8,d}]')
-            f'[epoch:{epoch:3d}] [iter:{current_iter:7,d}]')
+            f'[epoch:{epoch:4d}] [iter:{current_iter:7,d}]')
 
         # time and estimated time
         if 'time' in log_vars.keys():
@@ -102,11 +101,11 @@ class MessageLogger():
             time_sec_avg = total_time / (current_iter - self.start_iter + 1)
             eta_sec = time_sec_avg * (self.max_iters - current_iter - 1)
             eta_str = str(datetime.timedelta(seconds=int(eta_sec)))
-            message += f' [performance: {iter_time:.3f} it/s] [lr:('
+            message += f' [performance: {iter_time:.3f} it/s] [lr: '
             for v in lrs:
-                message += f'{v:.3e}'
-            message += ')] '
-            message += f'[eta: {eta_str}, '
+                message += f'{v:.2e}'
+            message += '] '
+            message += f'[eta: {eta_str}] '
 
         # other items, especially losses
         for k, v in log_vars.items():
@@ -172,7 +171,8 @@ def get_root_logger(logger_name='neosr', log_level=logging.INFO, log_file=None):
     if logger_name in initialized_logger:
         return logger
 
-    format_str = '%(asctime)s %(levelname)s: %(message)s'
+    current_time = time.strftime("%d/%m/%Y %I:%M %p |", time.localtime()) 
+    format_str = f'{current_time} %(levelname)s: %(message)s'
     stream_handler = logging.StreamHandler()
     stream_handler.setFormatter(logging.Formatter(format_str))
     logger.addHandler(stream_handler)
