@@ -123,7 +123,7 @@ train:
       'conv4_4': 1
       'conv5_4': 1
     perceptual_weight: 1.0
-    criterion: chc
+    criterion: huber
   gan_opt:
     type: GANLoss
     gan_type: vanilla
