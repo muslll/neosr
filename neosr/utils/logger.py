@@ -171,7 +171,7 @@ def get_root_logger(logger_name='neosr', log_level=logging.INFO, log_file=None):
     if logger_name in initialized_logger:
         return logger
 
-    current_time = time.strftime("%d/%m/%Y %I:%M %p |", time.localtime()) 
+    current_time = datetime.datetime.now().strftime("%d/%m/%Y %I:%M %p |")
     format_str = f'{current_time} %(levelname)s: %(message)s'
     stream_handler = logging.StreamHandler()
     stream_handler.setFormatter(logging.Formatter(format_str))
