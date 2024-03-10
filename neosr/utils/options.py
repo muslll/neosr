@@ -167,7 +167,7 @@ def parse_options(root_path, is_train=True):
     args = parser.parse_args()
 
     # error if no config file exists
-    if not osp.exists(args.opt) and args.input is None:
+    if args.input is None and not osp.exists(args.opt):
         msg = "Didn't get a config! Please link the config file using -opt /path/to/config.yml"
         raise ValueError(msg) 
 
