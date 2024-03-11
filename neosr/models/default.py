@@ -314,6 +314,7 @@ class default():
                 p.requires_grad = True
 
             with torch.autocast(device_type='cuda', dtype=self.amp_dtype, enabled=self.use_amp):
+
                 if self.cri_gan:
                 # real
                     real_d_pred = self.net_d(self.gt)
