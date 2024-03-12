@@ -84,7 +84,7 @@ def create_train_val_dataloader(opt, logger):
                 f'\n\tAccumulated batches: {dataset_opt["batch_size"] * accumulate}'
                 f'\n\tWorld size (gpu number): {opt["world_size"]}'
                 f'\n\tRequired iters per epoch: {num_iter_per_epoch}'
-                f'\n\tTotal epochs: {total_epochs}; iters: {total_iters}'
+                f'\n\tTotal epochs: {total_epochs}. Total iters: {total_iters // accumulate}'
             )
         elif phase.split("_")[0] == "val":
             val_set = build_dataset(dataset_opt)
@@ -275,10 +275,6 @@ def train_pipeline(root_path):
 
                 # validation
                 if opt.get("val") is not None and (current_iter_log % val_freq == 0):
-                    if len(val_loaders) > 1:
-                        logger.warning(
-                            "Multiple validation datasets are *only* supported by SRModel."
-                        )
                     for val_loader in val_loaders:
                         model.validation(
                             val_loader,
@@ -287,7 +283,7 @@ def train_pipeline(root_path):
                             opt["val"]["save_img"],
                         )
 
-                data_timer.start()
+                #data_timer.start()
                 iter_timer.start()
                 train_data = prefetcher.next()
             # end of iter
@@ -305,9 +301,10 @@ def train_pipeline(root_path):
         sys.exit(0)
 
     if opt.get("val") is not None:
+        accumulate = opt["datasets"]["train"].get("accumulate", 1)
         for val_loader in val_loaders:
             model.validation(
-                val_loader, int(current_iter_log), tb_logger, opt["val"]["save_img"]
+                val_loader, int(current_iter / accumulate), tb_logger, opt["val"]["save_img"]
             )
     if tb_logger:
         tb_logger.close()

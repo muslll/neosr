@@ -58,10 +58,10 @@ class MessageLogger():
     def __init__(self, opt, start_iter=1, tb_logger=None):
         self.exp_name = opt['name']
         self.interval = opt['logger']['print_freq']
+        self.accumulate = opt['datasets']['train'].get('accumulate', 1)
         self.start_iter = start_iter
         self.max_iters = opt['train']['total_iter']
         self.use_tb_logger = opt['logger']['use_tb_logger']
-        self.accumulate = opt['datasets']['train'].get('accumulate', 1)
         self.tb_logger = tb_logger
         self.start_time = time.time()
         self.logger = get_root_logger()
@@ -98,7 +98,7 @@ class MessageLogger():
             iter_time = iter_time / self.accumulate
 
             total_time = time.time() - self.start_time
-            time_sec_avg = total_time / (current_iter - self.start_iter + 1)
+            time_sec_avg = total_time / (current_iter - (self.start_iter / self.accumulate) + 1)
             eta_sec = time_sec_avg * (self.max_iters - current_iter - 1)
             eta_str = str(datetime.timedelta(seconds=int(eta_sec)))
             message += f' [ performance: {iter_time:.3f} it/s ] [ lr: '
