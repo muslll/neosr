@@ -71,7 +71,6 @@ def build_dataloader(dataset, dataset_opt, num_gpu=1, dist=False, sampler=None, 
             multiplier = 1 if num_gpu == 0 else num_gpu
             batch_size = dataset_opt['batch_size'] * multiplier
             p_factor = dataset_opt.get('prefetch', 1)
-            print(f'prefetch is set to: {p_factor}')
             num_workers = num_workers * multiplier
         dataloader_args = dict(
             dataset=dataset,
