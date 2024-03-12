@@ -89,7 +89,7 @@ class CUDAPrefetcher():
             for k, v in self.batch.items():
                 if torch.is_tensor(v):
                     self.batch[k] = self.batch[k].to(
-                        device=self.device, non_blocking=True)
+                        device=self.device, memory_format=torch.channels_last, non_blocking=True)
 
     def next(self):
         torch.cuda.current_stream().wait_stream(self.stream)

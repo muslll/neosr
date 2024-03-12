@@ -143,7 +143,7 @@ def train_pipeline(root_path):
     # condition. Hardcoding 1024 for now.
     manual_seed_opt = opt.get("manual_seed", None)
 
-    if manual_seed_opt == "1024":
+    if manual_seed_opt == 1024:
         torch.backends.cudnn.benchmark = False
     else:
         torch.backends.cudnn.benchmark = True
