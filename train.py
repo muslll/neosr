@@ -4,10 +4,7 @@ import math
 import sys
 import time
 import os
-
 from os import path as osp
-
-os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "backend:cudaMallocAsync"
 
 import torch
 

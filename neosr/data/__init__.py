@@ -70,7 +70,6 @@ def build_dataloader(dataset, dataset_opt, num_gpu=1, dist=False, sampler=None, 
         else:  # non-distributed training
             multiplier = 1 if num_gpu == 0 else num_gpu
             batch_size = dataset_opt['batch_size'] * multiplier
-            p_factor = dataset_opt.get('prefetch', 1)
             num_workers = num_workers * multiplier
         dataloader_args = dict(
             dataset=dataset,
@@ -78,8 +77,7 @@ def build_dataloader(dataset, dataset_opt, num_gpu=1, dist=False, sampler=None, 
             shuffle=False,
             num_workers=num_workers,
             sampler=sampler,
-            #prefetch_factor=8,
-            prefetch_factor=p_factor,
+            prefetch_factor=8,
             drop_last=True)
         if sampler is None:
             dataloader_args['shuffle'] = True
