@@ -7,6 +7,8 @@ import os
 
 from os import path as osp
 
+os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "backend:cudaMallocAsync"
+
 import torch
 
 from neosr.data import build_dataloader, build_dataset
