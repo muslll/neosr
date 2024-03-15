@@ -269,7 +269,7 @@ class PerceptualLoss(nn.Module):
         elif self.criterion_type == "fro":
             self.criterion = None
         else:
-            raise NotImplementedError(f"{criterion} criterion has not been supported.")
+            raise NotImplementedError(f"{criterion} criterion not supported.")
 
     def forward(
         self, x: torch.Tensor, gt: torch.Tensor
@@ -302,8 +302,7 @@ class PerceptualLoss(nn.Module):
                         * self.layer_weights[k]
                     )
             percep_loss *= self.perceptual_weight
-        else:
-            percep_loss = None
+
 
         return percep_loss
 

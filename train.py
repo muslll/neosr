@@ -209,7 +209,6 @@ def train_pipeline(root_path):
 
     # dataloader prefetcher
     prefetcher = CUDAPrefetcher(train_loader, opt)
-    logger.info("Using CUDA prefetch dataloader.")
 
     if opt["use_amp"] is True:
         logger.info("AMP enabled.")
@@ -223,7 +222,8 @@ def train_pipeline(root_path):
 
     # training
     logger.info(f"Start training from epoch: {start_epoch}, iter: {int(current_iter / accumulate)}")
-    data_timer, iter_timer = AvgTimer(), AvgTimer()
+    #data_timer, iter_timer = AvgTimer(), AvgTimer()
+    iter_timer = AvgTimer()
     start_time = time.time()
 
     try:
@@ -233,7 +233,7 @@ def train_pipeline(root_path):
             train_data = prefetcher.next()
 
             while train_data is not None:
-                data_timer.record()
+                #data_timer.record()
 
                 current_iter += 1
                 if current_iter > total_iters:

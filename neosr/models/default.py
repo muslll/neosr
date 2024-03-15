@@ -96,6 +96,12 @@ class default():
         else:
             self.cri_perceptual = None
 
+        if train_opt.get('dists_opt'):
+            self.cri_dists = build_loss(
+                train_opt['dists_opt']).to(self.device, memory_format=torch.channels_last, non_blocking=True)
+        else:
+            self.cri_dists = None
+
         if self.cri_pix is None and self.cri_perceptual is None:
             raise ValueError('Both pixel and perceptual losses are None.')
 
@@ -249,9 +255,13 @@ class default():
                 # perceptual loss
                 if self.cri_perceptual:
                     l_g_percep = self.cri_perceptual(self.output, self.gt)
-                    if l_g_percep is not None:
-                        l_g_total += l_g_percep
-                        loss_dict['l_g_percep'] = l_g_percep
+                    l_g_total += l_g_percep
+                    loss_dict['l_g_percep'] = l_g_percep
+                # dists loss
+                if self.cri_dists:
+                    l_g_dists = self.cri_dists(self.output, self.gt)
+                    l_g_total += l_g_dists
+                    loss_dict['l_g_dists'] = l_g_dists
                 # ldl loss
                 if self.cri_ldl:
                     pixel_weight = get_refined_artifact_map(self.gt, self.output, 7)

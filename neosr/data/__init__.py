@@ -57,7 +57,6 @@ def build_dataloader(dataset, dataset_opt, num_gpu=1, dist=False, sampler=None, 
     """
     phase = dataset_opt['phase']
     rank, _ = get_dist_info()
-    accumulate = dataset_opt.get('accumulate', 1)
 
     # train
     if phase == 'train':
