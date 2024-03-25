@@ -1,5 +1,5 @@
 
-name: train_hdsrnet
+name: train_scnet
 model_type: default
 scale: 4
 use_amp: false
@@ -49,7 +49,9 @@ path:
   #strict_load_g: false # do not uncomment, read docs
 
 network_g:
-  type: hdsrnet
+  type: scnet
+  #type: scnet_l
+  #type: scnet_b
 
 network_d:
   type: unet

@@ -80,9 +80,10 @@ Please read the wiki [Configuration Walkthrough](https://github.com/muslll/neosr
 
 #### Under Testing
 
-| arch                                          		     | option               |
-|--------------------------------------------------------------------|----------------------|
-| [HDSRNet](https://github.com/hellloxiaotian/HDSRNet/)   	     | `hdsrnet`   	    |
+| arch                                          		     | option               	     |
+|--------------------------------------------------------------------|-------------------------------|
+| [HDSRNet](https://github.com/hellloxiaotian/HDSRNet/)   	     | `hdsrnet`   	    	     |
+| [SCNet](https://github.com/Aitical/SCNet)			     | `scnet`, `scnet_b`, `scnet_l` |
 
 
 ### Supported Discriminators:
