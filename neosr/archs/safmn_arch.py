@@ -1,8 +1,9 @@
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
+from torch import nn
 
 from neosr.utils.registry import ARCH_REGISTRY
+
 from .arch_util import net_opt
 
 upscale, training = net_opt()
@@ -10,11 +11,7 @@ upscale, training = net_opt()
 
 # Layer Norm
 class LayerNorm(nn.Module):
-
-    def __init__(self,
-                 normalized_shape,
-                 eps=1e-6,
-                 data_format="channels_first"):
+    def __init__(self, normalized_shape, eps=1e-6, data_format="channels_first"):
         super().__init__()
         self.weight = nn.Parameter(torch.ones(normalized_shape))
         self.bias = nn.Parameter(torch.zeros(normalized_shape))
@@ -26,8 +23,9 @@ class LayerNorm(nn.Module):
 
     def forward(self, x):
         if self.data_format == "channels_last":
-            return F.layer_norm(x, self.normalized_shape, self.weight,
-                                self.bias, self.eps)
+            return F.layer_norm(
+                x, self.normalized_shape, self.weight, self.bias, self.eps
+            )
         elif self.data_format == "channels_first":
             u = x.mean(1, keepdim=True)
             s = (x - u).pow(2).mean(1, keepdim=True)
@@ -38,7 +36,6 @@ class LayerNorm(nn.Module):
 
 # SE
 class SqueezeExcitation(nn.Module):
-
     def __init__(self, dim, shrinkage_rate=0.25):
         super().__init__()
         hidden_dim = int(dim * shrinkage_rate)
@@ -57,13 +54,15 @@ class SqueezeExcitation(nn.Module):
 
 # Channel MLP: Conv1*1 -> Conv1*1
 class ChannelMLP(nn.Module):
-
     def __init__(self, dim, growth_rate=2.0):
         super().__init__()
         hidden_dim = int(dim * growth_rate)
 
-        self.mlp = nn.Sequential(nn.Conv2d(dim, hidden_dim, 1, 1, 0), nn.GELU(),
-                                 nn.Conv2d(hidden_dim, dim, 1, 1, 0))
+        self.mlp = nn.Sequential(
+            nn.Conv2d(dim, hidden_dim, 1, 1, 0),
+            nn.GELU(),
+            nn.Conv2d(hidden_dim, dim, 1, 1, 0),
+        )
 
     def forward(self, x):
         return self.mlp(x)
@@ -71,16 +70,18 @@ class ChannelMLP(nn.Module):
 
 # MBConv: Conv1*1 -> DW Conv3*3 -> [SE] -> Conv1*1
 class MBConv(nn.Module):
-
     def __init__(self, dim, growth_rate=2.0):
         super().__init__()
         hidden_dim = int(dim * growth_rate)
 
         self.mbconv = nn.Sequential(
-            nn.Conv2d(dim, hidden_dim, 1, 1, 0), nn.GELU(),
+            nn.Conv2d(dim, hidden_dim, 1, 1, 0),
+            nn.GELU(),
             nn.Conv2d(hidden_dim, hidden_dim, 3, 1, 1, groups=hidden_dim),
-            nn.GELU(), SqueezeExcitation(hidden_dim),
-            nn.Conv2d(hidden_dim, dim, 1, 1, 0))
+            nn.GELU(),
+            SqueezeExcitation(hidden_dim),
+            nn.Conv2d(hidden_dim, dim, 1, 1, 0),
+        )
 
     def forward(self, x):
         return self.mbconv(x)
@@ -88,13 +89,15 @@ class MBConv(nn.Module):
 
 # CCM
 class CCM(nn.Module):
-
     def __init__(self, dim, growth_rate=2.0):
         super().__init__()
         hidden_dim = int(dim * growth_rate)
 
-        self.ccm = nn.Sequential(nn.Conv2d(dim, hidden_dim, 3, 1, 1), nn.GELU(),
-                                 nn.Conv2d(hidden_dim, dim, 1, 1, 0))
+        self.ccm = nn.Sequential(
+            nn.Conv2d(dim, hidden_dim, 3, 1, 1),
+            nn.GELU(),
+            nn.Conv2d(hidden_dim, dim, 1, 1, 0),
+        )
 
     def forward(self, x):
         return self.ccm(x)
@@ -102,7 +105,6 @@ class CCM(nn.Module):
 
 # SAFM
 class SAFM(nn.Module):
-
     def __init__(self, dim, n_levels=4):
         super().__init__()
         self.n_levels = n_levels
@@ -130,7 +132,7 @@ class SAFM(nn.Module):
                 p_size = (h // 2**i, w // 2**i)
                 s = F.adaptive_max_pool2d(xc[i], p_size)
                 s = self.mfr[i](s)
-                s = F.interpolate(s, size=(h, w), mode='nearest')
+                s = F.interpolate(s, size=(h, w), mode="nearest")
             else:
                 s = self.mfr[i](xc[i])
             out.append(s)
@@ -141,7 +143,6 @@ class SAFM(nn.Module):
 
 
 class AttBlock(nn.Module):
-
     def __init__(self, dim, ffn_scale=2.0):
         super().__init__()
 
@@ -159,24 +160,46 @@ class AttBlock(nn.Module):
         return x
 
 
+class BasicLayer(nn.Module):
+    def __init__(self, num_layer, dim, ffn_scale=2.0):
+        super().__init__()
+
+        self.layers = nn.Sequential(*[
+            AttBlock(dim, ffn_scale) for _ in range(num_layer)
+        ])
+        self.conv = nn.Conv2d(dim, dim, 3, 1, 1)
+
+    def forward(self, x):
+        return self.conv(self.layers(x)) + x
+
+
 @ARCH_REGISTRY.register()
 class safmn(nn.Module):
-
-    def __init__(self,
-                 dim=36,
-                 n_blocks=8,
-                 ffn_scale=2.0,
-                 upscaling_factor=upscale,
-                 **kwargs):
+    def __init__(
+        self,
+        dim=36,
+        n_blocks=8,
+        ffn_scale=2.0,
+        upscaling_factor=upscale,
+        bcie=False,
+        **kwargs,
+    ):
         super().__init__()
         self.to_feat = nn.Conv2d(3, dim, 3, 1, 1)
 
-        self.feats = nn.Sequential(
-            *[AttBlock(dim, ffn_scale) for _ in range(n_blocks)])
+        if bcie:
+            self.feats = nn.Sequential(*[
+                BasicLayer(num_layers, dim, ffn_scale) for _ in range(n_blocks)
+            ])
+        else:
+            self.feats = nn.Sequential(*[
+                AttBlock(dim, ffn_scale) for _ in range(n_blocks)
+            ])
 
         self.to_img = nn.Sequential(
             nn.Conv2d(dim, 3 * upscaling_factor**2, 3, 1, 1),
-            nn.PixelShuffle(upscaling_factor))
+            nn.PixelShuffle(upscaling_factor),
+        )
 
     def forward(self, x):
         x = self.to_feat(x)
