@@ -13,6 +13,7 @@ from torch.nn import functional as F
 from neosr.archs import build_network
 from neosr.losses import build_loss
 from neosr.optimizers import build_optimizer
+from neosr.losses.wavelet_guided import wavelet_guided
 from neosr.losses.loss_util import get_refined_artifact_map
 from neosr.metrics import calculate_metric
 
@@ -141,6 +142,18 @@ class default():
         else:
             self.cri_luma = None
 
+        # Wavelet Guided loss
+        self.wavelet_guided = self.opt["train"].get("wavelet_guided", False)
+        if self.wavelet_guided is True:
+            self.wg_pw = train_opt.get("wg_pw", 0.01)
+            self.wg_pw_lh = train_opt.get("wg_pw_lh", 0.01)
+            self.wg_pw_hl = train_opt.get("wg_pw_hl", 0.01)
+            self.wg_pw_hh = train_opt.get("wg_pw_hh", 0.05)
+        if train_opt.get("wavelet_guided", False) is True:
+            if self.cri_perceptual is None and self.cri_dists is None:
+                msg = "Please enable at least one perceptual loss with weight =>1.0 to use Wavelet Guided"
+                raise ValueError(msg)
+
         self.net_d_iters = train_opt.get('net_d_iters', 1)
         self.net_d_init_iters = train_opt.get('net_d_init_iters', 0)
 
@@ -243,14 +256,36 @@ class default():
             # lq match
             self.lq_interp = F.interpolate(self.lq, scale_factor=self.opt['scale'], mode='bicubic')
 
+            # wavelet guided loss
+            if self.wavelet_guided is True:
+                (
+                    LL,
+                    LH,
+                    HL,
+                    HH,
+                    combined_HF,
+                    LL_gt,
+                    LH_gt,
+                    HL_gt,
+                    HH_gt,
+                    combined_HF_gt,
+                ) = wavelet_guided(self.output, self.gt)
+
             l_g_total = 0
             loss_dict = OrderedDict()
 
             if (current_iter % self.net_d_iters == 0 and current_iter > self.net_d_init_iters):
                 # pixel loss
                 if self.cri_pix:
-                    l_g_pix = self.cri_pix(self.output, self.gt)
-                    l_g_total += l_g_pix
+                    if self.wavelet_guided is True:
+                        l_g_pix = self.wg_pw * self.cri_pix(LL, LL_gt)
+                        l_g_pix_lh = self.wg_pw_lh * self.cri_pix(LH, LH_gt)
+                        l_g_pix_hl = self.wg_pw_hl * self.cri_pix(HL, HL_gt)
+                        l_g_pix_hh = self.wg_pw_hh * self.cri_pix(HH, HH_gt)
+                        l_g_total = l_g_total + l_g_pix + l_g_pix_lh + l_g_pix_hl + l_g_pix_hh
+                    else:
+                        l_g_pix = self.cri_pix(self.output, self.gt)
+                        l_g_total += l_g_pix
                     loss_dict['l_g_pix'] = l_g_pix
                 # perceptual loss
                 if self.cri_perceptual:
@@ -327,12 +362,18 @@ class default():
 
                 if self.cri_gan:
                 # real
-                    real_d_pred = self.net_d(self.gt)
+                    if self.wavelet_guided is True:
+                        real_d_pred = self.net_d(combined_HF_gt)
+                    else:
+                        real_d_pred = self.net_d(self.gt)
                     l_d_real = self.cri_gan(real_d_pred, True, is_disc=True)
                     loss_dict['l_d_real'] = l_d_real
                     loss_dict['out_d_real'] = torch.mean(real_d_pred.detach())
                 # fake
-                    fake_d_pred = self.net_d(self.output.detach().clone())
+                    if self.wavelet_guided is True:
+                        fake_d_pred = self.net_d(combined_HF.detach().clone())
+                    else:
+                        fake_d_pred = self.net_d(self.output.detach().clone())
                     l_d_fake = self.cri_gan(fake_d_pred, False, is_disc=True)
                     loss_dict['l_d_fake'] = l_d_fake
                     loss_dict['out_d_fake'] = torch.mean(fake_d_pred.detach())

@@ -134,6 +134,7 @@ Please read the wiki [Configuration Walkthrough](https://github.com/muslll/neosr
 | [Focal Frequency](https://github.com/EndlessSora/focal-frequency-loss) | `ff_opt`, `focalfrequencyloss`            |
 | [Gradient Variance](https://github.com/lusinlu/gradient-variance-loss) | `gv_opt`, `gradvarloss`		     |
 | [DISTS](https://github.com/dingkeyan93/DISTS)				 | `dists_opt`, `dists`			     |
+| [Wavelet Guided](https://github.com/mandalinadagi/WGSR)		 | `wavelet_guided`			     |
 
 ## datasets
 

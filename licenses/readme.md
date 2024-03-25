@@ -30,3 +30,4 @@
 | [`Gradient Variance Loss`](https://github.com/lusinlu/gradient-variance-loss)			      | Unknown 												|
 | [DISTS](https://github.com/dingkeyan93/DISTS)							      | [MIT](https://github.com/dingkeyan93/DISTS/blob/master/LICENSE)						|
 | DISTS weights from [IQA-PyTorch](https://github.com/chaofengc/IQA-PyTorch)			      | [CC-NC-SA 4.0](https://github.com/chaofengc/IQA-PyTorch/blob/main/LICENSE)				|
+| [WGSR](https://github.com/mandalinadagi/WGSR)							      | Unknown													|
