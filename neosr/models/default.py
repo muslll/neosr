@@ -145,11 +145,13 @@ class default():
         # Wavelet Guided loss
         self.wavelet_guided = self.opt["train"].get("wavelet_guided", False)
         if self.wavelet_guided is True:
+            logger = get_root_logger()
+            logger.info('Wavelet-Guided loss enabled.')
             self.wg_pw = train_opt.get("wg_pw", 0.01)
             self.wg_pw_lh = train_opt.get("wg_pw_lh", 0.01)
             self.wg_pw_hl = train_opt.get("wg_pw_hl", 0.01)
             self.wg_pw_hh = train_opt.get("wg_pw_hh", 0.05)
-        if train_opt.get("wavelet_guided", False) is True:
+        if self.wavelet_guided is True:
             if self.cri_perceptual is None and self.cri_dists is None:
                 msg = "Please enable at least one perceptual loss with weight =>1.0 to use Wavelet Guided"
                 raise ValueError(msg)

@@ -92,7 +92,7 @@ train:
   gan_opt:
     type: GANLoss
     gan_type: vanilla
-    loss_weight: 0.05
+    loss_weight: 0.1
   #dists_opt:
   #  type: dists
   #  loss_weight: 0.5
