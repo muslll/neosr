@@ -10,7 +10,7 @@ from neosr.utils.registry import LOSS_REGISTRY
 
 
 class L2pooling(nn.Module):
-    def __init__(self, filter_size=5, stride=2, channels=None, pad_off=0):
+    def __init__(self, filter_size=5, stride=2, channels=None, as_loss=True, pad_off=0):
         super(L2pooling, self).__init__()
         self.padding = (filter_size - 2) // 2
         self.stride = stride
@@ -21,6 +21,10 @@ class L2pooling(nn.Module):
         self.register_buffer(
             "filter", g[None, None, :, :].repeat((self.channels, 1, 1, 1))
         )
+
+        if as_loss is False:
+            # send to cuda
+            self.filter = self.filter.cuda()
 
     def forward(self, input):
         input = input**2
@@ -48,7 +52,7 @@ class dists(nn.Module):
             Default: False.
     """
 
-    def __init__(self, as_loss=True, loss_weight=1.0, load_weights=False, **kwargs):
+    def __init__(self, as_loss=True, loss_weight=1.0, load_weights=True, **kwargs):
         super(dists, self).__init__()
         self.as_loss = as_loss
         self.loss_weight = loss_weight
@@ -61,16 +65,16 @@ class dists(nn.Module):
         self.stage5 = torch.nn.Sequential()
         for x in range(4):
             self.stage1.add_module(str(x), vgg_pretrained_features[x])
-        self.stage2.add_module(str(4), L2pooling(channels=64))
+        self.stage2.add_module(str(4), L2pooling(channels=64, as_loss=as_loss))
         for x in range(5, 9):
             self.stage2.add_module(str(x), vgg_pretrained_features[x])
-        self.stage3.add_module(str(9), L2pooling(channels=128))
+        self.stage3.add_module(str(9), L2pooling(channels=128, as_loss=as_loss))
         for x in range(10, 16):
             self.stage3.add_module(str(x), vgg_pretrained_features[x])
-        self.stage4.add_module(str(16), L2pooling(channels=256))
+        self.stage4.add_module(str(16), L2pooling(channels=256, as_loss=as_loss))
         for x in range(17, 23):
             self.stage4.add_module(str(x), vgg_pretrained_features[x])
-        self.stage5.add_module(str(23), L2pooling(channels=512))
+        self.stage5.add_module(str(23), L2pooling(channels=512, as_loss=as_loss))
         for x in range(24, 30):
             self.stage5.add_module(str(x), vgg_pretrained_features[x])
 
@@ -102,6 +106,11 @@ class dists(nn.Module):
 
             self.alpha.data = weights["alpha"]
             self.beta.data = weights["beta"]
+
+            if as_loss is False:
+                # send to cuda
+                self.alpha.data = self.alpha.data.cuda()
+                self.beta.data = self.beta.data.cuda()
 
     def forward_once(self, x):
         h = (x - self.mean) / self.std

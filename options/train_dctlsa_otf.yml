@@ -59,6 +59,9 @@ datasets:
 #      type: calculate_psnr
 #    ssim:
 #      type: calculate_ssim
+#    dists:
+#      type: calculate_dists
+#      better: lower
 
 resize_prob: [0.3, 0.4, 0.3] # up, down, keep
 resize_range: [0.5, 1.5]

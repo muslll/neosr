@@ -1,7 +1,10 @@
 import cv2
 import numpy as np
+import torch
 
 from neosr.metrics.metric_util import reorder_image, to_y_channel
+from neosr.losses.dists_loss import dists
+from neosr.utils.img_util import img2tensor
 from neosr.utils.registry import METRIC_REGISTRY
 
 
@@ -128,3 +131,23 @@ def _ssim(img, img2):
         ((mu1_sq + mu2_sq + c1) * (sigma1_sq + sigma2_sq + c2))
     return ssim_map.mean()
 
+
+@METRIC_REGISTRY.register()
+def calculate_dists(img, img2, **kwargs):
+    assert img.shape == img2.shape, (
+        f'Image shapes are different: {img.shape}, {img2.shape}.')
+
+    # to tensor
+    img, img2 = img2tensor([img, img2], bgr2rgb=True, float32=True, color=True)
+    # normalize to [0, 1]
+    img, img2 = img/255, img2/255
+    # add dim
+    img, img2 = img.unsqueeze_(0), img2.unsqueeze_(0)
+    # to cuda
+    device = torch.device("cuda")
+    img, img2 = img.to(device), img2.to(device)
+
+    loss = dists(as_loss=False)
+    loss = loss.forward(img, img2)
+
+    return loss

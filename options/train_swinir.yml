@@ -38,6 +38,9 @@ datasets:
 #      type: calculate_psnr
 #    ssim:
 #      type: calculate_ssim
+#    dists:
+#      type: calculate_dists
+#      better: lower
 
 path:
   #pretrain_network_g: 'experiments/pretrain.pth'
