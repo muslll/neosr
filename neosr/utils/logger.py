@@ -147,7 +147,6 @@ def init_wandb_logger(opt):
 
     logger.info(f'Use wandb logger with id={wandb_id}; project={project}.')
 
-
 def get_root_logger(logger_name='neosr', log_level=logging.INFO, log_file=None):
     """Get the root logger.
 
@@ -171,10 +170,9 @@ def get_root_logger(logger_name='neosr', log_level=logging.INFO, log_file=None):
     if logger_name in initialized_logger:
         return logger
 
-    current_time = datetime.datetime.now().strftime("%d.%m.%Y %I:%M %p |")
-    format_str = f'{current_time} %(levelname)s: %(message)s'
+    format_str = f'%(asctime)s %(levelname)s: %(message)s'
     stream_handler = logging.StreamHandler()
-    stream_handler.setFormatter(logging.Formatter(format_str))
+    stream_handler.setFormatter(logging.Formatter(format_str, datefmt='%d-%m-%Y %I:%M %p |'))
     logger.addHandler(stream_handler)
     logger.propagate = False
     rank, _ = get_dist_info()
