@@ -77,6 +77,7 @@ train:
   wavelet_guided: false
 
   # losses
+  wavelet_guided: false
   pixel_opt:
     type: chc
     loss_weight: 1.0
