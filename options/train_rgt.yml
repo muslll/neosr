@@ -2,7 +2,7 @@
 name: train_rgt
 model_type: default
 scale: 4
-use_amp: true
+use_amp: false
 bfloat16: false
 fast_matmul: false
 compile: false

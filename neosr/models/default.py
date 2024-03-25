@@ -302,7 +302,7 @@ class default():
                     l_g_total += l_g_gan
                     loss_dict['l_g_gan'] = l_g_gan
 
-        # add total loss for tensorboard tracking
+        # add total generator loss for tensorboard tracking
         loss_dict['l_g_total'] = l_g_total
                    
         # divide losses by accumulation factor
@@ -352,12 +352,24 @@ class default():
 
                 self.scaler.step(self.optimizer_d)
 
+            # add total discriminator loss for tensorboard tracking
+            loss_dict['l_d_total'] = (l_d_real + l_d_fake) / 2
+
         # update gradscaler and zero grads
         if (self.n_accumulated) % self.accum_iters == 0:
             self.scaler.update()
             self.optimizer_g.zero_grad(set_to_none=True)
             if self.opt.get('network_d', None) is not None:
                 self.optimizer_d.zero_grad(set_to_none=True)
+
+        # error if NaN
+        if torch.isnan(l_g_total):
+            msg = """
+                  NaN found, aborting training. Make sure you're using a proper learning rate.
+                  If you have AMP enabled, try using bfloat16. For more information:
+                  https://github.com/muslll/neosr/wiki/Configuration-Walkthrough
+                  """
+            raise ValueError(msg)
 
         self.log_dict = self.reduce_loss_dict(loss_dict)
 
