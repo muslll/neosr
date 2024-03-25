@@ -74,7 +74,6 @@ train:
 
   total_iter: 500000
   warmup_iter: -1  # no warm up
-  wavelet_guided: false
 
   # losses
   wavelet_guided: false
