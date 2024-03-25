@@ -28,3 +28,5 @@
 | [`ATD`](https://github.com/LabShuHangGU/Adaptive-Token-Dictionary)				      | [Apache 2.0](https://github.com/LabShuHangGU/Adaptive-Token-Dictionary/blob/main/LICENSE.txt)		|
 | [`patchgan`](https://github.com/NVIDIA/pix2pixHD) discriminator (pix2pixHD)			      | [BSD](https://github.com/NVIDIA/pix2pixHD/blob/master/LICENSE.txt)					|
 | [`Gradient Variance Loss`](https://github.com/lusinlu/gradient-variance-loss)			      | Unknown 												|
+| [DISTS](https://github.com/dingkeyan93/DISTS)							      | [MIT](https://github.com/dingkeyan93/DISTS/blob/master/LICENSE)						|
+| DISTS weights from [IQA-PyTorch](https://github.com/chaofengc/IQA-PyTorch)			      | [CC-NC-SA 4.0](https://github.com/chaofengc/IQA-PyTorch/blob/main/LICENSE)				|

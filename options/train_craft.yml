@@ -90,6 +90,9 @@ train:
     type: GANLoss
     gan_type: vanilla
     loss_weight: 0.1
+  #dists_opt:
+  #  type: dists
+  #  loss_weight: 0.5
   #ldl_opt:
   #  type: HuberLoss
   #  loss_weight: 1.0

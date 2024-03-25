@@ -73,6 +73,7 @@ Please read the wiki [Configuration Walkthrough](https://github.com/muslll/neosr
 | [CRAFT](https://github.com/AVC2-UESTC/CRAFT-SR)		 				    | `craft`			   			|
 | [SAFMN](https://github.com/sunny2109/SAFMN)							    | `safmn`, `safmn_l`				|
 | [RGT](https://github.com/zhengchen1999/RGT)							    | `rgt`, `rgt_s` 					|
+| [ATD](https://github.com/LabShuHangGU/Adaptive-Token-Dictionary)   				    | `atd`, `atd_light`   				|
 
 > [!NOTE]
 > For all arch-specific parameters, [read the wiki](https://github.com/muslll/neosr/wiki/Arch%E2%80%90specific-options).
@@ -81,7 +82,7 @@ Please read the wiki [Configuration Walkthrough](https://github.com/muslll/neosr
 
 | arch                                          		     | option               |
 |--------------------------------------------------------------------|----------------------|
-| [ATD](https://github.com/LabShuHangGU/Adaptive-Token-Dictionary)   | `atd`, `atd_light`   |
+| []()   | ``, ``   |
 
 
 ### Supported Discriminators:
@@ -132,6 +133,7 @@ Please read the wiki [Configuration Walkthrough](https://github.com/muslll/neosr
 | [LDL Loss](https://github.com/csjliang/LDL)                            | `ldl_opt`  			             |
 | [Focal Frequency](https://github.com/EndlessSora/focal-frequency-loss) | `ff_opt`, `focalfrequencyloss`            |
 | [Gradient Variance](https://github.com/lusinlu/gradient-variance-loss) | `gv_opt`, `gradvarloss`		     |
+| [DISTS](https://github.com/dingkeyan93/DISTS)				 | `dists_opt`, `dists`			     |
 
 ## datasets
 

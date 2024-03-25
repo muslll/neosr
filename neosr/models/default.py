@@ -102,7 +102,7 @@ class default():
         else:
             self.cri_dists = None
 
-        if self.cri_pix is None and self.cri_perceptual is None:
+        if self.cri_pix is None and self.cri_perceptual is None and self.cri_dists is None:
             raise ValueError('Both pixel and perceptual losses are None.')
 
         # GAN loss

@@ -1,3 +1,5 @@
+from os import path as osp
+
 import numpy as np
 import torch
 import torch.nn.functional as F
@@ -46,13 +48,7 @@ class dists(nn.Module):
             Default: False.
     """
 
-    def __init__(
-        self,
-        as_loss=True,
-        loss_weight=1.0,
-        load_weights=False,
-        **kwargs,
-    ):
+    def __init__(self, as_loss=True, loss_weight=1.0, load_weights=False, **kwargs):
         super(dists, self).__init__()
         self.as_loss = as_loss
         self.loss_weight = loss_weight
@@ -99,8 +95,11 @@ class dists(nn.Module):
         self.beta.data.normal_(0.1, 0.01)
 
         if load_weights:
-            # test
-            weights = torch.load("/tmp/DISTS_weights-f5e65c96.pth")
+            if osp.exists("neosr/losses/dists_weights.pth"):
+                weights = torch.load("neosr/losses/dists_weights.pth")
+            else:
+                weights = None
+
             self.alpha.data = weights["alpha"]
             self.beta.data = weights["beta"]
 
