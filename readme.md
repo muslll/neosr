@@ -82,7 +82,7 @@ Please read the wiki [Configuration Walkthrough](https://github.com/muslll/neosr
 
 | arch                                          		     | option               |
 |--------------------------------------------------------------------|----------------------|
-| []()   | ``, ``   |
+| [HDSRNet](https://github.com/hellloxiaotian/HDSRNet/)   	     | `hdsrnet`   	    |
 
 
 ### Supported Discriminators:
