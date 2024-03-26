@@ -194,6 +194,8 @@ class DropPath(nn.Module):
         super(DropPath, self).__init__()
         self.drop_prob = drop_prob
         self.scale_by_keep = scale_by_keep
+        __, training = net_opt()
+        self.training = training
 
     def forward(self, x):
         return drop_path(x, self.drop_prob, self.training, self.scale_by_keep)
