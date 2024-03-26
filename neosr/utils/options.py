@@ -145,7 +145,7 @@ def parse_options(root_path, is_train=True):
     group.add_argument('-opset', '--opset', type=int,
                         help='ONNX opset. (default: 17)', default=17)
 
-    group.add_argument('-static', '--static', type=str,
+    group.add_argument('-static', '--static', type=int, nargs=3,
                         help='Set static shape for ONNX conversion. Example: -static "3,640,640".', default=None)
 
     group.add_argument('-nocheck', '--nocheck', action='store_true',

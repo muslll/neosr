@@ -59,7 +59,10 @@ def load_net():
 
 
 def assert_verify(onnx_model, torch_model) -> None:
-    dummy_input = torch.randn(1, 3, 20, 20, requires_grad=True)
+    if args.static is not None:
+        dummy_input = torch.randn(1, *args.static, requires_grad=True)
+    else:
+        dummy_input = torch.randn(1, 3, 20, 20, requires_grad=True)
     # onnxruntime output prediction
     # NOTE: "CUDAExecutionProvider" errors if some nvidia libs
     # are not found, defaulting to cpu
@@ -90,8 +93,26 @@ def to_onnx() -> None:
     model = load_net()
     # set model to eval mode
     model.eval()
-    #if args.static:
-    dummy_input = torch.randn(1, 3, 20, 20, requires_grad=True)
+
+    # set static or dynamic
+    if args.static is not None:
+        dummy_input = torch.randn(1, *args.static, requires_grad=True)
+    else:
+        dummy_input = torch.randn(1, 3, 20, 20, requires_grad=True)
+
+    # dict for dynamic axes
+    if args.static is None:
+        dyn_axes = {
+        'dynamic_axes': {
+            'input': {0: 'batch_size', 2: 'width', 3: 'height'},
+            'output': {0: 'batch_size', 2: 'width', 3: 'height'},
+        },
+        'input_names': ["input"],
+        'output_names': ["output"],
+    }
+    else:
+        dyn_axes = None
+
     # add _fp32 suffix to output str
     filename, extension = osp.splitext(args.output)
     output_fp32 = filename + "_fp32" + extension
@@ -109,12 +130,7 @@ def to_onnx() -> None:
             export_params=True,
             opset_version=args.opset,
             do_constant_folding=False,
-            input_names=["input"],
-            output_names=["output"],
-            dynamic_axes={
-                "input": {0: "batch_size", 2: "width", 3: "height"},
-                "output": {0: "batch_size", 2: "width", 3: "height"},
-            },
+            **(dyn_axes or {}),
         )
 
     print("-------- Conversion was successful. Verifying...")
