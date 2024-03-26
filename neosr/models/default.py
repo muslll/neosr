@@ -623,7 +623,7 @@ class default():
         Args:
             net (nn.Module)
         """
-        if self.opt['use_amp'] is True:
+        if self.opt.get('use_amp', False) is True:
             net = net.to(self.device, non_blocking=True, memory_format=torch.channels_last)
         else:
             net = net.to(self.device, non_blocking=True)

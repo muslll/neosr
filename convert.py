@@ -51,7 +51,7 @@ def load_net():
 
     # load_network and send to device
     net.load_state_dict(load_net, strict=True)
-    net = net.to(device="cuda", non_blocking=True, memory_format=torch.channels_last)
+    net = net.to(device="cuda", non_blocking=True)
     print(f"-------- Successfully loaded network [{args.network}].")
     torch.cuda.empty_cache()
 
