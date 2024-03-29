@@ -178,6 +178,7 @@ class safmn(nn.Module):
     def __init__(
         self,
         dim=36,
+        num_layers=6,
         n_blocks=8,
         ffn_scale=2.0,
         upscaling_factor=upscale,

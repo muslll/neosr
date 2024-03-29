@@ -108,15 +108,15 @@ train:
   #  loss_weight: 0.5
   #  criterion: huber 
 
-#  match_lq: false
-#  color_opt:
-#    type: colorloss
-#    loss_weight: 1.0
-#    criterion: l1
-#  luma_opt:
-#    type: lumaloss
-#    loss_weight: 1.0
-#    criterion: l1
+  match_lq: false
+  color_opt:
+    type: colorloss
+    loss_weight: 1.0
+    criterion: l1
+  luma_opt:
+    type: lumaloss
+    loss_weight: 1.0
+    criterion: l1
 
 logger:
   print_freq: 100

@@ -89,6 +89,7 @@ path:
 network_g:
   type: safmn
   #type: safmn_l
+  #bcie: true
 
 
 network_d:

@@ -164,51 +164,38 @@ def img_rotate(img, angle, center=None, scale=1.0):
     return rotated_img
 
 
-'''
-
-# Code from CutBlur:
-# https://github.com/clovaai/cutblur
-
-def augmentations(
-    im1, im2,
-    augs, probs, alphas,
-    aux_prob=None, aux_alpha=None,
-    mix_p=None
-):
-    idx = np.random.choice(len(augs), p=mix_p)
-    aug = augs[idx]
-    prob = float(probs[idx])
-    alpha = float(alphas[idx])
-
-    if aug == "none":
-        im1_aug, im2_aug = im1.clone(), im2.clone()
-    elif aug == "cutblur":
-        im1_aug, im2_aug = cutblur(
-            im1.clone(), im2.clone(),
-            prob=prob, alpha=alpha
-        )
-    else:
-        raise ValueError("{} is not invalid.".format(aug))
-
-    return im1_aug, im2_aug, aug
-
-
 def cutblur(im1, im2, prob=1.0, alpha=1.0):
+    """
+    From ""Rethinking Data Augmentation for Image Super-resolution:
+    A Comprehensive Analysis and a New Strategy" - https://arxiv.org/abs/2004.00448
+    
+    Args:
+        img1, img2 (tensor): Images to be augmented. Expects shape N,C,H,W and same size.
+        prob (float): probability to apply the augmentation 
+        alpha (float): - 
+    """
+
     if im1.size() != im2.size():
         raise ValueError("im1 and im2 have to be the same resolution.")
 
-    if alpha <= 0 or np.random.rand(1) >= prob:
+    if alpha <= 0 or torch.rand(1) >= prob:
         return im1, im2
 
-    cut_ratio = np.random.randn() * 0.01 + alpha
+    cut_ratio = torch.randn(1) * 0.01 + alpha
 
     h, w = im2.size(2), im2.size(3)
     ch, cw = int(h*cut_ratio), int(w*cut_ratio)
-    cy = np.random.randint(0, h-ch+1)
-    cx = np.random.randint(0, w-cw+1)
 
-    # apply CutBlur to inside or outside
-    if np.random.random() > 0.5:
+    if ch > h:
+        ch = h
+    if cw > w:
+        cw = w
+
+    cy = torch.randint(0, h+1, (1,))
+    cx = torch.randint(0, w+1, (1,))
+
+    # apply cutblur to inside or outside
+    if torch.rand(1) > 0.5:
         im2[..., cy:cy+ch, cx:cx+cw] = im1[..., cy:cy+ch, cx:cx+cw]
     else:
         im2_aug = im1.clone()
@@ -216,5 +203,3 @@ def cutblur(im1, im2, prob=1.0, alpha=1.0):
         im2 = im2_aug
 
     return im1, im2
-'''
-

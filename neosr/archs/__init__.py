@@ -19,5 +19,5 @@ def build_network(opt):
     network_type = opt.pop('type')
     net = ARCH_REGISTRY.get(network_type)(**opt)
     logger = get_root_logger()
-    logger.info(f'Network [{net.__class__.__name__}] is created.')
+    logger.info(f'Using network [{net.__class__.__name__}].')
     return net

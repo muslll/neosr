@@ -144,14 +144,14 @@ class default():
 
         # Wavelet Guided loss
         self.wavelet_guided = self.opt["train"].get("wavelet_guided", False)
-        if self.wavelet_guided is True:
+        if self.wavelet_guided:
             logger = get_root_logger()
             logger.info('Wavelet-Guided loss enabled.')
             self.wg_pw = train_opt.get("wg_pw", 0.01)
             self.wg_pw_lh = train_opt.get("wg_pw_lh", 0.01)
             self.wg_pw_hl = train_opt.get("wg_pw_hl", 0.01)
             self.wg_pw_hh = train_opt.get("wg_pw_hh", 0.05)
-        if self.wavelet_guided is True:
+        if self.wavelet_guided:
             if self.cri_perceptual is None and self.cri_dists is None:
                 msg = "Please enable at least one perceptual loss with weight =>1.0 to use Wavelet Guided"
                 raise ValueError(msg)
@@ -259,7 +259,7 @@ class default():
             self.lq_interp = F.interpolate(self.lq, scale_factor=self.opt['scale'], mode='bicubic')
 
             # wavelet guided loss
-            if self.wavelet_guided is True:
+            if self.wavelet_guided:
                 (
                     LL,
                     LH,
@@ -279,7 +279,7 @@ class default():
             if (current_iter % self.net_d_iters == 0 and current_iter > self.net_d_init_iters):
                 # pixel loss
                 if self.cri_pix:
-                    if self.wavelet_guided is True:
+                    if self.wavelet_guided:
                         l_g_pix = self.wg_pw * self.cri_pix(LL, LL_gt)
                         l_g_pix_lh = self.wg_pw_lh * self.cri_pix(LH, LH_gt)
                         l_g_pix_hl = self.wg_pw_hl * self.cri_pix(HL, HL_gt)
@@ -364,7 +364,7 @@ class default():
 
                 if self.cri_gan:
                 # real
-                    if self.wavelet_guided is True:
+                    if self.wavelet_guided:
                         real_d_pred = self.net_d(combined_HF_gt)
                     else:
                         real_d_pred = self.net_d(self.gt)
@@ -372,7 +372,7 @@ class default():
                     loss_dict['l_d_real'] = l_d_real
                     loss_dict['out_d_real'] = torch.mean(real_d_pred.detach())
                 # fake
-                    if self.wavelet_guided is True:
+                    if self.wavelet_guided:
                         fake_d_pred = self.net_d(combined_HF.detach().clone())
                     else:
                         fake_d_pred = self.net_d(self.output.detach().clone())
