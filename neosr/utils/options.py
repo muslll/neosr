@@ -98,7 +98,7 @@ def _postprocess_yml_value(value):
     return value
 
 
-def parse_options(root_path, is_train=True):
+def parse_options(root_path, is_train=True, init_dist_launcher=False):
     parser = argparse.ArgumentParser(prog='neosr',
                         usage=argparse.SUPPRESS,
                         description='''-------- neosr command-line options --------''')
@@ -175,17 +175,18 @@ def parse_options(root_path, is_train=True):
         # parse yml to dict
         opt = yaml_load(args.opt)
 
-        # distributed settings
-        if args.launcher == 'none':
-            opt['dist'] = False
-        else:
-            opt['dist'] = True
-            if args.launcher == 'slurm' and 'dist_params' in opt:
-                init_dist(args.launcher, **opt['dist_params'])
+        # distributed settings, should only be run once
+        if init_dist_launcher == True:
+            if args.launcher == 'none':
+                opt['dist'] = False
             else:
-                init_dist(args.launcher)
-        opt['rank'], opt['world_size'] = get_dist_info()
-
+                opt['dist'] = True
+                if args.launcher == 'slurm' and 'dist_params' in opt:
+                    init_dist(args.launcher, **opt['dist_params'])
+                else:
+                    init_dist(args.launcher)
+            opt['rank'], opt['world_size'] = get_dist_info()
+    
         # random seed
         seed = opt.get('manual_seed')
         if seed is None:
