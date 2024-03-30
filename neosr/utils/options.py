@@ -115,7 +115,7 @@ def parse_options(root_path, is_train=True, init_dist_launcher=False):
 
     parser.add_argument('--debug', action='store_true')
 
-    parser.add_argument('--local_rank', type=int, default=0)
+    parser.add_argument('--local-rank', type=int, default=0)
 
     parser.add_argument('--force_yml', nargs='+', default=None,
                         help='Force to update yml files. Examples: train:total_iter=200000')
