@@ -132,7 +132,7 @@ def load_resume_state(opt):
 
 def train_pipeline(root_path):
     # parse options, set distributed setting, set random seed
-    opt, args = parse_options(root_path, is_train=True)
+    opt, args = parse_options(root_path, is_train=True, init_dist_launcher=True)
     opt["root_path"] = root_path
 
     # default device
