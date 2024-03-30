@@ -175,17 +175,16 @@ def parse_options(root_path, is_train=True, init_dist_launcher=False):
         # parse yml to dict
         opt = yaml_load(args.opt)
 
-        # distributed settings, should only be run once
-        if init_dist_launcher == True:
-            if args.launcher == 'none':
-                opt['dist'] = False
+        # distributed settings, init_dist can only be run once!
+        if args.launcher == 'none':
+            opt['dist'] = False
+        elif init_dist_launcher == True:
+            opt['dist'] = True
+            if args.launcher == 'slurm' and 'dist_params' in opt:
+                init_dist(args.launcher, **opt['dist_params'])
             else:
-                opt['dist'] = True
-                if args.launcher == 'slurm' and 'dist_params' in opt:
-                    init_dist(args.launcher, **opt['dist_params'])
-                else:
-                    init_dist(args.launcher)
-            opt['rank'], opt['world_size'] = get_dist_info()
+                init_dist(args.launcher)
+        opt['rank'], opt['world_size'] = get_dist_info()
     
         # random seed
         seed = opt.get('manual_seed')
