@@ -1,6 +1,7 @@
 from torch import autograd as autograd
 from torch import nn
 
+from neosr.losses.basic_loss import chc
 from neosr.utils.registry import LOSS_REGISTRY
 
 
@@ -30,6 +31,8 @@ class GANLoss(nn.Module):
             self.loss = nn.MSELoss()
         elif self.gan_type == 'huber':
             self.loss = nn.HuberLoss()
+        elif self.gan_type == 'chc':
+            self.loss = chc()
         else:
             raise NotImplementedError(
                 f'GAN type {self.gan_type} is not implemented.')

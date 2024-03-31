@@ -33,3 +33,4 @@
 | [`WGSR`](https://github.com/mandalinadagi/WGSR)						      | Unknown													|
 | [`HDSRNet`](https://github.com/hellloxiaotian/HDSRNet/)					      | Unknown													| 
 | [`SCNet`](https://github.com/Aitical/SCNet)							      | Unknown													|
+| [`CutBlur`](https://github.com/clovaai/cutblur/)						      | [MIT](https://github.com/clovaai/cutblur/blob/master/LICENSE)						|

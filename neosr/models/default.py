@@ -40,7 +40,8 @@ class default():
             self.print_network(self.net_g)
 
         # define network net_d
-        if self.opt.get('network_d', None) is not None:
+        self.net_d = self.opt.get('network_d', None)
+        if self.net_d is not None:
             self.net_d = build_network(self.opt['network_d'])
             self.net_d = self.model_to_device(self.net_d)
             if self.opt.get('print_network', False) is True:
@@ -66,7 +67,7 @@ class default():
     def init_training_settings(self):
         train_opt = self.opt['train']
         self.net_g.train()
-        if self.opt.get('network_d', None) is not None:
+        if self.net_d is not None:
             self.net_d.train()
             
         # for amp
@@ -102,9 +103,6 @@ class default():
                 train_opt['dists_opt']).to(self.device, memory_format=torch.channels_last, non_blocking=True)
         else:
             self.cri_dists = None
-
-        if self.cri_pix is None and self.cri_perceptual is None and self.cri_dists is None:
-            raise ValueError('Both pixel and perceptual losses are None.')
 
         # GAN loss
         if train_opt.get('gan_opt'):
@@ -151,10 +149,27 @@ class default():
             self.wg_pw_lh = train_opt.get("wg_pw_lh", 0.01)
             self.wg_pw_hl = train_opt.get("wg_pw_hl", 0.01)
             self.wg_pw_hh = train_opt.get("wg_pw_hh", 0.05)
+
+        # error handling
+        optim_d = self.opt["train"].get("optim_d", None)
+        if self.cri_pix is None and self.cri_perceptual is None and self.cri_dists is None:
+            raise ValueError('Both pixel and perceptual losses are None.')
         if self.wavelet_guided:
             if self.cri_perceptual is None and self.cri_dists is None:
                 msg = "Please enable at least one perceptual loss with weight =>1.0 to use Wavelet Guided"
                 raise ValueError(msg)
+        if self.net_d is None and optim_d is not None:
+            msg = "Please set a discriminator in network_d or disable optim_d."
+            raise ValueError(msg)
+        if self.net_d is not None and optim_d is None:
+            msg = "Please set an optimizer for the discriminator or disable network_d."
+            raise ValueError(msg)
+        if self.net_d is not None and self.cri_gan is None:
+            msg = "Discriminator needs GAN to be enabled."
+            raise ValueError(msg)
+        if self.net_d is None and self.cri_gan is not None:
+            msg = "GAN requires a discriminator to be set."
+            raise ValueError(msg)
 
         self.net_d_iters = train_opt.get('net_d_iters', 1)
         self.net_d_init_iters = train_opt.get('net_d_init_iters', 0)
@@ -194,7 +209,7 @@ class default():
             optim_type, optim_params, **train_opt['optim_g'])
         self.optimizers.append(self.optimizer_g)
         # optimizer d
-        if self.opt.get('network_d', None) is not None:
+        if self.net_d is not None:
             optim_type = train_opt['optim_d'].pop('type')
             self.optimizer_d = self.get_optimizer(
                 optim_type, self.net_d.parameters(), **train_opt['optim_d'])
@@ -241,10 +256,9 @@ class default():
 
     def optimize_parameters(self, current_iter):
 
-        if self.opt.get('network_d', None) is not None:
+        if self.net_d is not None:
             for p in self.net_d.parameters():
                 p.requires_grad = False
-
 
         # increment accumulation counter
         self.n_accumulated += 1
@@ -356,7 +370,7 @@ class default():
             self.scaler.step(self.optimizer_g)
 
         # optimize net_d
-        if self.opt.get('network_d', None) is not None:
+        if self.net_d is not None:
             for p in self.net_d.parameters():
                 p.requires_grad = True
 
@@ -402,7 +416,7 @@ class default():
         if (self.n_accumulated) % self.accum_iters == 0:
             self.scaler.update()
             self.optimizer_g.zero_grad(set_to_none=True)
-            if self.opt.get('network_d', None) is not None:
+            if self.net_d is not None:
                 self.optimizer_d.zero_grad(set_to_none=True)
 
         # error if NaN
@@ -816,7 +830,7 @@ class default():
         """Save networks and training state."""
         self.save_network(self.net_g, 'net_g', current_iter)
 
-        if self.opt.get('network_d', None) is not None:
+        if self.net_d is not None:
             self.save_network(self.net_d, 'net_d', current_iter)
 
         self.save_training_state(epoch, current_iter)

@@ -104,21 +104,6 @@ Please read the wiki [Configuration Walkthrough](https://github.com/muslll/neosr
 | [LAMB](https://arxiv.org/abs/1904.00962)                                  | `Lamb` or `lamb`   |
 | [Adan](https://github.com/sail-sg/Adan)                                   | `Adan` or `adan`   |
 
-### Supported models:
-
-| model   | description                                                            | option    |
-|---------|------------------------------------------------------------------------|-----------|
-| Default | Base model, supports both Generator and Discriminator                  | `default` |
-| OTF     | Builds on top of `default`, adding Real-ESRGAN on-the-fly degradations | `otf`     |
-
-### Supported dataset loaders:
-
-| loader                                          | option   |
-|-------------------------------------------------|----------|
-| Paired datasets                                 | `paired` |
-| Single datasets (for inference, no GT required) | `single` |
-| Real-ESRGAN on-the-fly degradation              | `otf`    |
-
 ### Supported losses:
 
 | loss                                                                   | option               		     |
@@ -136,6 +121,29 @@ Please read the wiki [Configuration Walkthrough](https://github.com/muslll/neosr
 | [Gradient Variance](https://github.com/lusinlu/gradient-variance-loss) | `gv_opt`, `gradvarloss`		     |
 | [DISTS](https://github.com/dingkeyan93/DISTS)				 | `dists_opt`, `dists`			     |
 | [Wavelet Guided](https://github.com/mandalinadagi/WGSR)		 | `wavelet_guided`			     |
+
+### Supported Augmentations:
+
+| augmentation						| option	|
+|-------------------------------------------------------|---------------|
+| Rotation						| `rot`		|
+| Flip							| `flip`	|
+| [CutBlur](https://github.com/clovaai/cutblur/)	| `cutblur`	|
+
+### Supported models:
+
+| model   | description                                                            | option    |
+|---------|------------------------------------------------------------------------|-----------|
+| Default | Base model, supports both Generator and Discriminator                  | `default` |
+| OTF     | Builds on top of `default`, adding Real-ESRGAN on-the-fly degradations | `otf`     |
+
+### Supported dataset loaders:
+
+| loader                                          | option   |
+|-------------------------------------------------|----------|
+| Paired datasets                                 | `paired` |
+| Single datasets (for inference, no GT required) | `single` |
+| Real-ESRGAN on-the-fly degradation              | `otf`    |
 
 ## datasets
 
