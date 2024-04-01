@@ -191,6 +191,8 @@ def parse_options(root_path, is_train=True):
         if seed is None:
             seed = random.randint(1024, 10000)
             opt['manual_seed'] = seed
+            torch.backends.cudnn.benchmark = True
+            torch.backends.cudnn.benchmark_limit = 0
         else:
             # Determinism
             os.environ['PYTHONHASHSEED'] = str(seed)

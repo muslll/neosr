@@ -123,7 +123,7 @@ def basic_augment(
     All the images in the list use the same augmentation.
 
     Args:
-        imgs (list[tensor] | tensor): Images to be augmented. If the input
+        imgs (list[ndarray] | ndarray): Images to be augmented. If the input
             is an ndarray, it will be transformed to a list.
         hflip (bool): Horizontal flip. Default: True.
         rotation (bool): Ratotation. Default: True.

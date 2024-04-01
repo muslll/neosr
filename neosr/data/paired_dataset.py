@@ -119,7 +119,7 @@ class paired(data.Dataset):
                     f"File client error: {e} in paths {gt_path}, {lq_path}, remaining retry times: {retry - 1}"
                 )
                 # change another file to read
-                index = random.randint(0, len(self))
+                index = random.randint(0, self.__len__())
                 gt_path = gt_path[index]
                 time.sleep(1)  # sleep 1s for occasional server congestion
             else:
@@ -130,11 +130,11 @@ class paired(data.Dataset):
         # augmentation for training
         if self.opt["phase"] == "train":
             gt_size = self.opt["gt_size"]
-            scale = self.opt["scale"]
             aug = self.opt.get("augmentation", "rot, flip")
             aug_prob = self.opt.get("aug_prob", [0.5, 0.5])
             flip = "flip" in aug or self.opt.get("use_hflip", False)
             rot = "rot" in aug or self.opt.get("use_rot", False)
+
             # random crop
             img_gt, img_lq = paired_random_crop(img_gt, img_lq, gt_size, scale, gt_path)
             # flip, rotation
@@ -161,25 +161,23 @@ class paired(data.Dataset):
             normalize(img_gt, self.mean, self.std, inplace=True)
 
         # augmentations
-        if self.opt["phase"] == "train":
-            # cutblur
-            if "cutblur" in aug:
-                # add dim and match sizes
-                img_gt, img_lq = img_gt.unsqueeze(0), img_lq.unsqueeze(0)
-                if scale > 1:
-                    img_lq = F.interpolate(img_lq, scale_factor=scale, mode="nearest")
+        if self.opt["phase"] == "train" and "cutblur" in aug:
+            # add dim and match sizes
+            img_gt, img_lq = img_gt.unsqueeze(0), img_lq.unsqueeze(0)
+            if scale > 1:
+                img_lq = F.interpolate(img_lq, scale_factor=scale, mode="nearest")
 
-                # run cutblur
-                # NOTE: requires cpu due to cuda with multiprocessing not working together
-                with torch.device("cpu"):
-                    img_gt, img_lq = cutblur(img_gt, img_lq, prob=aug_prob[2])
+            # run cutblur
+            # NOTE: requires cpu due to cuda with multiprocessing not working together
+            with torch.device("cpu"):
+                img_gt, img_lq = cutblur(img_gt, img_lq, prob=aug_prob[2])
 
-                # back to original dim and size
-                if scale > 1:
-                    img_lq = F.interpolate(
-                        img_lq, scale_factor=1 / scale, mode="nearest"
-                    )
-                img_gt, img_lq = img_gt.squeeze(0), img_lq.squeeze(0)
+            # back to original dim and size
+            if scale > 1:
+                img_lq = F.interpolate(
+                    img_lq, scale_factor=1 / scale, mode="nearest"
+                )
+            img_gt, img_lq = img_gt.squeeze(0), img_lq.squeeze(0)
 
         return {"lq": img_lq, "gt": img_gt, "lq_path": lq_path, "gt_path": gt_path}
 

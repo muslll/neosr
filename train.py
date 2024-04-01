@@ -138,16 +138,6 @@ def train_pipeline(root_path):
     # default device
     torch.set_default_device("cuda")
 
-    # manual seed is set automatically, so we can't do a "is not None"
-    # condition. Hardcoding 1024 for now.
-    manual_seed_opt = opt.get("manual_seed", None)
-
-    if manual_seed_opt == 1024:
-        torch.backends.cudnn.benchmark = False
-    else:
-        torch.backends.cudnn.benchmark = True
-        torch.backends.cudnn.benchmark_limit = 0
-
     # enable tensorfloat32 and possibly bfloat16 matmul
     fast_matmul = opt.get("fast_matmul", False)
     if fast_matmul:
