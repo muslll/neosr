@@ -90,9 +90,9 @@ Please read the wiki [Configuration Walkthrough](https://github.com/muslll/neosr
 
 | net                               				  | option 		        |
 |-----------------------------------------------------------------|-----------------------------|
-| U-Net SN 							  | `unet` 		        |
-| [A2-FPN](https://github.com/lironui/A2-FPN)			  | `a2fpn`			|
-| [PatchGAN w/ SN](https://github.com/NVIDIA/pix2pixHD)		  | `patchgan`			|
+| U-Net w/ SN 							  | `unet` 		        |
+| [A2-FPN](https://github.com/lironui/A2-FPN) w/ SN		  | `a2fpn`			|
+| [PatchGAN](https://github.com/NVIDIA/pix2pixHD) w/ SN		  | `patchgan`			|
 
 ### Supported Optimizers:
 
@@ -100,6 +100,7 @@ Please read the wiki [Configuration Walkthrough](https://github.com/muslll/neosr
 |---------------------------------------------------------------------------|--------------------|
 | [Adam](https://pytorch.org/docs/stable/generated/torch.optim.Adam.html)   | `Adam` or `adam`   |
 | [AdamW](https://pytorch.org/docs/stable/generated/torch.optim.AdamW.html) | `AdamW` or `adamw` |
+| [NAdam](https://pytorch.org/docs/stable/generated/torch.optim.NAdam.html) | `NAdam` or `nadam` |
 | [Lion](https://arxiv.org/abs/2302.06675)                                  | `Lion` or `lion`   |
 | [LAMB](https://arxiv.org/abs/1904.00962)                                  | `Lamb` or `lamb`   |
 | [Adan](https://github.com/sail-sg/Adan)                                   | `Adan` or `adan`   |

@@ -48,7 +48,7 @@ class paired(data.Dataset):
         # mean and std for normalizing the input images
         self.mean = opt["mean"] if "mean" in opt else None
         self.std = opt["std"] if "std" in opt else None
-        self.color = False if "color" in self.opt and self.opt["color"] == "y" else True
+        self.color = not self.opt.get("color", None) == "y"
 
         self.gt_folder, self.lq_folder = opt["dataroot_gt"], opt["dataroot_lq"]
         self.filename_tmpl = opt["filename_tmpl"] if "filename_tmpl" in opt else "{}"
@@ -163,9 +163,10 @@ class paired(data.Dataset):
         # augmentations
         if self.opt["phase"] == "train" and "cutblur" in aug:
             # add dim and match sizes
+            modes = ['nearest', 'bilinear', 'bicubic', 'area', 'nearest-exact']
             img_gt, img_lq = img_gt.unsqueeze(0), img_lq.unsqueeze(0)
             if scale > 1:
-                img_lq = F.interpolate(img_lq, scale_factor=scale, mode="nearest")
+                img_lq = F.interpolate(img_lq, scale_factor=scale, mode=random.choice(modes))
 
             # run cutblur
             # NOTE: requires cpu due to cuda with multiprocessing not working together
@@ -175,7 +176,7 @@ class paired(data.Dataset):
             # back to original dim and size
             if scale > 1:
                 img_lq = F.interpolate(
-                    img_lq, scale_factor=1 / scale, mode="nearest"
+                    img_lq, scale_factor=1 / scale, mode=random.choice(modes)
                 )
             img_gt, img_lq = img_gt.squeeze(0), img_lq.squeeze(0)
 

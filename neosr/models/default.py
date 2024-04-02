@@ -183,6 +183,8 @@ class default():
             optimizer = torch.optim.Adam(params, lr, **kwargs)
         elif optim_type in {'AdamW', 'adamw'}:
             optimizer = torch.optim.AdamW(params, lr, **kwargs)
+        elif optim_type in {'NAdam', 'nadam'}:
+            optimizer = torch.optim.NAdam(params, lr, **kwargs)
         elif optim_type in {'Adan', 'adan'}:
             optimizer = pytorch_optimizer.Adan(params, lr, **kwargs)
         elif optim_type in {'Lamb', 'lamb'}:
