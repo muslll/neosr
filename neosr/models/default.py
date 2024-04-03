@@ -15,6 +15,7 @@ from neosr.losses import build_loss
 from neosr.optimizers import build_optimizer
 from neosr.losses.wavelet_guided import wavelet_guided
 from neosr.losses.loss_util import get_refined_artifact_map
+from neosr.data.augmentations import apply_augment
 from neosr.metrics import calculate_metric
 
 from neosr.utils import get_root_logger, imwrite, tensor2img
@@ -65,17 +66,26 @@ class default():
             self.init_training_settings()
 
     def init_training_settings(self):
+
+        # options var
         train_opt = self.opt['train']
+
+        # set nets to training mode
         self.net_g.train()
         if self.net_d is not None:
             self.net_d.train()
+
+        # scale ratio var
+        self.scale = self.opt['scale'] 
+
+        # augmentations
+        self.aug = self.opt["datasets"]["train"].get("augmentation", None)
+        self.aug_prob = self.opt["datasets"]["train"].get("aug_prob", None)
             
         # for amp
         self.use_amp = self.opt.get('use_amp', False) is True
         self.amp_dtype = torch.bfloat16 if self.opt.get('bfloat16', False) is True else torch.float16
-
-        # initialise GradScaler
-        self.scaler = torch.cuda.amp.GradScaler(enabled = self.use_amp, init_scale=2.**5)
+        self.gradscaler = torch.cuda.amp.GradScaler(enabled = self.use_amp, init_scale=2.**5)
 
         # LQ matching for Color/Luma losses
         self.match_lq = self.opt['train'].get('match_lq', False)
@@ -149,6 +159,9 @@ class default():
             self.wg_pw_lh = train_opt.get("wg_pw_lh", 0.01)
             self.wg_pw_hl = train_opt.get("wg_pw_hl", 0.01)
             self.wg_pw_hh = train_opt.get("wg_pw_hh", 0.05)
+
+        # gradient clipping
+        self.gradclip = self.opt["train"].get("grad_clip", True)
 
         # error handling
         optim_d = self.opt["train"].get("optim_d", None)
@@ -272,7 +285,7 @@ class default():
 
             self.output = self.net_g(self.lq)
             # lq match
-            self.lq_interp = F.interpolate(self.lq, scale_factor=self.opt['scale'], mode='bicubic')
+            self.lq_interp = F.interpolate(self.lq, scale_factor=self.scale, mode='bicubic')
 
             # wavelet guided loss
             if self.wavelet_guided:
@@ -360,16 +373,15 @@ class default():
                    
         # divide losses by accumulation factor
         l_g_total = l_g_total / self.accum_iters
-        self.scaler.scale(l_g_total).backward()
+        self.gradscaler.scale(l_g_total).backward()
 
-        # clip and step() generator 
         if (self.n_accumulated) % self.accum_iters == 0:
             # gradient clipping on generator
-            if self.opt["train"].get("grad_clip", True):
-                self.scaler.unscale_(self.optimizer_g)
+            if self.gradclip:
+                self.gradscaler.unscale_(self.optimizer_g)
                 torch.nn.utils.clip_grad_norm_(self.net_g.parameters(), 1.0, error_if_nonfinite=False)
 
-            self.scaler.step(self.optimizer_g)
+            self.gradscaler.step(self.optimizer_g)
 
         # optimize net_d
         if self.net_d is not None:
@@ -399,24 +411,24 @@ class default():
             if self.cri_gan:
                 l_d_real = l_d_real / self.accum_iters
                 l_d_fake = l_d_fake / self.accum_iters
-                self.scaler.scale(l_d_real).backward()
-                self.scaler.scale(l_d_fake).backward()
+                self.gradscaler.scale(l_d_real).backward()
+                self.gradscaler.scale(l_d_fake).backward()
 
             # clip and step() discriminator
             if (self.n_accumulated) % self.accum_iters == 0:
                 # gradient clipping on discriminator
-                if self.opt["train"].get("grad_clip", True):
-                    self.scaler.unscale_(self.optimizer_d)
+                if self.gradclip:
+                    self.gradscaler.unscale_(self.optimizer_d)
                     torch.nn.utils.clip_grad_norm_(self.net_d.parameters(), 1.0, error_if_nonfinite=False)
 
-                self.scaler.step(self.optimizer_d)
+                self.gradscaler.step(self.optimizer_d)
 
             # add total discriminator loss for tensorboard tracking
             loss_dict['l_d_total'] = (l_d_real + l_d_fake) / 2
 
         # update gradscaler and zero grads
         if (self.n_accumulated) % self.accum_iters == 0:
-            self.scaler.update()
+            self.gradscaler.update()
             self.optimizer_g.zero_grad(set_to_none=True)
             if self.net_d is not None:
                 self.optimizer_d.zero_grad(set_to_none=True)
@@ -521,7 +533,7 @@ class default():
             # overlapping
             shave_h = 16
             shave_w = 16
-            scale = self.opt.get('scale', 1)
+            scale = self.scale # self.opt.get('scale', 1)
             ral = H // split_h
             row = W // split_w
             slices = []  # list of partition borders
@@ -581,6 +593,10 @@ class default():
         self.lq = data['lq'].to(self.device, memory_format=torch.channels_last, non_blocking=True)
         if 'gt' in data:
             self.gt = data['gt'].to(self.device, memory_format=torch.channels_last, non_blocking=True)
+
+        # augmentation
+        if self.opt["train"] is not None and self.aug is not None:
+            self.gt, self.lq = apply_augment(self.gt, self.lq, scale=self.scale, augs=self.aug, prob=self.aug_prob)
 
     def dist_validation(self, dataloader, current_iter, tb_logger, save_img):
         if self.opt['rank'] == 0:

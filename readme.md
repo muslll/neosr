@@ -127,8 +127,11 @@ Please read the wiki [Configuration Walkthrough](https://github.com/muslll/neosr
 
 | augmentation						| option	|
 |-------------------------------------------------------|---------------|
-| Rotation						| `rot`		|
-| Flip							| `flip`	|
+| Rotation						| `use_rot`	|
+| Flip							| `use_hflip`	|
+| [MixUp](https://arxiv.org/abs/1710.09412)		| `mixup`	|
+| [CutMix](https://arxiv.org/abs/1905.04899)		| `cutmix`	|
+| [ResizeMix](https://arxiv.org/abs/2012.11101)		| `resizemix`	|
 | [CutBlur](https://github.com/clovaai/cutblur/)	| `cutblur`	|
 
 ### Supported models:

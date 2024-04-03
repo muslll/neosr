@@ -7,7 +7,7 @@ from torch.utils import data
 from torchvision.transforms.functional import normalize
 
 from neosr.data.data_util import paired_paths_from_folder, paired_paths_from_lmdb
-from neosr.data.transforms import basic_augment, cutblur, paired_random_crop
+from neosr.data.transforms import basic_augment, paired_random_crop
 from neosr.utils import FileClient, get_root_logger, imfrombytes, img2tensor
 from neosr.utils.registry import DATASET_REGISTRY
 
@@ -130,10 +130,8 @@ class paired(data.Dataset):
         # augmentation for training
         if self.opt["phase"] == "train":
             gt_size = self.opt["gt_size"]
-            aug = self.opt.get("augmentation", "rot, flip")
-            aug_prob = self.opt.get("aug_prob", [0.5, 0.5])
-            flip = "flip" in aug or self.opt.get("use_hflip", False)
-            rot = "rot" in aug or self.opt.get("use_rot", False)
+            flip = self.opt.get("use_hflip", True)
+            rot = self.opt.get("use_rot", True)
 
             # random crop
             img_gt, img_lq = paired_random_crop(img_gt, img_lq, gt_size, scale, gt_path)
@@ -142,8 +140,6 @@ class paired(data.Dataset):
                 [img_gt, img_lq],
                 hflip=flip,
                 rotation=rot,
-                flip_prob=aug_prob[1],
-                rotation_prob=aug_prob[0],
             )
 
         # crop the unmatched GT images during validation or testing
@@ -159,26 +155,6 @@ class paired(data.Dataset):
         if self.mean is not None or self.std is not None:
             normalize(img_lq, self.mean, self.std, inplace=True)
             normalize(img_gt, self.mean, self.std, inplace=True)
-
-        # augmentations
-        if self.opt["phase"] == "train" and "cutblur" in aug:
-            # add dim and match sizes
-            modes = ['nearest', 'bilinear', 'bicubic', 'area', 'nearest-exact']
-            img_gt, img_lq = img_gt.unsqueeze(0), img_lq.unsqueeze(0)
-            if scale > 1:
-                img_lq = F.interpolate(img_lq, scale_factor=scale, mode=random.choice(modes))
-
-            # run cutblur
-            # NOTE: requires cpu due to cuda with multiprocessing not working together
-            with torch.device("cpu"):
-                img_gt, img_lq = cutblur(img_gt, img_lq, prob=aug_prob[2])
-
-            # back to original dim and size
-            if scale > 1:
-                img_lq = F.interpolate(
-                    img_lq, scale_factor=1 / scale, mode=random.choice(modes)
-                )
-            img_gt, img_lq = img_gt.squeeze(0), img_lq.squeeze(0)
 
         return {"lq": img_lq, "gt": img_gt, "lq_path": lq_path, "gt_path": gt_path}
 

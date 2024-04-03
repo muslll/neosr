@@ -185,6 +185,10 @@ class otf(default):
             if 'gt' in data:
                 self.gt = data['gt'].to(device=self.device, memory_format=torch.channels_last, non_blocking=True)
 
+        # augmentation
+        if self.opt["train"] is not None and self.aug is not None:
+            self.gt, self.lq = apply_augment(self.gt, self.lq, scale=self.scale, augs=self.aug, prob=self.aug_prob)
+
     def nondist_validation(self, dataloader, current_iter, tb_logger, save_img):
         # do not use the synthetic process during validation
         self.is_train = False
