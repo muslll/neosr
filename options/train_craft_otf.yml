@@ -91,7 +91,7 @@ path:
 
 network_g:
   type: craft
-  #flash_attn: false
+  #flash_attn: true
 
 network_d:
   type: unet

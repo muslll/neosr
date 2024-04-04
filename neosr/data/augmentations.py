@@ -136,12 +136,11 @@ def resizemix(img_gt, img_lq, scope=(0.2, 0.9)):
     bbx1, bby1, bbx2, bby2 = rand_bbox_tao(img_gt.size(), tao)
 
     # resize
-    modes = ["nearest-exact", "bilinear", "bicubic"]
     img_gt_resize = F.interpolate(
-        img_gt_resize, (bby2 - bby1, bbx2 - bbx1), mode=random.choice(modes)
+        img_gt_resize, (bby2 - bby1, bbx2 - bbx1), mode="bicubic"
     )
     img_lq_resize = F.interpolate(
-        img_lq_resize, (bby2 - bby1, bbx2 - bbx1), mode=random.choice(modes)
+        img_lq_resize, (bby2 - bby1, bbx2 - bbx1), mode="bicubic"
     )
 
     # mix
@@ -229,7 +228,7 @@ def apply_augment(
         raise ValueError(msg)
 
     # match resolutions
-    modes = ["nearest-exact", "bilinear", "bicubic"]
+    modes = ["bilinear", "bicubic"]
     if scale > 1:
         img_lq = F.interpolate(img_lq, scale_factor=scale, mode=random.choice(modes))
 
@@ -267,6 +266,6 @@ def apply_augment(
 
     # back to original resolution
     if scale > 1:
-        img_lq = F.interpolate(img_lq, scale_factor=1 / scale, mode=random.choice(modes))
+        img_lq = F.interpolate(img_lq, scale_factor=1 / scale, mode="bicubic")
 
     return img_gt, img_lq

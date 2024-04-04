@@ -642,7 +642,7 @@ class craft(nn.Module):
                  split_size_0 = 4,
                  split_size_1 = 16,
                  mlp_ratio=2.,
-                 flash_attn=True,
+                 flash_attn=False,
                  qkv_bias=True,
                  qk_scale=None,
                  norm_layer=nn.LayerNorm,
