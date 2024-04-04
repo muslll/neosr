@@ -229,7 +229,7 @@ def apply_augment(
 
     # match resolutions
     if scale > 1:
-        img_lq = F.interpolate(img_lq, scale_factor=scale, mode="nearest-exact")
+        img_lq = F.interpolate(img_lq, scale_factor=scale, mode="nearest")
 
     if rng.random() < multi_prob:
         num_augs = rng.integers(2, len(augs)) if len(augs) > 2 else len(augs)
@@ -241,30 +241,30 @@ def apply_augment(
             weighted.remove(choice[0])
 
         if "cutmix" in aug:
-            img_gt, img_lq = cutmix(img_gt.clone(), img_lq.clone())
+            img_gt, img_lq = cutmix(img_gt, img_lq)
         if "mixup" in aug:
-            img_gt, img_lq = mixup(img_gt.clone(), img_lq.clone())
+            img_gt, img_lq = mixup(img_gt, img_lq)
         if "resizemix" in aug:
-            img_gt, img_lq = resizemix(img_gt.clone(), img_lq.clone())
+            img_gt, img_lq = resizemix(img_gt, img_lq)
         if "cutblur" in aug:
-            img_gt, img_lq = cutblur(img_gt.clone(), img_lq.clone())
+            img_gt, img_lq = cutblur(img_gt, img_lq)
 
     else:
         idx = random.choices(range(len(augs)), weights=prob)[0]
         aug = augs[idx]
         if "cutmix" in aug:
-            img_gt, img_lq = cutmix(img_gt.clone(), img_lq.clone())
+            img_gt, img_lq = cutmix(img_gt, img_lq)
         elif "mixup" in aug:
-            img_gt, img_lq = mixup(img_gt.clone(), img_lq.clone())
+            img_gt, img_lq = mixup(img_gt, img_lq)
         elif "resizemix" in aug:
-            img_gt, img_lq = resizemix(img_gt.clone(), img_lq.clone())
+            img_gt, img_lq = resizemix(img_gt, img_lq)
         elif "cutblur" in aug:
-            img_gt, img_lq = cutblur(img_gt.clone(), img_lq.clone())
+            img_gt, img_lq = cutblur(img_gt, img_lq)
         else:
             pass
 
     # back to original resolution
     if scale > 1:
-        img_lq = F.interpolate(img_lq, scale_factor=1 / scale, mode="nearest-exact")
+        img_lq = F.interpolate(img_lq, scale_factor=1 / scale, mode="nearest")
 
     return img_gt, img_lq

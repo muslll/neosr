@@ -179,15 +179,14 @@ class otf(default):
             self._dequeue_and_enqueue()
             # for the warning: grad and param do not obey the gradient layout contract
             self.lq = self.lq.contiguous()
+            # augmentation
+            if self.aug is not None:
+                self.gt, self.lq = apply_augment(self.gt, self.lq, scale=self.scale, augs=self.aug, prob=self.aug_prob)
         else:
             # for paired training or validation
             self.lq = data['lq'].to(device=self.device, memory_format=torch.channels_last, non_blocking=True)
             if 'gt' in data:
                 self.gt = data['gt'].to(device=self.device, memory_format=torch.channels_last, non_blocking=True)
-
-        # augmentation
-        if self.opt["train"] is not None and self.aug is not None:
-            self.gt, self.lq = apply_augment(self.gt, self.lq, scale=self.scale, augs=self.aug, prob=self.aug_prob)
 
     def nondist_validation(self, dataloader, current_iter, tb_logger, save_img):
         # do not use the synthetic process during validation

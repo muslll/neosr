@@ -589,13 +589,14 @@ class default():
             self.output = self.output[:, :, 0:h - mod_pad_h * scale, 0:w - mod_pad_w * scale]
     '''
 
+    @torch.no_grad()
     def feed_data(self, data):
         self.lq = data['lq'].to(self.device, memory_format=torch.channels_last, non_blocking=True)
         if 'gt' in data:
             self.gt = data['gt'].to(self.device, memory_format=torch.channels_last, non_blocking=True)
 
         # augmentation
-        if self.opt["train"] is not None and self.aug is not None:
+        if self.is_train and self.aug is not None:
             self.gt, self.lq = apply_augment(self.gt, self.lq, scale=self.scale, augs=self.aug, prob=self.aug_prob)
 
     def dist_validation(self, dataloader, current_iter, tb_logger, save_img):
@@ -629,6 +630,10 @@ class default():
                 self.best_metric_results[dataset_name][metric]['iter'] = current_iter
 
     def nondist_validation(self, dataloader, current_iter, tb_logger, save_img):
+
+        # flag to not apply augmentation during val
+        self.is_train = False
+
         dataset_name = dataloader.dataset.opt['name']
         with_metrics = self.opt['val'].get('metrics') is not None
         use_pbar = self.opt['val'].get('pbar', False)
@@ -698,6 +703,8 @@ class default():
 
             self._log_validation_metric_values(
                 current_iter, dataset_name, tb_logger)
+
+        self.is_train = True
 
     def _log_validation_metric_values(self, current_iter, dataset_name, tb_logger):
         log_str = f'Validation {dataset_name}\n\n'
