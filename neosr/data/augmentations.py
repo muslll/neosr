@@ -28,7 +28,7 @@ def mixup(img_gt, img_lq, alpha_min=0.4, alpha_max=0.6):
     lam = rng.uniform(alpha_min, alpha_max)
 
     # mixup process
-    rand_index = torch.randperm(img_gt.size(0)).cuda()
+    rand_index = torch.randperm(img_gt.size(0))
     img_ = img_gt[rand_index]
 
     img_gt = lam * img_gt + (1 - lam) * img_
@@ -75,7 +75,7 @@ def cutmix(img_gt, img_lq, alpha=0.9):
         return bbx1, bby1, bbx2, bby2
 
     lam = rng.uniform(0, alpha)
-    rand_index = torch.randperm(img_gt.size(0)).cuda()
+    rand_index = torch.randperm(img_gt.size(0))
 
     # mixup process
     img_gt_ = img_gt[rand_index]
@@ -136,11 +136,12 @@ def resizemix(img_gt, img_lq, scope=(0.2, 0.9)):
     bbx1, bby1, bbx2, bby2 = rand_bbox_tao(img_gt.size(), tao)
 
     # resize
+    modes = ["nearest-exact", "bilinear", "bicubic"]
     img_gt_resize = F.interpolate(
-        img_gt_resize, (bby2 - bby1, bbx2 - bbx1), mode="nearest"
+        img_gt_resize, (bby2 - bby1, bbx2 - bbx1), mode=random.choice(modes)
     )
     img_lq_resize = F.interpolate(
-        img_lq_resize, (bby2 - bby1, bbx2 - bbx1), mode="nearest"
+        img_lq_resize, (bby2 - bby1, bbx2 - bbx1), mode=random.choice(modes)
     )
 
     # mix
@@ -228,8 +229,9 @@ def apply_augment(
         raise ValueError(msg)
 
     # match resolutions
+    modes = ["nearest-exact", "bilinear", "bicubic"]
     if scale > 1:
-        img_lq = F.interpolate(img_lq, scale_factor=scale, mode="nearest")
+        img_lq = F.interpolate(img_lq, scale_factor=scale, mode=random.choice(modes))
 
     if rng.random() < multi_prob:
         num_augs = rng.integers(2, len(augs)) if len(augs) > 2 else len(augs)
@@ -265,6 +267,6 @@ def apply_augment(
 
     # back to original resolution
     if scale > 1:
-        img_lq = F.interpolate(img_lq, scale_factor=1 / scale, mode="nearest")
+        img_lq = F.interpolate(img_lq, scale_factor=1 / scale, mode=random.choice(modes))
 
     return img_gt, img_lq
