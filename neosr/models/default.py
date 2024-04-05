@@ -165,8 +165,8 @@ class default():
 
         # error handling
         optim_d = self.opt["train"].get("optim_d", None)
-        if self.cri_pix is None and self.cri_perceptual is None and self.cri_dists is None:
-            raise ValueError('Both pixel and perceptual losses are None.')
+        #if self.cri_pix is None and self.cri_perceptual is None and self.cri_dists is None:
+        #    raise ValueError('Both pixel and perceptual losses are None.')
         if self.wavelet_guided:
             if self.cri_perceptual is None and self.cri_dists is None:
                 msg = "Please enable at least one perceptual loss with weight =>1.0 to use Wavelet Guided"

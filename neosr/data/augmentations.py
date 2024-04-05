@@ -3,9 +3,9 @@ import random
 import numpy as np
 import torch
 from torch.nn import functional as F
+from neosr.utils.rng import rng
 
-rng = np.random.default_rng()
-
+rng = rng() 
 
 @torch.no_grad()
 def mixup(img_gt, img_lq, alpha_min=0.4, alpha_max=0.6):

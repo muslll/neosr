@@ -12,7 +12,9 @@ from neosr.data.degradations import circular_lowpass_kernel, random_mixed_kernel
 from neosr.data.transforms import basic_augment
 from neosr.utils import FileClient, get_root_logger, imfrombytes, img2tensor, scandir
 from neosr.utils.registry import DATASET_REGISTRY
+from neosr.utils.rng import rng
 
+rng = rng()
 
 @DATASET_REGISTRY.register()
 class otf(data.Dataset):
@@ -155,7 +157,6 @@ class otf(data.Dataset):
                             left:left + crop_pad_size, ...]
 
         # ------------------------ Generate kernels (used in the first degradation) ------------------------ #
-        rng = np.random.default_rng()
         kernel_size = random.choice(self.kernel_range)
         if rng.uniform() < self.opt['sinc_prob']:
             # this sinc filter setting is for kernels ranging from [7, 21]

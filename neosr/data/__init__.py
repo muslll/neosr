@@ -99,7 +99,6 @@ def build_dataloader(dataset, dataset_opt, num_gpu=1, dist=False, sampler=None, 
 def worker_init_fn(worker_id, num_workers, rank, seed):
     # Set the worker seed to num_workers * rank + worker_id + seed
     worker_seed = num_workers * rank + worker_id + seed
-    np.random.default_rng(seed=worker_seed)
-    np.random.seed(seed)
+    np.random.seed(worker_seed)
     torch.manual_seed(worker_seed)
     random.seed(worker_seed)
