@@ -32,6 +32,5 @@
 | DISTS weights from [`IQA-PyTorch`](https://github.com/chaofengc/IQA-PyTorch)			      | [CC-NC-SA 4.0](https://github.com/chaofengc/IQA-PyTorch/blob/main/LICENSE)				|
 | [`WGSR`](https://github.com/mandalinadagi/WGSR)						      | Unknown													|
 | [`HDSRNet`](https://github.com/hellloxiaotian/HDSRNet/)					      | Unknown													| 
-| [`SCNet`](https://github.com/Aitical/SCNet)							      | Unknown													|
 | [`CutBlur`](https://github.com/clovaai/cutblur/)						      | [MIT](https://github.com/clovaai/cutblur/blob/master/LICENSE)						|
 | Augmentations inspired by [OpenMixUp](https://github.com/Westlake-AI/openmixup)		      | [Apache 2.0](https://github.com/Westlake-AI/openmixup/blob/main/LICENSE)				|

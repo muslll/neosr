@@ -547,11 +547,12 @@ class gradvarloss(nn.Module):
         patch_size (int): size of the patches extracted from the gt and predicted images
     """
 
-    def __init__(self, patch_size=8, criterion="huber", loss_weight=1.0):
+    def __init__(self, patch_size=20, criterion="chc", pad=2, loss_weight=0.5):
         super(gradvarloss, self).__init__()
         self.patch_size = patch_size
         self.loss_weight = loss_weight
         self.criterion_type = criterion
+        self.pad = pad
 
         if self.criterion_type == "l1":
             self.criterion = nn.L1Loss()
@@ -598,10 +599,10 @@ class gradvarloss(nn.Module):
         )
 
         # calculation of the gradient maps of x and y directions
-        gx_target = F.conv2d(gray_target, self.kernel_x, stride=1, padding=1)
-        gy_target = F.conv2d(gray_target, self.kernel_y, stride=1, padding=1)
-        gx_output = F.conv2d(gray_output, self.kernel_x, stride=1, padding=1)
-        gy_output = F.conv2d(gray_output, self.kernel_y, stride=1, padding=1)
+        gx_target = F.conv2d(gray_target, self.kernel_x, stride=1, padding=self.pad)
+        gy_target = F.conv2d(gray_target, self.kernel_y, stride=1, padding=self.pad)
+        gx_output = F.conv2d(gray_output, self.kernel_x, stride=1, padding=self.pad)
+        gy_output = F.conv2d(gray_output, self.kernel_y, stride=1, padding=self.pad)
 
         # unfolding image to patches
         gx_target_patches = self.unfold(gx_target)

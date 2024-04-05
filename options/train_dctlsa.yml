@@ -108,7 +108,7 @@ train:
   #gv_opt:
   #  type: gradvarloss
   #  loss_weight: 0.5
-  #  criterion: huber
+  #  criterion: chc
 
   match_lq: false
   color_opt:

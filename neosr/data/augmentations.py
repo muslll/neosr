@@ -226,6 +226,9 @@ def apply_augment(
     if len(augs) != len(prob):
         msg = "Length of 'augmentation' and aug_prob don't match!"
         raise ValueError(msg)
+    if img_gt.shape[0] == 1:
+        msg = "Augmentations need batch >1 to work."
+        raise ValueError(msg)
 
     # match resolutions
     modes = ["bilinear", "bicubic"]
