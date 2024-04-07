@@ -81,13 +81,6 @@ class dists(nn.Module):
         for param in self.parameters():
             param.requires_grad = False
 
-        self.register_buffer(
-            "mean", torch.tensor([0.485, 0.456, 0.406]).view(1, -1, 1, 1)
-        )
-        self.register_buffer(
-            "std", torch.tensor([0.229, 0.224, 0.225]).view(1, -1, 1, 1)
-        )
-
         self.chns = [3, 64, 128, 256, 512, 512]
         self.register_parameter(
             "alpha", nn.Parameter(torch.randn(1, sum(self.chns), 1, 1))
@@ -113,7 +106,7 @@ class dists(nn.Module):
                 self.beta.data = self.beta.data.cuda()
 
     def forward_once(self, x):
-        h = (x - self.mean) / self.std
+        h = x
         h = self.stage1(h)
         h_relu1_2 = h
         h = self.stage2(h)

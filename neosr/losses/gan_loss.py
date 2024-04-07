@@ -18,24 +18,29 @@ class GANLoss(nn.Module):
             for discriminators.
     """
 
-    def __init__(self, gan_type="vanilla", real_label_val=1.0, fake_label_val=0.0, loss_weight=0.1):
+    def __init__(
+        self,
+        gan_type="vanilla",
+        real_label_val=1.0,
+        fake_label_val=0.0,
+        loss_weight=0.1,
+    ):
         super(GANLoss, self).__init__()
         self.gan_type = gan_type
         self.loss_weight = loss_weight
         self.real_label_val = real_label_val
         self.fake_label_val = fake_label_val
 
-        if self.gan_type == 'vanilla':
+        if self.gan_type == "vanilla":
             self.loss = nn.BCEWithLogitsLoss()
-        elif self.gan_type == 'lsgan':
+        elif self.gan_type == "lsgan":
             self.loss = nn.MSELoss()
-        elif self.gan_type == 'huber':
+        elif self.gan_type == "huber":
             self.loss = nn.HuberLoss()
-        elif self.gan_type == 'chc':
+        elif self.gan_type == "chc":
             self.loss = chc()
         else:
-            raise NotImplementedError(
-                f'GAN type {self.gan_type} is not implemented.')
+            raise NotImplementedError(f"GAN type {self.gan_type} is not implemented.")
 
     def get_target_label(self, input, target_is_real):
         """Get target label.
@@ -49,8 +54,7 @@ class GANLoss(nn.Module):
                 return Tensor.
         """
 
-        target_val = (
-            self.real_label_val if target_is_real else self.fake_label_val)
+        target_val = self.real_label_val if target_is_real else self.fake_label_val
         return input.new_ones(input.size()) * target_val
 
     def forward(self, input, target_is_real, is_disc=False):
@@ -78,9 +82,12 @@ class MultiScaleGANLoss(GANLoss):
     MultiScaleGANLoss accepts a list of predictions
     """
 
-    def __init__(self, gan_type, real_label_val=1.0, fake_label_val=0.0, loss_weight=1.0):
+    def __init__(
+        self, gan_type, real_label_val=1.0, fake_label_val=0.0, loss_weight=1.0
+    ):
         super(MultiScaleGANLoss, self).__init__(
-            gan_type, real_label_val, fake_label_val, loss_weight)
+            gan_type, real_label_val, fake_label_val, loss_weight
+        )
 
     def forward(self, input, target_is_real, is_disc=False):
         """

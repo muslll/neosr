@@ -23,7 +23,7 @@ def reduce_loss(loss, reduction):
         return loss.sum()
 
 
-def weight_reduce_loss(loss, weight=None, reduction='mean'):
+def weight_reduce_loss(loss, weight=None, reduction="mean"):
     """Apply element-wise weight and reduce loss.
 
     Args:
@@ -42,10 +42,10 @@ def weight_reduce_loss(loss, weight=None, reduction='mean'):
         loss = loss * weight
 
     # if weight is not specified or reduction is sum, just reduce the loss
-    if weight is None or reduction == 'sum':
+    if weight is None or reduction == "sum":
         loss = reduce_loss(loss, reduction)
     # if reduction is mean, then compute mean over weight region
-    elif reduction == 'mean':
+    elif reduction == "mean":
         if weight.size(1) > 1:
             weight = weight.sum()
         else:
@@ -87,7 +87,7 @@ def weighted_loss(loss_func):
     """
 
     @functools.wraps(loss_func)
-    def wrapper(pred, target, weight=None, reduction='mean', **kwargs):
+    def wrapper(pred, target, weight=None, reduction="mean", **kwargs):
         # get element-wise loss
         loss = loss_func(pred, target, **kwargs)
         loss = weight_reduce_loss(loss, weight, reduction)
@@ -110,11 +110,14 @@ def get_local_weights(residual, ksize):
     """
 
     pad = (ksize - 1) // 2
-    residual_pad = F.pad(residual, pad=[pad, pad, pad, pad], mode='reflect')
+    residual_pad = F.pad(residual, pad=[pad, pad, pad, pad], mode="reflect")
 
     unfolded_residual = residual_pad.unfold(2, ksize, 1).unfold(3, ksize, 1)
-    pixel_level_weight = torch.var(
-        unfolded_residual, dim=(-1, -2), unbiased=True, keepdim=True).squeeze(-1).squeeze(-1)
+    pixel_level_weight = (
+        torch.var(unfolded_residual, dim=(-1, -2), unbiased=True, keepdim=True)
+        .squeeze(-1)
+        .squeeze(-1)
+    )
 
     return pixel_level_weight
 
@@ -136,7 +139,8 @@ def get_refined_artifact_map(img_gt, img_output, ksize):
     residual_sr = torch.sum(torch.abs(img_gt - img_output), 1, keepdim=True)
 
     patch_level_weight = torch.var(
-        residual_sr.clone(), dim=(-1, -2, -3), keepdim=True)**(1 / 5)
+        residual_sr.clone(), dim=(-1, -2, -3), keepdim=True
+    ) ** (1 / 5)
     pixel_level_weight = get_local_weights(residual_sr.clone(), ksize)
     overall_weight = patch_level_weight * pixel_level_weight
 

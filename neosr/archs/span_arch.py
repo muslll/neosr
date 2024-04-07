@@ -213,7 +213,7 @@ class span(nn.Module):
                  bias=True,
                  norm=False,
                  img_range=1.0,
-                 rgb_mean=(0.4488, 0.4371, 0.4040)
+                 rgb_mean=(0.5, 0.5, 0.5)
                  ):
         super(span, self).__init__()
 

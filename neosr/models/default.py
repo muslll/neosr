@@ -170,10 +170,10 @@ class default():
 
         # error handling
         optim_d = self.opt["train"].get("optim_d", None)
-        pix_losses_bool = if self.cri_pix or self.cri_mssim
-        percep_losses_bool = if self.cri_perceptual or self.cri_dists 
+        pix_losses_bool = self.cri_pix or self.cri_mssim is not None
+        percep_losses_bool = self.cri_perceptual or self.cri_dists is not None
 
-        if pix_losses_bool and percep_losses_bool is None:
+        if pix_losses_bool is False and percep_losses_bool is False:
             raise ValueError('Both pixel/mssim and perceptual losses are None. Please enable at least one.')
         if self.wavelet_guided:
             if self.cri_perceptual is None and self.cri_dists is None:
