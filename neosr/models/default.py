@@ -102,6 +102,11 @@ class default():
         else:
             self.cri_pix = None
 
+        if train_opt.get('mssim_opt'):
+            self.cri_mssim = build_loss(train_opt['mssim_opt']).to(self.device, memory_format=torch.channels_last, non_blocking=True)
+        else:
+            self.cri_mssim = None
+
         if train_opt.get('perceptual_opt'):
             self.cri_perceptual = build_loss(
                 train_opt['perceptual_opt']).to(self.device, memory_format=torch.channels_last, non_blocking=True)
@@ -165,8 +170,11 @@ class default():
 
         # error handling
         optim_d = self.opt["train"].get("optim_d", None)
-        #if self.cri_pix is None and self.cri_perceptual is None and self.cri_dists is None:
-        #    raise ValueError('Both pixel and perceptual losses are None.')
+        pix_losses_bool = if self.cri_pix or self.cri_mssim
+        percep_losses_bool = if self.cri_perceptual or self.cri_dists 
+
+        if pix_losses_bool and percep_losses_bool is None:
+            raise ValueError('Both pixel/mssim and perceptual losses are None. Please enable at least one.')
         if self.wavelet_guided:
             if self.cri_perceptual is None and self.cri_dists is None:
                 msg = "Please enable at least one perceptual loss with weight =>1.0 to use Wavelet Guided"
@@ -318,6 +326,11 @@ class default():
                         l_g_pix = self.cri_pix(self.output, self.gt)
                         l_g_total += l_g_pix
                     loss_dict['l_g_pix'] = l_g_pix
+                # ssim loss
+                if self.cri_mssim:
+                    l_g_mssim = self.cri_mssim(self.output, self.gt)
+                    l_g_total += l_g_mssim
+                    loss_dict['l_g_mssim'] = l_g_mssim
                 # perceptual loss
                 if self.cri_perceptual:
                     l_g_percep = self.cri_perceptual(self.output, self.gt)

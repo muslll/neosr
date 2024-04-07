@@ -116,6 +116,7 @@ Please read the wiki [Configuration Walkthrough](https://github.com/muslll/neosr
 | GAN                                                                    | `gan_opt`, `GANLoss`, `MultiScaleGANLoss` |
 | Y**CbCr** Color Loss (bt601)                                           | `color_opt`, `colorloss`                  |
 | Luma Loss (CIE X**Y**Z)						 | `luma_opt` `lumaloss`		     |
+| [MS-SSIM](https://github.com/lartpang/mssim.pytorch)			 | `mssim_opt` `mssim`			     |
 | [LDL Loss](https://github.com/csjliang/LDL)                            | `ldl_opt`  			             |
 | [Focal Frequency](https://github.com/EndlessSora/focal-frequency-loss) | `ff_opt`, `focalfrequencyloss`            |
 | [Gradient Variance](https://github.com/lusinlu/gradient-variance-loss) | `gv_opt`, `gradvarloss`		     |

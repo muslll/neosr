@@ -34,3 +34,4 @@
 | [`HDSRNet`](https://github.com/hellloxiaotian/HDSRNet/)					      | Unknown													| 
 | [`CutBlur`](https://github.com/clovaai/cutblur/)						      | [MIT](https://github.com/clovaai/cutblur/blob/master/LICENSE)						|
 | Augmentations inspired by [OpenMixUp](https://github.com/Westlake-AI/openmixup)		      | [Apache 2.0](https://github.com/Westlake-AI/openmixup/blob/main/LICENSE)				|
+| MS-SSIM loss adapted from [mssim.pytorch](https://github.com/lartpang/mssim.pytorch)		      | [MIT](https://github.com/lartpang/mssim.pytorch/blob/main/LICENSE)					|

@@ -200,8 +200,11 @@ def train_pipeline(root_path):
     # dataloader prefetcher
     prefetcher = CUDAPrefetcher(train_loader, opt)
 
-    if opt["use_amp"] is True:
+    if opt["use_amp"]:
         logger.info("AMP enabled.")
+
+    if opt["deterministic"]:
+        logger.info("Deterministic mode enabled.")
 
     # training log vars
     accumulate = opt["datasets"]["train"].get("accumulate", 1)

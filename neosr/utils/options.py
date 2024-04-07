@@ -189,12 +189,14 @@ def parse_options(root_path, is_train=True):
         # random seed
         seed = opt.get('manual_seed')
         if seed is None:
+            opt["deterministic"] = False
             seed = random.randint(1024, 10000)
             opt['manual_seed'] = seed
             torch.backends.cudnn.benchmark = True
             torch.backends.cudnn.benchmark_limit = 0
         else:
             # Determinism
+            opt["deterministic"] = True
             os.environ['PYTHONHASHSEED'] = str(seed)
             os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
             torch.cuda.manual_seed(seed)

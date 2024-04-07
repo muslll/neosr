@@ -7,7 +7,6 @@ def rng():
     root_path = Path(__file__).parents[2]
     opt, args = parse_options(root_path, is_train=True)
     seed = opt["manual_seed"]
-    print(f'SEED is: {seed}')
 
     if seed is not None:
         rng = np.random.default_rng(seed=seed)

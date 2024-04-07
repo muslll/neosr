@@ -156,7 +156,7 @@ class chc(nn.Module):
         loss_weight: float = 1.0,
         reduction: str = "mean",
         criterion: str = "huber",
-        loss_lambda: float = 0.019607,
+        loss_lambda: float = 5,
         clip_min: float = 0.003921,
         clip_max: float = 0.996078,
     ) -> None:
@@ -233,7 +233,7 @@ class PerceptualLoss(nn.Module):
         perceptual_weight (float): If `perceptual_weight > 0`, the perceptual
             loss will be calculated and the loss will multiplied by the
             weight. Default: 1.0.
-        criterion (str): Criterion used for perceptual loss. Default: 'l1'.
+        criterion (str): Criterion used for perceptual loss. Default: 'huber'.
     """
 
     def __init__(
