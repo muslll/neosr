@@ -37,3 +37,4 @@
 | MS-SSIM loss adapted from [mssim.pytorch](https://github.com/lartpang/mssim.pytorch)		      | [MIT](https://github.com/lartpang/mssim.pytorch/blob/main/LICENSE)					|
 | [`CAMixerSR`](https://github.com/icandle/CAMixerSR)						      | [Apache 2.0](https://github.com/icandle/CAMixerSR/blob/main/LICENSE)					|
 | [`TTST`](https://github.com/XY-boy/TTST)							      | Unknown													|
+| [`SMFAN`](https://github.com/Zheng-MJ/NTIRE2024-ESR-SMFAN/)					      | [MIT](https://github.com/Zheng-MJ/NTIRE2024-ESR-SMFAN/blob/main/LICENSE)				|
