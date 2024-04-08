@@ -33,7 +33,7 @@ class PerceptualLoss(nn.Module):
         self,
         layer_weights: OrderedDict,
         vgg_type: str = "vgg19",
-        use_input_norm: bool = False,
+        use_input_norm: bool = True,
         range_norm: bool = False,
         perceptual_weight: float = 1.0,
         criterion: str = "huber",
@@ -57,8 +57,6 @@ class PerceptualLoss(nn.Module):
             self.criterion = nn.MSELoss()
         elif self.criterion_type == "huber":
             self.criterion = nn.HuberLoss()
-        elif self.criterion_type == "chc":
-            self.criterion = chc()
         elif self.criterion_type == "fro":
             self.criterion = None
         else:
@@ -85,8 +83,9 @@ class PerceptualLoss(nn.Module):
             percep_loss = 0
             for k in x_features.keys():
                 if self.criterion_type == "fro":
+                    # note: linalg.norm uses Frobenius norm by default
                     percep_loss += (
-                        torch.norm(x_features[k] - gt_features[k], p="fro")
+                        torch.linalg.norm(x_features[k] - gt_features[k])
                         * self.layer_weights[k]
                     )
                 else:
@@ -94,6 +93,7 @@ class PerceptualLoss(nn.Module):
                         self.criterion(x_features[k], gt_features[k])
                         * self.layer_weights[k]
                     )
+
             percep_loss *= self.perceptual_weight
 
         return percep_loss

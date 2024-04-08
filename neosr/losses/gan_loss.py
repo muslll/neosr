@@ -1,4 +1,3 @@
-from torch import autograd as autograd
 from torch import nn
 
 from neosr.losses.basic_loss import chc

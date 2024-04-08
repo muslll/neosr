@@ -85,8 +85,6 @@ class paired(data.Dataset):
                 self.io_backend_opt.pop("type"), **self.io_backend_opt
             )
 
-        scale = self.opt["scale"]
-
         # Load gt and lq images. Dimension order: HWC; channel order: BGR;
         # image range: [0, 1], float32.
         gt_path = self.paths[index]["gt_path"]
@@ -127,6 +125,8 @@ class paired(data.Dataset):
             finally:
                 retry -= 1
 
+
+        scale = self.opt["scale"]
         # augmentation for training
         if self.opt["phase"] == "train":
             gt_size = self.opt["gt_size"]

@@ -2,7 +2,7 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 from torch.nn import Conv2d, Module, Parameter
-from torch.nn.utils.parametrizations import spectral_norm
+from torch.nn.utils import spectral_norm
 from torchvision import models
 from torchvision.models import ResNet18_Weights
 

@@ -6,7 +6,7 @@ import torch
 from torchvision.utils import make_grid
 
 
-def img2tensor(imgs, color=True, bgr2rgb=True, float32=True):
+def img2tensor(imgs, bgr2rgb=True, float32=True, color=True):
     """Numpy array to tensor.
 
     Args:
@@ -41,9 +41,9 @@ def img2tensor(imgs, color=True, bgr2rgb=True, float32=True):
         return img
 
     if isinstance(imgs, list):
-        return [_totensor(img, color, bgr2rgb, float32) for img in imgs]
+        return [_totensor(img, bgr2rgb, float32, color) for img in imgs]
     else:
-        return _totensor(imgs, color, bgr2rgb, float32)
+        return _totensor(imgs, bgr2rgb, float32, color)
 
 
 def tensor2img(tensor, rgb2bgr=True, out_type=np.uint8, min_max=(0, 1)):

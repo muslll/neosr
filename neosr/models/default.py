@@ -159,7 +159,7 @@ class default():
         self.wavelet_guided = self.opt["train"].get("wavelet_guided", False)
         if self.wavelet_guided:
             logger = get_root_logger()
-            logger.info('Wavelet-Guided loss enabled.')
+            logger.info('Loss [Wavelet-Guided] enabled.')
             self.wg_pw = train_opt.get("wg_pw", 0.01)
             self.wg_pw_lh = train_opt.get("wg_pw_lh", 0.01)
             self.wg_pw_hl = train_opt.get("wg_pw_hl", 0.01)
@@ -328,8 +328,15 @@ class default():
                     loss_dict['l_g_pix'] = l_g_pix
                 # ssim loss
                 if self.cri_mssim:
-                    l_g_mssim = self.cri_mssim(self.output, self.gt)
-                    l_g_total += l_g_mssim
+                    if self.wavelet_guided:
+                        l_g_mssim = self.wg_pw * self.cri_mssim(LL, LL_gt)
+                        l_g_mssim_lh = self.wg_pw_lh * self.cri_mssim(LH, LH_gt)
+                        l_g_mssim_hl = self.wg_pw_hl * self.cri_mssim(HL, HL_gt)
+                        l_g_mssim_hh = self.wg_pw_hh * self.cri_mssim(HH, HH_gt)
+                        l_g_total = l_g_total + l_g_mssim + l_g_mssim_lh + l_g_mssim_hl + l_g_mssim_hh
+                    else:
+                        l_g_mssim = self.cri_mssim(self.output, self.gt)
+                        l_g_total += l_g_mssim
                     loss_dict['l_g_mssim'] = l_g_mssim
                 # perceptual loss
                 if self.cri_perceptual:
