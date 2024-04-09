@@ -153,7 +153,7 @@ class chc(nn.Module):
         loss_weight: float = 1.0,
         reduction: str = "mean",
         criterion: str = "huber",
-        loss_lambda: float = 5,
+        loss_lambda: float = 0,
         clip_min: float = 0.003921,
         clip_max: float = 0.996078,
     ) -> None:
