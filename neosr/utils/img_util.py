@@ -6,7 +6,7 @@ import torch
 from torchvision.utils import make_grid
 
 
-def img2tensor(imgs, color, bgr2rgb=True, float32=True):
+def img2tensor(imgs, bgr2rgb=True, float32=True, color=True):
     """Numpy array to tensor.
 
     Args:
@@ -21,9 +21,11 @@ def img2tensor(imgs, color, bgr2rgb=True, float32=True):
             one element, just return tensor.
     """
 
-    def _totensor(img, bgr2rgb, float32, color=True):
+    def _totensor(img, bgr2rgb, float32, color):
         if color:
             if img.shape[2] == 3 and bgr2rgb:
+                if img.dtype == 'float64':
+                    img = img.astype('float32')
                 img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
             img = torch.from_numpy(img.transpose(2, 0, 1))
         else:
@@ -32,14 +34,16 @@ def img2tensor(imgs, color, bgr2rgb=True, float32=True):
             else:
                 img = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
             img = torch.from_numpy(img[None, ...])
+
         if float32:
             img = img.float()
+
         return img
 
     if isinstance(imgs, list):
-        return [_totensor(img, color, bgr2rgb, float32) for img in imgs]
+        return [_totensor(img, bgr2rgb, float32, color) for img in imgs]
     else:
-        return _totensor(imgs, color, bgr2rgb, float32)
+        return _totensor(imgs, bgr2rgb, float32, color)
 
 
 def tensor2img(tensor, rgb2bgr=True, out_type=np.uint8, min_max=(0, 1)):
@@ -159,9 +163,10 @@ def imwrite(img, file_path, params=None, auto_mkdir=True):
     if auto_mkdir:
         dir_name = os.path.abspath(os.path.dirname(file_path))
         os.makedirs(dir_name, exist_ok=True)
-    ok = cv2.imwrite(file_path, img, params)
-    if not ok:
-        raise IOError('Failed in writing images.')
+    try:
+        cv2.imencode(os.path.splitext(file_path)[1], img, params)[1].tofile(file_path)
+    except Exception:
+        raise IOError('Failed to write images.')
 
 
 def crop_border(imgs, crop_border):

@@ -642,7 +642,7 @@ class craft(nn.Module):
                  split_size_0 = 4,
                  split_size_1 = 16,
                  mlp_ratio=2.,
-                 flash_attn=True,
+                 flash_attn=False,
                  qkv_bias=True,
                  qk_scale=None,
                  norm_layer=nn.LayerNorm,
@@ -661,7 +661,7 @@ class craft(nn.Module):
         self.num_feat = num_feat
         self.num_out_ch = num_out_ch
         if in_chans == 3:
-            rgb_mean = (0.4488, 0.4371, 0.4040)
+            rgb_mean = (0.5, 0.5, 0.5)
             self.mean = torch.Tensor(rgb_mean).view(1, 3, 1, 1)
         else:
             self.mean = torch.zeros(1, 1, 1, 1)

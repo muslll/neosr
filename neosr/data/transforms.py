@@ -1,8 +1,7 @@
 import random
+
 import cv2
 import torch
-import numpy as np
-import torch.nn.functional as F
 
 
 def mod_crop(img, scale):
@@ -19,9 +18,9 @@ def mod_crop(img, scale):
     if img.ndim in (2, 3):
         h, w = img.shape[0], img.shape[1]
         h_remainder, w_remainder = h % scale, w % scale
-        img = img[:h - h_remainder, :w - w_remainder, ...]
+        img = img[: h - h_remainder, : w - w_remainder, ...]
     else:
-        raise ValueError(f'Wrong img ndim: {img.ndim}.')
+        raise ValueError(f"Wrong img ndim: {img.ndim}.")
     return img
 
 
@@ -52,9 +51,9 @@ def paired_random_crop(img_gts, img_lqs, gt_patch_size, scale, gt_path=None):
         img_lqs = [img_lqs]
 
     # determine input type: Numpy array or Tensor
-    input_type = 'Tensor' if torch.is_tensor(img_gts[0]) else 'Numpy'
+    input_type = "Tensor" if torch.is_tensor(img_gts[0]) else "Numpy"
 
-    if input_type == 'Tensor':
+    if input_type == "Tensor":
         h_lq, w_lq = img_lqs[0].size()[-2:]
         h_gt, w_gt = img_gts[0].size()[-2:]
     else:
@@ -63,35 +62,46 @@ def paired_random_crop(img_gts, img_lqs, gt_patch_size, scale, gt_path=None):
     lq_patch_size = gt_patch_size // scale
 
     if h_gt != h_lq * scale or w_gt != w_lq * scale:
-        raise ValueError(f'Scale mismatches. GT ({h_gt}, {w_gt}) is not {scale}x ',
-                         f'multiplication of LQ ({h_lq}, {w_lq}). '
-                         f'Please fix {gt_path}.')
+        raise ValueError(
+            f"Scale mismatches. GT ({h_gt}, {w_gt}) is not {scale}x ",
+            f"multiplication of LQ ({h_lq}, {w_lq}). " f"Please fix {gt_path}.",
+        )
 
     if h_lq < lq_patch_size or w_lq < lq_patch_size:
-        raise ValueError(f'LQ ({h_lq}, {w_lq}) is smaller than patch size '
-                         f'({lq_patch_size}, {lq_patch_size}). '
-                         f'Please remove {gt_path}.')
+        raise ValueError(
+            f"LQ ({h_lq}, {w_lq}) is smaller than patch size "
+            f"({lq_patch_size}, {lq_patch_size}). "
+            f"Please remove {gt_path}."
+        )
 
     # randomly choose top and left coordinates for lq patch
     top = random.randint(0, h_lq - lq_patch_size)
     left = random.randint(0, w_lq - lq_patch_size)
 
     # crop lq patch
-    if input_type == 'Tensor':
-        img_lqs = [v[:, :, top:top + lq_patch_size,
-                     left:left + lq_patch_size] for v in img_lqs]
+    if input_type == "Tensor":
+        img_lqs = [
+            v[:, :, top : top + lq_patch_size, left : left + lq_patch_size]
+            for v in img_lqs
+        ]
     else:
-        img_lqs = [v[top:top + lq_patch_size, left:left +
-                     lq_patch_size, ...] for v in img_lqs]
+        img_lqs = [
+            v[top : top + lq_patch_size, left : left + lq_patch_size, ...]
+            for v in img_lqs
+        ]
 
     # crop corresponding gt patch
     top_gt, left_gt = int(top * scale), int(left * scale)
-    if input_type == 'Tensor':
-        img_gts = [v[:, :, top_gt:top_gt + gt_patch_size,
-                     left_gt:left_gt + gt_patch_size] for v in img_gts]
+    if input_type == "Tensor":
+        img_gts = [
+            v[:, :, top_gt : top_gt + gt_patch_size, left_gt : left_gt + gt_patch_size]
+            for v in img_gts
+        ]
     else:
-        img_gts = [v[top_gt:top_gt + gt_patch_size,
-                     left_gt:left_gt + gt_patch_size, ...] for v in img_gts]
+        img_gts = [
+            v[top_gt : top_gt + gt_patch_size, left_gt : left_gt + gt_patch_size, ...]
+            for v in img_gts
+        ]
     if len(img_gts) == 1:
         img_gts = img_gts[0]
     if len(img_lqs) == 1:
@@ -99,7 +109,14 @@ def paired_random_crop(img_gts, img_lqs, gt_patch_size, scale, gt_path=None):
     return img_gts, img_lqs
 
 
-def basic_augment(imgs, hflip=True, rotation=True, return_status=False):
+def basic_augment(
+    imgs,
+    hflip=True,
+    rotation=True,
+    flip_prob=0.5,
+    rotation_prob=0.5,
+    return_status=False,
+):
     """Augment: horizontal flips OR rotate (0, 90, 180, 270 degrees).
 
     We use vertical flip and transpose for rotation implementation.
@@ -118,9 +135,9 @@ def basic_augment(imgs, hflip=True, rotation=True, return_status=False):
             results only have one element, just return ndarray.
 
     """
-    hflip = hflip and random.random() < 0.5
-    vflip = rotation and random.random() < 0.5
-    rot90 = rotation and random.random() < 0.5
+    hflip = hflip and random.random() <= flip_prob
+    vflip = rotation and random.random() <= flip_prob
+    rot90 = rotation and random.random() <= rotation_prob
 
     def _augment(img):
         if hflip:  # horizontal
@@ -142,64 +159,3 @@ def basic_augment(imgs, hflip=True, rotation=True, return_status=False):
     else:
         return imgs
 
-
-def img_rotate(img, angle, center=None, scale=1.0):
-    """Rotate image.
-
-    Args:
-        img (ndarray): Image to be rotated.
-        angle (float): Rotation angle in degrees. Positive values mean
-            counter-clockwise rotation.
-        center (tuple[int]): Rotation center. If the center is None,
-            initialize it as the center of the image. Default: None.
-        scale (float): Isotropic scale factor. Default: 1.0.
-    """
-    (h, w) = img.shape[:2]
-
-    if center is None:
-        center = (w // 2, h // 2)
-
-    matrix = cv2.getRotationMatrix2D(center, angle, scale)
-    rotated_img = cv2.warpAffine(img, matrix, (w, h))
-    return rotated_img
-
-
-def cutblur(im1, im2, prob=1.0, alpha=1.0):
-    """
-    From ""Rethinking Data Augmentation for Image Super-resolution:
-    A Comprehensive Analysis and a New Strategy" - https://arxiv.org/abs/2004.00448
-    
-    Args:
-        img1, img2 (tensor): Images to be augmented. Expects shape N,C,H,W and same size.
-        prob (float): probability to apply the augmentation 
-        alpha (float): - 
-    """
-
-    if im1.size() != im2.size():
-        raise ValueError("im1 and im2 have to be the same resolution.")
-
-    if alpha <= 0 or torch.rand(1) >= prob:
-        return im1, im2
-
-    cut_ratio = torch.randn(1) * 0.01 + alpha
-
-    h, w = im2.size(2), im2.size(3)
-    ch, cw = int(h*cut_ratio), int(w*cut_ratio)
-
-    if ch > h:
-        ch = h
-    if cw > w:
-        cw = w
-
-    cy = torch.randint(0, h+1, (1,))
-    cx = torch.randint(0, w+1, (1,))
-
-    # apply cutblur to inside or outside
-    if torch.rand(1) > 0.5:
-        im2[..., cy:cy+ch, cx:cx+cw] = im1[..., cy:cy+ch, cx:cx+cw]
-    else:
-        im2_aug = im1.clone()
-        im2_aug[..., cy:cy+ch, cx:cx+cw] = im2[..., cy:cy+ch, cx:cx+cw]
-        im2 = im2_aug
-
-    return im1, im2

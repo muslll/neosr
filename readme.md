@@ -83,16 +83,18 @@ Please read the wiki [Configuration Walkthrough](https://github.com/muslll/neosr
 | arch                                          		     | option               	     |
 |--------------------------------------------------------------------|-------------------------------|
 | [HDSRNet](https://github.com/hellloxiaotian/HDSRNet/)   	     | `hdsrnet`   	    	     |
-| [SCNet](https://github.com/Aitical/SCNet)			     | `scnet`, `scnet_b`, `scnet_l` |
+| [CAMixerSR](https://github.com/icandle/CAMixerSR)		     | `camixersr`		     |
+| [TTST](https://github.com/XY-boy/TTST)			     | `ttst`			     |
+| [SMFAN](https://github.com/Zheng-MJ/NTIRE2024-ESR-SMFAN/)	     | `smfan`			     |
 
 
 ### Supported Discriminators:
 
 | net                               				  | option 		        |
 |-----------------------------------------------------------------|-----------------------------|
-| U-Net SN 							  | `unet` 		        |
-| [A2-FPN](https://github.com/lironui/A2-FPN)			  | `a2fpn`			|
-| [PatchGAN w/ SN](https://github.com/NVIDIA/pix2pixHD)		  | `patchgan`			|
+| U-Net w/ SN 							  | `unet` 		        |
+| [A2-FPN](https://github.com/lironui/A2-FPN) w/ SN		  | `a2fpn`			|
+| [PatchGAN](https://github.com/NVIDIA/pix2pixHD) w/ SN		  | `patchgan`			|
 
 ### Supported Optimizers:
 
@@ -100,9 +102,40 @@ Please read the wiki [Configuration Walkthrough](https://github.com/muslll/neosr
 |---------------------------------------------------------------------------|--------------------|
 | [Adam](https://pytorch.org/docs/stable/generated/torch.optim.Adam.html)   | `Adam` or `adam`   |
 | [AdamW](https://pytorch.org/docs/stable/generated/torch.optim.AdamW.html) | `AdamW` or `adamw` |
+| [NAdam](https://pytorch.org/docs/stable/generated/torch.optim.NAdam.html) | `NAdam` or `nadam` |
 | [Lion](https://arxiv.org/abs/2302.06675)                                  | `Lion` or `lion`   |
 | [LAMB](https://arxiv.org/abs/1904.00962)                                  | `Lamb` or `lamb`   |
 | [Adan](https://github.com/sail-sg/Adan)                                   | `Adan` or `adan`   |
+
+### Supported losses:
+
+| loss                                                                   | option               		     |
+|------------------------------------------------------------------------|-------------------------------------------|
+| L1 Loss                                                                | `L1Loss`, `l1`       		     |
+| L2 Loss                                                                | `MSELoss`, `l2`      		     |
+| Huber Loss                                                             | `HuberLoss`, `huber` 		     |
+| CHC (Clipped Huber with Cosine Similarity Loss)			 | `chc`, `chc_l2`			     |
+| Perceptual Loss                                                        | `perceptual_opt`, `PerceptualLoss`        |
+| GAN                                                                    | `gan_opt`, `GANLoss`, `MultiScaleGANLoss` |
+| Y**CbCr** Color Loss (bt601)                                           | `color_opt`, `colorloss`                  |
+| Luma Loss (CIE X**Y**Z)						 | `luma_opt` `lumaloss`		     |
+| [MS-SSIM](https://github.com/lartpang/mssim.pytorch)			 | `mssim_opt` `mssim`			     |
+| [LDL Loss](https://github.com/csjliang/LDL)                            | `ldl_opt`  			             |
+| [Focal Frequency](https://github.com/EndlessSora/focal-frequency-loss) | `ff_opt`, `focalfrequencyloss`            |
+| [Gradient Variance](https://github.com/lusinlu/gradient-variance-loss) | `gv_opt`, `gradvarloss`		     |
+| [DISTS](https://github.com/dingkeyan93/DISTS)				 | `dists_opt`, `dists`			     |
+| [Wavelet Guided](https://github.com/mandalinadagi/WGSR)		 | `wavelet_guided`			     |
+
+### Supported Augmentations:
+
+| augmentation						| option	|
+|-------------------------------------------------------|---------------|
+| Rotation						| `use_rot`	|
+| Flip							| `use_hflip`	|
+| [MixUp](https://arxiv.org/abs/1710.09412)		| `mixup`	|
+| [CutMix](https://arxiv.org/abs/1905.04899)		| `cutmix`	|
+| [ResizeMix](https://arxiv.org/abs/2012.11101)		| `resizemix`	|
+| [CutBlur](https://github.com/clovaai/cutblur/)	| `cutblur`	|
 
 ### Supported models:
 
@@ -118,24 +151,6 @@ Please read the wiki [Configuration Walkthrough](https://github.com/muslll/neosr
 | Paired datasets                                 | `paired` |
 | Single datasets (for inference, no GT required) | `single` |
 | Real-ESRGAN on-the-fly degradation              | `otf`    |
-
-### Supported losses:
-
-| loss                                                                   | option               		     |
-|------------------------------------------------------------------------|-------------------------------------------|
-| L1 Loss                                                                | `L1Loss`, `l1`       		     |
-| L2 Loss                                                                | `MSELoss`, `l2`      		     |
-| Huber Loss                                                             | `HuberLoss`, `huber` 		     |
-| CHC (Clipped Huber with Cosine Similarity Loss)			 | `chc`, `chc_l2`			     |
-| Perceptual Loss                                                        | `perceptual_opt`, `PerceptualLoss`        |
-| GAN                                                                    | `gan_opt`, `GANLoss`, `MultiScaleGANLoss` |
-| Y**CbCr** Color Loss (bt601)                                           | `color_opt`, `colorloss`                  |
-| Luma Loss (CIE X**Y**Z)						 | `luma_opt` `lumaloss`		     |
-| [LDL Loss](https://github.com/csjliang/LDL)                            | `ldl_opt`  			             |
-| [Focal Frequency](https://github.com/EndlessSora/focal-frequency-loss) | `ff_opt`, `focalfrequencyloss`            |
-| [Gradient Variance](https://github.com/lusinlu/gradient-variance-loss) | `gv_opt`, `gradvarloss`		     |
-| [DISTS](https://github.com/dingkeyan93/DISTS)				 | `dists_opt`, `dists`			     |
-| [Wavelet Guided](https://github.com/mandalinadagi/WGSR)		 | `wavelet_guided`			     |
 
 ## datasets
 

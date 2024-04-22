@@ -1,12 +1,14 @@
 import os
-import numpy as np
+import random
 
+import torch
+from torch.nn import functional as F
 from torch.utils import data
 from torchvision.transforms.functional import normalize
 
 from neosr.data.data_util import paired_paths_from_folder, paired_paths_from_lmdb
 from neosr.data.transforms import basic_augment, paired_random_crop
-from neosr.utils import get_root_logger, FileClient, imfrombytes, img2tensor
+from neosr.utils import FileClient, get_root_logger, imfrombytes, img2tensor
 from neosr.utils.registry import DATASET_REGISTRY
 
 
@@ -42,59 +44,59 @@ class paired(data.Dataset):
         super(paired, self).__init__()
         self.opt = opt
         self.file_client = None
-        self.io_backend_opt = opt['io_backend']
+        self.io_backend_opt = opt["io_backend"]
         # mean and std for normalizing the input images
-        self.mean = opt['mean'] if 'mean' in opt else None
-        self.std = opt['std'] if 'std' in opt else None
-        self.color = False if 'color' in self.opt and self.opt['color'] == 'y' else True
+        self.mean = opt["mean"] if "mean" in opt else None
+        self.std = opt["std"] if "std" in opt else None
+        self.color = not self.opt.get("color", None) == "y"
 
-        self.gt_folder, self.lq_folder = opt['dataroot_gt'], opt['dataroot_lq']
-        self.filename_tmpl = opt['filename_tmpl'] if 'filename_tmpl' in opt else '{}'
+        self.gt_folder, self.lq_folder = opt["dataroot_gt"], opt["dataroot_lq"]
+        self.filename_tmpl = opt["filename_tmpl"] if "filename_tmpl" in opt else "{}"
 
         # file client (lmdb io backend)
-        if self.io_backend_opt['type'] == 'lmdb':
-            self.io_backend_opt['db_paths'] = [self.lq_folder, self.gt_folder]
-            self.io_backend_opt['client_keys'] = ['lq', 'gt']
+        if self.io_backend_opt["type"] == "lmdb":
+            self.io_backend_opt["db_paths"] = [self.lq_folder, self.gt_folder]
+            self.io_backend_opt["client_keys"] = ["lq", "gt"]
             self.paths = paired_paths_from_lmdb(
-                [self.lq_folder, self.gt_folder], ['lq', 'gt'])
-        elif 'meta_info' in self.opt and self.opt['meta_info'] is not None:
+                [self.lq_folder, self.gt_folder], ["lq", "gt"]
+            )
+        elif "meta_info" in self.opt and self.opt["meta_info"] is not None:
             # disk backend with meta_info
             # Each line in the meta_info describes the relative path to an image
-            with open(self.opt['meta_info']) as fin:
+            with open(self.opt["meta_info"]) as fin:
                 paths = [line.strip() for line in fin]
             self.paths = []
             for path in paths:
-                gt_path, lq_path = path.split(', ')
+                gt_path, lq_path = path.split(", ")
                 gt_path = os.path.join(self.gt_folder, gt_path)
                 lq_path = os.path.join(self.lq_folder, lq_path)
-                self.paths.append(
-                    dict([('gt_path', gt_path), ('lq_path', lq_path)]))
+                self.paths.append(dict([("gt_path", gt_path), ("lq_path", lq_path)]))
         else:
             # disk backend
             # it will scan the whole folder to get meta info
             # it will be time-consuming for folders with too many files. It is recommended using an extra meta txt file
-            self.paths = paired_paths_from_folder([self.lq_folder, self.gt_folder], [
-                                                  'lq', 'gt'], self.filename_tmpl)
+            self.paths = paired_paths_from_folder(
+                [self.lq_folder, self.gt_folder], ["lq", "gt"], self.filename_tmpl
+            )
 
     def __getitem__(self, index):
         if self.file_client is None:
             self.file_client = FileClient(
-                self.io_backend_opt.pop('type'), **self.io_backend_opt)
-
-        scale = self.opt['scale']
+                self.io_backend_opt.pop("type"), **self.io_backend_opt
+            )
 
         # Load gt and lq images. Dimension order: HWC; channel order: BGR;
         # image range: [0, 1], float32.
-        gt_path = self.paths[index]['gt_path']
-        img_bytes = self.file_client.get(gt_path, 'gt')
+        gt_path = self.paths[index]["gt_path"]
+        img_bytes = self.file_client.get(gt_path, "gt")
 
         try:
             img_gt = imfrombytes(img_bytes, float32=True)
         except AttributeError:
             raise AttributeError(gt_path)
 
-        lq_path = self.paths[index]['lq_path']
-        img_bytes = self.file_client.get(lq_path, 'lq')
+        lq_path = self.paths[index]["lq_path"]
+        img_bytes = self.file_client.get(lq_path, "lq")
 
         try:
             img_lq = imfrombytes(img_bytes, float32=True)
@@ -106,10 +108,14 @@ class paired(data.Dataset):
         while retry > 0:
             try:
                 if img_bytes is None:
-                    raise ValueError(f'No data returned from path: {gt_path}, {lq_path}')
-            except (IOError, OSError) as e:
+                    raise ValueError(
+                        f"No data returned from path: {gt_path}, {lq_path}"
+                    )
+            except OSError as e:
                 logger = get_root_logger()
-                logger.warn(f'File client error: {e} in paths {gt_path}, {lq_path}, remaining retry times: {retry - 1}')
+                logger.warning(
+                    f"File client error: {e} in paths {gt_path}, {lq_path}, remaining retry times: {retry - 1}"
+                )
                 # change another file to read
                 index = random.randint(0, self.__len__())
                 gt_path = gt_path[index]
@@ -119,32 +125,38 @@ class paired(data.Dataset):
             finally:
                 retry -= 1
 
+
+        scale = self.opt["scale"]
         # augmentation for training
-        if self.opt['phase'] == 'train':
-            gt_size = self.opt['gt_size']
+        if self.opt["phase"] == "train":
+            gt_size = self.opt["gt_size"]
+            flip = self.opt.get("use_hflip", True)
+            rot = self.opt.get("use_rot", True)
+
             # random crop
-            img_gt, img_lq = paired_random_crop(
-                img_gt, img_lq, gt_size, scale, gt_path)
+            img_gt, img_lq = paired_random_crop(img_gt, img_lq, gt_size, scale, gt_path)
             # flip, rotation
             img_gt, img_lq = basic_augment(
-                [img_gt, img_lq], self.opt['use_hflip'], self.opt['use_rot'])
+                [img_gt, img_lq],
+                hflip=flip,
+                rotation=rot,
+            )
 
-
-        # crop the unmatched GT images during validation or testing, especially for SR benchmark datasets
-        # TODO: It is better to update the datasets, rather than force to crop
-        if self.opt['phase'] != 'train':
-            img_gt = img_gt[0:img_lq.shape[0] *
-                            scale, 0:img_lq.shape[1] * scale, :]
+        # crop the unmatched GT images during validation or testing
+        if self.opt["phase"] != "train":
+            img_gt = img_gt[0 : img_lq.shape[0] * scale, 0 : img_lq.shape[1] * scale, :]
 
         # BGR to RGB, HWC to CHW, numpy to tensor
         img_gt, img_lq = img2tensor(
-            [img_gt, img_lq], bgr2rgb=True, float32=True, color= self.color)
+            [img_gt, img_lq], bgr2rgb=True, float32=True, color=self.color
+        )
+
         # normalize
         if self.mean is not None or self.std is not None:
             normalize(img_lq, self.mean, self.std, inplace=True)
             normalize(img_gt, self.mean, self.std, inplace=True)
 
-        return {'lq': img_lq, 'gt': img_gt, 'lq_path': lq_path, 'gt_path': gt_path}
+        return {"lq": img_lq, "gt": img_gt, "lq_path": lq_path, "gt_path": gt_path}
 
     def __len__(self):
         return len(self.paths)

@@ -21,9 +21,12 @@ datasets:
 
     batch_size: 6
     accumulate: 1
+    dataset_enlarge_ratio: 1
+
     use_hflip: true
     use_rot: true
-    dataset_enlarge_ratio: 1
+    augmentation: ['none', 'mixup', 'cutmix', 'resizemix', 'cutblur']
+    aug_prob: [0.2, 0.3, 0.2, 0.5, 0.7]
 
     blur_kernel_size: 7
     kernel_list: ["iso", "aniso", "generalized_iso", "generalized_aniso", "plateau_iso", "plateau_aniso"]
@@ -97,15 +100,17 @@ network_d:
 
 train:
   optim_g:
-    type: adamw
-    lr: !!float 1e-4
-    weight_decay: 0
-    betas: [0.9, 0.99]
+    type: nadam
+    lr: !!float 5e-4
+    betas: [0.98, 0.99]
+    weight_decay: 0.01
+    decoupled_weight_decay: true
   optim_d:
-    type: adamw
+    type: nadam
     lr: !!float 1e-4
-    weight_decay: 0
-    betas: [0.9, 0.99]
+    betas: [0.98, 0.99]
+    weight_decay: 0.01
+    decoupled_weight_decay: true
 
   scheduler:
     type: multisteplr
@@ -117,8 +122,11 @@ train:
 
   # losses
   wavelet_guided: false
-  pixel_opt:
-    type: chc
+  #pixel_opt:
+  #  type: chc
+  #  loss_weight: 1.0
+  mssim_opt:
+    type: mssim
     loss_weight: 1.0
   perceptual_opt:
     type: PerceptualLoss
@@ -129,7 +137,7 @@ train:
       'conv4_4': 1
       'conv5_4': 1
     perceptual_weight: 1.0
-    criterion: chc
+    criterion: huber
   gan_opt:
     type: GANLoss
     gan_type: vanilla
@@ -146,7 +154,7 @@ train:
   #gv_opt:
   #  type: gradvarloss
   #  loss_weight: 0.5
-  #  criterion: huber
+  #  criterion: chc
 
   match_lq: false
   color_opt:

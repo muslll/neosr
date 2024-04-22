@@ -391,6 +391,7 @@ class SWTForward(nn.Module):
         self.J = J
         self.mode = mode
 
+    @torch.cuda.amp.custom_fwd(cast_inputs=torch.float32)
     def forward(self, x):
         """Forward pass of the SWT.
         Args:
@@ -445,6 +446,7 @@ class SWTInverse(nn.Module):
 
         self.mode = mode
 
+    @torch.cuda.amp.custom_fwd(cast_inputs=torch.float32)
     def forward(self, coeffs):
         """
         Args:

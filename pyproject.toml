@@ -24,7 +24,7 @@ pywavelets = "^1.5.0"
 select = ["ALL"]
 ignore = [ "E501", "T201", "D", "CPY001",
 	   "TD002", "TD003", "COM812", "ISC001",
-	   "N8", "ANN" ]
+	   "N8", "ANN", "S101" ]
 target-version = "py311"
 preview = true
 

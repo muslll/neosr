@@ -15,6 +15,7 @@ from neosr.losses import build_loss
 from neosr.optimizers import build_optimizer
 from neosr.losses.wavelet_guided import wavelet_guided
 from neosr.losses.loss_util import get_refined_artifact_map
+from neosr.data.augmentations import apply_augment
 from neosr.metrics import calculate_metric
 
 from neosr.utils import get_root_logger, imwrite, tensor2img
@@ -40,7 +41,8 @@ class default():
             self.print_network(self.net_g)
 
         # define network net_d
-        if self.opt.get('network_d', None) is not None:
+        self.net_d = self.opt.get('network_d', None)
+        if self.net_d is not None:
             self.net_d = build_network(self.opt['network_d'])
             self.net_d = self.model_to_device(self.net_d)
             if self.opt.get('print_network', False) is True:
@@ -64,17 +66,26 @@ class default():
             self.init_training_settings()
 
     def init_training_settings(self):
+
+        # options var
         train_opt = self.opt['train']
+
+        # set nets to training mode
         self.net_g.train()
-        if self.opt.get('network_d', None) is not None:
+        if self.net_d is not None:
             self.net_d.train()
+
+        # scale ratio var
+        self.scale = self.opt['scale'] 
+
+        # augmentations
+        self.aug = self.opt["datasets"]["train"].get("augmentation", None)
+        self.aug_prob = self.opt["datasets"]["train"].get("aug_prob", None)
             
         # for amp
         self.use_amp = self.opt.get('use_amp', False) is True
         self.amp_dtype = torch.bfloat16 if self.opt.get('bfloat16', False) is True else torch.float16
-
-        # initialise GradScaler
-        self.scaler = torch.cuda.amp.GradScaler(enabled = self.use_amp, init_scale=2.**5)
+        self.gradscaler = torch.cuda.amp.GradScaler(enabled = self.use_amp, init_scale=2.**5)
 
         # LQ matching for Color/Luma losses
         self.match_lq = self.opt['train'].get('match_lq', False)
@@ -91,6 +102,11 @@ class default():
         else:
             self.cri_pix = None
 
+        if train_opt.get('mssim_opt'):
+            self.cri_mssim = build_loss(train_opt['mssim_opt']).to(self.device, memory_format=torch.channels_last, non_blocking=True)
+        else:
+            self.cri_mssim = None
+
         if train_opt.get('perceptual_opt'):
             self.cri_perceptual = build_loss(
                 train_opt['perceptual_opt']).to(self.device, memory_format=torch.channels_last, non_blocking=True)
@@ -102,9 +118,6 @@ class default():
                 train_opt['dists_opt']).to(self.device, memory_format=torch.channels_last, non_blocking=True)
         else:
             self.cri_dists = None
-
-        if self.cri_pix is None and self.cri_perceptual is None and self.cri_dists is None:
-            raise ValueError('Both pixel and perceptual losses are None.')
 
         # GAN loss
         if train_opt.get('gan_opt'):
@@ -146,15 +159,38 @@ class default():
         self.wavelet_guided = self.opt["train"].get("wavelet_guided", False)
         if self.wavelet_guided:
             logger = get_root_logger()
-            logger.info('Wavelet-Guided loss enabled.')
+            logger.info('Loss [Wavelet-Guided] enabled.')
             self.wg_pw = train_opt.get("wg_pw", 0.01)
             self.wg_pw_lh = train_opt.get("wg_pw_lh", 0.01)
             self.wg_pw_hl = train_opt.get("wg_pw_hl", 0.01)
             self.wg_pw_hh = train_opt.get("wg_pw_hh", 0.05)
+
+        # gradient clipping
+        self.gradclip = self.opt["train"].get("grad_clip", True)
+
+        # error handling
+        optim_d = self.opt["train"].get("optim_d", None)
+        pix_losses_bool = self.cri_pix or self.cri_mssim is not None
+        percep_losses_bool = self.cri_perceptual or self.cri_dists is not None
+
+        if pix_losses_bool is False and percep_losses_bool is False:
+            raise ValueError('Both pixel/mssim and perceptual losses are None. Please enable at least one.')
         if self.wavelet_guided:
             if self.cri_perceptual is None and self.cri_dists is None:
                 msg = "Please enable at least one perceptual loss with weight =>1.0 to use Wavelet Guided"
                 raise ValueError(msg)
+        if self.net_d is None and optim_d is not None:
+            msg = "Please set a discriminator in network_d or disable optim_d."
+            raise ValueError(msg)
+        if self.net_d is not None and optim_d is None:
+            msg = "Please set an optimizer for the discriminator or disable network_d."
+            raise ValueError(msg)
+        if self.net_d is not None and self.cri_gan is None:
+            msg = "Discriminator needs GAN to be enabled."
+            raise ValueError(msg)
+        if self.net_d is None and self.cri_gan is not None:
+            msg = "GAN requires a discriminator to be set."
+            raise ValueError(msg)
 
         self.net_d_iters = train_opt.get('net_d_iters', 1)
         self.net_d_init_iters = train_opt.get('net_d_init_iters', 0)
@@ -168,6 +204,8 @@ class default():
             optimizer = torch.optim.Adam(params, lr, **kwargs)
         elif optim_type in {'AdamW', 'adamw'}:
             optimizer = torch.optim.AdamW(params, lr, **kwargs)
+        elif optim_type in {'NAdam', 'nadam'}:
+            optimizer = torch.optim.NAdam(params, lr, **kwargs)
         elif optim_type in {'Adan', 'adan'}:
             optimizer = pytorch_optimizer.Adan(params, lr, **kwargs)
         elif optim_type in {'Lamb', 'lamb'}:
@@ -194,7 +232,7 @@ class default():
             optim_type, optim_params, **train_opt['optim_g'])
         self.optimizers.append(self.optimizer_g)
         # optimizer d
-        if self.opt.get('network_d', None) is not None:
+        if self.net_d is not None:
             optim_type = train_opt['optim_d'].pop('type')
             self.optimizer_d = self.get_optimizer(
                 optim_type, self.net_d.parameters(), **train_opt['optim_d'])
@@ -241,10 +279,9 @@ class default():
 
     def optimize_parameters(self, current_iter):
 
-        if self.opt.get('network_d', None) is not None:
+        if self.net_d is not None:
             for p in self.net_d.parameters():
                 p.requires_grad = False
-
 
         # increment accumulation counter
         self.n_accumulated += 1
@@ -256,7 +293,7 @@ class default():
 
             self.output = self.net_g(self.lq)
             # lq match
-            self.lq_interp = F.interpolate(self.lq, scale_factor=self.opt['scale'], mode='bicubic')
+            self.lq_interp = F.interpolate(self.lq, scale_factor=self.scale, mode='bicubic')
 
             # wavelet guided loss
             if self.wavelet_guided:
@@ -289,6 +326,18 @@ class default():
                         l_g_pix = self.cri_pix(self.output, self.gt)
                         l_g_total += l_g_pix
                     loss_dict['l_g_pix'] = l_g_pix
+                # ssim loss
+                if self.cri_mssim:
+                    if self.wavelet_guided:
+                        l_g_mssim = self.wg_pw * self.cri_mssim(LL, LL_gt)
+                        l_g_mssim_lh = self.wg_pw_lh * self.cri_mssim(LH, LH_gt)
+                        l_g_mssim_hl = self.wg_pw_hl * self.cri_mssim(HL, HL_gt)
+                        l_g_mssim_hh = self.wg_pw_hh * self.cri_mssim(HH, HH_gt)
+                        l_g_total = l_g_total + l_g_mssim + l_g_mssim_lh + l_g_mssim_hl + l_g_mssim_hh
+                    else:
+                        l_g_mssim = self.cri_mssim(self.output, self.gt)
+                        l_g_total += l_g_mssim
+                    loss_dict['l_g_mssim'] = l_g_mssim
                 # perceptual loss
                 if self.cri_perceptual:
                     l_g_percep = self.cri_perceptual(self.output, self.gt)
@@ -344,19 +393,18 @@ class default():
                    
         # divide losses by accumulation factor
         l_g_total = l_g_total / self.accum_iters
-        self.scaler.scale(l_g_total).backward()
+        self.gradscaler.scale(l_g_total).backward()
 
-        # clip and step() generator 
         if (self.n_accumulated) % self.accum_iters == 0:
             # gradient clipping on generator
-            if self.opt["train"].get("grad_clip", True):
-                self.scaler.unscale_(self.optimizer_g)
+            if self.gradclip:
+                self.gradscaler.unscale_(self.optimizer_g)
                 torch.nn.utils.clip_grad_norm_(self.net_g.parameters(), 1.0, error_if_nonfinite=False)
 
-            self.scaler.step(self.optimizer_g)
+            self.gradscaler.step(self.optimizer_g)
 
         # optimize net_d
-        if self.opt.get('network_d', None) is not None:
+        if self.net_d is not None:
             for p in self.net_d.parameters():
                 p.requires_grad = True
 
@@ -383,26 +431,26 @@ class default():
             if self.cri_gan:
                 l_d_real = l_d_real / self.accum_iters
                 l_d_fake = l_d_fake / self.accum_iters
-                self.scaler.scale(l_d_real).backward()
-                self.scaler.scale(l_d_fake).backward()
+                self.gradscaler.scale(l_d_real).backward()
+                self.gradscaler.scale(l_d_fake).backward()
 
             # clip and step() discriminator
             if (self.n_accumulated) % self.accum_iters == 0:
                 # gradient clipping on discriminator
-                if self.opt["train"].get("grad_clip", True):
-                    self.scaler.unscale_(self.optimizer_d)
+                if self.gradclip:
+                    self.gradscaler.unscale_(self.optimizer_d)
                     torch.nn.utils.clip_grad_norm_(self.net_d.parameters(), 1.0, error_if_nonfinite=False)
 
-                self.scaler.step(self.optimizer_d)
+                self.gradscaler.step(self.optimizer_d)
 
             # add total discriminator loss for tensorboard tracking
             loss_dict['l_d_total'] = (l_d_real + l_d_fake) / 2
 
         # update gradscaler and zero grads
         if (self.n_accumulated) % self.accum_iters == 0:
-            self.scaler.update()
+            self.gradscaler.update()
             self.optimizer_g.zero_grad(set_to_none=True)
-            if self.opt.get('network_d', None) is not None:
+            if self.net_d is not None:
                 self.optimizer_d.zero_grad(set_to_none=True)
 
         # error if NaN
@@ -505,7 +553,7 @@ class default():
             # overlapping
             shave_h = 16
             shave_w = 16
-            scale = self.opt.get('scale', 1)
+            scale = self.scale # self.opt.get('scale', 1)
             ral = H // split_h
             row = W // split_w
             slices = []  # list of partition borders
@@ -561,10 +609,15 @@ class default():
             self.output = self.output[:, :, 0:h - mod_pad_h * scale, 0:w - mod_pad_w * scale]
     '''
 
+    @torch.no_grad()
     def feed_data(self, data):
         self.lq = data['lq'].to(self.device, memory_format=torch.channels_last, non_blocking=True)
         if 'gt' in data:
             self.gt = data['gt'].to(self.device, memory_format=torch.channels_last, non_blocking=True)
+
+        # augmentation
+        if self.is_train and self.aug is not None:
+            self.gt, self.lq = apply_augment(self.gt, self.lq, scale=self.scale, augs=self.aug, prob=self.aug_prob)
 
     def dist_validation(self, dataloader, current_iter, tb_logger, save_img):
         if self.opt['rank'] == 0:
@@ -597,6 +650,10 @@ class default():
                 self.best_metric_results[dataset_name][metric]['iter'] = current_iter
 
     def nondist_validation(self, dataloader, current_iter, tb_logger, save_img):
+
+        # flag to not apply augmentation during val
+        self.is_train = False
+
         dataset_name = dataloader.dataset.opt['name']
         with_metrics = self.opt['val'].get('metrics') is not None
         use_pbar = self.opt['val'].get('pbar', False)
@@ -666,6 +723,8 @@ class default():
 
             self._log_validation_metric_values(
                 current_iter, dataset_name, tb_logger)
+
+        self.is_train = True
 
     def _log_validation_metric_values(self, current_iter, dataset_name, tb_logger):
         log_str = f'Validation {dataset_name}\n\n'
@@ -816,7 +875,7 @@ class default():
         """Save networks and training state."""
         self.save_network(self.net_g, 'net_g', current_iter)
 
-        if self.opt.get('network_d', None) is not None:
+        if self.net_d is not None:
             self.save_network(self.net_d, 'net_d', current_iter)
 
         self.save_training_state(epoch, current_iter)
