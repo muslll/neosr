@@ -1,5 +1,5 @@
 
-name: train_plksr
+name: train_drct
 model_type: default
 scale: 4
 use_amp: false
@@ -25,7 +25,7 @@ datasets:
     use_hflip: true
     use_rot: true
     augmentation: ['none', 'mixup', 'cutmix', 'resizemix'] #['cutblur']
-    aug_prob: [0.2, 0.3, 0.2, 0.5] #[0.7]
+    aug_prob: [0.2, 0.3, 0.2, 0.5] # [0.7]
 
 #  val:
 #    name: val_1
@@ -52,18 +52,20 @@ path:
   #strict_load_g: false # do not uncomment, read docs
 
 network_g:
-  type: plksr
-  #type: plksr_tiny
+  type: drct
+  #type: drct_l
+  #type: drct_s
 
 network_d:
   type: unet
 
 train:
   optim_g:
-    type: adamw
-    lr: !!float 3e-4
-    weight_decay: 0
-    betas: [0.9, 0.99]
+    type: nadam
+    lr: !!float 5e-4
+    betas: [0.98, 0.99]
+    weight_decay: 0.01
+    decoupled_weight_decay: true
   optim_d:
     type: nadam
     lr: !!float 1e-4

@@ -82,7 +82,8 @@ Please read the wiki [Configuration Walkthrough](https://github.com/muslll/neosr
 
 | arch                                          		     | option               	     |
 |--------------------------------------------------------------------|-------------------------------|
-| [PLKSR](https://github.com/dslisleedh/PLKSR)			     | `plksr` `plksr_tiny`	     |
+| [PLKSR](https://github.com/dslisleedh/PLKSR)			     | `plksr`, `plksr_tiny`	     |
+| [DRCT](https://github.com/ming053l/DRCT)			     | `drct`, `drct_l`, `drct_s`    |
 
 
 ### Supported Discriminators:
