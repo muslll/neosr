@@ -99,7 +99,7 @@ network_d:
 train:
   optim_g:
     type: nadam
-    lr: !!float 5e-4
+    lr: !!float 3e-4
     betas: [0.98, 0.99]
     weight_decay: 0.01
     decoupled_weight_decay: true
@@ -158,11 +158,11 @@ train:
   color_opt:
     type: colorloss
     loss_weight: 1.0
-    criterion: l1
+    criterion: huber
   luma_opt:
     type: lumaloss
     loss_weight: 1.0
-    criterion: l1
+    criterion: huber
 
 logger:
   print_freq: 100
