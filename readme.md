@@ -84,6 +84,7 @@ Please read the wiki [Configuration Walkthrough](https://github.com/muslll/neosr
 |--------------------------------------------------------------------|-------------------------------|
 | [PLKSR](https://github.com/dslisleedh/PLKSR)			     | `plksr`, `plksr_tiny`	     |
 | [DRCT](https://github.com/ming053l/DRCT)			     | `drct`, `drct_l`, `drct_s`    |
+| [AGDN](https://github.com/daydreamer2024/AGDN)		     | `agdn`, `agdn_s`		     |
 
 
 ### Supported Discriminators:

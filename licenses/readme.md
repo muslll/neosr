@@ -36,3 +36,4 @@
 | MS-SSIM loss adapted from [mssim.pytorch](https://github.com/lartpang/mssim.pytorch)		      | [MIT](https://github.com/lartpang/mssim.pytorch/blob/main/LICENSE)					|
 | [`PLKSR`](https://github.com/dslisleedh/PLKSR)						      | [MIT](https://github.com/dslisleedh/PLKSR/blob/main/LICENSE)						|
 | [`DRCT`](https://github.com/ming053l/DRCT)							      | [MIT](https://github.com/ming053l/DRCT/blob/main/LICENSE)						|
+| [`AGDN`](https://github.com/daydreamer2024/AGDN)						      | [MIT](https://github.com/daydreamer2024/AGDN/blob/main/LICENSE)						|
