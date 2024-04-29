@@ -98,16 +98,17 @@ network_d:
 
 train:
   optim_g:
-    type: adamw
-    lr: !!float 3e-4
-    weight_decay: 0
-    betas: [0.9, 0.99]
-  optim_d:
-    type: nadam
+    type: adan
     lr: !!float 1e-4
-    betas: [0.98, 0.99]
-    weight_decay: 0.01
-    decoupled_weight_decay: true
+    weight_decay: 0.02
+    weight_decouple: true
+    use_gc: true
+  optim_d:
+    type: adan
+    lr: !!float 1e-4
+    weight_decay: 0.02
+    weight_decouple: true
+    use_gc: true
 
   scheduler:
     type: multisteplr
@@ -138,7 +139,7 @@ train:
   gan_opt:
     type: GANLoss
     gan_type: vanilla
-    loss_weight: 0.1
+    loss_weight: 0.05
   #dists_opt:
   #  type: dists
   #  loss_weight: 0.5
