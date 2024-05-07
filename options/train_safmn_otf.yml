@@ -160,11 +160,11 @@ train:
   color_opt:
     type: colorloss
     loss_weight: 1.0
-    criterion: l1
+    criterion: huber
   luma_opt:
     type: lumaloss
     loss_weight: 1.0
-    criterion: l1
+    criterion: huber
 
 logger:
   print_freq: 100

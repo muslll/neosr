@@ -1,5 +1,5 @@
 
-name: train_hdsrnet_otf
+name: train_agdn_otf
 model_type: otf
 scale: 4
 use_amp: false
@@ -90,7 +90,8 @@ path:
   #strict_load_g: false # do not uncomment, read docs
 
 network_g:
-  type: hdsrnet
+  type: agdn
+  #type: agdn_s
 
 network_d:
   type: unet
@@ -157,11 +158,11 @@ train:
   color_opt:
     type: colorloss
     loss_weight: 1.0
-    criterion: l1
+    criterion: huber
   luma_opt:
     type: lumaloss
     loss_weight: 1.0
-    criterion: l1
+    criterion: huber
 
 logger:
   print_freq: 100

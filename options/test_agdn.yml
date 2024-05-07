@@ -1,5 +1,5 @@
 # Results will be saved to neosr/experiments/results/
-name: test_hdsrnet
+name: test_agdn
 model_type: default
 scale: 4
 use_amp: false
@@ -14,7 +14,8 @@ datasets:
       type: disk
 
 network_g:
-  type: hdsrnet
+  type: agdn
+  #type: agdn_s
 
 path:
   pretrain_network_g: 'model.pth'

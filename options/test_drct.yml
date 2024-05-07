@@ -1,5 +1,5 @@
 # Results will be saved to neosr/experiments/results/
-name: test_smfan
+name: test_drct
 model_type: default
 scale: 4
 use_amp: false
@@ -14,7 +14,9 @@ datasets:
       type: disk
 
 network_g:
-  type: smfan
+  type: drct
+  #type: drct_l
+  #type: drct_s
 
 path:
   pretrain_network_g: 'model.pth'

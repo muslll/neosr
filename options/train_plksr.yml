@@ -1,6 +1,6 @@
 
-name: train_camixersr_otf
-model_type: otf
+name: train_plksr
+model_type: default
 scale: 4
 use_amp: false
 bfloat16: false
@@ -8,52 +8,32 @@ fast_matmul: false
 compile: false
 #manual_seed: 1024
 
-gt_size: 128
-queue_size: 180
-
 datasets:
   train:
-    type: otf
+    type: paired
     dataroot_gt: 'datasets/gt/'
+    dataroot_lq: 'datasets/lq/'
     #meta_info: 'datasets/meta_info.txt'
     io_backend:
       type: disk
 
+    gt_size: 128
     batch_size: 6
     accumulate: 1
     dataset_enlarge_ratio: 1
 
     use_hflip: true
     use_rot: true
-    augmentation: ['none', 'mixup', 'cutmix', 'resizemix', 'cutblur']
-    aug_prob: [0.2, 0.3, 0.2, 0.5, 0.7]
-
-    blur_kernel_size: 7
-    kernel_list: ["iso", "aniso", "generalized_iso", "generalized_aniso", "plateau_iso", "plateau_aniso"]
-    kernel_prob: [0.45, 0.25, 0.12, 0.03, 0.12, 0.03]
-    sinc_prob: 0.1
-    blur_sigma: [0.2, 3]
-    betag_range: [0.5, 4]
-    betap_range: [1, 2]
-
-    blur_kernel_size2: 9
-    kernel_list2: ["iso", "aniso", "generalized_iso", "generalized_aniso", "plateau_iso", "plateau_aniso"]
-    kernel_prob2: [0.45, 0.25, 0.12, 0.03, 0.12, 0.03]
-    sinc_prob2: 0.1
-    blur_sigma2: [0.2, 1.5]
-    betag_range2: [0.5, 4]
-    betap_range2: [1, 2]
-
-    final_sinc_prob: 0.8
+    augmentation: ['none', 'mixup', 'cutmix', 'resizemix'] #['cutblur']
+    aug_prob: [0.2, 0.3, 0.2, 0.5] #[0.7]
 
 #  val:
 #    name: val_1
-#    type: paired
+#    type: paired 
 #    dataroot_gt: 'datasets/val/gt/'
 #    dataroot_lq: 'datasets/val/lq/'
 #    io_backend:
 #      type: disk
-
 #val:
 #  val_freq: 1000
 #  save_img: true
@@ -66,48 +46,31 @@ datasets:
 #      type: calculate_dists
 #      better: lower
 
-resize_prob: [0.3, 0.4, 0.3] # up, down, keep
-resize_range: [0.5, 1.5]
-gaussian_noise_prob: 0.2
-noise_range: [0, 2]
-poisson_scale_range: [0.05, 0.25]
-gray_noise_prob: 0.1
-jpeg_range: [40, 95]
-
-# the second degradation process
-second_blur_prob: 0.4
-resize_prob2: [0.3, 0.4, 0.3] # up, down, keep
-resize_range2: [0.3, 1.5]
-gaussian_noise_prob2: 0.2
-noise_range2: [0, 2]
-poisson_scale_range2: [0.05, 0.1]
-gray_noise_prob2: 0.1
-jpeg_range2: [35, 95]
-
 path:
   #pretrain_network_g: 'experiments/pretrain.pth'
   resume_state: ~
   #strict_load_g: false # do not uncomment, read docs
 
 network_g:
-  type: camixersr
+  type: plksr
+  #type: plksr_tiny
 
 network_d:
   type: unet
 
 train:
   optim_g:
-    type: nadam
-    lr: !!float 5e-4
-    betas: [0.98, 0.99]
-    weight_decay: 0.01
-    decoupled_weight_decay: true
-  optim_d:
-    type: nadam
+    type: adan
     lr: !!float 1e-4
-    betas: [0.98, 0.99]
-    weight_decay: 0.01
-    decoupled_weight_decay: true
+    weight_decay: 0.02
+    weight_decouple: true
+    use_gc: true
+  optim_d:
+    type: adan
+    lr: !!float 1e-4
+    weight_decay: 0.02
+    weight_decouple: true
+    use_gc: true
 
   scheduler:
     type: multisteplr
@@ -115,7 +78,7 @@ train:
     gamma: 0.5
 
   total_iter: 500000
-  warmup_iter: -1 # no warm up
+  warmup_iter: -1  # no warm up
 
   # losses
   wavelet_guided: false
@@ -134,11 +97,11 @@ train:
       'conv4_4': 1
       'conv5_4': 1
     perceptual_weight: 1.0
-    criterion: huber 
+    criterion: huber
   gan_opt:
     type: GANLoss
     gan_type: vanilla
-    loss_weight: 0.1
+    loss_weight: 0.05
   #dists_opt:
   #  type: dists
   #  loss_weight: 0.5
@@ -157,11 +120,11 @@ train:
   color_opt:
     type: colorloss
     loss_weight: 1.0
-    criterion: l1
+    criterion: huber
   luma_opt:
     type: lumaloss
     loss_weight: 1.0
-    criterion: l1
+    criterion: huber
 
 logger:
   print_freq: 100

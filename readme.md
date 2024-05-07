@@ -82,10 +82,10 @@ Please read the wiki [Configuration Walkthrough](https://github.com/muslll/neosr
 
 | arch                                          		     | option               	     |
 |--------------------------------------------------------------------|-------------------------------|
-| [HDSRNet](https://github.com/hellloxiaotian/HDSRNet/)   	     | `hdsrnet`   	    	     |
-| [CAMixerSR](https://github.com/icandle/CAMixerSR)		     | `camixersr`		     |
-| [TTST](https://github.com/XY-boy/TTST)			     | `ttst`			     |
-| [SMFAN](https://github.com/Zheng-MJ/NTIRE2024-ESR-SMFAN/)	     | `smfan`			     |
+| [PLKSR](https://github.com/dslisleedh/PLKSR)			     | `plksr`, `plksr_tiny`	     |
+| [DRCT](https://github.com/ming053l/DRCT)			     | `drct`, `drct_l`, `drct_s`    |
+| [AGDN](https://github.com/daydreamer2024/AGDN)		     | `agdn`, `agdn_s`		     |
+| [EFEN](https://github.com/Supereeeee/EFEN)			     | `efen`			     |
 
 
 ### Supported Discriminators:

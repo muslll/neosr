@@ -1,5 +1,5 @@
 
-name: train_camixersr
+name: train_efen
 model_type: default
 scale: 4
 use_amp: false
@@ -25,7 +25,7 @@ datasets:
     use_hflip: true
     use_rot: true
     augmentation: ['none', 'mixup', 'cutmix', 'resizemix'] #['cutblur']
-    aug_prob: [0.2, 0.3, 0.2, 0.5] #[0.7]
+    aug_prob: [0.2, 0.3, 0.2, 0.5] # [0.7]
 
 #  val:
 #    name: val_1
@@ -52,7 +52,7 @@ path:
   #strict_load_g: false # do not uncomment, read docs
 
 network_g:
-  type: camixersr 
+  type: efen
 
 network_d:
   type: unet
@@ -119,11 +119,11 @@ train:
   color_opt:
     type: colorloss
     loss_weight: 1.0
-    criterion: l1
+    criterion: huber
   luma_opt:
     type: lumaloss
     loss_weight: 1.0
-    criterion: l1
+    criterion: huber
 
 logger:
   print_freq: 100

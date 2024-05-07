@@ -120,21 +120,13 @@ train:
   color_opt:
     type: colorloss
     loss_weight: 1.0
-    criterion: l1
+    criterion: huber
   luma_opt:
     type: lumaloss
     loss_weight: 1.0
-    criterion: l1
+    criterion: huber
 
 logger:
   print_freq: 100
   save_checkpoint_freq: 1000
   use_tb_logger: true
-  #wandb:
-  #  project: ~
-  #  resume_id: ~
-
-# dist training settings
-#dist_params:
-#  backend: nccl
-#  port: 29500
