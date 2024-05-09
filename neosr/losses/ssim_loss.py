@@ -148,7 +148,6 @@ class mssim(nn.Module):
             cosine_term = (1 - similarity(x, y)).mean()
             msssim = msssim - self.cosim_lambda * cosine_term
 
-
         return msssim
 
     def _ssim(self, x, y):

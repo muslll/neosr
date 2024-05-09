@@ -147,6 +147,9 @@ train:
   #ff_opt:
   #  type: focalfrequencyloss
   #  loss_weight: 0.5
+  #gw_opt:
+  #  type: gw_loss
+  #  loss_weight: 1.0
 
   match_lq: false
   color_opt:

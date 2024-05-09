@@ -137,6 +137,12 @@ class default():
         else:
             self.cri_ff = None
 
+        # Gradient-Weighted loss
+        if train_opt.get('gw_opt'):
+            self.cri_gw = build_loss(train_opt['gw_opt']).to(self.device, memory_format=torch.channels_last, non_blocking=True)
+        else:
+            self.cri_gw = None
+
         # Color loss
         if train_opt.get('color_opt'):
             self.cri_color = build_loss(train_opt['color_opt']).to(self.device, memory_format=torch.channels_last, non_blocking=True)
@@ -349,11 +355,16 @@ class default():
                         torch.mul(pixel_weight, self.output), torch.mul(pixel_weight, self.gt))
                     l_g_total += l_g_ldl
                     loss_dict['l_g_ldl'] = l_g_ldl
-                # Focal Frequency Loss
+                # focal frequency loss
                 if self.cri_ff:
                     l_g_ff = self.cri_ff(self.output, self.gt)
                     l_g_total += l_g_ff
                     loss_dict['l_g_ff'] = l_g_ff
+                # gradient-weighted loss
+                if self.cri_gw:
+                    l_g_gw = self.cri_gw(self.output, self.gt)
+                    l_g_total += l_g_gw
+                    loss_dict['l_g_gw'] = l_g_gw
                 # color loss
                 if self.cri_color:
                     if self.match_lq:

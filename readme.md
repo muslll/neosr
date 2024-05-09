@@ -123,22 +123,22 @@ Where `options.yml` is a configuration file. Templates can be found in [options]
 
 ### Supported losses:
 
-| loss                                                                   | option               		     |
-|------------------------------------------------------------------------|-------------------------------------------|
-| L1 Loss                                                                | `L1Loss`, `l1`       		     |
-| L2 Loss                                                                | `MSELoss`, `l2`      		     |
-| Huber Loss                                                             | `HuberLoss`, `huber` 		     |
-| CHC (Clipped Huber with Cosine Similarity Loss)			 | `chc`, `chc_l2`			     |
-| Perceptual Loss                                                        | `perceptual_opt`, `PerceptualLoss`        |
-| GAN                                                                    | `gan_opt`, `GANLoss`, `MultiScaleGANLoss` |
-| Y**CbCr** Color Loss (bt601)                                           | `color_opt`, `colorloss`                  |
-| Luma Loss (CIE X**Y**Z)						 | `luma_opt` `lumaloss`		     |
-| [MS-SSIM](https://github.com/lartpang/mssim.pytorch)			 | `mssim_opt` `mssim`			     |
-| [LDL Loss](https://github.com/csjliang/LDL)                            | `ldl_opt`  			             |
-| [Focal Frequency](https://github.com/EndlessSora/focal-frequency-loss) | `ff_opt`, `focalfrequencyloss`            |
-| [Gradient Variance](https://github.com/lusinlu/gradient-variance-loss) | `gv_opt`, `gradvarloss`		     |
-| [DISTS](https://github.com/dingkeyan93/DISTS)				 | `dists_opt`, `dists`			     |
-| [Wavelet Guided](https://github.com/mandalinadagi/WGSR)		 | `wavelet_guided`			     |
+| loss                                                                   						| option               		      	    |
+|-----------------------------------------------------------------------------------------------------------------------|-------------------------------------------|
+| L1 Loss                                                                						| `L1Loss`, `l1`       		     	    |
+| L2 Loss                                                                						| `MSELoss`, `l2`      		     	    |
+| Huber Loss                                                             						| `HuberLoss`, `huber` 		     	    |
+| CHC (Clipped Huber with Cosine Similarity Loss)			 						| `chc`, `chc_l2`			    |
+| Perceptual Loss                                                        						| `perceptual_opt`, `PerceptualLoss`        |
+| GAN                                                                    						| `gan_opt`, `GANLoss`, `MultiScaleGANLoss` |
+| Y**CbCr** Color Loss (bt601)                                           						| `color_opt`, `colorloss`                  |
+| Luma Loss (CIE X**Y**Z)						 						| `luma_opt` `lumaloss`		     	    |
+| [MS-SSIM](https://github.com/lartpang/mssim.pytorch)			 						| `mssim_opt` `mssim`			    |
+| [LDL Loss](https://github.com/csjliang/LDL)                            						| `ldl_opt`  			            |
+| [Focal Frequency](https://github.com/EndlessSora/focal-frequency-loss) 						| `ff_opt`, `focalfrequencyloss`            |
+| [DISTS](https://github.com/dingkeyan93/DISTS)				 						| `dists_opt`, `dists`			    |
+| [Wavelet Guided](https://github.com/mandalinadagi/WGSR)		 						| `wavelet_guided`			    |
+| [Gradient-Weighted](https://github.com/xiezw5/Component-Divide-and-Conquer-for-Real-World-Image-Super-Resolution/)	| `gw_opt`, `gw_loss`			    | 
 
 ### Supported Augmentations:
 
