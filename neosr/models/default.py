@@ -137,12 +137,6 @@ class default():
         else:
             self.cri_ff = None
 
-        # Gradient Variance Loss
-        if train_opt.get('gv_opt'):
-            self.cri_gv = build_loss(train_opt['gv_opt']).to(self.device, memory_format=torch.channels_last, non_blocking=True)
-        else:
-            self.cri_gv = None
-
         # Color loss
         if train_opt.get('color_opt'):
             self.cri_color = build_loss(train_opt['color_opt']).to(self.device, memory_format=torch.channels_last, non_blocking=True)
@@ -360,11 +354,6 @@ class default():
                     l_g_ff = self.cri_ff(self.output, self.gt)
                     l_g_total += l_g_ff
                     loss_dict['l_g_ff'] = l_g_ff
-                # Gradient Variance Loss
-                if self.cri_gv:
-                    l_g_gv = self.cri_gv(self.output, self.gt)
-                    l_g_total += l_g_gv
-                    loss_dict['l_g_gv'] = l_g_gv
                 # color loss
                 if self.cri_color:
                     if self.match_lq:
