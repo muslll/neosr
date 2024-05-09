@@ -4,7 +4,8 @@
 <a href=https://github.com/muslll/neosr><b>neosr</b></a> is a framework for training real-world single-image super-resolution networks. <a href=https://github.com/muslll/neosr/wiki><b>wiki</b></a>.
 </div>
 <br>
-<a href="https://discord.gg/NN2HGtJ3d6"><img align="center" src="https://github.com/muslll/neosr/assets/132400428/4bd54b1d-4639-4940-b9c7-b3f212aea5c8?sanitize=true" width="100"</img></a>
+<a href="https://discord.gg/NN2HGtJ3d6"><img align="center" src="https://github.com/muslll/neosr/assets/132400428/4bd54b1d-4639-4940-b9c7-b3f212aea5c8?sanitize=true" width="150"</img></a><br>
+
 Join our [Discord](https://discord.gg/NN2HGtJ3d6)
 
 <details>
