@@ -1,6 +1,8 @@
 ![neosr](https://github.com/muslll/neosr/assets/132400428/54e8f7fa-8705-4ea3-8b6e-c6227117044d?sanitize=true")
 
-<center>[**neosr**](https://github.com/muslll/neosr) is a framework for training real-world single-image super-resolution networks. [**wiki**](https://github.com/muslll/neosr/wiki)</center>
+<div align="center">
+[**neosr**](https://github.com/muslll/neosr) is a framework for training real-world single-image super-resolution networks. [**wiki**](https://github.com/muslll/neosr/wiki)
+</div>
 
 <details>
   <summary><b>news</b></summary>
