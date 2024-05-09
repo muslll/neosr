@@ -3,16 +3,18 @@
 <div align="center">
 <a href=https://github.com/muslll/neosr><b>neosr</b></a> is a framework for training real-world single-image super-resolution networks. <a href=https://github.com/muslll/neosr/wiki><b>wiki</b></a>.
 </div>
+<br>
 
 <details>
   <summary><b>news</b></summary>
-  05.09.2014 - Released Real-PLKSR network. [wiki](https://github.com/muslll/neosr/wiki/Arch%E2%80%90specific-options#realplksr-realplksr_s) <br>
-  05.08.2014 - Released <b>Nomos-v2</b> dataset. For more details, see [datasets](#datasets) <br>
+  05.09.2014 - Released Real-PLKSR network. <a href=https://github.com/muslll/neosr/wiki/Arch%E2%80%90specific-options#realplksr-realplksr_s>wiki</a><br>
+  05.08.2014 - Released <b>Nomos-v2</b> dataset. For more details, see <a href=#datasets>datasets</a><br>
 </details>
 
 ## 🤝 support me
 
-Consider supporting me on [**KoFi**](https://ko-fi.com/muslll) &#9749; or [**Patreon**](https://www.patreon.com/neosr)
+> [!TIP]
+> Consider supporting me on [**KoFi**](https://ko-fi.com/muslll) &#9749; or [**Patreon**](https://www.patreon.com/neosr)
 
 ## 💻 installation
 
@@ -52,8 +54,7 @@ You can also install using poetry (*recommended on linux*):
 poetry add onnx onnxruntime-gpu onnxconverter-common onnxsim
 ```
 
-> [!TIP]
-> Please read the [**wiki tutorial**](https://github.com/muslll/neosr/wiki/Model-Conversion) for converting your models.
+Please read the [**wiki tutorial**](https://github.com/muslll/neosr/wiki/Model-Conversion) for converting your models.
 
 ## quick start
 
@@ -63,7 +64,9 @@ Start training by running:
 python train.py -opt options.yml
 ```
 Where `options.yml` is a configuration file. Templates can be found in [options](options/).
-Please read the wiki [Configuration Walkthrough](https://github.com/muslll/neosr/wiki/Configuration-Walkthrough) for an explanation of each option.
+
+> [!TIP]
+> Please read the wiki [Configuration Walkthrough](https://github.com/muslll/neosr/wiki/Configuration-Walkthrough) for an explanation of each option.
 
 ## features
 
