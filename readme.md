@@ -1,11 +1,11 @@
 ![neosr](https://github.com/muslll/neosr/assets/132400428/54e8f7fa-8705-4ea3-8b6e-c6227117044d?sanitize=true")
 
-**neosr** is a framework for training real-world single-image super-resolution networks. [**wiki**](https://github.com/muslll/neosr/wiki)
+<center>[**neosr**](https://github.com/muslll/neosr) is a framework for training real-world single-image super-resolution networks. [**wiki**](https://github.com/muslll/neosr/wiki)</center>
 
 <details>
   <summary><b>news</b></summary>
-  05.09.2014 - Released Real-PLKSR network. [wiki](https://github.com/muslll/neosr/wiki/Arch%E2%80%90specific-options#realplksr-realplksr_s)
-  05.08.2014 - Released <b>Nomos-v2</b> dataset. For more details, see [datasets](#datasets)
+  05.09.2014 - Released Real-PLKSR network. [wiki](https://github.com/muslll/neosr/wiki/Arch%E2%80%90specific-options#realplksr-realplksr_s) <br>
+  05.08.2014 - Released <b>Nomos-v2</b> dataset. For more details, see [datasets](#datasets) <br>
 </details>
 
 ## 🤝 support me
@@ -166,7 +166,7 @@ Please read the wiki [Configuration Walkthrough](https://github.com/muslll/neosr
 
 As part of *neosr*, I have released a dataset series called *Nomos*. The purpose of these dataset is to distill only the best images from the academic and community datasets. A total of 14 datasets were manually reviewed and processed, including: [Adobe-MIT-5k](https://data.csail.mit.edu/graphics/fivek/), [RAISE](http://loki.disi.unitn.it/RAISE/), [LSDIR](https://data.vision.ee.ethz.ch/yawli/), [LIU4k-v2](https://structpku.github.io/LIU4K_Dataset/LIU4K_v2.html), [KONIQ-10k](https://database.mmsp-kn.de/koniq-10k-database.html), [Nikon LL RAW](https://www.kaggle.com/datasets/razorblade/nikon-camera-dataset), [DIV8k](https://ieeexplore.ieee.org/document/9021973), [FFHQ](https://github.com/NVlabs/ffhq-dataset), [Flickr2k](http://cv.snu.ac.kr/research/EDSR/Flickr2K.tar), [ModernAnimation1080_v2](https://huggingface.co/datasets/Zarxrax/ModernAnimation1080_v2), [Rawsamples](https://www.rawsamples.ch/index.php/en/), [SignatureEdits](https://www.signatureedits.com/free-raw-photos/), [Hasselblad raw samples](https://www.hasselblad.com/learn/sample-images/) and [Unsplash](https://unsplash.com/). 
 
-- `Nomos-v2` (*recommended*): contains 6000 images, multipurpose. Data distribution:
+- `Nomos-v2` (**recommended**): contains 6000 images, multipurpose. Data distribution:
 
 ```mermaid
 pie
@@ -207,11 +207,11 @@ Datasets made by the upscaling community. More info can be found in the [Enhance
 - `SSDIR`: Curated version of [LSDIR](https://data.vision.ee.ethz.ch/yawli/).
 - `kim's 8k Dataset V2`: Video Game Dataset
 
-| dataset                                                | num images        | meta_info      | download                                                                                                   | sha256          |
-|--------------------------------------------------------|-------------------|----------------|------------------------------------------------------------------------------------------------------------|-----------------|
-| [@Kim2091](https://github.com/Kim2091)'s 8k Dataset V2 | 672 (7680x4320px) | -              | [GDrive (33.5GB)](https://drive.google.com/drive/folders/1z6-UFJPciU5ysTaRXUPTfC9QrqW517G6?usp=drive_link) | -               |
-| [@Phhofm](https://github.com/Phhofm) FaceUp            | 10000 (512x512)   | -              | [GDrive (4GB)](https://drive.google.com/file/d/1WFY0siR_ERVSnE2p7ouiCfV3wQizpAKr/view)                     | -               |
-| [@Phhofm](https://github.com/Phhofm) SSDIR             | 10000 (512x512)   | -              | [Gdrive (4.5GB)](https://drive.google.com/file/d/1FA8Q-T3xZ6_KA7SHYgoa6idIS7xpdrl4/view)                   | -               |
+| dataset                                                | download 												      |
+|--------------------------------------------------------|------------------------------------------------------------------------------------------------------------|
+| [@Kim2091](https://github.com/Kim2091) 8k Dataset V2	 | [GDrive (33.5GB)](https://drive.google.com/drive/folders/1z6-UFJPciU5ysTaRXUPTfC9QrqW517G6?usp=drive_link) |
+| [@Phhofm](https://github.com/Phhofm) FaceUp            | [GDrive (4GB)](https://drive.google.com/file/d/1WFY0siR_ERVSnE2p7ouiCfV3wQizpAKr/view)                     |
+| [@Phhofm](https://github.com/Phhofm) SSDIR             | [Gdrive (4.5GB)](https://drive.google.com/file/d/1FA8Q-T3xZ6_KA7SHYgoa6idIS7xpdrl4/view)                   |
 
 ## resources
 
