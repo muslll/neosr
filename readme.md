@@ -9,8 +9,8 @@ Join our <a href="https://discord.gg/NN2HGtJ3d6">Discord</a>
 
 <details>
   <summary><b>news</b></summary>
-  05.09.2014 - Released Real-PLKSR network. <a href=https://github.com/muslll/neosr/wiki/Arch%E2%80%90specific-options#realplksr-realplksr_s>wiki</a><br>
-  05.08.2014 - Released <b>Nomos-v2</b> dataset. For more details, see <a href=#datasets>datasets</a><br>
+  05.09.2014 - Release Real-PLKSR network. <a href=https://github.com/muslll/neosr/wiki/Arch%E2%80%90specific-options#realplksr-realplksr_s>wiki</a><br>
+  05.08.2014 - Release <b>Nomos-v2</b> dataset. For more details, see <a href=#datasets>datasets</a><br>
 </details>
 
 ## 🤝 support me
@@ -171,7 +171,7 @@ Where `options.yml` is a configuration file. Templates can be found in [options]
 
 ## 📸 datasets
 
-As part of *neosr*, I have released a dataset series called *Nomos*. The purpose of these dataset is to distill only the best images from the academic and community datasets. A total of 14 datasets were manually reviewed and processed, including: [Adobe-MIT-5k](https://data.csail.mit.edu/graphics/fivek/), [RAISE](http://loki.disi.unitn.it/RAISE/), [LSDIR](https://data.vision.ee.ethz.ch/yawli/), [LIU4k-v2](https://structpku.github.io/LIU4K_Dataset/LIU4K_v2.html), [KONIQ-10k](https://database.mmsp-kn.de/koniq-10k-database.html), [Nikon LL RAW](https://www.kaggle.com/datasets/razorblade/nikon-camera-dataset), [DIV8k](https://ieeexplore.ieee.org/document/9021973), [FFHQ](https://github.com/NVlabs/ffhq-dataset), [Flickr2k](http://cv.snu.ac.kr/research/EDSR/Flickr2K.tar), [ModernAnimation1080_v2](https://huggingface.co/datasets/Zarxrax/ModernAnimation1080_v2), [Rawsamples](https://www.rawsamples.ch/index.php/en/), [SignatureEdits](https://www.signatureedits.com/free-raw-photos/), [Hasselblad raw samples](https://www.hasselblad.com/learn/sample-images/) and [Unsplash](https://unsplash.com/). 
+As part of *neosr*, I have released a dataset series called *Nomos*. The purpose of these datasets is to distill only the best images from the academic and community datasets. A total of 14 datasets were manually reviewed and processed, including: [Adobe-MIT-5k](https://data.csail.mit.edu/graphics/fivek/), [RAISE](http://loki.disi.unitn.it/RAISE/), [LSDIR](https://data.vision.ee.ethz.ch/yawli/), [LIU4k-v2](https://structpku.github.io/LIU4K_Dataset/LIU4K_v2.html), [KONIQ-10k](https://database.mmsp-kn.de/koniq-10k-database.html), [Nikon LL RAW](https://www.kaggle.com/datasets/razorblade/nikon-camera-dataset), [DIV8k](https://ieeexplore.ieee.org/document/9021973), [FFHQ](https://github.com/NVlabs/ffhq-dataset), [Flickr2k](http://cv.snu.ac.kr/research/EDSR/Flickr2K.tar), [ModernAnimation1080_v2](https://huggingface.co/datasets/Zarxrax/ModernAnimation1080_v2), [Rawsamples](https://www.rawsamples.ch/index.php/en/), [SignatureEdits](https://www.signatureedits.com/free-raw-photos/), [Hasselblad raw samples](https://www.hasselblad.com/learn/sample-images/) and [Unsplash](https://unsplash.com/). 
 
 - `Nomos-v2` (**recommended**): contains 6000 images, multipurpose. Data distribution:
 
