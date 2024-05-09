@@ -35,6 +35,7 @@
 | Augmentations inspired by [OpenMixUp](https://github.com/Westlake-AI/openmixup)		      		| [Apache 2.0](https://github.com/Westlake-AI/openmixup/blob/main/LICENSE)					|
 | MS-SSIM loss adapted from [mssim.pytorch](https://github.com/lartpang/mssim.pytorch)		      		| [MIT](https://github.com/lartpang/mssim.pytorch/blob/main/LICENSE)						|
 | [`PLKSR`](https://github.com/dslisleedh/PLKSR)						      		| [MIT](https://github.com/dslisleedh/PLKSR/blob/main/LICENSE)							|
+| [`RealPLKSR`](https://github.com/dslisleedh/PLKSR)						      		| [MIT](https://github.com/dslisleedh/PLKSR/blob/main/LICENSE)							|
 | [`DRCT`](https://github.com/ming053l/DRCT)							      		| [MIT](https://github.com/ming053l/DRCT/blob/main/LICENSE)							|
 | [`EFEN`](https://github.com/Supereeeee/EFEN)							      		| Unknown													|
 | [`GW loss`](https://github.com/xiezw5/Component-Divide-and-Conquer-for-Real-World-Image-Super-Resolution/)	| Unknown													|
