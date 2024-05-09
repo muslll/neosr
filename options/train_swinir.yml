@@ -36,6 +36,7 @@ datasets:
 #val:
 #  val_freq: 1000
 #  save_img: true
+#  tile: -1 # 200
 #  metrics:
 #    psnr:
 #      type: calculate_psnr
@@ -82,9 +83,6 @@ train:
 
   # losses
   wavelet_guided: false
-  #pixel_opt:
-  #  type: chc
-  #  loss_weight: 1.0
   mssim_opt:
     type: mssim
     loss_weight: 1.0
@@ -111,10 +109,6 @@ train:
   #ff_opt:
   #  type: focalfrequencyloss
   #  loss_weight: 0.5
-  #gv_opt:
-  #  type: gradvarloss
-  #  loss_weight: 0.5
-  #  criterion: chc
 
   match_lq: false
   color_opt:
