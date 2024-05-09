@@ -567,7 +567,6 @@ class default():
             _, _, h, w = self.output.size()
             self.output = self.output[:, :, 0:h - mod_pad_h * self.scale, 0:w - mod_pad_w * self.scale]
 
-
     @torch.no_grad()
     def feed_data(self, data):
         self.lq = data['lq'].to(self.device, memory_format=torch.channels_last, non_blocking=True)

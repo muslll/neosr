@@ -190,11 +190,7 @@ def cutblur(img_gt, img_lq, alpha=0.7):
     bbx1, bby1, bbx2, bby2 = rand_bbox(img_gt.size(), lam)
 
     # apply cutblur
-    img_lq_aug = img_lq.clone()
-    # apply GT to LQ
     img_lq[:, :, bbx1:bbx2, bby1:bby2] = img_gt[:, :, bbx1:bbx2, bby1:bby2]
-    # apply LQ to GT
-    img_gt[:, :, bbx1:bbx2, bby1:bby2] = img_lq_aug[:, :, bbx1:bbx2, bby1:bby2]
 
     return img_gt, img_lq
 
