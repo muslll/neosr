@@ -9,8 +9,8 @@ Join our <a href="https://discord.gg/NN2HGtJ3d6">Discord</a>
 
 <details>
   <summary><b>news</b></summary>
-  05.09.2014 - Release Real-PLKSR network. <a href=https://github.com/muslll/neosr/wiki/Arch%E2%80%90specific-options#realplksr-realplksr_s>wiki</a><br>
-  05.08.2014 - Release <b>Nomos-v2</b> dataset. For more details, see <a href=#datasets>datasets</a><br>
+  05.09.2024 - Release Real-PLKSR network. <a href=https://github.com/muslll/neosr/wiki/Arch%E2%80%90specific-options#realplksr-realplksr_s>wiki</a><br>
+  05.08.2024 - Release <b>Nomos-v2</b> dataset. For more details, see <a href=#datasets>datasets</a><br>
 </details>
 
 ## 🤝 support me
