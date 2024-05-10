@@ -78,6 +78,9 @@ class default():
         # scale ratio var
         self.scale = self.opt['scale'] 
 
+        # gt size var
+        self.gt_size = self.opt["datasets"]["train"]["gt_size"]
+
         # augmentations
         self.aug = self.opt["datasets"]["train"].get("augmentation", None)
         self.aug_prob = self.opt["datasets"]["train"].get("aug_prob", None)
@@ -190,6 +193,9 @@ class default():
             raise ValueError(msg)
         if self.net_d is None and self.cri_gan is not None:
             msg = "GAN requires a discriminator to be set."
+            raise ValueError(msg)
+        if self.aug is not None and self.gt_size % 4 != 0:
+            msg = "The gt_size value must be a multiple of 4. Please change it."
             raise ValueError(msg)
 
         self.net_d_iters = train_opt.get('net_d_iters', 1)

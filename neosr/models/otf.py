@@ -24,6 +24,7 @@ class otf(default):
         # simulate JPEG compression artifacts
         self.jpeger = DiffJPEG(differentiable=False).cuda()
         self.queue_size = opt.get('queue_size', 180)
+        self.gt_size = opt['gt_size']
         self.device = torch.device('cuda')
 
     @torch.no_grad()
@@ -183,7 +184,12 @@ class otf(default):
             self._dequeue_and_enqueue()
             # for the warning: grad and param do not obey the gradient layout contract
             self.lq = self.lq.contiguous()
-            # augmentation
+
+            # augmentation error handling
+            if self.aug is not None and self.gt_size % 4 != 0:
+                msg = "The gt_size value must be a multiple of 4. Please change it."
+                raise ValueError(msg)
+            # apply augmentation
             if self.aug is not None:
                 self.gt, self.lq = apply_augment(self.gt, self.lq, scale=self.scale, augs=self.aug, prob=self.aug_prob)
         else:
