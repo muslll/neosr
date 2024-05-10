@@ -135,7 +135,7 @@ Where `options.yml` is a configuration file. Templates can be found in [options]
 | Perceptual Loss                                                        						| `perceptual_opt`, `PerceptualLoss`        |
 | GAN                                                                    						| `gan_opt`, `GANLoss`, `MultiScaleGANLoss` |
 | Y**CbCr** Color Loss (bt601)                                           						| `color_opt`, `colorloss`                  |
-| Luma Loss (CIE X**Y**Z)						 						| `luma_opt` `lumaloss`		     	    |
+| Luma Loss (CIE L*)						 						| `luma_opt` `lumaloss`		     	    |
 | [MS-SSIM](https://github.com/lartpang/mssim.pytorch)			 						| `mssim_opt` `mssim`			    |
 | [LDL Loss](https://github.com/csjliang/LDL)                            						| `ldl_opt`  			            |
 | [Focal Frequency](https://github.com/EndlessSora/focal-frequency-loss) 						| `ff_opt`, `focalfrequencyloss`            |
@@ -235,4 +235,4 @@ This code was originally based on [BasicSR](https://github.com/XPixelGroup/Basic
 
 Thanks to [victorca25/traiNNer](https://github.com/victorca25/traiNNer), [styler00dollar/Colab-traiNNer](https://github.com/styler00dollar/Colab-traiNNer/) and [timm](https://github.com/huggingface/pytorch-image-models) for providing helpful insights into some problems.
 
-Thanks to contributors [@Phhofm](https://github.com/Phhofm), [@Sirosky](https://github.com/Sirosky), [@Kim2091](https://github.com/Kim2091), [@terrainer](https://github.com/terrainer) and [@Corpsecreate](https://github.com/Corpsecreate) for helping with tests and bug reporting. 
+Thanks to contributors [@Phhofm](https://github.com/Phhofm), [@Sirosky](https://github.com/Sirosky), [@Kim2091](https://github.com/Kim2091), [@terrainer](https://github.com/terrainer), [@Corpsecreate](https://github.com/Corpsecreate) and [@umzi2](https://github.com/umzi2) for helping with tests and bug reporting. 

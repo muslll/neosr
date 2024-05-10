@@ -3,13 +3,14 @@ import random
 import torch
 from torch.nn import functional as F
 
+from neosr.models.default import default
 from neosr.data.degradations import random_add_gaussian_noise_pt, random_add_poisson_noise_pt
 from neosr.data.transforms import paired_random_crop
 from neosr.utils import DiffJPEG
 from neosr.utils.img_process_util import filter2D
-from neosr.models.default import default
-from neosr.utils.registry import MODEL_REGISTRY
+from neosr.data.augmentations import apply_augment
 from neosr.utils.rng import rng
+from neosr.utils.registry import MODEL_REGISTRY
 
 rng = rng()
 
