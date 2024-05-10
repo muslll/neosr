@@ -79,7 +79,10 @@ class default():
         self.scale = self.opt['scale'] 
 
         # gt size var
-        self.gt_size = self.opt["datasets"]["train"]["gt_size"]
+        if self.opt["model_type"] == "otf":
+            self.gt_size = self.opt["gt_size"]
+        else:
+            self.gt_size = self.opt["datasets"]["train"].get("gt_size")
 
         # augmentations
         self.aug = self.opt["datasets"]["train"].get("augmentation", None)
