@@ -3,13 +3,14 @@ import random
 import torch
 from torch.nn import functional as F
 
+from neosr.models.default import default
 from neosr.data.degradations import random_add_gaussian_noise_pt, random_add_poisson_noise_pt
 from neosr.data.transforms import paired_random_crop
 from neosr.utils import DiffJPEG
 from neosr.utils.img_process_util import filter2D
-from neosr.models.default import default
-from neosr.utils.registry import MODEL_REGISTRY
+from neosr.data.augmentations import apply_augment
 from neosr.utils.rng import rng
+from neosr.utils.registry import MODEL_REGISTRY
 
 rng = rng()
 
@@ -23,6 +24,7 @@ class otf(default):
         # simulate JPEG compression artifacts
         self.jpeger = DiffJPEG(differentiable=False).cuda()
         self.queue_size = opt.get('queue_size', 180)
+        self.gt_size = opt['gt_size']
         self.device = torch.device('cuda')
 
     @torch.no_grad()
@@ -182,7 +184,12 @@ class otf(default):
             self._dequeue_and_enqueue()
             # for the warning: grad and param do not obey the gradient layout contract
             self.lq = self.lq.contiguous()
-            # augmentation
+
+            # augmentation error handling
+            if self.aug is not None and self.gt_size % 4 != 0:
+                msg = "The gt_size value must be a multiple of 4. Please change it."
+                raise ValueError(msg)
+            # apply augmentation
             if self.aug is not None:
                 self.gt, self.lq = apply_augment(self.gt, self.lq, scale=self.scale, augs=self.aug, prob=self.aug_prob)
         else:

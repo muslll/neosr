@@ -653,6 +653,7 @@ class craft(nn.Module):
         super(craft, self).__init__()
 
         self.split_size = (split_size_0, split_size_1)
+        self.window_size = window_size
 
         num_in_ch = in_chans
         num_out_ch = in_chans
@@ -782,9 +783,16 @@ class craft(nn.Module):
 
         return x
 
-
-
     def forward(self, x):
+        _, _, h_old, w_old = x.size()
+        h_pad = (h_old // self.window_size + 1) * self.window_size - h_old
+        w_pad = (w_old // self.window_size + 1) * self.window_size - w_old
+        pad = h_pad != 0 or w_pad != 0
+
+        if pad:
+            x = torch.cat([x, torch.flip(x, [2])], 2)[:, :, : h_old + h_pad, :]
+            x = torch.cat([x, torch.flip(x, [3])], 3)[:, :, :, : w_old + w_pad]
+
         self.h, self.w = x.shape[2:]
         self.mean = self.mean.type_as(x)
         x = (x - self.mean) * self.img_range
@@ -794,5 +802,9 @@ class craft(nn.Module):
 
         x = self.upsample(x)
         x = x / self.img_range + self.mean
+
+        if pad:
+            x = x[..., : h_old * self.upscale, : w_old * self.upscale]
+
         return x
 

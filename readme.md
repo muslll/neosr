@@ -1,8 +1,24 @@
-# neosr
+![neosr](https://github.com/muslll/neosr/assets/132400428/54e8f7fa-8705-4ea3-8b6e-c6227117044d?sanitize=true")
 
-**neosr** is a framework for training real-world single-image super-resolution networks. [**wiki**](https://github.com/muslll/neosr/wiki)
+<div align="center">
+<a href=https://github.com/muslll/neosr><b>neosr</b></a> is a framework for training real-world single-image super-resolution networks. <a href=https://github.com/muslll/neosr/wiki><b>wiki</b></a>.
+<br><br>
+<a href="https://discord.gg/NN2HGtJ3d6"><img src="https://github.com/muslll/neosr/assets/132400428/4bd54b1d-4639-4940-b9c7-b3f212aea5c8?sanitize=true" width="120"</img></a><br>
+Join our <a href="https://discord.gg/NN2HGtJ3d6">Discord</a>
+</div>
 
-## installation
+<details>
+  <summary><b>news</b></summary>
+  05.09.2024 - Release Real-PLKSR network. <a href=https://github.com/muslll/neosr/wiki/Arch%E2%80%90specific-options#realplksr-realplksr_s>wiki</a><br>
+  05.08.2024 - Release <b>Nomos-v2</b> dataset. For more details, see <a href=#datasets>datasets</a><br>
+</details>
+
+## 🤝 support me
+
+> [!TIP]
+> Consider supporting me on [**KoFi**](https://ko-fi.com/muslll) &#9749; or [**Patreon**](https://www.patreon.com/neosr)
+
+## 💻 installation
 
 Requires Python 3.11 and CUDA =>11.8.
 Install latest [Pytorch (=>2.1) and TorchVision](https://pytorch.org/get-started/locally/) (required).
@@ -40,8 +56,7 @@ You can also install using poetry (*recommended on linux*):
 poetry add onnx onnxruntime-gpu onnxconverter-common onnxsim
 ```
 
-> [!TIP]
-> Please read the [**wiki tutorial**](https://github.com/muslll/neosr/wiki/Model-Conversion) for converting your models.
+Please read the [**wiki tutorial**](https://github.com/muslll/neosr/wiki/Model-Conversion) for converting your models.
 
 ## quick start
 
@@ -51,7 +66,9 @@ Start training by running:
 python train.py -opt options.yml
 ```
 Where `options.yml` is a configuration file. Templates can be found in [options](options/).
-Please read the wiki [Configuration Walkthrough](https://github.com/muslll/neosr/wiki/Configuration-Walkthrough) for an explanation of each option.
+
+> [!TIP]
+> Please read the wiki [Configuration Walkthrough](https://github.com/muslll/neosr/wiki/Configuration-Walkthrough) for an explanation of each option.
 
 ## features
 
@@ -74,6 +91,10 @@ Please read the wiki [Configuration Walkthrough](https://github.com/muslll/neosr
 | [SAFMN](https://github.com/sunny2109/SAFMN)							    | `safmn`, `safmn_l`				|
 | [RGT](https://github.com/zhengchen1999/RGT)							    | `rgt`, `rgt_s` 					|
 | [ATD](https://github.com/LabShuHangGU/Adaptive-Token-Dictionary)   				    | `atd`, `atd_light`   				|
+| [PLKSR](https://github.com/dslisleedh/PLKSR)			     				    | `plksr`, `plksr_tiny`	    			|
+| RealPLKSR											    | `realplksr`, `realplksr_s`			|
+| [DRCT](https://github.com/ming053l/DRCT)			     				    | `drct`, `drct_l`, `drct_s`   			|
+| [EFEN](https://github.com/Supereeeee/EFEN)			     				    | `efen`			    			|
 
 > [!NOTE]
 > For all arch-specific parameters, [read the wiki](https://github.com/muslll/neosr/wiki/Arch%E2%80%90specific-options).
@@ -82,10 +103,6 @@ Please read the wiki [Configuration Walkthrough](https://github.com/muslll/neosr
 
 | arch                                          		     | option               	     |
 |--------------------------------------------------------------------|-------------------------------|
-| [PLKSR](https://github.com/dslisleedh/PLKSR)			     | `plksr`, `plksr_tiny`	     |
-| [DRCT](https://github.com/ming053l/DRCT)			     | `drct`, `drct_l`, `drct_s`    |
-| [AGDN](https://github.com/daydreamer2024/AGDN)		     | `agdn`, `agdn_s`		     |
-| [EFEN](https://github.com/Supereeeee/EFEN)			     | `efen`			     |
 
 
 ### Supported Discriminators:
@@ -109,22 +126,22 @@ Please read the wiki [Configuration Walkthrough](https://github.com/muslll/neosr
 
 ### Supported losses:
 
-| loss                                                                   | option               		     |
-|------------------------------------------------------------------------|-------------------------------------------|
-| L1 Loss                                                                | `L1Loss`, `l1`       		     |
-| L2 Loss                                                                | `MSELoss`, `l2`      		     |
-| Huber Loss                                                             | `HuberLoss`, `huber` 		     |
-| CHC (Clipped Huber with Cosine Similarity Loss)			 | `chc`, `chc_l2`			     |
-| Perceptual Loss                                                        | `perceptual_opt`, `PerceptualLoss`        |
-| GAN                                                                    | `gan_opt`, `GANLoss`, `MultiScaleGANLoss` |
-| Y**CbCr** Color Loss (bt601)                                           | `color_opt`, `colorloss`                  |
-| Luma Loss (CIE X**Y**Z)						 | `luma_opt` `lumaloss`		     |
-| [MS-SSIM](https://github.com/lartpang/mssim.pytorch)			 | `mssim_opt` `mssim`			     |
-| [LDL Loss](https://github.com/csjliang/LDL)                            | `ldl_opt`  			             |
-| [Focal Frequency](https://github.com/EndlessSora/focal-frequency-loss) | `ff_opt`, `focalfrequencyloss`            |
-| [Gradient Variance](https://github.com/lusinlu/gradient-variance-loss) | `gv_opt`, `gradvarloss`		     |
-| [DISTS](https://github.com/dingkeyan93/DISTS)				 | `dists_opt`, `dists`			     |
-| [Wavelet Guided](https://github.com/mandalinadagi/WGSR)		 | `wavelet_guided`			     |
+| loss                                                                   						| option               		      	    |
+|-----------------------------------------------------------------------------------------------------------------------|-------------------------------------------|
+| L1 Loss                                                                						| `L1Loss`, `l1`       		     	    |
+| L2 Loss                                                                						| `MSELoss`, `l2`      		     	    |
+| Huber Loss                                                             						| `HuberLoss`, `huber` 		     	    |
+| CHC (Clipped Huber with Cosine Similarity Loss)			 						| `chc`, `chc_l2`			    |
+| Perceptual Loss                                                        						| `perceptual_opt`, `PerceptualLoss`        |
+| GAN                                                                    						| `gan_opt`, `GANLoss`, `MultiScaleGANLoss` |
+| Y**CbCr** Color Loss (bt601)                                           						| `color_opt`, `colorloss`                  |
+| Luma Loss (CIE L*)						 						| `luma_opt` `lumaloss`		     	    |
+| [MS-SSIM](https://github.com/lartpang/mssim.pytorch)			 						| `mssim_opt` `mssim`			    |
+| [LDL Loss](https://github.com/csjliang/LDL)                            						| `ldl_opt`  			            |
+| [Focal Frequency](https://github.com/EndlessSora/focal-frequency-loss) 						| `ff_opt`, `focalfrequencyloss`            |
+| [DISTS](https://github.com/dingkeyan93/DISTS)				 						| `dists_opt`, `dists`			    |
+| [Wavelet Guided](https://github.com/mandalinadagi/WGSR)		 						| `wavelet_guided`			    |
+| [Gradient-Weighted](https://github.com/xiezw5/Component-Divide-and-Conquer-for-Real-World-Image-Super-Resolution/)	| `gw_opt`, `gw_loss`			    | 
 
 ### Supported Augmentations:
 
@@ -152,59 +169,70 @@ Please read the wiki [Configuration Walkthrough](https://github.com/muslll/neosr
 | Single datasets (for inference, no GT required) | `single` |
 | Real-ESRGAN on-the-fly degradation              | `otf`    |
 
-## datasets
+## 📸 datasets
 
-If you don't have a dataset, you can either download research datasets like [DIV2K](https://data.vision.ee.ethz.ch/cvl/DIV2K/) or use one of the following.
-- `nomos_uni` (*recommended*): universal dataset containing real photographs and anime images
-- `nomos8k`: dataset with real photographs only
-- `hfa2k`: anime dataset
+As part of *neosr*, I have released a dataset series called *Nomos*. The purpose of these datasets is to distill only the best images from the academic and community datasets. A total of 14 datasets were manually reviewed and processed, including: [Adobe-MIT-5k](https://data.csail.mit.edu/graphics/fivek/), [RAISE](http://loki.disi.unitn.it/RAISE/), [LSDIR](https://data.vision.ee.ethz.ch/yawli/), [LIU4k-v2](https://structpku.github.io/LIU4K_Dataset/LIU4K_v2.html), [KONIQ-10k](https://database.mmsp-kn.de/koniq-10k-database.html), [Nikon LL RAW](https://www.kaggle.com/datasets/razorblade/nikon-camera-dataset), [DIV8k](https://ieeexplore.ieee.org/document/9021973), [FFHQ](https://github.com/NVlabs/ffhq-dataset), [Flickr2k](http://cv.snu.ac.kr/research/EDSR/Flickr2K.tar), [ModernAnimation1080_v2](https://huggingface.co/datasets/Zarxrax/ModernAnimation1080_v2), [Rawsamples](https://www.rawsamples.ch/index.php/en/), [SignatureEdits](https://www.signatureedits.com/free-raw-photos/), [Hasselblad raw samples](https://www.hasselblad.com/learn/sample-images/) and [Unsplash](https://unsplash.com/). 
 
-These datasets have been tiled and manually curated across multiple sources, including DIV8K, Adobe-MIT 5k, RAISE, FFHQ, etc.
+- `Nomos-v2` (**recommended**): contains 6000 images, multipurpose. Data distribution:
 
-| dataset                  | num images       | meta_info                                                                                                    | download                                                                                             | sha256                                                           |
-|--------------------------|------------------|--------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------|------------------------------------------------------------------|
-| nomos_uni                | 2989 (512x512px) | [nomos_uni_metainfo.txt](https://drive.google.com/file/d/1e_pg5nxrk9P2gpDo7CsVc4f1xE7_DV8x/view?usp=sharing) | [GDrive (1.3GB)](https://drive.google.com/file/d/1LVS7i9J3mP9f2Qav2Z9i9vq3y2xsKxA_/view?usp=sharing) | 6403764c3062aa8aa6b842319502004aab931fcab228f85eb94f14f3a4c224b2 |
-| nomos_uni (lmdb)         | 2989 (512x512px) | -                                                                                                            | [GDrive (1.3GB)](https://drive.google.com/file/d/1MHJCS4Zl3H5nihgpA_VVliziXnhJ3aU7/view?usp=sharing) | 596e64ec7a4d5b5a6d44e098b12c2eaf6951c68239ade3e0a1fcb914c4412788 |
-| nomos_uni (LQ 4x)        | 2989 (512x512px) | [nomos_uni_metainfo.txt](https://drive.google.com/file/d/1e_pg5nxrk9P2gpDo7CsVc4f1xE7_DV8x/view?usp=sharing) | [GDrive (92MB)](https://drive.google.com/file/d/1uvMl8dG8-LXjCOEoO9Aiq5Q9rd_BIUw9/view?usp=sharing)  | c467e078d711f818a0148cfb097b3f60763363de5981bf7ea650dad246946920 |
-| nomos_uni (LQ 4x - lmdb) | 2989 (512x512px) | -                                                                                                            | [GDrive (91MB)](https://drive.google.com/file/d/1h27AsZze_FFsAsf8eXupcqIZQHhvwa1y/view?usp=sharing)  | 1d770b2c6721c97bd2679db68f43a9f12d59a580e9cfeefd368db5a4fab0f0bb |
-| nomos8k                  | 8492 (512x512px) | [nomos8k_metainfo.txt](https://drive.google.com/file/d/1XCK82vVOoy7rfSHS8bNXKJSdTEmsLjnG/view?usp=sharing)   | [GDrive (3.4GB)](https://drive.google.com/file/d/1ppTpi1-FQEBp908CxfnbI5Gc9PPMiP3l/view?usp=sharing) | 89724f4adb651e1c17ebee9e4b2526f2513c9b060bc3fe16b317bbe9cd8dd138 |
-| hfa2k                    | 2568 (512x512px) | [hfa2k_metainfo.txt](https://drive.google.com/file/d/1X1EYSF4vjLzwckfkN-juzS9UBRI2HZky/view?usp=sharing)     | [GDrive (3.2GB)](https://drive.google.com/file/d/1PonJdHWwCtBdG4i1LwThm06t6RibnVu8/view?usp=sharing) | 3a3d2293a92fb60507ecd6dfacd636a21fd84b96f8f19f8c8a55ad63ca69037a |
+```mermaid
+pie
+  title Nomos-v2 distribution
+  "Animal / fur" : 439
+  "Interiors" : 280
+  "Exteriors / misc" : 696
+  "Architecture / geometric" : 1470
+  "Drawing / painting / anime" : 1076
+  "Humans" : 598
+  "Mountain / Rocks" : 317
+  "Text" : 102
+  "Textures" : 439
+  "Vegetation" : 574
+```
 
-> [!NOTE]
-> These are not intended for use in academic research.
+- `nomos_uni` (*recommended for lightweight networks*): contains 2989 images, multipurpose. Meant to be used on lightweight networks (<800k parameters).
+- `hfa2k`: contains 2568 anime images.
+
+| 						dataset download   							| 						sha256						  |
+|-----------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------|
+| [**nomosv2**](https://drive.google.com/file/d/1vqKWGtpkYHKv8uqK_xgYZbYuPHJS2l8j/view?usp=drive_link) (3GB)		| [sha256](https://drive.google.com/file/d/12eNzPqHd2N1rTWMDh_rAv3urNypJexQT/view?usp=drive_link) |
+| [**nomosv2.lmdb**](https://drive.google.com/file/d/1Rzdjt3w0qXle7vHa8FeFltmyKTMIwPR5/view?usp=drive_link) (3GB)	| [sha256](https://drive.google.com/file/d/1IrDjI37psiCc-Khn3_KSyov-xP4txZYe/view?usp=drive_link) |
+| [nomosv2_lq_4x](https://drive.google.com/file/d/1YiCywSFwRuwaYmnZ0TgoWDvcDQifAsZo/view?usp=drive_link) (187MB)	| [sha256](https://drive.google.com/file/d/1iOOte6h-AE1iD-i5wl_gVx1uJzNTS4Cq/view?usp=drive_link) |
+| [nomosv2_lq_4x.lmdb](https://drive.google.com/file/d/1IrDjI37psiCc-Khn3_KSyov-xP4txZYe/view?usp=drive_link) (187MB)	| [sha256](https://drive.google.com/file/d/1bpuuiGFNBrDuZiRSP5hpVgFQx44MImay/view?usp=drive_link) |
+| [nomos_uni](https://drive.google.com/file/d/1LVS7i9J3mP9f2Qav2Z9i9vq3y2xsKxA_/view?usp=sharing) (1.3GB)		| [sha256](https://drive.google.com/file/d/1cdzVSpXQQhcbRVuFPbNtb6mZx_BoLwyW/view?usp=sharing)	  |
+| [nomos_uni.lmdb](https://drive.google.com/file/d/1MHJCS4Zl3H5nihgpA_VVliziXnhJ3aU7/view?usp=sharing) (1.3GB)		| [sha256](https://drive.google.com/file/d/1g3XLV-hFdLUcuAHLv2R6Entye8MkMx0V/view?usp=drive_link) |
+| [nomos_uni_lq_4x](https://drive.google.com/file/d/1uvMl8dG8-LXjCOEoO9Aiq5Q9rd_BIUw9/view?usp=sharing)			| [sha256](https://drive.google.com/file/d/1MTJBcfaMYdfWhsZCWEEOwbKSdmN5dVwl/view?usp=drive_link) |
+| [nomos_uni_lq_4x.lmdb](https://drive.google.com/file/d/1h27AsZze_FFsAsf8eXupcqIZQHhvwa1y/view?usp=sharing)		| [sha256](https://drive.google.com/file/d/1dhvIlM_uaIYMEKuijemnlmMTg4qf7bj7/view?usp=drive_link) |
+| [hfa2k](https://drive.google.com/file/d/1PonJdHWwCtBdG4i1LwThm06t6RibnVu8/view?usp=sharing)				| [sha256](https://drive.google.com/file/d/1ojDSyKCnCDoLOf9C-Zo4-BmuVSNTItEl/view?usp=sharing)	  |
+
 
 ### community datasets
-These are datasets made by the upscaling community. More info can be found in the [Enhance Everything discord](https://discord.gg/cpAUpDK)
+
+Datasets made by the upscaling community. More info can be found in the [Enhance Everything discord](https://discord.gg/cpAUpDK)
 
 - `FaceUp`: Curated version of [FFHQ](https://github.com/NVlabs/ffhq-dataset)
-
 - `SSDIR`: Curated version of [LSDIR](https://data.vision.ee.ethz.ch/yawli/).
-
 - `kim's 8k Dataset V2`: Video Game Dataset
 
-| dataset                                                | num images        | meta_info      | download                                                                                                   | sha256          |
-|--------------------------------------------------------|-------------------|----------------|------------------------------------------------------------------------------------------------------------|-----------------|
-| [@Kim2091](https://github.com/Kim2091)'s 8k Dataset V2 | 672 (7680x4320px) | -              | [GDrive (33.5GB)](https://drive.google.com/drive/folders/1z6-UFJPciU5ysTaRXUPTfC9QrqW517G6?usp=drive_link) | -               |
-| [@Phhofm](https://github.com/Phhofm) FaceUp            | 10000 (512x512)   | -              | [GDrive (4GB)](https://drive.google.com/file/d/1WFY0siR_ERVSnE2p7ouiCfV3wQizpAKr/view)                     | -               |
-| [@Phhofm](https://github.com/Phhofm) SSDIR             | 10000 (512x512)   | -              | [Gdrive (4.5GB)](https://drive.google.com/file/d/1FA8Q-T3xZ6_KA7SHYgoa6idIS7xpdrl4/view)                   | -               |
+| dataset                                                | download 												      |
+|--------------------------------------------------------|------------------------------------------------------------------------------------------------------------|
+| [@Kim2091](https://github.com/Kim2091) 8k Dataset V2	 | [GDrive (33.5GB)](https://drive.google.com/drive/folders/1z6-UFJPciU5ysTaRXUPTfC9QrqW517G6?usp=drive_link) |
+| [@Phhofm](https://github.com/Phhofm) FaceUp            | [GDrive (4GB)](https://drive.google.com/file/d/1WFY0siR_ERVSnE2p7ouiCfV3wQizpAKr/view)                     |
+| [@Phhofm](https://github.com/Phhofm) SSDIR             | [Gdrive (4.5GB)](https://drive.google.com/file/d/1FA8Q-T3xZ6_KA7SHYgoa6idIS7xpdrl4/view)                   |
 
-# resources
+## resources
 
 - [OpenModelDB](https://openmodeldb.info/)
 - [chaiNNer](https://chainner.app/)
 - [Training Guide](https://github.com/Sirosky/Upscale-Hub/wiki/%F0%9F%93%88-Training-a-Model-in-NeoSR) from [@Sirosky](https://github.com/Sirosky) 
 - [Training Info](https://github.com/Kim2091/training-info) from [@Kim](https://github.com/Kim2091)
 
-# support me
-
-Consider supporting me on [**Patreon**](https://www.patreon.com/neosr) or [**KoFi**](https://ko-fi.com/muslll). &#9749;
-
-## license and acknowledgements
+## 📄 license and acknowledgements
 
 Released under the [Apache license](license.txt).
-This code was originally based on [BasicSR](https://github.com/XPixelGroup/BasicSR). See other licenses in [license/readme](license/readme.md).
+All licenses listed on [license/readme](license/readme.md).
+This code was originally based on [BasicSR](https://github.com/XPixelGroup/BasicSR). 
 
 Thanks to [victorca25/traiNNer](https://github.com/victorca25/traiNNer), [styler00dollar/Colab-traiNNer](https://github.com/styler00dollar/Colab-traiNNer/) and [timm](https://github.com/huggingface/pytorch-image-models) for providing helpful insights into some problems.
 
-Thanks to contributors [@Phhofm](https://github.com/Phhofm), [@Sirosky](https://github.com/Sirosky), [@Kim2091](https://github.com/Kim2091), [@terrainer](https://github.com/terrainer) and [@Corpsecreate](https://github.com/Corpsecreate) for helping with tests and bug reporting. 
-
+Thanks to contributors [@Phhofm](https://github.com/Phhofm), [@Sirosky](https://github.com/Sirosky), [@Kim2091](https://github.com/Kim2091), [@terrainer](https://github.com/terrainer), [@Corpsecreate](https://github.com/Corpsecreate) and [@umzi2](https://github.com/umzi2) for helping with tests and bug reporting. 

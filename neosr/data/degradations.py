@@ -312,7 +312,7 @@ def random_bivariate_plateau(kernel_size,
         assert sigma_y_range[0] < sigma_y_range[1], 'Wrong sigma_y_range.'
         assert rotation_range[0] < rotation_range[1], 'Wrong rotation_range.'
         sigma_y = rng.uniform(sigma_y_range[0], sigma_y_range[1])
-        rotation = rng().uniform(rotation_range[0], rotation_range[1])
+        rotation = rng.uniform(rotation_range[0], rotation_range[1])
     else:
         sigma_y = sigma_x
         rotation = 0
