@@ -10,10 +10,43 @@ from neosr.utils.registry import ARCH_REGISTRY
 VGG_PRETRAIN_PATH = "experiments/pretrained_models/vgg19-dcbb9e9d.pth"
 NAMES = {
     "vgg19": [
-        "conv1_1", "relu1_1", "conv1_2", "relu1_2", "pool1", "conv2_1", "relu2_1", "conv2_2", "relu2_2", "pool2",
-        "conv3_1", "relu3_1", "conv3_2", "relu3_2", "conv3_3", "relu3_3", "conv3_4", "relu3_4", "pool3", "conv4_1",
-        "relu4_1", "conv4_2", "relu4_2", "conv4_3", "relu4_3", "conv4_4", "relu4_4", "pool4", "conv5_1", "relu5_1",
-        "conv5_2", "relu5_2", "conv5_3", "relu5_3", "conv5_4", "relu5_4", "pool5"
+        "conv1_1",
+        "relu1_1",
+        "conv1_2",
+        "relu1_2",
+        "pool1",
+        "conv2_1",
+        "relu2_1",
+        "conv2_2",
+        "relu2_2",
+        "pool2",
+        "conv3_1",
+        "relu3_1",
+        "conv3_2",
+        "relu3_2",
+        "conv3_3",
+        "relu3_3",
+        "conv3_4",
+        "relu3_4",
+        "pool3",
+        "conv4_1",
+        "relu4_1",
+        "conv4_2",
+        "relu4_2",
+        "conv4_3",
+        "relu4_3",
+        "conv4_4",
+        "relu4_4",
+        "pool4",
+        "conv5_1",
+        "relu5_1",
+        "conv5_2",
+        "relu5_2",
+        "conv5_3",
+        "relu5_3",
+        "conv5_4",
+        "relu5_4",
+        "pool5",
     ]
 }
 
@@ -60,14 +93,16 @@ class VGGFeatureExtractor(nn.Module):
         pooling_stride (int): The stride of max pooling operation. Default: 2.
     """
 
-    def __init__(self,
-                 layer_name_list,
-                 vgg_type="vgg19",
-                 use_input_norm=True,
-                 range_norm=False,
-                 requires_grad=False,
-                 remove_pooling=False,
-                 pooling_stride=2):
+    def __init__(
+        self,
+        layer_name_list,
+        vgg_type="vgg19",
+        use_input_norm=True,
+        range_norm=False,
+        requires_grad=False,
+        remove_pooling=False,
+        pooling_stride=2,
+    ):
         super().__init__()
 
         self.layer_name_list = layer_name_list
@@ -86,12 +121,14 @@ class VGGFeatureExtractor(nn.Module):
 
         if os.path.exists(VGG_PRETRAIN_PATH):
             vgg_net = getattr(vgg, vgg_type)
-            state_dict = torch.load(VGG_PRETRAIN_PATH, map_location=torch.device("cuda"))
+            state_dict = torch.load(
+                VGG_PRETRAIN_PATH, map_location=torch.device("cuda")
+            )
             vgg_net.load_state_dict(state_dict)
         else:
             vgg_net = getattr(vgg, vgg_type)(weights=VGG19_Weights.DEFAULT)
 
-        features = vgg_net.features[:max_idx + 1]
+        features = vgg_net.features[: max_idx + 1]
 
         modified_net = OrderedDict()
         for k, v in zip(self.names, features, strict=False):
@@ -100,8 +137,7 @@ class VGGFeatureExtractor(nn.Module):
                 if remove_pooling:
                     continue
                 # in some cases, we may want to change the default stride
-                modified_net[k] = nn.MaxPool2d(
-                    kernel_size=2, stride=pooling_stride)
+                modified_net[k] = nn.MaxPool2d(kernel_size=2, stride=pooling_stride)
             else:
                 modified_net[k] = v
 
@@ -124,11 +160,13 @@ class VGGFeatureExtractor(nn.Module):
             """
 
             # the mean is for image with range [0, 1]
-            self.register_buffer("mean", torch.tensor(
-                [0.5, 0.5, 0.5], device="cuda").view(1, 3, 1, 1))
+            self.register_buffer(
+                "mean", torch.tensor([0.5, 0.5, 0.5], device="cuda").view(1, 3, 1, 1)
+            )
             # the std is for image with range [0, 1]
-            self.register_buffer("std", torch.tensor(
-                [0.25, 0.25, 0.25], device="cuda").view(1, 3, 1, 1))
+            self.register_buffer(
+                "std", torch.tensor([0.25, 0.25, 0.25], device="cuda").view(1, 3, 1, 1)
+            )
 
     def forward(self, x):
         """Forward function.

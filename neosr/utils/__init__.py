@@ -52,5 +52,5 @@ __all__ = [
     # options
     "yaml_load",
     "ycbcr2bgr",
-    "ycbcr2rgb"
+    "ycbcr2rgb",
 ]

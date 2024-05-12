@@ -39,9 +39,7 @@ class L1Loss(nn.Module):
         super().__init__()
         if reduction not in {"none", "mean", "sum"}:
             msg = f"Unsupported reduction mode: {reduction}. Supported ones are: {_reduction_modes}"
-            raise ValueError(
-                msg
-            )
+            raise ValueError(msg)
 
         self.loss_weight = loss_weight
         self.reduction = reduction
@@ -72,9 +70,7 @@ class MSELoss(nn.Module):
         super().__init__()
         if reduction not in {"none", "mean", "sum"}:
             msg = f"Unsupported reduction mode: {reduction}. Supported ones are: {_reduction_modes}"
-            raise ValueError(
-                msg
-            )
+            raise ValueError(msg)
 
         self.loss_weight = loss_weight
         self.reduction = reduction
@@ -109,16 +105,18 @@ class HuberLoss(nn.Module):
         super().__init__()
         if reduction not in {"none", "mean", "sum"}:
             msg = f"Unsupported reduction mode: {reduction}. Supported ones are: {_reduction_modes}"
-            raise ValueError(
-                msg
-            )
+            raise ValueError(msg)
 
         self.loss_weight = loss_weight
         self.reduction = reduction
         self.delta = delta
 
     def forward(
-        self, pred: torch.Tensor, target: torch.Tensor, weight: float | None = None, **kwargs
+        self,
+        pred: torch.Tensor,
+        target: torch.Tensor,
+        weight: float | None = None,
+        **kwargs,
     ) -> torch.Tensor:
         """
         Args:
@@ -164,9 +162,7 @@ class chc(nn.Module):
 
         if reduction not in {"none", "mean", "sum"}:
             msg = f"Unsupported reduction mode: {reduction}. Supported ones are: {_reduction_modes}"
-            raise ValueError(
-                msg
-            )
+            raise ValueError(msg)
 
         # Loss params
         self.loss_weight = loss_weight

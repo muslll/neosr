@@ -143,7 +143,9 @@ class WindowAttention(nn.Module):
         # get pair-wise relative position index for each token inside the window
         coords_h = torch.arange(self.window_size[0])
         coords_w = torch.arange(self.window_size[1])
-        coords = torch.stack(torch.meshgrid([coords_h, coords_w], indexing="ij"))  # 2, Wh, Ww
+        coords = torch.stack(
+            torch.meshgrid([coords_h, coords_w], indexing="ij")
+        )  # 2, Wh, Ww
         coords_flatten = torch.flatten(coords, 1)  # 2, Wh*Ww
         relative_coords = (
             coords_flatten[:, :, None] - coords_flatten[:, None, :]
@@ -701,14 +703,15 @@ class Upsample(nn.Sequential):
         m = []
         if (scale & (scale - 1)) == 0:  # scale = 2^n
             for _ in range(int(math.log2(scale))):
-                m.extend((nn.Conv2d(num_feat, 4 * num_feat, 3, 1, 1), nn.PixelShuffle(2)))
+                m.extend((
+                    nn.Conv2d(num_feat, 4 * num_feat, 3, 1, 1),
+                    nn.PixelShuffle(2),
+                ))
         elif scale == 3:
             m.extend((nn.Conv2d(num_feat, 9 * num_feat, 3, 1, 1), nn.PixelShuffle(3)))
         else:
             msg = f"scale {scale} is not supported. " "Supported scales: 2^n and 3."
-            raise ValueError(
-                msg
-            )
+            raise ValueError(msg)
         super().__init__(*m)
 
 
@@ -905,9 +908,4 @@ def drct_l(**kwargs):
 
 @ARCH_REGISTRY.register()
 def drct_s(**kwargs):
-    return drct(
-        embed_dim=48,
-        depths=(2, 2, 2, 2),
-        num_heads=(6, 6, 6, 6),
-        **kwargs,
-    )
+    return drct(embed_dim=48, depths=(2, 2, 2, 2), num_heads=(6, 6, 6, 6), **kwargs)

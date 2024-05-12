@@ -29,7 +29,19 @@ def rgb2ycbcr(img, y_only=False):
     if y_only:
         out_img = np.dot(img, [65.481, 128.553, 24.966]) + 16.0
     else:
-        out_img = [*np.matmul(img, [[65.481, -37.797, 112.0], [128.553, -74.203, -93.786], [24.966, 112.0, -18.214]]), 16, 128, 128]
+        out_img = [
+            *np.matmul(
+                img,
+                [
+                    [65.481, -37.797, 112.0],
+                    [128.553, -74.203, -93.786],
+                    [24.966, 112.0, -18.214],
+                ],
+            ),
+            16,
+            128,
+            128,
+        ]
     return _convert_output_type_range(out_img, img_type)
 
 
@@ -60,7 +72,19 @@ def bgr2ycbcr(img, y_only=False):
     if y_only:
         out_img = np.dot(img, [24.966, 128.553, 65.481]) + 16.0
     else:
-        out_img = [*np.matmul(img, [[24.966, 112.0, -18.214], [128.553, -74.203, -93.786], [65.481, -37.797, 112.0]]), 16, 128, 128]
+        out_img = [
+            *np.matmul(
+                img,
+                [
+                    [24.966, 112.0, -18.214],
+                    [128.553, -74.203, -93.786],
+                    [65.481, -37.797, 112.0],
+                ],
+            ),
+            16,
+            128,
+            128,
+        ]
     return _convert_output_type_range(out_img, img_type)
 
 
@@ -153,9 +177,7 @@ def _convert_input_type_range(img):
         img /= 255.0
     else:
         msg = f"The img type should be np.float32, np.float16 or np.uint8, but got {img_type}"
-        raise TypeError(
-            msg
-        )
+        raise TypeError(msg)
     return img
 
 
@@ -180,9 +202,7 @@ def _convert_output_type_range(img, dst_type):
 
     if dst_type not in {np.uint8, np.float32, np.float16}:
         msg = f"The dst_type should be np.float32, np.float16 or np.uint8, but got {dst_type}"
-        raise TypeError(
-            msg
-        )
+        raise TypeError(msg)
     if dst_type == np.uint8:
         img = img.round()
     else:
@@ -241,9 +261,7 @@ def rgb_to_cbcr(img: torch.Tensor) -> torch.Tensor:
 
     if len(img.shape) < 3 or img.shape[-3] != 3:
         msg = f"Input size must have a shape of (*, 3, H, W). Got {image.shape}"
-        raise ValueError(
-            msg
-        )
+        raise ValueError(msg)
 
     # bt.601 matrices in 16-240 range
     weight = torch.tensor([
@@ -269,9 +287,7 @@ def rgb_to_luma(img: torch.Tensor) -> torch.Tensor:
 
     if len(img.shape) < 3 or img.shape[-3] != 3:
         msg = f"Input size must have a shape of (*, 3, H, W). Got {image.shape}"
-        raise ValueError(
-            msg
-        )
+        raise ValueError(msg)
 
     # permute
     out_img = img.permute(0, 2, 3, 1)

@@ -13,7 +13,9 @@ def create_lmdb():
     folder_path = args.input
     lmdb_path = args.output
     img_path_list, keys = prepare_keys(folder_path)
-    make_lmdb_from_imgs(folder_path, lmdb_path, img_path_list, keys, multiprocessing_read=True)
+    make_lmdb_from_imgs(
+        folder_path, lmdb_path, img_path_list, keys, multiprocessing_read=True
+    )
 
 
 def prepare_keys(folder_path):

@@ -103,13 +103,13 @@ def to_onnx() -> None:
     # dict for dynamic axes
     if args.static is None:
         dyn_axes = {
-        "dynamic_axes": {
-            "input": {0: "batch_size", 2: "width", 3: "height"},
-            "output": {0: "batch_size", 2: "width", 3: "height"},
-        },
-        "input_names": ["input"],
-        "output_names": ["output"],
-    }
+            "dynamic_axes": {
+                "input": {0: "batch_size", 2: "width", 3: "height"},
+                "output": {0: "batch_size", 2: "width", 3: "height"},
+            },
+            "input_names": ["input"],
+            "output_names": ["output"],
+        }
     else:
         dyn_axes = None
 
@@ -138,7 +138,9 @@ def to_onnx() -> None:
     load_onnx = onnx.load(output_fp32)
     torch.cuda.empty_cache()
     onnx.checker.check_model(load_onnx)
-    print(f"-------- Model successfully converted to ONNX format. Saved at: {output_fp32}.")
+    print(
+        f"-------- Model successfully converted to ONNX format. Saved at: {output_fp32}."
+    )
     # verify outputs
     if args.nocheck is False:
         assert_verify(output_fp32, model)

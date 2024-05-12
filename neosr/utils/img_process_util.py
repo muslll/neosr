@@ -24,6 +24,5 @@ def filter2D(img, kernel):
         kernel = kernel.view(1, 1, k, k)
         return F.conv2d(img, kernel, padding=0).view(b, c, h, w)
     img = img.view(1, b * c, ph, pw)
-    kernel = kernel.view(b, 1, k, k).repeat(
-        1, c, 1, 1).view(b * c, 1, k, k)
+    kernel = kernel.view(b, 1, k, k).repeat(1, c, 1, 1).view(b * c, 1, k, k)
     return F.conv2d(img, kernel, groups=b * c).view(b, c, h, w)

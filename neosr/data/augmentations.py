@@ -198,14 +198,7 @@ def cutblur(img_gt, img_lq, alpha=0.7):
 
 
 @torch.no_grad()
-def apply_augment(
-    img_gt,
-    img_lq,
-    scale=1,
-    augs=None,
-    prob=None,
-    multi_prob=0.3,
-):
+def apply_augment(img_gt, img_lq, scale=1, augs=None, prob=None, multi_prob=0.3):
     r"""Applies Augmentations.
 
     Args:

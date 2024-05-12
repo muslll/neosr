@@ -78,7 +78,7 @@ class PLKConv2d(nn.Module):
             x1 = self.conv(x1) + x1 if self.with_idt else self.conv(x1)
             return torch.cat([x1, x2], dim=1)
         if self.with_idt:
-            x[:, :self.idx] += self.conv(x[:, :self.idx])
+            x[:, : self.idx] += self.conv(x[:, : self.idx])
         else:
             x[:, : self.idx] = self.conv(x[:, : self.idx])
         return x

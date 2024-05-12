@@ -50,21 +50,28 @@ class default:
         load_path = self.opt["path"].get("pretrain_network_g", None)
         if load_path is not None:
             param_key = self.opt["path"].get("param_key_g")
-            self.load_network(self.net_g, load_path, param_key, self.opt["path"].get(
-                "strict_load_g", True))
+            self.load_network(
+                self.net_g,
+                load_path,
+                param_key,
+                self.opt["path"].get("strict_load_g", True),
+            )
 
         # load pretrained d
         load_path = self.opt["path"].get("pretrain_network_d", None)
         if load_path is not None:
             param_key = self.opt["path"].get("param_key_d")
-            self.load_network(self.net_d, load_path, param_key, self.opt["path"].get(
-                "strict_load_d", True))
+            self.load_network(
+                self.net_d,
+                load_path,
+                param_key,
+                self.opt["path"].get("strict_load_d", True),
+            )
 
         if self.is_train:
             self.init_training_settings()
 
     def init_training_settings(self):
-
         # options var
         train_opt = self.opt["train"]
 
@@ -88,8 +95,12 @@ class default:
 
         # for amp
         self.use_amp = self.opt.get("use_amp", False) is True
-        self.amp_dtype = torch.bfloat16 if self.opt.get("bfloat16", False) is True else torch.float16
-        self.gradscaler = torch.cuda.amp.GradScaler(enabled=self.use_amp, init_scale=2.**5)
+        self.amp_dtype = (
+            torch.bfloat16 if self.opt.get("bfloat16", False) is True else torch.float16
+        )
+        self.gradscaler = torch.cuda.amp.GradScaler(
+            enabled=self.use_amp, init_scale=2.0**5
+        )
 
         # LQ matching for Color/Luma losses
         self.match_lq = self.opt["train"].get("match_lq", False)
@@ -102,60 +113,78 @@ class default:
 
         # define losses
         if train_opt.get("pixel_opt"):
-            self.cri_pix = build_loss(train_opt["pixel_opt"]).to(self.device, memory_format=torch.channels_last, non_blocking=True)
+            self.cri_pix = build_loss(train_opt["pixel_opt"]).to(
+                self.device, memory_format=torch.channels_last, non_blocking=True
+            )
         else:
             self.cri_pix = None
 
         if train_opt.get("mssim_opt"):
-            self.cri_mssim = build_loss(train_opt["mssim_opt"]).to(self.device, memory_format=torch.channels_last, non_blocking=True)
+            self.cri_mssim = build_loss(train_opt["mssim_opt"]).to(
+                self.device, memory_format=torch.channels_last, non_blocking=True
+            )
         else:
             self.cri_mssim = None
 
         if train_opt.get("perceptual_opt"):
-            self.cri_perceptual = build_loss(
-                train_opt["perceptual_opt"]).to(self.device, memory_format=torch.channels_last, non_blocking=True)
+            self.cri_perceptual = build_loss(train_opt["perceptual_opt"]).to(
+                self.device, memory_format=torch.channels_last, non_blocking=True
+            )
         else:
             self.cri_perceptual = None
 
         if train_opt.get("dists_opt"):
-            self.cri_dists = build_loss(
-                train_opt["dists_opt"]).to(self.device, memory_format=torch.channels_last, non_blocking=True)
+            self.cri_dists = build_loss(train_opt["dists_opt"]).to(
+                self.device, memory_format=torch.channels_last, non_blocking=True
+            )
         else:
             self.cri_dists = None
 
         # GAN loss
         if train_opt.get("gan_opt"):
-            self.cri_gan = build_loss(train_opt["gan_opt"]).to(self.device, memory_format=torch.channels_last, non_blocking=True)
+            self.cri_gan = build_loss(train_opt["gan_opt"]).to(
+                self.device, memory_format=torch.channels_last, non_blocking=True
+            )
         else:
             self.cri_gan = None
 
         # LDL loss
         if train_opt.get("ldl_opt"):
-            self.cri_ldl = build_loss(train_opt["ldl_opt"]).to(self.device, memory_format=torch.channels_last, non_blocking=True)
+            self.cri_ldl = build_loss(train_opt["ldl_opt"]).to(
+                self.device, memory_format=torch.channels_last, non_blocking=True
+            )
         else:
             self.cri_ldl = None
 
         # Focal Frequency Loss
         if train_opt.get("ff_opt"):
-            self.cri_ff = build_loss(train_opt["ff_opt"]).to(self.device, memory_format=torch.channels_last, non_blocking=True)
+            self.cri_ff = build_loss(train_opt["ff_opt"]).to(
+                self.device, memory_format=torch.channels_last, non_blocking=True
+            )
         else:
             self.cri_ff = None
 
         # Gradient-Weighted loss
         if train_opt.get("gw_opt"):
-            self.cri_gw = build_loss(train_opt["gw_opt"]).to(self.device, memory_format=torch.channels_last, non_blocking=True)
+            self.cri_gw = build_loss(train_opt["gw_opt"]).to(
+                self.device, memory_format=torch.channels_last, non_blocking=True
+            )
         else:
             self.cri_gw = None
 
         # Color loss
         if train_opt.get("color_opt"):
-            self.cri_color = build_loss(train_opt["color_opt"]).to(self.device, memory_format=torch.channels_last, non_blocking=True)
+            self.cri_color = build_loss(train_opt["color_opt"]).to(
+                self.device, memory_format=torch.channels_last, non_blocking=True
+            )
         else:
             self.cri_color = None
 
         # Luma loss
         if train_opt.get("luma_opt"):
-            self.cri_luma = build_loss(train_opt["luma_opt"]).to(self.device, memory_format=torch.channels_last, non_blocking=True)
+            self.cri_luma = build_loss(train_opt["luma_opt"]).to(
+                self.device, memory_format=torch.channels_last, non_blocking=True
+            )
         else:
             self.cri_luma = None
 
@@ -222,8 +251,7 @@ class default:
             optimizer = pytorch_optimizer.Lion(params, lr, **kwargs)
         else:
             msg = f"optimizer {optim_type} is not supported yet."
-            raise NotImplementedError(
-                msg)
+            raise NotImplementedError(msg)
         return optimizer
 
     def setup_optimizers(self):
@@ -238,13 +266,15 @@ class default:
         # optimizer g
         optim_type = train_opt["optim_g"].pop("type")
         self.optimizer_g = self.get_optimizer(
-            optim_type, optim_params, **train_opt["optim_g"])
+            optim_type, optim_params, **train_opt["optim_g"]
+        )
         self.optimizers.append(self.optimizer_g)
         # optimizer d
         if self.net_d is not None:
             optim_type = train_opt["optim_d"].pop("type")
             self.optimizer_d = self.get_optimizer(
-                optim_type, self.net_d.parameters(), **train_opt["optim_d"])
+                optim_type, self.net_d.parameters(), **train_opt["optim_d"]
+            )
             self.optimizers.append(self.optimizer_d)
 
     def setup_schedulers(self):
@@ -254,24 +284,27 @@ class default:
 
         if scheduler_type in {"MultiStepLR", "multisteplr"}:
             for optimizer in self.optimizers:
-                self.schedulers.append(torch.optim.lr_scheduler.MultiStepLR(
-                    optimizer, **train_opt["scheduler"]))
+                self.schedulers.append(
+                    torch.optim.lr_scheduler.MultiStepLR(
+                        optimizer, **train_opt["scheduler"]
+                    )
+                )
         elif scheduler_type in {"CosineAnnealing", "cosineannealing"}:
             for optimizer in self.optimizers:
-                self.schedulers.append(torch.optim.lr_scheduler.CosineAnnealingLR(
-                    optimizer, **train_opt["scheduler"]))
+                self.schedulers.append(
+                    torch.optim.lr_scheduler.CosineAnnealingLR(
+                        optimizer, **train_opt["scheduler"]
+                    )
+                )
         else:
             msg = f"Scheduler {scheduler_type} is not implemented yet."
-            raise NotImplementedError(
-                msg)
+            raise NotImplementedError(msg)
 
     def _get_init_lr(self):
-        """Get the initial lr, which is set by the scheduler.
-        """
+        """Get the initial lr, which is set by the scheduler."""
         init_lr_groups_l = []
         for optimizer in self.optimizers:
-            init_lr_groups_l.append([v["initial_lr"]
-                                    for v in optimizer.param_groups])
+            init_lr_groups_l.append([v["initial_lr"] for v in optimizer.param_groups])
         return init_lr_groups_l
 
     def get_current_learning_rate(self):
@@ -288,7 +321,6 @@ class default:
                 param_group["lr"] = lr
 
     def optimize_parameters(self, current_iter):
-
         if self.net_d is not None:
             for p in self.net_d.parameters():
                 p.requires_grad = False
@@ -299,11 +331,14 @@ class default:
         if self.n_accumulated >= self.accum_iters:
             self.n_accumulated = 0
 
-        with torch.autocast(device_type="cuda", dtype=self.amp_dtype, enabled=self.use_amp):
-
+        with torch.autocast(
+            device_type="cuda", dtype=self.amp_dtype, enabled=self.use_amp
+        ):
             self.output = self.net_g(self.lq)
             # lq match
-            self.lq_interp = F.interpolate(self.lq, scale_factor=self.scale, mode="bicubic")
+            self.lq_interp = F.interpolate(
+                self.lq, scale_factor=self.scale, mode="bicubic"
+            )
 
             # wavelet guided loss
             if self.wavelet_guided:
@@ -323,7 +358,10 @@ class default:
             l_g_total = 0
             loss_dict = OrderedDict()
 
-            if (current_iter % self.net_d_iters == 0 and current_iter > self.net_d_init_iters):
+            if (
+                current_iter % self.net_d_iters == 0
+                and current_iter > self.net_d_init_iters
+            ):
                 # pixel loss
                 if self.cri_pix:
                     if self.wavelet_guided:
@@ -331,7 +369,9 @@ class default:
                         l_g_pix_lh = self.wg_pw_lh * self.cri_pix(LH, LH_gt)
                         l_g_pix_hl = self.wg_pw_hl * self.cri_pix(HL, HL_gt)
                         l_g_pix_hh = self.wg_pw_hh * self.cri_pix(HH, HH_gt)
-                        l_g_total = l_g_total + l_g_pix + l_g_pix_lh + l_g_pix_hl + l_g_pix_hh
+                        l_g_total = (
+                            l_g_total + l_g_pix + l_g_pix_lh + l_g_pix_hl + l_g_pix_hh
+                        )
                     else:
                         l_g_pix = self.cri_pix(self.output, self.gt)
                         l_g_total += l_g_pix
@@ -343,7 +383,13 @@ class default:
                         l_g_mssim_lh = self.wg_pw_lh * self.cri_mssim(LH, LH_gt)
                         l_g_mssim_hl = self.wg_pw_hl * self.cri_mssim(HL, HL_gt)
                         l_g_mssim_hh = self.wg_pw_hh * self.cri_mssim(HH, HH_gt)
-                        l_g_total = l_g_total + l_g_mssim + l_g_mssim_lh + l_g_mssim_hl + l_g_mssim_hh
+                        l_g_total = (
+                            l_g_total
+                            + l_g_mssim
+                            + l_g_mssim_lh
+                            + l_g_mssim_hl
+                            + l_g_mssim_hh
+                        )
                     else:
                         l_g_mssim = self.cri_mssim(self.output, self.gt)
                         l_g_total += l_g_mssim
@@ -362,7 +408,9 @@ class default:
                 if self.cri_ldl:
                     pixel_weight = get_refined_artifact_map(self.gt, self.output, 7)
                     l_g_ldl = self.cri_ldl(
-                        torch.mul(pixel_weight, self.output), torch.mul(pixel_weight, self.gt))
+                        torch.mul(pixel_weight, self.output),
+                        torch.mul(pixel_weight, self.gt),
+                    )
                     l_g_total += l_g_ldl
                     loss_dict["l_g_ldl"] = l_g_ldl
                 # focal frequency loss
@@ -409,7 +457,9 @@ class default:
             # gradient clipping on generator
             if self.gradclip:
                 self.gradscaler.unscale_(self.optimizer_g)
-                torch.nn.utils.clip_grad_norm_(self.net_g.parameters(), 1.0, error_if_nonfinite=False)
+                torch.nn.utils.clip_grad_norm_(
+                    self.net_g.parameters(), 1.0, error_if_nonfinite=False
+                )
 
             self.gradscaler.step(self.optimizer_g)
 
@@ -418,10 +468,11 @@ class default:
             for p in self.net_d.parameters():
                 p.requires_grad = True
 
-            with torch.autocast(device_type="cuda", dtype=self.amp_dtype, enabled=self.use_amp):
-
+            with torch.autocast(
+                device_type="cuda", dtype=self.amp_dtype, enabled=self.use_amp
+            ):
                 if self.cri_gan:
-                # real
+                    # real
                     if self.wavelet_guided:
                         real_d_pred = self.net_d(combined_HF_gt)
                     else:
@@ -429,7 +480,7 @@ class default:
                     l_d_real = self.cri_gan(real_d_pred, True, is_disc=True)
                     loss_dict["l_d_real"] = l_d_real
                     loss_dict["out_d_real"] = torch.mean(real_d_pred.detach())
-                # fake
+                    # fake
                     if self.wavelet_guided:
                         fake_d_pred = self.net_d(combined_HF.detach().clone())
                     else:
@@ -449,7 +500,9 @@ class default:
                 # gradient clipping on discriminator
                 if self.gradclip:
                     self.gradscaler.unscale_(self.optimizer_d)
-                    torch.nn.utils.clip_grad_norm_(self.net_d.parameters(), 1.0, error_if_nonfinite=False)
+                    torch.nn.utils.clip_grad_norm_(
+                        self.net_d.parameters(), 1.0, error_if_nonfinite=False
+                    )
 
                 self.gradscaler.step(self.optimizer_d)
 
@@ -493,8 +546,7 @@ class default:
             # currently only support linearly warm up
             warm_up_lr_l = []
             for init_lr_g in init_lr_g_l:
-                warm_up_lr_l.append(
-                    [v / warmup_iter * current_iter for v in init_lr_g])
+                warm_up_lr_l.append([v / warmup_iter * current_iter for v in init_lr_g])
             # set learning rate
             self._set_lr(warm_up_lr_l)
 
@@ -523,8 +575,8 @@ class default:
                 mod_pad_w = patch_size_tmp_w - w % patch_size_tmp_w
 
             img = self.lq
-            img = torch.cat([img, torch.flip(img, [2])], 2)[:, :, :h + mod_pad_h, :]
-            img = torch.cat([img, torch.flip(img, [3])], 3)[:, :, :, :w + mod_pad_w]
+            img = torch.cat([img, torch.flip(img, [2])], 2)[:, :, : h + mod_pad_h, :]
+            img = torch.cat([img, torch.flip(img, [3])], 3)[:, :, :, : w + mod_pad_w]
 
             _, _, H, W = img.size()
             split_h = H // split_token_h  # height of each partition
@@ -571,40 +623,58 @@ class default:
                 # merge
                 for i in range(ral):
                     for j in range(row):
-                        top = slice(i * split_h * self.scale, (i + 1) * split_h * self.scale)
-                        left = slice(j * split_w * self.scale, (j + 1) * split_w * self.scale)
+                        top = slice(
+                            i * split_h * self.scale, (i + 1) * split_h * self.scale
+                        )
+                        left = slice(
+                            j * split_w * self.scale, (j + 1) * split_w * self.scale
+                        )
                         if i == 0:
                             _top = slice(0, split_h * self.scale)
                         else:
-                            _top = slice(shave_h * self.scale, (shave_h + split_h) * self.scale)
+                            _top = slice(
+                                shave_h * self.scale, (shave_h + split_h) * self.scale
+                            )
                         if j == 0:
                             _left = slice(0, split_w * self.scale)
                         else:
-                            _left = slice(shave_w * self.scale, (shave_w + split_w) * self.scale)
+                            _left = slice(
+                                shave_w * self.scale, (shave_w + split_w) * self.scale
+                            )
                         _img[..., top, left] = outputs[i * row + j][..., _top, _left]
                 self.output = _img
             self.net_g.train()
             _, _, h, w = self.output.size()
-            self.output = self.output[:, :, 0:h - mod_pad_h * self.scale, 0:w - mod_pad_w * self.scale]
+            self.output = self.output[
+                :, :, 0 : h - mod_pad_h * self.scale, 0 : w - mod_pad_w * self.scale
+            ]
 
     @torch.no_grad()
     def feed_data(self, data):
-        self.lq = data["lq"].to(self.device, memory_format=torch.channels_last, non_blocking=True)
+        self.lq = data["lq"].to(
+            self.device, memory_format=torch.channels_last, non_blocking=True
+        )
         if "gt" in data:
-            self.gt = data["gt"].to(self.device, memory_format=torch.channels_last, non_blocking=True)
+            self.gt = data["gt"].to(
+                self.device, memory_format=torch.channels_last, non_blocking=True
+            )
 
         # augmentation
         if self.is_train and self.aug is not None:
-            self.gt, self.lq = apply_augment(self.gt, self.lq, scale=self.scale, augs=self.aug, prob=self.aug_prob)
+            self.gt, self.lq = apply_augment(
+                self.gt, self.lq, scale=self.scale, augs=self.aug, prob=self.aug_prob
+            )
 
     def dist_validation(self, dataloader, current_iter, tb_logger, save_img):
         if self.opt["rank"] == 0:
-            self.nondist_validation(
-                dataloader, current_iter, tb_logger, save_img)
+            self.nondist_validation(dataloader, current_iter, tb_logger, save_img)
 
     def _initialize_best_metric_results(self, dataset_name):
         """Initialize the best metric results dict for recording the best metric value and iteration."""
-        if hasattr(self, "best_metric_results") and dataset_name in self.best_metric_results:
+        if (
+            hasattr(self, "best_metric_results")
+            and dataset_name in self.best_metric_results
+        ):
             return
         if not hasattr(self, "best_metric_results"):
             self.best_metric_results = {}
@@ -627,7 +697,6 @@ class default:
             self.best_metric_results[dataset_name][metric]["iter"] = current_iter
 
     def nondist_validation(self, dataloader, current_iter, tb_logger, save_img):
-
         # flag to not apply augmentation during val
         self.is_train = False
 
@@ -637,7 +706,9 @@ class default:
 
         if with_metrics:
             if not hasattr(self, "metric_results"):  # only execute in the first run
-                self.metric_results = dict.fromkeys(self.opt["val"]["metrics"].keys(), 0)
+                self.metric_results = dict.fromkeys(
+                    self.opt["val"]["metrics"].keys(), 0
+                )
             # initialize the best metric results for each dataset_name (supporting multiple validation datasets)
             self._initialize_best_metric_results(dataset_name)
         # zero self.metric_results
@@ -668,21 +739,29 @@ class default:
 
             if save_img:
                 if self.opt["is_train"]:
-                    save_img_path = osp.join(self.opt["path"]["visualization"], img_name,
-                                             f"{img_name}_{current_iter}.png")
+                    save_img_path = osp.join(
+                        self.opt["path"]["visualization"],
+                        img_name,
+                        f"{img_name}_{current_iter}.png",
+                    )
                 elif self.opt["val"]["suffix"]:
-                    save_img_path = osp.join(self.opt["path"]["visualization"], dataset_name,
-                                             f'{img_name}_{self.opt["val"]["suffix"]}.png')
+                    save_img_path = osp.join(
+                        self.opt["path"]["visualization"],
+                        dataset_name,
+                        f'{img_name}_{self.opt["val"]["suffix"]}.png',
+                    )
                 else:
-                    save_img_path = osp.join(self.opt["path"]["visualization"], dataset_name,
-                                             f'{img_name}_{self.opt["name"]}.png')
+                    save_img_path = osp.join(
+                        self.opt["path"]["visualization"],
+                        dataset_name,
+                        f'{img_name}_{self.opt["name"]}.png',
+                    )
                 imwrite(sr_img, save_img_path)
 
             if with_metrics:
                 # calculate metrics
                 for name, opt_ in self.opt["val"]["metrics"].items():
-                    self.metric_results[name] += calculate_metric(
-                        metric_data, opt_)
+                    self.metric_results[name] += calculate_metric(metric_data, opt_)
             if use_pbar:
                 pbar.update(1)
                 pbar.set_description(f"Test {img_name}")
@@ -691,13 +770,13 @@ class default:
 
         if with_metrics:
             for metric in self.metric_results:
-                self.metric_results[metric] /= (idx + 1)
+                self.metric_results[metric] /= idx + 1
                 # update the best metric result
                 self._update_best_metric_result(
-                    dataset_name, metric, self.metric_results[metric], current_iter)
+                    dataset_name, metric, self.metric_results[metric], current_iter
+                )
 
-            self._log_validation_metric_values(
-                current_iter, dataset_name, tb_logger)
+            self._log_validation_metric_values(current_iter, dataset_name, tb_logger)
 
         self.is_train = True
 
@@ -706,8 +785,10 @@ class default:
         for metric, value in self.metric_results.items():
             log_str += f"\t # {metric}: {value:.4f}"
             if hasattr(self, "best_metric_results"):
-                log_str += (f'........ Best: {self.best_metric_results[dataset_name][metric]["val"]:.4f} @ '
-                            f'{self.best_metric_results[dataset_name][metric]["iter"]} iter')
+                log_str += (
+                    f'........ Best: {self.best_metric_results[dataset_name][metric]["val"]:.4f} @ '
+                    f'{self.best_metric_results[dataset_name][metric]["iter"]} iter'
+                )
             log_str += "\n"
 
         logger = get_root_logger()
@@ -715,7 +796,8 @@ class default:
         if tb_logger:
             for metric, value in self.metric_results.items():
                 tb_logger.add_scalar(
-                    f"metrics/{dataset_name}/{metric}", value, current_iter)
+                    f"metrics/{dataset_name}/{metric}", value, current_iter
+                )
 
     def get_current_visuals(self):
         out_dict = OrderedDict()
@@ -737,8 +819,7 @@ class default:
         if self.opt["dist"]:
             self.dist_validation(dataloader, current_iter, tb_logger, save_img)
         else:
-            self.nondist_validation(
-                dataloader, current_iter, tb_logger, save_img)
+            self.nondist_validation(dataloader, current_iter, tb_logger, save_img)
 
     def get_current_log(self):
         return self.log_dict
@@ -751,7 +832,9 @@ class default:
             net (nn.Module)
         """
         if self.opt.get("use_amp", False) is True:
-            net = net.to(self.device, non_blocking=True, memory_format=torch.channels_last)
+            net = net.to(
+                self.device, non_blocking=True, memory_format=torch.channels_last
+            )
         else:
             net = net.to(self.device, non_blocking=True)
 
@@ -760,10 +843,12 @@ class default:
             # see option fullgraph=True
 
         if self.opt["dist"]:
-            find_unused_parameters = self.opt.get(
-                "find_unused_parameters", False)
+            find_unused_parameters = self.opt.get("find_unused_parameters", False)
             net = DistributedDataParallel(
-                net, device_ids=[torch.cuda.current_device()], find_unused_parameters=find_unused_parameters)
+                net,
+                device_ids=[torch.cuda.current_device()],
+                find_unused_parameters=find_unused_parameters,
+            )
         elif self.opt["num_gpu"] > 1:
             net = DataParallel(net)
         return net
@@ -793,8 +878,7 @@ class default:
         net_params = sum(x.numel() for x in net.parameters())
 
         logger = get_root_logger()
-        logger.info(
-            f"Network: {net_cls_str}, with parameters: {net_params:,d}")
+        logger.info(f"Network: {net_cls_str}, with parameters: {net_params:,d}")
         logger.info(net_str)
 
     @master_only
@@ -816,7 +900,8 @@ class default:
         net = net if isinstance(net, list) else [net]
         param_key = param_key if isinstance(param_key, list) else [param_key]
         assert len(net) == len(
-            param_key), "The lengths of net and param_key should be the same."
+            param_key
+        ), "The lengths of net and param_key should be the same."
 
         save_dict = {}
         for net_, param_key_ in zip(net, param_key, strict=True):
@@ -836,7 +921,8 @@ class default:
             except Exception as e:
                 logger = get_root_logger()
                 logger.warning(
-                    f"Save model error: {e}, remaining retry times: {retry - 1}")
+                    f"Save model error: {e}, remaining retry times: {retry - 1}"
+                )
                 time.sleep(1)
             else:
                 break
@@ -887,8 +973,10 @@ class default:
             common_keys = crt_net_keys & load_net_keys
             for k in common_keys:
                 if crt_net[k].size() != load_net[k].size():
-                    logger.warning(f"Size different, ignore [{k}]: crt_net: "
-                                   f"{crt_net[k].shape}; load_net: {load_net[k].shape}")
+                    logger.warning(
+                        f"Size different, ignore [{k}]: crt_net: "
+                        f"{crt_net[k].shape}; load_net: {load_net[k].shape}"
+                    )
                     load_net[k + ".ignore"] = load_net.pop(k)
 
     def load_network(self, net, load_path, param_key, strict=True):
@@ -922,10 +1010,10 @@ class default:
 
         if param_key:
             logger.info(
-                f"Loading {net.__class__.__name__} model from {load_path}, with param key: [{param_key}].")
+                f"Loading {net.__class__.__name__} model from {load_path}, with param key: [{param_key}]."
+            )
         else:
-            logger.info(
-                f"Loading {net.__class__.__name__} model from {load_path}.")
+            logger.info(f"Loading {net.__class__.__name__} model from {load_path}.")
 
         # remove unnecessary 'module.'
         for k, v in deepcopy(load_net).items():
@@ -947,15 +1035,18 @@ class default:
         """
 
         if current_iter != -1:
-            state = {"epoch": epoch, "iter": current_iter,
-                    "optimizers": [], "schedulers": []}
+            state = {
+                "epoch": epoch,
+                "iter": current_iter,
+                "optimizers": [],
+                "schedulers": [],
+            }
             for o in self.optimizers:
                 state["optimizers"].append(o.state_dict())
             for s in self.schedulers:
                 state["schedulers"].append(s.state_dict())
             save_filename = f"{int(current_iter)}.state"
-            save_path = os.path.join(
-                self.opt["path"]["training_states"], save_filename)
+            save_path = os.path.join(self.opt["path"]["training_states"], save_filename)
 
             # avoid occasional writing errors
             retry = 3
@@ -965,15 +1056,15 @@ class default:
                 except Exception as e:
                     logger = get_root_logger()
                     logger.warning(
-                        f"Save training state error: {e}, remaining retry times: {retry - 1}")
+                        f"Save training state error: {e}, remaining retry times: {retry - 1}"
+                    )
                     time.sleep(1)
                 else:
                     break
                 finally:
                     retry -= 1
             if retry == 0:
-                logger.warning(
-                    f"Still cannot save {save_path}. Just ignore it.")
+                logger.warning(f"Still cannot save {save_path}. Just ignore it.")
                 msg = "Cannot save, aborting."
                 raise OSError(msg)
 
@@ -986,9 +1077,11 @@ class default:
         resume_optimizers = resume_state["optimizers"]
         resume_schedulers = resume_state["schedulers"]
         assert len(resume_optimizers) == len(
-            self.optimizers), "Wrong lengths of optimizers"
+            self.optimizers
+        ), "Wrong lengths of optimizers"
         assert len(resume_schedulers) == len(
-            self.schedulers), "Wrong lengths of schedulers"
+            self.schedulers
+        ), "Wrong lengths of schedulers"
         for i, o in enumerate(resume_optimizers):
             self.optimizers[i].load_state_dict(o)
         for i, s in enumerate(resume_schedulers):

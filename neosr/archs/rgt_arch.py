@@ -390,9 +390,9 @@ class L_SA(nn.Module):
         )  # nW, sw[0], sw[1], 1
         mask_windows_0 = img_mask_0.view(-1, self.split_size[0] * self.split_size[1])
         attn_mask_0 = mask_windows_0.unsqueeze(1) - mask_windows_0.unsqueeze(2)
-        attn_mask_0 = attn_mask_0.masked_fill(
-            attn_mask_0 != 0, -100.0
-        ).masked_fill(attn_mask_0 == 0, 0.0)
+        attn_mask_0 = attn_mask_0.masked_fill(attn_mask_0 != 0, -100.0).masked_fill(
+            attn_mask_0 == 0, 0.0
+        )
 
         # calculate mask for V-Shift
         img_mask_1 = img_mask_1.view(
@@ -410,9 +410,9 @@ class L_SA(nn.Module):
         )  # nW, sw[1], sw[0], 1
         mask_windows_1 = img_mask_1.view(-1, self.split_size[1] * self.split_size[0])
         attn_mask_1 = mask_windows_1.unsqueeze(1) - mask_windows_1.unsqueeze(2)
-        attn_mask_1 = attn_mask_1.masked_fill(
-            attn_mask_1 != 0, -100.0
-        ).masked_fill(attn_mask_1 == 0, 0.0)
+        attn_mask_1 = attn_mask_1.masked_fill(attn_mask_1 != 0, -100.0).masked_fill(
+            attn_mask_1 == 0, 0.0
+        )
 
         return attn_mask_0, attn_mask_1
 
@@ -574,7 +574,9 @@ class RG_SA(nn.Module):
             _time = max(int(math.log(H // 4, 4)), int(math.log(W // 4, 4)))
         else:
             _time = max(int(math.log(H // 16, 4)), int(math.log(W // 16, 4)))
-            _time = max(_time, 2)  # testing _time must equal or larger than training _time (2)
+            _time = max(
+                _time, 2
+            )  # testing _time must equal or larger than training _time (2)
 
         _scale = 4**_time
 
@@ -614,7 +616,18 @@ class RG_SA(nn.Module):
 
         # CPE
         # v_shape=(B, H, N', C//H)
-        v += self.cpe(v.transpose(1, 2).reshape(B, -1, C).transpose(1, 2).contiguous().view(B, C, H // _scale, W // _scale)).view(B, C, -1).view(B, self.num_heads, int(C / self.num_heads), -1).transpose(-1, -2)
+        v += (
+            self.cpe(
+                v.transpose(1, 2)
+                .reshape(B, -1, C)
+                .transpose(1, 2)
+                .contiguous()
+                .view(B, C, H // _scale, W // _scale)
+            )
+            .view(B, C, -1)
+            .view(B, self.num_heads, int(C / self.num_heads), -1)
+            .transpose(-1, -2)
+        )
 
         x = (attn @ v).transpose(1, 2).reshape(B, N, C)
         x = self.proj(x)
@@ -789,14 +802,15 @@ class Upsample(nn.Sequential):
         m = []
         if (scale & (scale - 1)) == 0:  # scale = 2^n
             for _ in range(int(math.log2(scale))):
-                m.extend((nn.Conv2d(num_feat, 4 * num_feat, 3, 1, 1), nn.PixelShuffle(2)))
+                m.extend((
+                    nn.Conv2d(num_feat, 4 * num_feat, 3, 1, 1),
+                    nn.PixelShuffle(2),
+                ))
         elif scale == 3:
             m.extend((nn.Conv2d(num_feat, 9 * num_feat, 3, 1, 1), nn.PixelShuffle(3)))
         else:
             msg = f"scale {scale} is not supported. " "Supported scales: 2^n and 3."
-            raise ValueError(
-                msg
-            )
+            raise ValueError(msg)
         super().__init__(*m)
 
 
@@ -850,9 +864,9 @@ class rgt(nn.Module):
         # ------------------------- 2, Deep Feature Extraction ------------------------- #
         self.num_layers = len(depth)
         self.use_chk = use_chk
-        self.num_features = self.embed_dim = (
-            embed_dim  # num_features for consistency with other models
-        )
+        self.num_features = (
+            self.embed_dim
+        ) = embed_dim  # num_features for consistency with other models
         heads = num_heads
 
         self.before_RG = nn.Sequential(
@@ -931,8 +945,7 @@ class rgt(nn.Module):
         return rearrange(x, "b (h w) c -> b c h w", h=H, w=W)
 
     def forward(self, x):
-        """Input: x: (B, C, H, W)
-        """
+        """Input: x: (B, C, H, W)"""
         self.mean = self.mean.type_as(x)
         x = (x - self.mean) * self.img_range
 

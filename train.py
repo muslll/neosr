@@ -186,7 +186,9 @@ def train_pipeline(root_path):
             f"Resuming training from epoch: {resume_state['epoch']}, iter: {int(resume_state['iter'])}"
         )
         start_epoch = resume_state["epoch"]
-        current_iter = int(resume_state["iter"] * opt["datasets"]["train"].get("accumulate", 1))
+        current_iter = int(
+            resume_state["iter"] * opt["datasets"]["train"].get("accumulate", 1)
+        )
         # current_iter = resume_state["iter"]
         torch.cuda.empty_cache()
     else:
@@ -213,7 +215,9 @@ def train_pipeline(root_path):
         val_freq = opt["val"]["val_freq"]
 
     # training
-    logger.info(f"Start training from epoch: {start_epoch}, iter: {int(current_iter / accumulate)}")
+    logger.info(
+        f"Start training from epoch: {start_epoch}, iter: {int(current_iter / accumulate)}"
+    )
     # data_timer, iter_timer = AvgTimer(), AvgTimer()
     iter_timer = AvgTimer()
     start_time = time.time()
@@ -253,7 +257,7 @@ def train_pipeline(root_path):
                     log_vars = {"epoch": epoch, "iter": current_iter_log}
                     log_vars.update({"lrs": model.get_current_learning_rate()})
                     log_vars.update({
-                        "time": iter_timer.get_avg_time(),
+                        "time": iter_timer.get_avg_time()
                         # "data_time": data_timer.get_avg_time(),
                     })
                     log_vars.update(model.get_current_log())
@@ -295,7 +299,10 @@ def train_pipeline(root_path):
         accumulate = opt["datasets"]["train"].get("accumulate", 1)
         for val_loader in val_loaders:
             model.validation(
-                val_loader, int(current_iter / accumulate), tb_logger, opt["val"]["save_img"]
+                val_loader,
+                int(current_iter / accumulate),
+                tb_logger,
+                opt["val"]["save_img"],
             )
     if tb_logger:
         tb_logger.close()

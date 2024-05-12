@@ -823,14 +823,15 @@ class Upsample(nn.Sequential):
         self.num_feat = num_feat
         if (scale & (scale - 1)) == 0:  # scale = 2^n
             for _ in range(int(math.log2(scale))):
-                m.extend((nn.Conv2d(num_feat, 4 * num_feat, 3, 1, 1), nn.PixelShuffle(2)))
+                m.extend((
+                    nn.Conv2d(num_feat, 4 * num_feat, 3, 1, 1),
+                    nn.PixelShuffle(2),
+                ))
         elif scale == 3:
             m.extend((nn.Conv2d(num_feat, 9 * num_feat, 3, 1, 1), nn.PixelShuffle(3)))
         else:
             msg = f"scale {scale} is not supported. Supported scales: 2^n and 3."
-            raise ValueError(
-                msg
-            )
+            raise ValueError(msg)
         super().__init__(*m)
 
 
@@ -848,7 +849,10 @@ class UpsampleOneStep(nn.Sequential):
         self.num_feat = num_feat
         self.input_resolution = input_resolution
         m = []
-        m.extend((nn.Conv2d(num_feat, scale ** 2 * num_out_ch, 3, 1, 1), nn.PixelShuffle(scale)))
+        m.extend((
+            nn.Conv2d(num_feat, scale**2 * num_out_ch, 3, 1, 1),
+            nn.PixelShuffle(scale),
+        ))
         super().__init__(*m)
 
 

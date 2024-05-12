@@ -1,4 +1,3 @@
-
 from torch import nn
 from torch.nn import functional as F
 
@@ -25,7 +24,16 @@ class compact(nn.Module):
         act_type (str): Activation type, options: 'relu', 'prelu', 'leakyrelu'. Default: prelu.
     """
 
-    def __init__(self, num_in_ch=3, num_out_ch=3, num_feat=64, num_conv=16, upscale=upscale, act_type="prelu", **kwargs):
+    def __init__(
+        self,
+        num_in_ch=3,
+        num_out_ch=3,
+        num_feat=64,
+        num_conv=16,
+        upscale=upscale,
+        act_type="prelu",
+        **kwargs,
+    ):
         super().__init__()
         self.num_in_ch = num_in_ch
         self.num_out_ch = num_out_ch
@@ -59,8 +67,7 @@ class compact(nn.Module):
             self.body.append(activation)
 
         # the last conv
-        self.body.append(nn.Conv2d(num_feat, num_out_ch *
-                         upscale * upscale, 3, 1, 1))
+        self.body.append(nn.Conv2d(num_feat, num_out_ch * upscale * upscale, 3, 1, 1))
         # upsample
         self.upsampler = nn.PixelShuffle(upscale)
 

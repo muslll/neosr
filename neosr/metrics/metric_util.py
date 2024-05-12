@@ -22,8 +22,7 @@ def reorder_image(img, input_order="HWC"):
 
     if input_order not in {"HWC", "CHW"}:
         msg = f"Wrong input_order {input_order}. Supported input_orders are 'HWC' and 'CHW'"
-        raise ValueError(
-            msg)
+        raise ValueError(msg)
     if len(img.shape) == 2:
         img = img[..., None]
     if input_order == "CHW":
@@ -40,8 +39,8 @@ def to_y_channel(img):
     Returns:
         (ndarray): Images with range [0, 255] (float type) without round.
     """
-    img = img.astype(np.float32) / 255.
+    img = img.astype(np.float32) / 255.0
     if img.ndim == 3 and img.shape[2] == 3:
         img = bgr2ycbcr(img, y_only=True)
         img = img[..., None]
-    return img * 255.
+    return img * 255.0

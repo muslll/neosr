@@ -1,4 +1,3 @@
-
 import torch
 from torch import nn
 from torch.nn import functional as F
@@ -24,17 +23,16 @@ class ResidualDenseBlock(nn.Module):
         super().__init__()
         self.conv1 = nn.Conv2d(num_feat, num_grow_ch, 3, 1, 1)
         self.conv2 = nn.Conv2d(num_feat + num_grow_ch, num_grow_ch, 3, 1, 1)
-        self.conv3 = nn.Conv2d(
-            num_feat + 2 * num_grow_ch, num_grow_ch, 3, 1, 1)
-        self.conv4 = nn.Conv2d(
-            num_feat + 3 * num_grow_ch, num_grow_ch, 3, 1, 1)
+        self.conv3 = nn.Conv2d(num_feat + 2 * num_grow_ch, num_grow_ch, 3, 1, 1)
+        self.conv4 = nn.Conv2d(num_feat + 3 * num_grow_ch, num_grow_ch, 3, 1, 1)
         self.conv5 = nn.Conv2d(num_feat + 4 * num_grow_ch, num_feat, 3, 1, 1)
 
         self.lrelu = nn.LeakyReLU(negative_slope=0.2, inplace=True)
 
         # initialization
         default_init_weights(
-            [self.conv1, self.conv2, self.conv3, self.conv4, self.conv5], 0.1)
+            [self.conv1, self.conv2, self.conv3, self.conv4, self.conv5], 0.1
+        )
 
     def forward(self, x):
         x1 = self.lrelu(self.conv1(x))
@@ -91,7 +89,15 @@ class esrgan(nn.Module):
         num_grow_ch (int): Channels for each growth. Default: 32.
     """
 
-    def __init__(self, num_in_ch=3, num_out_ch=3, scale=upscale, num_feat=64, num_block=23, num_grow_ch=32):
+    def __init__(
+        self,
+        num_in_ch=3,
+        num_out_ch=3,
+        scale=upscale,
+        num_feat=64,
+        num_block=23,
+        num_grow_ch=32,
+    ):
         super().__init__()
         self.scale = scale
         if scale == 2:
@@ -100,7 +106,8 @@ class esrgan(nn.Module):
             num_in_ch *= 16
         self.conv_first = nn.Conv2d(num_in_ch, num_feat, 3, 1, 1)
         self.body = make_layer(
-            RRDB, num_block, num_feat=num_feat, num_grow_ch=num_grow_ch)
+            RRDB, num_block, num_feat=num_feat, num_grow_ch=num_grow_ch
+        )
         self.conv_body = nn.Conv2d(num_feat, num_feat, 3, 1, 1)
         # upsample
         self.conv_up1 = nn.Conv2d(num_feat, num_feat, 3, 1, 1)
@@ -121,8 +128,10 @@ class esrgan(nn.Module):
         body_feat = self.conv_body(self.body(feat))
         feat += body_feat
         # upsample
-        feat = self.lrelu(self.conv_up1(F.interpolate(
-            feat, scale_factor=2, mode="nearest")))
-        feat = self.lrelu(self.conv_up2(F.interpolate(
-            feat, scale_factor=2, mode="nearest")))
+        feat = self.lrelu(
+            self.conv_up1(F.interpolate(feat, scale_factor=2, mode="nearest"))
+        )
+        feat = self.lrelu(
+            self.conv_up2(F.interpolate(feat, scale_factor=2, mode="nearest"))
+        )
         return self.conv_last(self.lrelu(self.conv_hr(feat)))

@@ -8,7 +8,6 @@ initialized_logger = {}
 
 
 class AvgTimer:
-
     def __init__(self, window=200):
         self.window = window  # average window
         self.current_time = 0
@@ -86,8 +85,7 @@ class MessageLogger:
         current_iter = int(log_vars.pop("iter"))
         lrs = log_vars.pop("lrs")
 
-        message = (
-            f"[ epoch:{epoch:4d} ] [ iter:{current_iter:7,d} ]")
+        message = f"[ epoch:{epoch:4d} ] [ iter:{current_iter:7,d} ]"
 
         # time and estimated time
         if "time" in log_vars:
@@ -98,7 +96,9 @@ class MessageLogger:
             iter_time /= self.accumulate
 
             total_time = time.time() - self.start_time
-            time_sec_avg = total_time / (current_iter - (self.start_iter / self.accumulate) + 1)
+            time_sec_avg = total_time / (
+                current_iter - (self.start_iter / self.accumulate) + 1
+            )
             eta_sec = time_sec_avg * (self.max_iters - current_iter - 1)
             eta_str = str(datetime.timedelta(seconds=int(eta_sec)))
             message += f" [ performance: {iter_time:.3f} it/s ] [ lr: "
@@ -122,6 +122,7 @@ class MessageLogger:
 @master_only
 def init_tb_logger(log_dir):
     from torch.utils.tensorboard import SummaryWriter
+
     return SummaryWriter(log_dir=log_dir)
 
 
@@ -129,6 +130,7 @@ def init_tb_logger(log_dir):
 def init_wandb_logger(opt):
     """We now only use wandb to sync tensorboard log."""
     import wandb
+
     logger = get_root_logger()
 
     project = opt["logger"]["wandb"]["project"]
@@ -141,8 +143,14 @@ def init_wandb_logger(opt):
         wandb_id = wandb.util.generate_id()
         resume = "never"
 
-    wandb.init(id=wandb_id, resume=resume,
-               name=opt["name"], config=opt, project=project, sync_tensorboard=True)
+    wandb.init(
+        id=wandb_id,
+        resume=resume,
+        name=opt["name"],
+        config=opt,
+        project=project,
+        sync_tensorboard=True,
+    )
 
     logger.info(f"Use wandb logger with id={wandb_id}; project={project}.")
 
@@ -172,7 +180,9 @@ def get_root_logger(logger_name="neosr", log_level=logging.INFO, log_file=None):
 
     format_str = "%(asctime)s %(levelname)s: %(message)s"
     stream_handler = logging.StreamHandler()
-    stream_handler.setFormatter(logging.Formatter(format_str, datefmt="%d-%m-%Y %I:%M %p |"))
+    stream_handler.setFormatter(
+        logging.Formatter(format_str, datefmt="%d-%m-%Y %I:%M %p |")
+    )
     logger.addHandler(stream_handler)
     logger.propagate = False
     rank, _ = get_dist_info()

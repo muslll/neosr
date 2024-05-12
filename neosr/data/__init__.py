@@ -18,11 +18,16 @@ __all__ = ["build_dataloader", "build_dataset"]
 # automatically scan and import dataset modules for registry
 # scan all the files under the data folder with '_dataset' in file names
 data_folder = osp.dirname(osp.abspath(__file__))
-dataset_filenames = [osp.splitext(osp.basename(v))[0] for v in scandir(
-    data_folder) if v.endswith("_dataset.py")]
+dataset_filenames = [
+    osp.splitext(osp.basename(v))[0]
+    for v in scandir(data_folder)
+    if v.endswith("_dataset.py")
+]
 # import all the dataset modules
-_dataset_modules = [importlib.import_module(
-    f"neosr.data.{file_name}") for file_name in dataset_filenames]
+_dataset_modules = [
+    importlib.import_module(f"neosr.data.{file_name}")
+    for file_name in dataset_filenames
+]
 
 
 def build_dataset(dataset_opt):
@@ -39,7 +44,9 @@ def build_dataset(dataset_opt):
     return dataset
 
 
-def build_dataloader(dataset, dataset_opt, num_gpu=1, dist=False, sampler=None, seed=None):
+def build_dataloader(
+    dataset, dataset_opt, num_gpu=1, dist=False, sampler=None, seed=None
+):
     """Build dataloader.
 
     Args:
@@ -77,19 +84,27 @@ def build_dataloader(dataset, dataset_opt, num_gpu=1, dist=False, sampler=None, 
             "num_workers": num_workers,
             "sampler": sampler,
             "prefetch_factor": 8,
-            "drop_last": True}
+            "drop_last": True,
+        }
         if sampler is None:
             dataloader_args["shuffle"] = True
-        dataloader_args["worker_init_fn"] = partial(
-            worker_init_fn, num_workers=num_workers, rank=rank, seed=seed) if seed is not None else None
+        dataloader_args["worker_init_fn"] = (
+            partial(worker_init_fn, num_workers=num_workers, rank=rank, seed=seed)
+            if seed is not None
+            else None
+        )
 
     # val
     elif phase in {"val", "test"}:
-        dataloader_args = {"dataset": dataset, "batch_size": 1, "shuffle": False, "num_workers": 4}
+        dataloader_args = {
+            "dataset": dataset,
+            "batch_size": 1,
+            "shuffle": False,
+            "num_workers": 4,
+        }
     else:
         msg = f"Wrong dataset phase: {phase}. Supported ones are 'train', 'val' and 'test'."
-        raise ValueError(
-            msg)
+        raise ValueError(msg)
 
     dataloader_args["pin_memory"] = dataset_opt.get("pin_memory", True)
     dataloader_args["persistent_workers"] = dataset_opt.get("persistent_workers", True)
