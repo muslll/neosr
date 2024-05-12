@@ -61,18 +61,16 @@ def scandir(dir_path, suffix=None, recursive=False, full_path=False):
         A generator for all the interested files with relative paths.
     """
 
-    if (suffix is not None) and not isinstance(suffix, (str, tuple)):
-        raise TypeError('"suffix" must be a string or tuple of strings')
+    if (suffix is not None) and not isinstance(suffix, str | tuple):
+        msg = '"suffix" must be a string or tuple of strings'
+        raise TypeError(msg)
 
     root = dir_path
 
     def _scandir(dir_path, suffix, recursive):
         for entry in os.scandir(dir_path):
             if not entry.name.startswith(".") and entry.is_file():
-                if full_path:
-                    return_path = entry.path
-                else:
-                    return_path = osp.relpath(entry.path, root)
+                return_path = entry.path if full_path else osp.relpath(entry.path, root)
 
                 if suffix is None or return_path.endswith(suffix):
                     yield return_path
@@ -93,7 +91,7 @@ def check_resume(opt, resume_iter):
     """
     if opt["path"]["resume_state"]:
         # get all the networks
-        networks = [key for key in opt.keys() if key.startswith("network_")]
+        networks = [key for key in opt if key.startswith("network_")]
         flag_pretrain = False
         for network in networks:
             if opt["path"].get(f"pretrain_{network}") is not None:
@@ -111,7 +109,7 @@ def check_resume(opt, resume_iter):
                 print(f"Set {name} to {opt['path'][name]}")
 
         # change param_key to params in resume
-        param_keys = [key for key in opt["path"].keys()
+        param_keys = [key for key in opt["path"]
                       if key.startswith("param_key")]
         for param_key in param_keys:
             if opt["path"][param_key] == "params_ema":

@@ -13,15 +13,15 @@ def conv3otherRelu(in_planes, out_planes, kernel_size=None, stride=None, padding
     # 3x3 convolution with padding and relu
     if kernel_size is None:
         kernel_size = 3
-    assert isinstance(kernel_size, (int, tuple)), "kernel_size is not in (int, tuple)!"
+    assert isinstance(kernel_size, int | tuple), "kernel_size is not in (int, tuple)!"
 
     if stride is None:
         stride = 1
-    assert isinstance(stride, (int, tuple)), "stride is not in (int, tuple)!"
+    assert isinstance(stride, int | tuple), "stride is not in (int, tuple)!"
 
     if padding is None:
         padding = 1
-    assert isinstance(padding, (int, tuple)), "padding is not in (int, tuple)!"
+    assert isinstance(padding, int | tuple), "padding is not in (int, tuple)!"
 
     return nn.Sequential(
         spectral_norm(
@@ -59,7 +59,7 @@ class ConvBnRelu(nn.Module):
         inplace=True,
         has_bias=False,
     ):
-        super(ConvBnRelu, self).__init__()
+        super().__init__()
         self.conv = spectral_norm(
             nn.Conv2d(
                 in_planes,
@@ -91,7 +91,7 @@ class ConvBnRelu(nn.Module):
 
 class Attention(Module):
     def __init__(self, in_places, scale=8, eps=1e-6):
-        super(Attention, self).__init__()
+        super().__init__()
         self.gamma = Parameter(torch.zeros(1))
         self.in_places = in_places
         self.l2_norm = l2_norm
@@ -135,7 +135,7 @@ class Attention(Module):
 
 class AttentionAggregationModule(nn.Module):
     def __init__(self, in_chan, out_chan):
-        super(AttentionAggregationModule, self).__init__()
+        super().__init__()
         self.convblk = ConvBnRelu(in_chan, out_chan, ksize=1, stride=1, pad=0)
         self.conv_atten = Attention(out_chan)
 
@@ -143,8 +143,7 @@ class AttentionAggregationModule(nn.Module):
         fcat = torch.cat([s5, s4, s3, s2], dim=1)
         feat = self.convblk(fcat)
         atten = self.conv_atten(feat)
-        feat_out = atten + feat
-        return feat_out
+        return atten + feat
 
 
 class Conv3x3GNReLU(nn.Module):
@@ -178,8 +177,7 @@ class FPNBlock(nn.Module):
         x = F.interpolate(x, scale_factor=2, mode="nearest")
         skip = self.skip_conv(skip)
 
-        x = x + skip
-        return x
+        return x + skip
 
 
 class SegmentationBlock(nn.Module):
@@ -204,12 +202,14 @@ class a2fpn(nn.Module):
         self,
         band=3,
         class_num=6,
-        encoder_channels=[512, 256, 128, 64],
+        encoder_channels=None,
         pyramid_channels=64,
         segmentation_channels=64,
         dropout=0.2,
         **kwargs,
     ):
+        if encoder_channels is None:
+            encoder_channels = [512, 256, 128, 64]
         super().__init__()
         self.base_model = models.resnet18(weights=ResNet18_Weights.DEFAULT)
         self.base_layers = list(self.base_model.children())
@@ -274,6 +274,4 @@ class a2fpn(nn.Module):
 
         out = self.dropout(self.attention(s5, s4, s3, s2))
         out = self.final_conv(out)
-        out = F.interpolate(out, scale_factor=4, mode="bilinear", align_corners=True)
-
-        return out
+        return F.interpolate(out, scale_factor=4, mode="bilinear", align_corners=True)

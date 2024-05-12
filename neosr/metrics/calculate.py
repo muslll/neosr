@@ -27,9 +27,10 @@ def calculate_psnr(img, img2, crop_border=4, input_order="HWC", test_y_channel=F
 
     assert img.shape == img2.shape, (
         f"Image shapes are different: {img.shape}, {img2.shape}.")
-    if input_order not in ["HWC", "CHW"]:
+    if input_order not in {"HWC", "CHW"}:
+        msg = f'Wrong input_order {input_order}. Supported input_orders are "HWC" and "CHW"'
         raise ValueError(
-            f'Wrong input_order {input_order}. Supported input_orders are "HWC" and "CHW"')
+            msg)
     img = reorder_image(img, input_order=input_order)
     img2 = reorder_image(img2, input_order=input_order)
 
@@ -76,9 +77,10 @@ def calculate_ssim(img, img2, crop_border=4, input_order="HWC", test_y_channel=F
 
     assert img.shape == img2.shape, (
         f"Image shapes are different: {img.shape}, {img2.shape}.")
-    if input_order not in ["HWC", "CHW"]:
+    if input_order not in {"HWC", "CHW"}:
+        msg = f'Wrong input_order {input_order}. Supported input_orders are "HWC" and "CHW"'
         raise ValueError(
-            f'Wrong input_order {input_order}. Supported input_orders are "HWC" and "CHW"')
+            msg)
     img = reorder_image(img, input_order=input_order)
     img2 = reorder_image(img2, input_order=input_order)
 
@@ -148,6 +150,4 @@ def calculate_dists(img, img2, **kwargs):
     img, img2 = img.to(device), img2.to(device)
 
     loss = dists(as_loss=False)
-    loss = loss.forward(img, img2)
-
-    return loss
+    return loss.forward(img, img2)

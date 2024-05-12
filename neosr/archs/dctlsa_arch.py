@@ -12,15 +12,14 @@ upscale, training = net_opt()
 
 class LSAB(nn.Module):
     def __init__(self, in_channels=55, num_head=5):
-        super(LSAB, self).__init__()
+        super().__init__()
         m_body = []
-        for i in range(2):
+        for _i in range(2):
             m_body.append(SwinT(num_head=num_head, n_feats=in_channels))
         self.body = nn.Sequential(*m_body)
 
     def forward(self, input):
-        out_fused = self.body(input)
-        return out_fused
+        return self.body(input)
 
 
 def conv_layer(in_channels, out_channels, kernel_size, stride=1, dilation=1, groups=1):
@@ -32,7 +31,8 @@ def conv_layer(in_channels, out_channels, kernel_size, stride=1, dilation=1, gro
 def sequential(*args):
     if len(args) == 1:
         if isinstance(args[0], OrderedDict):
-            raise NotImplementedError("sequential does not support OrderedDict input.")
+            msg = "sequential does not support OrderedDict input."
+            raise NotImplementedError(msg)
         return args[0]
     modules = []
     for module in args:
@@ -53,9 +53,8 @@ def pixelshuffle_block(in_channels, out_channels, upscale_factor=2, kernel_size=
 
 
 def get_valid_padding(kernel_size, dilation):
-    kernel_size = kernel_size + (kernel_size - 1) * (dilation - 1)
-    padding = (kernel_size - 1) // 2
-    return padding
+    kernel_size += (kernel_size - 1) * (dilation - 1)
+    return (kernel_size - 1) // 2
 
 
 def pad(pad_type, padding):
@@ -67,7 +66,8 @@ def pad(pad_type, padding):
     elif pad_type == "replicate":
         layer = nn.ReplicationPad2d(padding)
     else:
-        raise NotImplementedError(f"padding layer [{pad_type:s}] is not implemented")
+        msg = f"padding layer [{pad_type:s}] is not implemented"
+        raise NotImplementedError(msg)
     return layer
 
 
@@ -80,7 +80,8 @@ def activation(act_type, inplace=True, neg_slope=0.05, n_prelu=1):
     elif act_type == "prelu":
         layer = nn.PReLU(num_parameters=n_prelu, init=neg_slope)
     else:
-        raise NotImplementedError(f"activation layer [{act_type:s}] is not found")
+        msg = f"activation layer [{act_type:s}] is not found"
+        raise NotImplementedError(msg)
     return layer
 
 
@@ -91,7 +92,8 @@ def norm(norm_type, nc):
     elif norm_type == "instance":
         layer = nn.InstanceNorm2d(nc, affine=False)
     else:
-        raise NotImplementedError(f"normalization layer [{norm_type:s}] is not found")
+        msg = f"normalization layer [{norm_type:s}] is not found"
+        raise NotImplementedError(msg)
     return layer
 
 
@@ -112,7 +114,7 @@ class SwinT(nn.Module):
     def __init__(
             self, num_head=5, n_feats=55):
 
-        super(SwinT, self).__init__()
+        super().__init__()
         m = []
         depth = 2
         num_heads = num_head
@@ -130,8 +132,7 @@ class SwinT(nn.Module):
         self.transformer_body = nn.Sequential(*m)
 
     def forward(self, x):
-        res = self.transformer_body(x)
-        return res
+        return self.transformer_body(x)
 
 
 class BasicLayer(nn.Module):
@@ -200,9 +201,8 @@ class SwinTransformerBlock(nn.Module):
 
     def forward(self, x, x_size):
         H, W = x_size
-        B, L, C = x.shape
+        B, _L, C = x.shape
 
-        shortcut = x
         x = x.view(B, H, W, C)
 
         # cyclic shift
@@ -220,8 +220,7 @@ class SwinTransformerBlock(nn.Module):
         x = x.view(B, H * W, C)
 
         # FFN
-        x = (x + self.mlp(x))
-        return x
+        return (x + self.mlp(x))
 
 
 class LocalModule(nn.Sequential):
@@ -256,7 +255,7 @@ class WindowAttention(nn.Module):
     def forward(self, x, H, W, mask=None):
         temp = x.permute(0, 3, 1, 2).contiguous()
         local = self.local(temp)
-        local = local + temp
+        local += temp
         local = local.permute(0, 2, 3, 1).contiguous()
         qkv = self.qkv(local)
         # partition windows
@@ -267,13 +266,13 @@ class WindowAttention(nn.Module):
         qkv = qkv.view(-1, self.window_size[0] * self.window_size[1], C)  # nW*B, window_size*window_size, C
 
         N = self.window_size[0] * self.window_size[1]
-        C = C // 3
+        C //= 3
 
         qkv = qkv.reshape(B_, N, 3, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4)
         q, k, v = qkv[0], qkv[1], qkv[2]  # make torchscript happy (cannot use tensor as tuple)
 
         k = self.softmax(k)
-        q = q * self.scale
+        q *= self.scale
 
         attn = (k.transpose(-2, -1) @ v)
         x = (q @ attn).transpose(1, 2).reshape(B_, N, C)
@@ -283,15 +282,13 @@ class WindowAttention(nn.Module):
         # merge windows
         x = x.view(-1, self.window_size[0], self.window_size[1], C)
         x = window_reverse(x, self.window_size[0], H, W)  # B H' W' C
-        x = x + local
-        return x
+        return x + local
 
 
 def window_reverse(windows, window_size, H, W):
     B = int(windows.shape[0] / (H * W / window_size / window_size))
     x = windows.view(B, H // window_size, W // window_size, window_size, window_size, -1)
-    x = x.permute(0, 1, 3, 2, 4, 5).contiguous().view(B, H, W, -1)
-    return x
+    return x.permute(0, 1, 3, 2, 4, 5).contiguous().view(B, H, W, -1)
 
 
 class Mlp(nn.Module):
@@ -306,15 +303,13 @@ class Mlp(nn.Module):
     def forward(self, x):
         x = self.fc1(x)
         x = self.act(x)
-        x = self.fc2(x)
-        return x
+        return self.fc2(x)
 
 
 def window_partition(x, window_size):
     B, H, W, C = x.shape
     x = x.view(B, H // window_size, window_size, W // window_size, window_size, C)
-    windows = x.permute(0, 1, 3, 2, 4, 5).contiguous().view(-1, window_size, window_size, C)
-    return windows
+    return x.permute(0, 1, 3, 2, 4, 5).contiguous().view(-1, window_size, window_size, C)
 
 
 class PatchEmbed(nn.Module):
@@ -346,13 +341,11 @@ class PatchUnEmbed(nn.Module):
         self.embed_dim = embed_dim
 
     def forward(self, x, x_size):
-        B, HW, C = x.shape
-        x = x.transpose(1, 2).view(B, self.embed_dim, x_size[0], x_size[1])  # B Ph*Pw C
-        return x
+        B, _HW, _C = x.shape
+        return x.transpose(1, 2).view(B, self.embed_dim, x_size[0], x_size[1])  # B Ph*Pw C
 
     def flops(self):
-        flops = 0
-        return flops
+        return 0
 
 
 # The DCTB code
@@ -403,14 +396,13 @@ class PatchUnEmbed(nn.Module):
 
 
 def make_model(args, parent=False):
-    model = dctlsa(in_nc=args.n_colors, nf=args.channel, num_modules=args.num_modules, out_nc=args.n_colors, upscale=args.scale[0], num_head=args.num_head)
-    return model
+    return dctlsa(in_nc=args.n_colors, nf=args.channel, num_modules=args.num_modules, out_nc=args.n_colors, upscale=args.scale[0], num_head=args.num_head)
 
 
 @ARCH_REGISTRY.register()
 class dctlsa(nn.Module):
     def __init__(self, in_nc=3, nf=55, num_modules=6, out_nc=3, upscale=upscale, num_head=5, **kwargs):
-        super(dctlsa, self).__init__()
+        super().__init__()
         self.fea_conv = conv_layer(in_nc, nf, kernel_size=3)
         # self.dctb = DCTB(nf=nf,num_modules=num_modules)
         # //The DCTB code Start
@@ -466,6 +458,4 @@ class dctlsa(nn.Module):
         out_B = self.dropout(out_B)
 
         out_lr = self.LR_conv(out_B) + out_fea
-        output = self.upsampler(out_lr)
-
-        return output
+        return self.upsampler(out_lr)

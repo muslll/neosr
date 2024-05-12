@@ -17,8 +17,7 @@ upscale, training = net_opt()
 def repeat_interleave(x, n):
     x = x.unsqueeze(2)
     x = x.repeat(1, 1, n, 1, 1)
-    x = x.reshape(x.shape[0], x.shape[1] * n, x.shape[3], x.shape[4])
-    return x
+    return x.reshape(x.shape[0], x.shape[1] * n, x.shape[3], x.shape[4])
 
 
 class CCM(nn.Sequential):
@@ -76,13 +75,10 @@ class PLKConv2d(nn.Module):
 
         if self.training:
             x1, x2 = torch.split(x, [self.idx, x.size(1) - self.idx], dim=1)
-            if self.with_idt:
-                x1 = self.conv(x1) + x1
-            else:
-                x1 = self.conv(x1)
+            x1 = self.conv(x1) + x1 if self.with_idt else self.conv(x1)
             return torch.cat([x1, x2], dim=1)
         if self.with_idt:
-            x[:, : self.idx] = x[:, : self.idx] + self.conv(x[:, : self.idx])
+            x[:, :self.idx] += self.conv(x[:, :self.idx])
         else:
             x[:, : self.idx] = self.conv(x[:, : self.idx])
         return x
@@ -95,7 +91,7 @@ class PLKConv2d(nn.Module):
                 n_pad = (k.shape[2] - 1) // 2
                 I = torch.eye(k.shape[0]).reshape(k.shape[0], k.shape[0], 1, 1)
                 I = F.pad(I, (n_pad, n_pad, n_pad, n_pad))
-                k = k + I
+                k += I
                 self.conv.weight.data.copy_(k)
             self.is_convert = True
 
@@ -174,12 +170,9 @@ class SparsePLKConv2d(nn.Module):
             x[:, : self.idx, :, :] = self.conv(x[:, : self.idx, :, :])
             return x
         x1, x2 = torch.split(x, [self.idx, x.size(1) - self.idx], dim=1)
-        if self.with_idt:
-            out = x1
-        else:
-            out = 0.0
+        out = x1 if self.with_idt else 0.0
         for conv in self.convs:
-            out = out + conv(x1)
+            out += conv(x1)
         return torch.cat([out, x2], dim=1)
 
     @staticmethod
@@ -246,8 +239,8 @@ class SparsePLKConv2d(nn.Module):
                 if _k.size(1) == 1:
                     _k = self._dwc_to_dense(_k)
 
-                k = k + _k
-                b = b + _b
+                k += _k
+                b += _b
 
             device = k.device
 
@@ -255,7 +248,7 @@ class SparsePLKConv2d(nn.Module):
                 I = torch.eye(k.size(0)).reshape(k.size(0), k.size(0), 1, 1).to(device)
                 n_pad = (k.size(2) - 1) // 2
                 I = F.pad(I, (n_pad, n_pad, n_pad, n_pad))
-                k = k + I
+                k += I
 
             del self.convs
 
@@ -308,7 +301,8 @@ class PLKBlock(nn.Module):
         elif ccm_type == "DCCM":
             self.channe_mixer = DCCM(dim)
         else:
-            raise ValueError(f"Unknown CCM type: {ccm_type}")
+            msg = f"Unknown CCM type: {ccm_type}"
+            raise ValueError(msg)
 
         # Long-range Dependency
         pdim = int(dim * split_ratio)
@@ -326,7 +320,8 @@ class PLKBlock(nn.Module):
         elif lk_type == "RectSparsePLK":
             self.lk = RectSparsePLKConv2d(pdim, max_kernel_size)
         else:
-            raise ValueError(f"Unknown LK type: {lk_type}")
+            msg = f"Unknown LK type: {lk_type}"
+            raise ValueError(msg)
 
         # Instance-dependent modulation
         if use_ea:
@@ -402,8 +397,7 @@ class plksr(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.feats(x) + self.repeat_op(x)
-        x = self.to_img(x)
-        return x
+        return self.to_img(x)
 
 
 @ARCH_REGISTRY.register()

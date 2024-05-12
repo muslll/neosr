@@ -23,7 +23,7 @@ class otf(default):
     """On The Fly degradations, based on RealESRGAN pipeline."""
 
     def __init__(self, opt):
-        super(otf, self).__init__(opt)
+        super().__init__(opt)
         # simulate JPEG compression artifacts
         self.jpeger = DiffJPEG(differentiable=False).cuda()
         self.queue_size = opt.get("queue_size", 180)
@@ -67,7 +67,7 @@ class otf(default):
                           b, :, :, :] = self.lq.clone()
             self.queue_gt[self.queue_ptr:self.queue_ptr +
                           b, :, :, :] = self.gt.clone()
-            self.queue_ptr = self.queue_ptr + b
+            self.queue_ptr += b
 
     @torch.no_grad()
     def feed_data(self, data):
@@ -204,6 +204,6 @@ class otf(default):
     def nondist_validation(self, dataloader, current_iter, tb_logger, save_img):
         # do not use the synthetic process during validation
         self.is_train = False
-        super(otf, self).nondist_validation(
+        super().nondist_validation(
             dataloader, current_iter, tb_logger, save_img)
         self.is_train = True

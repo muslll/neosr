@@ -21,7 +21,7 @@ class ResidualDenseBlock(nn.Module):
     """
 
     def __init__(self, num_feat=64, num_grow_ch=32):
-        super(ResidualDenseBlock, self).__init__()
+        super().__init__()
         self.conv1 = nn.Conv2d(num_feat, num_grow_ch, 3, 1, 1)
         self.conv2 = nn.Conv2d(num_feat + num_grow_ch, num_grow_ch, 3, 1, 1)
         self.conv3 = nn.Conv2d(
@@ -57,7 +57,7 @@ class RRDB(nn.Module):
     """
 
     def __init__(self, num_feat, num_grow_ch=32):
-        super(RRDB, self).__init__()
+        super().__init__()
         self.rdb1 = ResidualDenseBlock(num_feat, num_grow_ch)
         self.rdb2 = ResidualDenseBlock(num_feat, num_grow_ch)
         self.rdb3 = ResidualDenseBlock(num_feat, num_grow_ch)
@@ -92,12 +92,12 @@ class esrgan(nn.Module):
     """
 
     def __init__(self, num_in_ch=3, num_out_ch=3, scale=upscale, num_feat=64, num_block=23, num_grow_ch=32):
-        super(esrgan, self).__init__()
+        super().__init__()
         self.scale = scale
         if scale == 2:
-            num_in_ch = num_in_ch * 4
+            num_in_ch *= 4
         elif scale == 1:
-            num_in_ch = num_in_ch * 16
+            num_in_ch *= 16
         self.conv_first = nn.Conv2d(num_in_ch, num_feat, 3, 1, 1)
         self.body = make_layer(
             RRDB, num_block, num_feat=num_feat, num_grow_ch=num_grow_ch)
@@ -119,11 +119,10 @@ class esrgan(nn.Module):
             feat = x
         feat = self.conv_first(feat)
         body_feat = self.conv_body(self.body(feat))
-        feat = feat + body_feat
+        feat += body_feat
         # upsample
         feat = self.lrelu(self.conv_up1(F.interpolate(
             feat, scale_factor=2, mode="nearest")))
         feat = self.lrelu(self.conv_up2(F.interpolate(
             feat, scale_factor=2, mode="nearest")))
-        out = self.conv_last(self.lrelu(self.conv_hr(feat)))
-        return out
+        return self.conv_last(self.lrelu(self.conv_hr(feat)))

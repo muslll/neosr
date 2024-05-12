@@ -25,8 +25,8 @@ def read_img_seq(path, require_mod_crop=False, scale=1, return_imgname=False):
     if isinstance(path, list):
         img_paths = path
     else:
-        img_paths = sorted(list(scandir(path, full_path=True)))
-    imgs = [cv2.imread(v).astype(np.float32) / 255. for v in img_paths]
+        img_paths = sorted(scandir(path, full_path=True))
+    imgs = [cv2.imread(v).astype(np.float32) / 255.0 for v in img_paths]
 
     if require_mod_crop:
         imgs = [mod_crop(img, scale) for img in imgs]
@@ -60,10 +60,14 @@ def generate_frame_indices(crt_idx, max_frame_num, num_frames, padding="reflecti
         list[int]: A list of indices.
     """
     assert num_frames % 2 == 1, "num_frames should be an odd number."
-    assert padding in ("replicate", "reflection", "reflection_circle",
-                       "circle"), f"Wrong padding mode: {padding}."
+    assert padding in {
+        "replicate",
+        "reflection",
+        "reflection_circle",
+        "circle",
+    }, f"Wrong padding mode: {padding}."
 
-    max_frame_num = max_frame_num - 1  # start from 0
+    max_frame_num -= 1  # start from 0
     num_pad = num_frames // 2
 
     indices = []
@@ -129,29 +133,34 @@ def paired_paths_from_lmdb(folders, keys):
     Returns:
         list[str]: Returned path list.
     """
-    assert len(folders) == 2, ("The len of folders should be 2 with [input_folder, gt_folder]. "
-                               f"But got {len(folders)}")
-    assert len(
-        keys) == 2, f"The len of keys should be 2 with [input_key, gt_key]. But got {len(keys)}"
+    assert len(folders) == 2, (
+        "The len of folders should be 2 with [input_folder, gt_folder]. "
+        f"But got {len(folders)}"
+    )
+    assert (
+        len(keys) == 2
+    ), f"The len of keys should be 2 with [input_key, gt_key]. But got {len(keys)}"
     input_folder, gt_folder = folders
     input_key, gt_key = keys
 
     if not (input_folder.endswith(".lmdb") and gt_folder.endswith(".lmdb")):
-        raise ValueError(f"{input_key} folder and {gt_key} folder should both in lmdb "
-                         f"formats. But received {input_key}: {input_folder}; "
-                         f"{gt_key}: {gt_folder}")
+        msg = (
+            f"{input_key} folder and {gt_key} folder should both in lmdb "
+            f"formats. But received {input_key}: {input_folder}; "
+            f"{gt_key}: {gt_folder}"
+        )
+        raise ValueError(msg)
     # ensure that the two meta_info files are the same
-    with open(osp.join(input_folder, "meta_info.txt")) as fin:
+    with open(osp.join(input_folder, "meta_info.txt"), encoding="utf-8") as fin:
         input_lmdb_keys = [line.split(".")[0] for line in fin]
-    with open(osp.join(gt_folder, "meta_info.txt")) as fin:
+    with open(osp.join(gt_folder, "meta_info.txt"), encoding="utf-8") as fin:
         gt_lmdb_keys = [line.split(".")[0] for line in fin]
     if set(input_lmdb_keys) != set(gt_lmdb_keys):
-        raise ValueError(
-            f"Keys in {input_key}_folder and {gt_key}_folder are different.")
+        msg = f"Keys in {input_key}_folder and {gt_key}_folder are different."
+        raise ValueError(msg)
     paths = []
     for lmdb_key in sorted(input_lmdb_keys):
-        paths.append(
-            dict([(f"{input_key}_path", lmdb_key), (f"{gt_key}_path", lmdb_key)]))
+        paths.append({f"{input_key}_path": lmdb_key, f"{gt_key}_path": lmdb_key})
     return paths
 
 
@@ -180,14 +189,17 @@ def paired_paths_from_meta_info_file(folders, keys, meta_info_file, filename_tmp
     Returns:
         list[str]: Returned path list.
     """
-    assert len(folders) == 2, ("The len of folders should be 2 with [input_folder, gt_folder]. "
-                               f"But got {len(folders)}")
-    assert len(
-        keys) == 2, f"The len of keys should be 2 with [input_key, gt_key]. But got {len(keys)}"
+    assert len(folders) == 2, (
+        "The len of folders should be 2 with [input_folder, gt_folder]. "
+        f"But got {len(folders)}"
+    )
+    assert (
+        len(keys) == 2
+    ), f"The len of keys should be 2 with [input_key, gt_key]. But got {len(keys)}"
     input_folder, gt_folder = folders
     input_key, gt_key = keys
 
-    with open(meta_info_file) as fin:
+    with open(meta_info_file, encoding="utf-8") as fin:
         gt_names = [line.strip().split(" ")[0] for line in fin]
 
     paths = []
@@ -197,8 +209,7 @@ def paired_paths_from_meta_info_file(folders, keys, meta_info_file, filename_tmp
         input_path = osp.join(input_folder, input_name)
         assert input_name in input_paths, f"{input_name} is not in {input_key}_paths."
         gt_path = osp.join(gt_folder, gt_name)
-        paths.append(
-            dict([(f"{input_key}_path", input_path), (f"{gt_key}_path", gt_path)]))
+        paths.append({f"{input_key}_path": input_path, f"{gt_key}_path": gt_path})
     return paths
 
 
@@ -217,10 +228,13 @@ def paired_paths_from_folder(folders, keys, filename_tmpl):
     Returns:
         list[str]: Returned path list.
     """
-    assert len(folders) == 2, ("The len of folders should be 2 with [input_folder, gt_folder]. "
-                               f"But got {len(folders)}")
-    assert len(
-        keys) == 2, f"The len of keys should be 2 with [input_key, gt_key]. But got {len(keys)}"
+    assert len(folders) == 2, (
+        "The len of folders should be 2 with [input_folder, gt_folder]. "
+        f"But got {len(folders)}"
+    )
+    assert (
+        len(keys) == 2
+    ), f"The len of keys should be 2 with [input_key, gt_key]. But got {len(keys)}"
     input_folder, gt_folder = folders
     input_key, gt_key = keys
 
@@ -234,9 +248,7 @@ def paired_paths_from_folder(folders, keys, filename_tmpl):
     for gt_path in gt_paths:
         input_path = gt_path.replace(gt_folder, input_folder)
         assert input_path in input_paths, f"{input_path} is not in {input_key}_paths."
-        paths.append(
-            dict([(f"{input_key}_path", input_path), (f"{gt_key}_path", gt_path)])
-        )
+        paths.append({f"{input_key}_path": input_path, f"{gt_key}_path": gt_path})
     return paths
 
 
@@ -251,8 +263,7 @@ def paths_from_folder(folder):
     """
 
     paths = list(scandir(folder))
-    paths = [osp.join(folder, path) for path in paths]
-    return paths
+    return [osp.join(folder, path) for path in paths]
 
 
 def paths_from_lmdb(folder):
@@ -265,7 +276,7 @@ def paths_from_lmdb(folder):
         list[str]: Returned path list.
     """
     if not folder.endswith(".lmdb"):
-        raise ValueError(f"Folder {folder}folder should in lmdb format.")
-    with open(osp.join(folder, "meta_info.txt")) as fin:
-        paths = [line.split(".")[0] for line in fin]
-    return paths
+        msg = f"Folder {folder}folder should in lmdb format."
+        raise ValueError(msg)
+    with open(osp.join(folder, "meta_info.txt"), encoding="utf-8") as fin:
+        return [line.split(".")[0] for line in fin]

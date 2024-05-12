@@ -46,7 +46,7 @@ def yaml_load(f):
         dict: Loaded dict.
     """
     if os.path.isfile(f):
-        with open(f) as f:
+        with open(f, encoding="utf-8") as f:
             return yaml.load(f, Loader=ordered_yaml()[0])
     else:
         return yaml.load(f, Loader=ordered_yaml()[0])
@@ -98,17 +98,24 @@ def _postprocess_yml_value(value):
 
 
 def parse_options(root_path, is_train=True):
-    parser = argparse.ArgumentParser(prog="neosr",
-                        usage=argparse.SUPPRESS,
-                        description="""-------- neosr command-line options --------""")
+    parser = argparse.ArgumentParser(
+        prog="neosr",
+        usage=argparse.SUPPRESS,
+        description="""-------- neosr command-line options --------""",
+    )
 
     parser._optionals.title = "training and inference"
 
-    parser.add_argument("-opt", type=str, required=False,
-                        help="Path to option YAML file.")
+    parser.add_argument(
+        "-opt", type=str, required=False, help="Path to option YAML file."
+    )
 
-    parser.add_argument("--launcher", choices=["none", "pytorch", "slurm"], default="none",
-                        help="job launcher")
+    parser.add_argument(
+        "--launcher",
+        choices=["none", "pytorch", "slurm"],
+        default="none",
+        help="job launcher",
+    )
 
     parser.add_argument("--auto_resume", action="store_true", default=False)
 
@@ -116,51 +123,99 @@ def parse_options(root_path, is_train=True):
 
     parser.add_argument("--local_rank", type=int, default=0)
 
-    parser.add_argument("--force_yml", nargs="+", default=None,
-                        help="Force to update yml files. Examples: train:total_iter=200000")
+    parser.add_argument(
+        "--force_yml",
+        nargs="+",
+        default=None,
+        help="Force to update yml files. Examples: train:total_iter=200000",
+    )
 
     # Options for convert.py script
 
     group = parser.add_argument_group("model conversion")
 
-    group.add_argument("--input", type=str, required=False,
-                        help="Input Pytorch model path.")
+    group.add_argument(
+        "--input", type=str, required=False, help="Input Pytorch model path."
+    )
 
-    group.add_argument("-onnx", "--onnx", action="store_true",
-                        help="Enables ONNX conversion.", default=False)
+    group.add_argument(
+        "-onnx",
+        "--onnx",
+        action="store_true",
+        help="Enables ONNX conversion.",
+        default=False,
+    )
 
-    group.add_argument("-safetensor", "--safetensor", action="store_true",
-                        help="Enables safetensor conversion.", default=False)
+    group.add_argument(
+        "-safetensor",
+        "--safetensor",
+        action="store_true",
+        help="Enables safetensor conversion.",
+        default=False,
+    )
 
-    group.add_argument("-net", "--network", type=str,
-                        required=False, help="Generator network.")
+    group.add_argument(
+        "-net", "--network", type=str, required=False, help="Generator network."
+    )
 
-    group.add_argument("-s", "--scale", type=int,
-                        help="Model scale ratio.", default=4)
+    group.add_argument("-s", "--scale", type=int, help="Model scale ratio.", default=4)
 
-    group.add_argument("-window", "--window", type=int,
-                        help="Model scale ratio.", default=None)
+    group.add_argument(
+        "-window", "--window", type=int, help="Model scale ratio.", default=None
+    )
 
-    group.add_argument("-opset", "--opset", type=int,
-                        help="ONNX opset. (default: 17)", default=17)
+    group.add_argument(
+        "-opset", "--opset", type=int, help="ONNX opset. (default: 17)", default=17
+    )
 
-    group.add_argument("-static", "--static", type=int, nargs=3,
-                        help='Set static shape for ONNX conversion. Example: -static "3,640,640".', default=None)
+    group.add_argument(
+        "-static",
+        "--static",
+        type=int,
+        nargs=3,
+        help='Set static shape for ONNX conversion. Example: -static "3,640,640".',
+        default=None,
+    )
 
-    group.add_argument("-nocheck", "--nocheck", action="store_true",
-                        help="Disables checking against original pytorch model on ONNX conversion.", default=False)
+    group.add_argument(
+        "-nocheck",
+        "--nocheck",
+        action="store_true",
+        help="Disables checking against original pytorch model on ONNX conversion.",
+        default=False,
+    )
 
-    group.add_argument("-fp16", "--fp16", action="store_true",
-                        help="Enable half-precision. (default: false)", default=False)
+    group.add_argument(
+        "-fp16",
+        "--fp16",
+        action="store_true",
+        help="Enable half-precision. (default: false)",
+        default=False,
+    )
 
-    group.add_argument("-optimize", "--optimize", action="store_true",
-                        help="Run ONNX optimizations", default=False)
+    group.add_argument(
+        "-optimize",
+        "--optimize",
+        action="store_true",
+        help="Run ONNX optimizations",
+        default=False,
+    )
 
-    group.add_argument("-fulloptimization", "--fulloptimization", action="store_true",
-                        help="Run full ONNX optimizations", default=False)
+    group.add_argument(
+        "-fulloptimization",
+        "--fulloptimization",
+        action="store_true",
+        help="Run full ONNX optimizations",
+        default=False,
+    )
 
-    group.add_argument("--output", type=str, required=False,
-                        help="Output ONNX model path.", default=root_path)
+    group.add_argument(
+        "--output",
+        type=str,
+        required=False,
+        help="Output ONNX model path.",
+        default=root_path,
+    )
 
     args = parser.parse_args()
 
@@ -242,7 +297,9 @@ def parse_options(root_path, is_train=True):
 
         # paths
         for key, val in opt["path"].items():
-            if (val is not None) and ("resume_state" in key or "pretrain_network" in key):
+            if (val is not None) and (
+                "resume_state" in key or "pretrain_network" in key
+            ):
                 opt["path"][key] = osp.expanduser(val)
 
         if is_train:
@@ -254,10 +311,10 @@ def parse_options(root_path, is_train=True):
             opt["path"]["experiments_root"] = experiments_root
             opt["path"]["models"] = osp.join(experiments_root, "models")
             opt["path"]["training_states"] = osp.join(
-                experiments_root, "training_states")
+                experiments_root, "training_states"
+            )
             opt["path"]["log"] = experiments_root
-            opt["path"]["visualization"] = osp.join(
-                experiments_root, "visualization")
+            opt["path"]["visualization"] = osp.join(experiments_root, "visualization")
 
             # change some options for debug mode
             if "debug" in opt["name"]:
@@ -286,13 +343,13 @@ def copy_opt_file(opt_file, experiments_root):
     import sys
     import time
     from shutil import copyfile
+
     cmd = " ".join(sys.argv)
     filename = osp.join(experiments_root, osp.basename(opt_file))
     copyfile(opt_file, filename)
 
-    with open(filename, "r+") as f:
+    with open(filename, "r+", encoding="utf-8") as f:
         lines = f.readlines()
-        lines.insert(
-            0, f"# GENERATE TIME: {time.asctime()}\n# CMD:\n# {cmd}\n\n")
+        lines.insert(0, f"# GENERATE TIME: {time.asctime()}\n# CMD:\n# {cmd}\n\n")
         f.seek(0)
         f.writelines(lines)

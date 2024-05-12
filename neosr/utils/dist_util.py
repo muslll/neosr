@@ -16,7 +16,8 @@ def init_dist(launcher, backend="nccl", **kwargs):
     elif launcher == "slurm":
         _init_dist_slurm(backend, **kwargs)
     else:
-        raise ValueError(f"Invalid launcher type: {launcher}")
+        msg = f"Invalid launcher type: {launcher}"
+        raise ValueError(msg)
 
 
 def _init_dist_pytorch(backend, **kwargs):
@@ -60,10 +61,7 @@ def _init_dist_slurm(backend, port=None):
 
 
 def get_dist_info():
-    if dist.is_available():
-        initialized = dist.is_initialized()
-    else:
-        initialized = False
+    initialized = dist.is_initialized() if dist.is_available() else False
     if initialized:
         rank = dist.get_rank()
         world_size = dist.get_world_size()
@@ -80,5 +78,6 @@ def master_only(func):
         rank, _ = get_dist_info()
         if rank == 0:
             return func(*args, **kwargs)
+        return None
 
     return wrapper

@@ -57,8 +57,9 @@ def activation(act_type, inplace=True, neg_slope=0.05, n_prelu=1):
     elif act_type == "prelu":
         layer = nn.PReLU(num_parameters=n_prelu, init=neg_slope)
     else:
+        msg = f"activation layer [{act_type:s}] is not found"
         raise NotImplementedError(
-            f"activation layer [{act_type:s}] is not found")
+            msg)
     return layer
 
 
@@ -74,8 +75,9 @@ def sequential(*args):
     """
     if len(args) == 1:
         if isinstance(args[0], OrderedDict):
+            msg = "sequential does not support OrderedDict input."
             raise NotImplementedError(
-                "sequential does not support OrderedDict input.")
+                msg)
         return args[0]
     modules = []
     for module in args:
@@ -103,7 +105,7 @@ def pixelshuffle_block(in_channels,
 
 class Conv3XC(nn.Module):
     def __init__(self, c_in, c_out, gain1=1, gain2=0, s=1, bias=True, relu=False):
-        super(Conv3XC, self).__init__()
+        super().__init__()
         self.weight_concat = None
         self.bias_concat = None
         self.update_params_flag = False
@@ -148,8 +150,8 @@ class Conv3XC(nn.Module):
         W_pixels_to_pad = (target_kernel_size - 1) // 2
         sk_w = F.pad(sk_w, [H_pixels_to_pad, H_pixels_to_pad, W_pixels_to_pad, W_pixels_to_pad])
 
-        self.weight_concat = self.weight_concat + sk_w
-        self.bias_concat = self.bias_concat + sk_b
+        self.weight_concat += sk_w
+        self.bias_concat += sk_b
 
         self.eval_conv.weight.data = self.weight_concat
         self.eval_conv.bias.data = self.bias_concat
@@ -174,7 +176,7 @@ class SPAB(nn.Module):
                  mid_channels=None,
                  out_channels=None,
                  bias=False):
-        super(SPAB, self).__init__()
+        super().__init__()
         if mid_channels is None:
             mid_channels = in_channels
         if out_channels is None:
@@ -219,7 +221,7 @@ class span(nn.Module):
                  rgb_mean=(0.5, 0.5, 0.5),
                  **kwargs,
                  ):
-        super(span, self).__init__()
+        super().__init__()
 
         in_channels = num_in_ch
         out_channels = num_out_ch
@@ -256,16 +258,14 @@ class span(nn.Module):
 
         out_feature = self.conv_1(x)
 
-        out_b1, _, att1 = self.block_1(out_feature)
-        out_b2, _, att2 = self.block_2(out_b1)
-        out_b3, _, att3 = self.block_3(out_b2)
+        out_b1, _, _att1 = self.block_1(out_feature)
+        out_b2, _, _att2 = self.block_2(out_b1)
+        out_b3, _, _att3 = self.block_3(out_b2)
 
-        out_b4, _, att4 = self.block_4(out_b3)
-        out_b5, _, att5 = self.block_5(out_b4)
-        out_b6, out_b5_2, att6 = self.block_6(out_b5)
+        out_b4, _, _att4 = self.block_4(out_b3)
+        out_b5, _, _att5 = self.block_5(out_b4)
+        out_b6, out_b5_2, _att6 = self.block_6(out_b5)
 
         out_b6 = self.conv_2(out_b6)
         out = self.conv_cat(torch.cat([out_feature, out_b6, out_b1, out_b5_2], 1))
-        output = self.upsampler(out)
-
-        return output
+        return self.upsampler(out)

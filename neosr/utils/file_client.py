@@ -32,26 +32,28 @@ class MemcachedBackend(BaseStorageBackend):
     def __init__(self, server_list_cfg, client_cfg, sys_path=None):
         if sys_path is not None:
             import sys
+
             sys.path.append(sys_path)
         try:
             import mc
         except ImportError:
-            raise ImportError(
-                "Please install memcached to enable MemcachedBackend.")
+            msg = "Please install memcached to enable MemcachedBackend."
+            raise ImportError(msg)
 
         self.server_list_cfg = server_list_cfg
         self.client_cfg = client_cfg
         self._client = mc.MemcachedClient.GetInstance(
-            self.server_list_cfg, self.client_cfg)
+            self.server_list_cfg, self.client_cfg
+        )
         # mc.pyvector servers as a point which points to a memory cache
         self._mc_buffer = mc.pyvector()
 
     def get(self, filepath):
         filepath = str(filepath)
         import mc
+
         self._client.Get(filepath, self._mc_buffer)
-        value_buf = mc.ConvertBuffer(self._mc_buffer)
-        return value_buf
+        return mc.ConvertBuffer(self._mc_buffer)
 
     def get_text(self, filepath):
         raise NotImplementedError
@@ -63,14 +65,12 @@ class HardDiskBackend(BaseStorageBackend):
     def get(self, filepath):
         filepath = str(filepath)
         with open(filepath, "rb") as f:
-            value_buf = f.read()
-        return value_buf
+            return f.read()
 
     def get_text(self, filepath):
         filepath = str(filepath)
-        with open(filepath) as f:
-            value_buf = f.read()
-        return value_buf
+        with open(filepath, encoding="utf-8") as f:
+            return f.read()
 
 
 class LmdbBackend(BaseStorageBackend):
@@ -93,11 +93,20 @@ class LmdbBackend(BaseStorageBackend):
         _client (list): A list of several lmdb envs.
     """
 
-    def __init__(self, db_paths, client_keys="default", readonly=True, lock=False, readahead=False, **kwargs):
+    def __init__(
+        self,
+        db_paths,
+        client_keys="default",
+        readonly=True,
+        lock=False,
+        readahead=False,
+        **kwargs,
+    ):
         try:
             import lmdb
         except ImportError:
-            raise ImportError("Please install lmdb to enable LmdbBackend.")
+            msg = "Please install lmdb to enable LmdbBackend."
+            raise ImportError(msg)
 
         if isinstance(client_keys, str):
             client_keys = [client_keys]
@@ -106,13 +115,16 @@ class LmdbBackend(BaseStorageBackend):
             self.db_paths = [str(v) for v in db_paths]
         elif isinstance(db_paths, str):
             self.db_paths = [str(db_paths)]
-        assert len(client_keys) == len(self.db_paths), ("client_keys and db_paths should have the same length, "
-                                                        f"but received {len(client_keys)} and {len(self.db_paths)}.")
+        assert len(client_keys) == len(self.db_paths), (
+            "client_keys and db_paths should have the same length, "
+            f"but received {len(client_keys)} and {len(self.db_paths)}."
+        )
 
         self._client = {}
         for client, path in zip(client_keys, self.db_paths, strict=True):
             self._client[client] = lmdb.open(
-                path, readonly=readonly, lock=lock, readahead=readahead, **kwargs)
+                path, readonly=readonly, lock=lock, readahead=readahead, **kwargs
+            )
 
     def get(self, filepath, client_key):
         """Get values according to the filepath from one lmdb named client_key.
@@ -122,12 +134,12 @@ class LmdbBackend(BaseStorageBackend):
             client_key (str): Used for distinguishing different lmdb envs.
         """
         filepath = str(filepath)
-        assert client_key in self._client, (
-            f"client_key {client_key} is not in lmdb clients.")
+        assert (
+            client_key in self._client
+        ), f"client_key {client_key} is not in lmdb clients."
         client = self._client[client_key]
         with client.begin(write=False) as txn:
-            value_buf = txn.get(filepath.encode("ascii"))
-        return value_buf
+            return txn.get(filepath.encode("ascii"))
 
     def get_text(self, filepath):
         raise NotImplementedError
@@ -154,8 +166,11 @@ class FileClient:
 
     def __init__(self, backend="disk", **kwargs):
         if backend not in self._backends:
-            raise ValueError(f"Backend {backend} is not supported. Currently supported ones"
-                             f" are {list(self._backends.keys())}")
+            msg = (
+                f"Backend {backend} is not supported. Currently supported ones"
+                f" are {list(self._backends.keys())}"
+            )
+            raise ValueError(msg)
         self.backend = backend
         self.client = self._backends[backend](**kwargs)
 

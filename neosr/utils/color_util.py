@@ -29,16 +29,8 @@ def rgb2ycbcr(img, y_only=False):
     if y_only:
         out_img = np.dot(img, [65.481, 128.553, 24.966]) + 16.0
     else:
-        out_img = np.matmul(
-            img,
-            [
-                [65.481, -37.797, 112.0],
-                [128.553, -74.203, -93.786],
-                [24.966, 112.0, -18.214],
-            ],
-        ) + [16, 128, 128]
-    out_img = _convert_output_type_range(out_img, img_type)
-    return out_img
+        out_img = [*np.matmul(img, [[65.481, -37.797, 112.0], [128.553, -74.203, -93.786], [24.966, 112.0, -18.214]]), 16, 128, 128]
+    return _convert_output_type_range(out_img, img_type)
 
 
 def bgr2ycbcr(img, y_only=False):
@@ -68,16 +60,8 @@ def bgr2ycbcr(img, y_only=False):
     if y_only:
         out_img = np.dot(img, [24.966, 128.553, 65.481]) + 16.0
     else:
-        out_img = np.matmul(
-            img,
-            [
-                [24.966, 112.0, -18.214],
-                [128.553, -74.203, -93.786],
-                [65.481, -37.797, 112.0],
-            ],
-        ) + [16, 128, 128]
-    out_img = _convert_output_type_range(out_img, img_type)
-    return out_img
+        out_img = [*np.matmul(img, [[24.966, 112.0, -18.214], [128.553, -74.203, -93.786], [65.481, -37.797, 112.0]]), 16, 128, 128]
+    return _convert_output_type_range(out_img, img_type)
 
 
 def ycbcr2rgb(img):
@@ -111,8 +95,7 @@ def ycbcr2rgb(img):
             [0.00625893, -0.00318811, 0],
         ],
     ) * 255.0 + [-222.921, 135.576, -276.836]
-    out_img = _convert_output_type_range(out_img, img_type)
-    return out_img
+    return _convert_output_type_range(out_img, img_type)
 
 
 def ycbcr2bgr(img):
@@ -146,8 +129,7 @@ def ycbcr2bgr(img):
             [0, -0.00318811, 0.00625893],
         ],
     ) * 255.0 + [-276.836, 135.576, -222.921]
-    out_img = _convert_output_type_range(out_img, img_type)
-    return out_img
+    return _convert_output_type_range(out_img, img_type)
 
 
 def _convert_input_type_range(img):
@@ -165,13 +147,14 @@ def _convert_input_type_range(img):
 
     img_type = img.dtype
     img = img.astype(np.float32)
-    if img_type == np.float32 or img_type == np.float16:
+    if img_type in {np.float32, np.float16}:
         pass
     elif img_type == np.uint8:
         img /= 255.0
     else:
+        msg = f"The img type should be np.float32, np.float16 or np.uint8, but got {img_type}"
         raise TypeError(
-            f"The img type should be np.float32, np.float16 or np.uint8, but got {img_type}"
+            msg
         )
     return img
 
@@ -195,9 +178,10 @@ def _convert_output_type_range(img, dst_type):
         (ndarray): The converted image with desired type and range.
     """
 
-    if dst_type not in (np.uint8, np.float32, np.float16):
+    if dst_type not in {np.uint8, np.float32, np.float16}:
+        msg = f"The dst_type should be np.float32, np.float16 or np.uint8, but got {dst_type}"
         raise TypeError(
-            f"The dst_type should be np.float32, np.float16 or np.uint8, but got {dst_type}"
+            msg
         )
     if dst_type == np.uint8:
         img = img.round()
@@ -237,8 +221,7 @@ def rgb2ycbcr_pt(img, y_only=False):
             torch.matmul(img.permute(0, 2, 3, 1), weight).permute(0, 3, 1, 2) + bias
         )
 
-    out_img = out_img / 255.0
-    return out_img
+    return out_img / 255.0
 
 
 def rgb_to_cbcr(img: torch.Tensor) -> torch.Tensor:
@@ -253,11 +236,13 @@ def rgb_to_cbcr(img: torch.Tensor) -> torch.Tensor:
     """
 
     if not isinstance(img, torch.Tensor):
-        raise TypeError(f"Input type is not a Tensor. Got {type(image)}")
+        msg = f"Input type is not a Tensor. Got {type(image)}"
+        raise TypeError(msg)
 
     if len(img.shape) < 3 or img.shape[-3] != 3:
+        msg = f"Input size must have a shape of (*, 3, H, W). Got {image.shape}"
         raise ValueError(
-            f"Input size must have a shape of (*, 3, H, W). Got {image.shape}"
+            msg
         )
 
     # bt.601 matrices in 16-240 range
@@ -270,22 +255,22 @@ def rgb_to_cbcr(img: torch.Tensor) -> torch.Tensor:
     bias = torch.tensor([16, 128, 128]).view(1, 3, 1, 1).to(img)
     out_img = torch.matmul(img.permute(0, 2, 3, 1), weight).permute(0, 3, 1, 2) + bias
     # 0-1 normalization
-    out_img = out_img / 255.0
+    out_img /= 255.0
     # CbCr-only
-    out_img = out_img[:, 1:, :, :]
-
-    return out_img
+    return out_img[:, 1:, :, :]
 
 
 def rgb_to_luma(img: torch.Tensor) -> torch.Tensor:
     """RGB to CIELAB L*"""
 
     if not isinstance(img, torch.Tensor):
-        raise TypeError(f"Input type is not a Tensor. Got {type(image)}")
+        msg = f"Input type is not a Tensor. Got {type(image)}"
+        raise TypeError(msg)
 
     if len(img.shape) < 3 or img.shape[-3] != 3:
+        msg = f"Input size must have a shape of (*, 3, H, W). Got {image.shape}"
         raise ValueError(
-            f"Input size must have a shape of (*, 3, H, W). Got {image.shape}"
+            msg
         )
 
     # permute
@@ -294,22 +279,20 @@ def rgb_to_luma(img: torch.Tensor) -> torch.Tensor:
     # linearize rgb
     linear = out_img <= 0.04045
     if torch.any(linear):
-        out_img = out_img / 12.92
+        out_img /= 12.92
     else:
         out_img = torch.pow(((out_img + 0.055) / 1.055), 2.4)
 
     # convert to luma - Y axis of sRGB > XYZ standard
-    out_img = out_img @ torch.tensor([0.2126, 0.7152, 0.0722])
+    out_img @= torch.tensor([0.2126, 0.7152, 0.0722])
 
     # convert Y to L* (from CIELAB L*a*b*)
     # NOTE: will convert from range [0, 1] to range [0,100]
     condition = out_img <= (216 / 24389)
     if torch.any(condition):
-        out_img = out_img * (24389 / 27)
+        out_img *= 24389 / 27
     else:
         out_img = torch.pow(out_img, (1 / 3)) * 116 - 16
 
     # normalize to [0, 1] range again
-    out_img = torch.clamp((out_img / 100), 0, 1)
-
-    return out_img
+    return torch.clamp((out_img / 100), 0, 1)

@@ -53,7 +53,7 @@ class PrefetchDataLoader(DataLoader):
 
     def __init__(self, num_prefetch_queue, **kwargs):
         self.num_prefetch_queue = num_prefetch_queue
-        super(PrefetchDataLoader, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     def __iter__(self):
         return PrefetchGenerator(super().__iter__(), self.num_prefetch_queue)

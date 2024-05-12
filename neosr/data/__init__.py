@@ -69,26 +69,27 @@ def build_dataloader(dataset, dataset_opt, num_gpu=1, dist=False, sampler=None, 
         else:  # non-distributed training
             multiplier = 1 if num_gpu == 0 else num_gpu
             batch_size = dataset_opt["batch_size"] * multiplier
-            num_workers = num_workers * multiplier
-        dataloader_args = dict(
-            dataset=dataset,
-            batch_size=batch_size,
-            shuffle=False,
-            num_workers=num_workers,
-            sampler=sampler,
-            prefetch_factor=8,
-            drop_last=True)
+            num_workers *= multiplier
+        dataloader_args = {
+            "dataset": dataset,
+            "batch_size": batch_size,
+            "shuffle": False,
+            "num_workers": num_workers,
+            "sampler": sampler,
+            "prefetch_factor": 8,
+            "drop_last": True}
         if sampler is None:
             dataloader_args["shuffle"] = True
         dataloader_args["worker_init_fn"] = partial(
             worker_init_fn, num_workers=num_workers, rank=rank, seed=seed) if seed is not None else None
 
     # val
-    elif phase in ["val", "test"]:
-        dataloader_args = dict(dataset=dataset, batch_size=1, shuffle=False, num_workers=4)
+    elif phase in {"val", "test"}:
+        dataloader_args = {"dataset": dataset, "batch_size": 1, "shuffle": False, "num_workers": 4}
     else:
+        msg = f"Wrong dataset phase: {phase}. Supported ones are 'train', 'val' and 'test'."
         raise ValueError(
-            f"Wrong dataset phase: {phase}. Supported ones are 'train', 'val' and 'test'.")
+            msg)
 
     dataloader_args["pin_memory"] = dataset_opt.get("pin_memory", True)
     dataloader_args["persistent_workers"] = dataset_opt.get("persistent_workers", True)

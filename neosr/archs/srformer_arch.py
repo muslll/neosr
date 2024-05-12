@@ -24,7 +24,7 @@ class emptyModule(nn.Module):
 
 class dwconv(nn.Module):
     def __init__(self, hidden_features):
-        super(dwconv, self).__init__()
+        super().__init__()
         self.depthwise_conv = nn.Sequential(
             nn.Conv2d(hidden_features, hidden_features, kernel_size=5, stride=1, padding=2, dilation=1,
                       groups=hidden_features), nn.GELU())
@@ -33,8 +33,7 @@ class dwconv(nn.Module):
     def forward(self, x, x_size):
         x = x.transpose(1, 2).view(x.shape[0], self.hidden_features, x_size[0], x_size[1]).contiguous()  # b Ph*Pw c
         x = self.depthwise_conv(x)
-        x = x.flatten(2).transpose(1, 2).contiguous()
-        return x
+        return x.flatten(2).transpose(1, 2).contiguous()
 
 
 class ConvFFN(nn.Module):
@@ -55,12 +54,11 @@ class ConvFFN(nn.Module):
         x = self.fc1(x)
         x = self.act(x)
         x = self.before_add(x)
-        x = x + self.dwconv(x, x_size)
+        x += self.dwconv(x, x_size)
         x = self.after_add(x)
         x = self.drop(x)
         x = self.fc2(x)
-        x = self.drop(x)
-        return x
+        return self.drop(x)
 
 
 def window_partition(x, window_size):
@@ -74,8 +72,7 @@ def window_partition(x, window_size):
     """
     b, h, w, c = x.shape
     x = x.view(b, h // window_size, window_size, w // window_size, window_size, c)
-    windows = x.permute(0, 1, 3, 2, 4, 5).contiguous().view(-1, window_size, window_size, c)
-    return windows
+    return x.permute(0, 1, 3, 2, 4, 5).contiguous().view(-1, window_size, window_size, c)
 
 
 def window_reverse(windows, window_size, h, w):
@@ -91,8 +88,7 @@ def window_reverse(windows, window_size, h, w):
     """
     b = int(windows.shape[0] / (h * w / window_size / window_size))
     x = windows.view(b, h // window_size, w // window_size, window_size, window_size, -1)
-    x = x.permute(0, 1, 3, 2, 4, 5).contiguous().view(b, h, w, -1)
-    return x
+    return x.permute(0, 1, 3, 2, 4, 5).contiguous().view(b, h, w, -1)
 
 
 class PSA(nn.Module):
@@ -158,13 +154,13 @@ class PSA(nn.Module):
         k, v = kv[0], kv[1]
         # keep the channel dimension of Q: (num_windows*b, num_heads, n, c//num_heads)
         q = self.q(x).reshape(b_, n, 1, self.num_heads, c // self.num_heads).permute(2, 0, 3, 1, 4)[0]
-        q = q * self.scale
+        q *= self.scale
         attn = (q @ k.transpose(-2, -1))   # (num_windows*b, num_heads, n, n//4)
 
         relative_position_bias = self.relative_position_bias_table[self.aligned_relative_position_index.view(-1)].view(
             self.window_size[0] * self.window_size[1], self.permuted_window_size[0] * self.permuted_window_size[1], -1)  # (n, n//4)
         relative_position_bias = relative_position_bias.permute(2, 0, 1).contiguous()  # (num_heads, n, n//4)
-        attn = attn + relative_position_bias.unsqueeze(0)
+        attn += relative_position_bias.unsqueeze(0)
 
         if mask is not None:
             nw = mask.shape[0]
@@ -178,8 +174,7 @@ class PSA(nn.Module):
 
         x = (attn @ v).transpose(1, 2).reshape(b_, n, c)
         x = self.proj(x)
-        x = self.proj_drop(x)
-        return x
+        return self.proj_drop(x)
 
     def extra_repr(self) -> str:
         return f"dim={self.dim}, window_size={self.permuted_window_size}, num_heads={self.num_heads}"
@@ -309,9 +304,7 @@ class PSA_Block(nn.Module):
         permuted_windows = permuted_windows.view(-1, self.permuted_window_size * self.permuted_window_size)
         # calculate attention mask
         attn_mask = mask_windows.unsqueeze(2) - permuted_windows.unsqueeze(1)
-        attn_mask = attn_mask.masked_fill(attn_mask != 0, -100.0).masked_fill(attn_mask == 0, 0.0)
-
-        return attn_mask
+        return attn_mask.masked_fill(attn_mask != 0, -100.0).masked_fill(attn_mask == 0, 0.0)
 
     def forward(self, x, x_size):
         h, w = x_size
@@ -354,9 +347,7 @@ class PSA_Block(nn.Module):
         # FFN
         x = shortcut + self.drop_path(x)
         x = self.residual_after_attention(x)
-        x = self.residual_after_mlp(x + self.drop_path(self.after_mlp(self.mlp(self.after_norm2(self.norm2(x)), x_size))))
-
-        return x
+        return self.residual_after_mlp(x + self.drop_path(self.after_mlp(self.mlp(self.after_norm2(self.norm2(x)), x_size))))
 
     def extra_repr(self) -> str:
         return (f"dim={self.dim}, input_resolution={self.input_resolution}, num_heads={self.num_heads}, "
@@ -413,9 +404,7 @@ class PatchMerging(nn.Module):
         x = x.view(b, -1, 4 * c)  # b h/2*w/2 4*c
 
         x = self.norm(x)
-        x = self.reduction(x)
-
-        return x
+        return self.reduction(x)
 
     def extra_repr(self) -> str:
         return f"input_resolution={self.input_resolution}, dim={self.dim}"
@@ -494,10 +483,7 @@ class BasicLayer(nn.Module):
 
     def forward(self, x, x_size):
         for blk in self.blocks:
-            if self.use_checkpoint:
-                x = checkpoint.checkpoint(blk, x)
-            else:
-                x = blk(x, x_size)
+            x = checkpoint.checkpoint(blk, x) if self.use_checkpoint else blk(x, x_size)
         if self.downsample is not None:
             x = self.downsample(x)
         return x
@@ -555,7 +541,7 @@ class PSA_Group(nn.Module):
                  img_size=224,
                  patch_size=4,
                  resi_connection="1conv"):
-        super(PSA_Group, self).__init__()
+        super().__init__()
 
         self.dim = dim
         self.input_resolution = input_resolution
@@ -623,7 +609,7 @@ class PatchEmbed(nn.Module):
     def __init__(self, img_size=224, window_size=22, patch_size=4, in_chans=3, embed_dim=96, norm_layer=None):
         super().__init__()
         if img_size % window_size != 0:
-            img_size = img_size + (window_size - img_size % window_size)
+            img_size += window_size - img_size % window_size
         img_size = to_2tuple(img_size)
         patch_size = to_2tuple(patch_size)
         patches_resolution = [img_size[0] // patch_size[0], img_size[1] // patch_size[1]]
@@ -668,7 +654,7 @@ class PatchUnEmbed(nn.Module):
     def __init__(self, img_size=224, window_size=24, patch_size=4, in_chans=3, embed_dim=96, norm_layer=None):
         super().__init__()
         if img_size % window_size != 0:
-            img_size = img_size + (window_size - img_size % window_size)
+            img_size += window_size - img_size % window_size
         img_size = to_2tuple(img_size)
         patch_size = to_2tuple(patch_size)
         patches_resolution = [img_size[0] // patch_size[0], img_size[1] // patch_size[1]]
@@ -680,12 +666,10 @@ class PatchUnEmbed(nn.Module):
         self.embed_dim = embed_dim
 
     def forward(self, x, x_size):
-        x = x.transpose(1, 2).view(x.shape[0], self.embed_dim, x_size[0], x_size[1])  # b Ph*Pw c
-        return x
+        return x.transpose(1, 2).view(x.shape[0], self.embed_dim, x_size[0], x_size[1])  # b Ph*Pw c
 
     def flops(self):
-        flops = 0
-        return flops
+        return 0
 
 
 class Upsample(nn.Sequential):
@@ -700,14 +684,13 @@ class Upsample(nn.Sequential):
         m = []
         if (scale & (scale - 1)) == 0:  # scale = 2^n
             for _ in range(int(math.log2(scale))):
-                m.append(nn.Conv2d(num_feat, 4 * num_feat, 3, 1, 1))
-                m.append(nn.PixelShuffle(2))
+                m.extend((nn.Conv2d(num_feat, 4 * num_feat, 3, 1, 1), nn.PixelShuffle(2)))
         elif scale == 3:
-            m.append(nn.Conv2d(num_feat, 9 * num_feat, 3, 1, 1))
-            m.append(nn.PixelShuffle(3))
+            m.extend((nn.Conv2d(num_feat, 9 * num_feat, 3, 1, 1), nn.PixelShuffle(3)))
         else:
-            raise ValueError(f"scale {scale} is not supported. Supported scales: 2^n and 3.")
-        super(Upsample, self).__init__(*m)
+            msg = f"scale {scale} is not supported. Supported scales: 2^n and 3."
+            raise ValueError(msg)
+        super().__init__(*m)
 
 
 class UpsampleOneStep(nn.Sequential):
@@ -724,14 +707,12 @@ class UpsampleOneStep(nn.Sequential):
         self.num_feat = num_feat
         self.input_resolution = input_resolution
         m = []
-        m.append(nn.Conv2d(num_feat, (scale**2) * num_out_ch, 3, 1, 1))
-        m.append(nn.PixelShuffle(scale))
-        super(UpsampleOneStep, self).__init__(*m)
+        m.extend((nn.Conv2d(num_feat, scale ** 2 * num_out_ch, 3, 1, 1), nn.PixelShuffle(scale)))
+        super().__init__(*m)
 
     def flops(self):
         h, w = self.input_resolution
-        flops = h * w * self.num_feat * 3 * 9
-        return flops
+        return h * w * self.num_feat * 3 * 9
 
 
 class srformer(nn.Module):
@@ -785,7 +766,7 @@ class srformer(nn.Module):
                  upsampler="pixelshuffledirect",
                  resi_connection="1conv",
                  **kwargs):
-        super(srformer, self).__init__()
+        super().__init__()
         num_in_ch = in_chans
         num_out_ch = in_chans
         num_feat = 64
@@ -922,23 +903,20 @@ class srformer(nn.Module):
         x_size = (x.shape[2], x.shape[3])
         x = self.patch_embed(x)
         if self.ape:
-            x = x + self.absolute_pos_embed
+            x += self.absolute_pos_embed
         x = self.pos_drop(x)
 
         for layer in self.layers:
             x = layer(x, x_size)
 
         x = self.norm(x)  # b seq_len c
-        x = self.patch_unembed(x, x_size)
-
-        return x
+        return self.patch_unembed(x, x_size)
 
     def check_image_size(self, x):
         _, _, h, w = x.size()
         mod_pad_h = (self.window_size - h % self.window_size) % self.window_size
         mod_pad_w = (self.window_size - w % self.window_size) % self.window_size
-        x = F.pad(x, (0, mod_pad_w, 0, mod_pad_h), "reflect")
-        return x
+        return F.pad(x, (0, mod_pad_w, 0, mod_pad_h), "reflect")
 
     def forward(self, x):
         H, W = x.shape[2:]
@@ -969,7 +947,7 @@ class srformer(nn.Module):
             # for image denoising and JPEG compression artifact reduction
             x_first = self.conv_first(x)
             res = self.conv_after_body(self.forward_features(x_first)) + x_first
-            x = x + self.conv_last(res)
+            x += self.conv_last(res)
 
         x = x / self.img_range + self.mean
 

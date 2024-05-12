@@ -39,17 +39,17 @@ class paired(data.Dataset):
     """
 
     def __init__(self, opt):
-        super(paired, self).__init__()
+        super().__init__()
         self.opt = opt
         self.file_client = None
         self.io_backend_opt = opt["io_backend"]
         # mean and std for normalizing the input images
-        self.mean = opt["mean"] if "mean" in opt else None
-        self.std = opt["std"] if "std" in opt else None
+        self.mean = opt.get("mean", None)
+        self.std = opt.get("std", None)
         self.color = self.opt.get("color", None) != "y"
 
         self.gt_folder, self.lq_folder = opt["dataroot_gt"], opt["dataroot_lq"]
-        self.filename_tmpl = opt["filename_tmpl"] if "filename_tmpl" in opt else "{}"
+        self.filename_tmpl = opt.get("filename_tmpl", "{}")
 
         # file client (lmdb io backend)
         if self.io_backend_opt["type"] == "lmdb":
@@ -61,14 +61,14 @@ class paired(data.Dataset):
         elif "meta_info" in self.opt and self.opt["meta_info"] is not None:
             # disk backend with meta_info
             # Each line in the meta_info describes the relative path to an image
-            with open(self.opt["meta_info"]) as fin:
+            with open(self.opt["meta_info"], encoding="utf-8") as fin:
                 paths = [line.strip() for line in fin]
             self.paths = []
             for path in paths:
                 gt_path, lq_path = path.split(", ")
                 gt_path = os.path.join(self.gt_folder, gt_path)
                 lq_path = os.path.join(self.lq_folder, lq_path)
-                self.paths.append(dict([("gt_path", gt_path), ("lq_path", lq_path)]))
+                self.paths.append({"gt_path": gt_path, "lq_path": lq_path})
         else:
             # disk backend
             # it will scan the whole folder to get meta info
@@ -106,9 +106,8 @@ class paired(data.Dataset):
         while retry > 0:
             try:
                 if img_bytes is None:
-                    raise ValueError(
-                        f"No data returned from path: {gt_path}, {lq_path}"
-                    )
+                    msg = f"No data returned from path: {gt_path}, {lq_path}"
+                    raise ValueError(msg)
             except OSError as e:
                 logger = get_root_logger()
                 logger.warning(
@@ -133,11 +132,7 @@ class paired(data.Dataset):
             # random crop
             img_gt, img_lq = paired_random_crop(img_gt, img_lq, gt_size, scale, gt_path)
             # flip, rotation
-            img_gt, img_lq = basic_augment(
-                [img_gt, img_lq],
-                hflip=flip,
-                rotation=rot,
-            )
+            img_gt, img_lq = basic_augment([img_gt, img_lq], hflip=flip, rotation=rot)
 
         # crop the unmatched GT images during validation or testing
         if self.opt["phase"] != "train":

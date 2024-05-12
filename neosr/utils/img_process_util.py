@@ -13,7 +13,8 @@ def filter2D(img, kernel):
     if k % 2 == 1:
         img = F.pad(img, (k // 2, k // 2, k // 2, k // 2), mode="reflect")
     else:
-        raise ValueError("Wrong kernel size")
+        msg = "Wrong kernel size"
+        raise ValueError(msg)
 
     ph, pw = img.size()[-2:]
 

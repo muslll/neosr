@@ -68,7 +68,7 @@ class VGGFeatureExtractor(nn.Module):
                  requires_grad=False,
                  remove_pooling=False,
                  pooling_stride=2):
-        super(VGGFeatureExtractor, self).__init__()
+        super().__init__()
 
         self.layer_name_list = layer_name_list
         self.use_input_norm = use_input_norm

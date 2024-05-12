@@ -24,7 +24,7 @@ class GANLoss(nn.Module):
         fake_label_val=0.0,
         loss_weight=0.1,
     ):
-        super(GANLoss, self).__init__()
+        super().__init__()
         self.gan_type = gan_type
         self.loss_weight = loss_weight
         self.real_label_val = real_label_val
@@ -39,7 +39,8 @@ class GANLoss(nn.Module):
         elif self.gan_type == "chc":
             self.loss = chc()
         else:
-            raise NotImplementedError(f"GAN type {self.gan_type} is not implemented.")
+            msg = f"GAN type {self.gan_type} is not implemented."
+            raise NotImplementedError(msg)
 
     def get_target_label(self, input, target_is_real):
         """Get target label.
@@ -84,7 +85,7 @@ class MultiScaleGANLoss(GANLoss):
     def __init__(
         self, gan_type, real_label_val=1.0, fake_label_val=0.0, loss_weight=1.0
     ):
-        super(MultiScaleGANLoss, self).__init__(
+        super().__init__(
             gan_type, real_label_val, fake_label_val, loss_weight
         )
 

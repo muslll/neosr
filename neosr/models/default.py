@@ -97,7 +97,7 @@ class default:
         # initialise counter of how many batches has to be accumulated
         self.n_accumulated = 0
         self.accum_iters = self.opt["datasets"]["train"].get("accumulate", 1)
-        if self.accum_iters == 0 or self.accum_iters == None:
+        if self.accum_iters in {0, None}:
             self.accum_ters = 1
 
         # define losses
@@ -178,7 +178,8 @@ class default:
         percep_losses_bool = self.cri_perceptual or self.cri_dists is not None
 
         if pix_losses_bool is False and percep_losses_bool is False:
-            raise ValueError("Both pixel/mssim and perceptual losses are None. Please enable at least one.")
+            msg = "Both pixel/mssim and perceptual losses are None. Please enable at least one."
+            raise ValueError(msg)
         if self.wavelet_guided:
             if self.cri_perceptual is None and self.cri_dists is None:
                 msg = "Please enable at least one perceptual loss with weight =>1.0 to use Wavelet Guided"
@@ -220,8 +221,9 @@ class default:
         elif optim_type in {"Lion", "lion"}:
             optimizer = pytorch_optimizer.Lion(params, lr, **kwargs)
         else:
+            msg = f"optimizer {optim_type} is not supported yet."
             raise NotImplementedError(
-                f"optimizer {optim_type} is not supported yet.")
+                msg)
         return optimizer
 
     def setup_optimizers(self):
@@ -259,8 +261,9 @@ class default:
                 self.schedulers.append(torch.optim.lr_scheduler.CosineAnnealingLR(
                     optimizer, **train_opt["scheduler"]))
         else:
+            msg = f"Scheduler {scheduler_type} is not implemented yet."
             raise NotImplementedError(
-                f"Scheduler {scheduler_type} is not implemented yet.")
+                msg)
 
     def _get_init_lr(self):
         """Get the initial lr, which is set by the scheduler.
@@ -399,7 +402,7 @@ class default:
         loss_dict["l_g_total"] = l_g_total
 
         # divide losses by accumulation factor
-        l_g_total = l_g_total / self.accum_iters
+        l_g_total /= self.accum_iters
         self.gradscaler.scale(l_g_total).backward()
 
         if (self.n_accumulated) % self.accum_iters == 0:
@@ -436,8 +439,8 @@ class default:
                     loss_dict["out_d_fake"] = torch.mean(fake_d_pred.detach())
 
             if self.cri_gan:
-                l_d_real = l_d_real / self.accum_iters
-                l_d_fake = l_d_fake / self.accum_iters
+                l_d_real /= self.accum_iters
+                l_d_fake /= self.accum_iters
                 self.gradscaler.scale(l_d_real).backward()
                 self.gradscaler.scale(l_d_fake).backward()
 
@@ -604,14 +607,14 @@ class default:
         if hasattr(self, "best_metric_results") and dataset_name in self.best_metric_results:
             return
         if not hasattr(self, "best_metric_results"):
-            self.best_metric_results = dict()
+            self.best_metric_results = {}
 
         # add a dataset record
-        record = dict()
+        record = {}
         for metric, content in self.opt["val"]["metrics"].items():
             better = content.get("better", "higher")
             init_val = float("-inf") if better == "higher" else float("inf")
-            record[metric] = dict(better=better, val=init_val, iter=-1)
+            record[metric] = {"better": better, "val": init_val, "iter": -1}
         self.best_metric_results[dataset_name] = record
 
     def _update_best_metric_result(self, dataset_name, metric, val, current_iter):
@@ -641,7 +644,7 @@ class default:
         if with_metrics:
             self.metric_results = dict.fromkeys(self.metric_results, 0)
 
-        metric_data = dict()
+        metric_data = {}
         if use_pbar:
             pbar = tqdm(total=len(dataloader), unit="image")
 
@@ -687,7 +690,7 @@ class default:
             pbar.close()
 
         if with_metrics:
-            for metric in self.metric_results.keys():
+            for metric in self.metric_results:
                 self.metric_results[metric] /= (idx + 1)
                 # update the best metric result
                 self._update_best_metric_result(
@@ -769,7 +772,7 @@ class default:
         """Get bare model, especially under wrapping with
         DistributedDataParallel or DataParallel.
         """
-        if isinstance(net, (DataParallel, DistributedDataParallel)):
+        if isinstance(net, DataParallel | DistributedDataParallel):
             net = net.module
         return net
 
@@ -780,14 +783,14 @@ class default:
         Args:
             net (nn.Module)
         """
-        if isinstance(net, (DataParallel, DistributedDataParallel)):
+        if isinstance(net, DataParallel | DistributedDataParallel):
             net_cls_str = f"{net.__class__.__name__} - {net.module.__class__.__name__}"
         else:
             net_cls_str = f"{net.__class__.__name__}"
 
         net = self.get_bare_model(net)
         net_str = str(net)
-        net_params = sum(map(lambda x: x.numel(), net.parameters()))
+        net_params = sum(x.numel() for x in net.parameters())
 
         logger = get_root_logger()
         logger.info(
@@ -841,7 +844,8 @@ class default:
                 retry -= 1
         if retry == 0:
             logger.warning(f"Still cannot save {save_path}.")
-            raise OSError(f"Cannot save {save_path}.")
+            msg = f"Cannot save {save_path}."
+            raise OSError(msg)
 
     def save(self, epoch, current_iter):
         """Save networks and training state."""
@@ -872,10 +876,10 @@ class default:
         logger = get_root_logger()
         if crt_net_keys != load_net_keys:
             logger.warning("Current net - loaded net:")
-            for v in sorted(list(crt_net_keys - load_net_keys)):
+            for v in sorted(crt_net_keys - load_net_keys):
                 logger.warning(f"  {v}")
             logger.warning("Loaded net - current net:")
-            for v in sorted(list(load_net_keys - crt_net_keys)):
+            for v in sorted(load_net_keys - crt_net_keys):
                 logger.warning(f"  {v}")
 
         # check the size for the same keys
@@ -970,7 +974,8 @@ class default:
             if retry == 0:
                 logger.warning(
                     f"Still cannot save {save_path}. Just ignore it.")
-                raise OSError("Cannot save, aborting.")
+                msg = "Cannot save, aborting."
+                raise OSError(msg)
 
     def resume_training(self, resume_state):
         """Reload the optimizers and schedulers for resumed training.
@@ -1008,7 +1013,7 @@ class default:
                 torch.distributed.reduce(losses, dst=0)
                 if self.opt["rank"] == 0:
                     losses /= self.opt["world_size"]
-                loss_dict = {key: loss for key, loss in zip(keys, losses, strict=True)}
+                loss_dict = dict(zip(keys, losses, strict=True))
 
             log_dict = OrderedDict()
             for name, value in loss_dict.items():

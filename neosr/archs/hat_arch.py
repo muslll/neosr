@@ -20,7 +20,7 @@ class ChannelAttention(nn.Module):
     """
 
     def __init__(self, num_feat, squeeze_factor=16):
-        super(ChannelAttention, self).__init__()
+        super().__init__()
         self.attention = nn.Sequential(
             nn.AdaptiveAvgPool2d(1),
             nn.Conv2d(num_feat, num_feat // squeeze_factor, 1, padding=0),
@@ -36,7 +36,7 @@ class ChannelAttention(nn.Module):
 class CAB(nn.Module):
 
     def __init__(self, num_feat, compress_ratio=3, squeeze_factor=30):
-        super(CAB, self).__init__()
+        super().__init__()
 
         self.cab = nn.Sequential(
             nn.Conv2d(num_feat, num_feat // compress_ratio, 3, 1, 1),
@@ -65,8 +65,7 @@ class Mlp(nn.Module):
         x = self.act(x)
         x = self.drop(x)
         x = self.fc2(x)
-        x = self.drop(x)
-        return x
+        return self.drop(x)
 
 
 def window_partition(x, window_size):
@@ -80,8 +79,7 @@ def window_partition(x, window_size):
     """
     b, h, w, c = x.shape
     x = x.view(b, h // window_size, window_size, w // window_size, window_size, c)
-    windows = x.permute(0, 1, 3, 2, 4, 5).contiguous().view(-1, window_size, window_size, c)
-    return windows
+    return x.permute(0, 1, 3, 2, 4, 5).contiguous().view(-1, window_size, window_size, c)
 
 
 def window_reverse(windows, window_size, h, w):
@@ -97,8 +95,7 @@ def window_reverse(windows, window_size, h, w):
     """
     b = int(windows.shape[0] / (h * w / window_size / window_size))
     x = windows.view(b, h // window_size, w // window_size, window_size, window_size, -1)
-    x = x.permute(0, 1, 3, 2, 4, 5).contiguous().view(b, h, w, -1)
-    return x
+    return x.permute(0, 1, 3, 2, 4, 5).contiguous().view(b, h, w, -1)
 
 
 class WindowAttention(nn.Module):
@@ -147,13 +144,13 @@ class WindowAttention(nn.Module):
         qkv = self.qkv(x).reshape(b_, n, 3, self.num_heads, c // self.num_heads).permute(2, 0, 3, 1, 4)
         q, k, v = qkv[0], qkv[1], qkv[2]  # make torchscript happy (cannot use tensor as tuple)
 
-        q = q * self.scale
+        q *= self.scale
         attn = (q @ k.transpose(-2, -1))
 
         relative_position_bias = self.relative_position_bias_table[rpi.view(-1)].view(
             self.window_size[0] * self.window_size[1], self.window_size[0] * self.window_size[1], -1)  # Wh*Ww,Wh*Ww,nH
         relative_position_bias = relative_position_bias.permute(2, 0, 1).contiguous()  # nH, Wh*Ww, Wh*Ww
-        attn = attn + relative_position_bias.unsqueeze(0)
+        attn += relative_position_bias.unsqueeze(0)
 
         if mask is not None:
             nw = mask.shape[0]
@@ -167,8 +164,7 @@ class WindowAttention(nn.Module):
 
         x = (attn @ v).transpose(1, 2).reshape(b_, n, c)
         x = self.proj(x)
-        x = self.proj_drop(x)
-        return x
+        return self.proj_drop(x)
 
 
 class HAB(nn.Module):
@@ -279,9 +275,7 @@ class HAB(nn.Module):
 
         # FFN
         x = shortcut + self.drop_path(attn_x) + conv_x * self.conv_scale
-        x = x + self.drop_path(self.mlp(self.norm2(x)))
-
-        return x
+        return x + self.drop_path(self.mlp(self.norm2(x)))
 
 
 class PatchMerging(nn.Module):
@@ -319,9 +313,7 @@ class PatchMerging(nn.Module):
         x = x.view(b, -1, 4 * c)  # b h/2*w/2 4*c
 
         x = self.norm(x)
-        x = self.reduction(x)
-
-        return x
+        return self.reduction(x)
 
 
 class OCAB(nn.Module):
@@ -391,13 +383,13 @@ class OCAB(nn.Module):
         k = k_windows.reshape(b_, n, self.num_heads, d).permute(0, 2, 1, 3)  # nw*b, nH, n, d
         v = v_windows.reshape(b_, n, self.num_heads, d).permute(0, 2, 1, 3)  # nw*b, nH, n, d
 
-        q = q * self.scale
+        q *= self.scale
         attn = (q @ k.transpose(-2, -1))
 
         relative_position_bias = self.relative_position_bias_table[rpi.view(-1)].view(
             self.window_size * self.window_size, self.overlap_win_size * self.overlap_win_size, -1)  # ws*ws, wse*wse, nH
         relative_position_bias = relative_position_bias.permute(2, 0, 1).contiguous()  # nH, ws*ws, wse*wse
-        attn = attn + relative_position_bias.unsqueeze(0)
+        attn += relative_position_bias.unsqueeze(0)
 
         attn = self.softmax(attn)
         attn_windows = (attn @ v).transpose(1, 2).reshape(b_, nq, self.dim)
@@ -409,8 +401,7 @@ class OCAB(nn.Module):
 
         x = self.proj(x) + shortcut
 
-        x = x + self.mlp(self.norm2(x))
-        return x
+        return x + self.mlp(self.norm2(x))
 
 
 class AttenBlocks(nn.Module):
@@ -549,7 +540,7 @@ class RHAG(nn.Module):
                  img_size=224,
                  patch_size=4,
                  resi_connection="1conv"):
-        super(RHAG, self).__init__()
+        super().__init__()
 
         self.dim = dim
         self.input_resolution = input_resolution
@@ -649,8 +640,7 @@ class PatchUnEmbed(nn.Module):
         self.embed_dim = embed_dim
 
     def forward(self, x, x_size):
-        x = x.transpose(1, 2).contiguous().view(x.shape[0], self.embed_dim, x_size[0], x_size[1])  # b Ph*Pw c
-        return x
+        return x.transpose(1, 2).contiguous().view(x.shape[0], self.embed_dim, x_size[0], x_size[1])  # b Ph*Pw c
 
 
 class Upsample(nn.Sequential):
@@ -665,14 +655,13 @@ class Upsample(nn.Sequential):
         m = []
         if (scale & (scale - 1)) == 0:  # scale = 2^n
             for _ in range(int(math.log2(scale))):
-                m.append(nn.Conv2d(num_feat, 4 * num_feat, 3, 1, 1))
-                m.append(nn.PixelShuffle(2))
+                m.extend((nn.Conv2d(num_feat, 4 * num_feat, 3, 1, 1), nn.PixelShuffle(2)))
         elif scale == 3:
-            m.append(nn.Conv2d(num_feat, 9 * num_feat, 3, 1, 1))
-            m.append(nn.PixelShuffle(3))
+            m.extend((nn.Conv2d(num_feat, 9 * num_feat, 3, 1, 1), nn.PixelShuffle(3)))
         else:
-            raise ValueError(f"scale {scale} is not supported. " "Supported scales: 2^n and 3.")
-        super(Upsample, self).__init__(*m)
+            msg = f"scale {scale} is not supported. " "Supported scales: 2^n and 3."
+            raise ValueError(msg)
+        super().__init__(*m)
 
 
 class hat(nn.Module):
@@ -728,7 +717,7 @@ class hat(nn.Module):
                  upsampler="",
                  resi_connection="1conv",
                  **kwargs):
-        super(hat, self).__init__()
+        super().__init__()
 
         self.window_size = window_size
         self.shift_size = window_size // 2
@@ -855,8 +844,7 @@ class hat(nn.Module):
         relative_coords[:, :, 0] += self.window_size - 1  # shift to start from 0
         relative_coords[:, :, 1] += self.window_size - 1
         relative_coords[:, :, 0] *= 2 * self.window_size - 1
-        relative_position_index = relative_coords.sum(-1)  # Wh*Ww, Wh*Ww
-        return relative_position_index
+        return relative_coords.sum(-1)  # Wh*Ww, Wh*Ww
 
     def calculate_rpi_oca(self):
         # calculate relative position index for OCA
@@ -880,8 +868,7 @@ class hat(nn.Module):
         relative_coords[:, :, 1] += window_size_ori - window_size_ext + 1
 
         relative_coords[:, :, 0] *= window_size_ori + window_size_ext - 1
-        relative_position_index = relative_coords.sum(-1)
-        return relative_position_index
+        return relative_coords.sum(-1)
 
     def calculate_mask(self, x_size):
         # calculate attention mask for SW-MSA
@@ -900,9 +887,7 @@ class hat(nn.Module):
         mask_windows = window_partition(img_mask, self.window_size)  # nw, window_size, window_size, 1
         mask_windows = mask_windows.view(-1, self.window_size * self.window_size)
         attn_mask = mask_windows.unsqueeze(1) - mask_windows.unsqueeze(2)
-        attn_mask = attn_mask.masked_fill(attn_mask != 0, -100.0).masked_fill(attn_mask == 0, 0.0)
-
-        return attn_mask
+        return attn_mask.masked_fill(attn_mask != 0, -100.0).masked_fill(attn_mask == 0, 0.0)
 
     @torch.jit.ignore
     def no_weight_decay(self):
@@ -922,16 +907,14 @@ class hat(nn.Module):
 
         x = self.patch_embed(x)
         if self.ape:
-            x = x + self.absolute_pos_embed
+            x += self.absolute_pos_embed
         x = self.pos_drop(x)
 
         for layer in self.layers:
             x = layer(x, x_size, params)
 
         x = self.norm(x)  # b seq_len c
-        x = self.patch_unembed(x, x_size)
-
-        return x
+        return self.patch_unembed(x, x_size)
 
     def forward(self, x):
         self.mean = self.mean.type_as(x)
@@ -944,9 +927,7 @@ class hat(nn.Module):
             x = self.conv_before_upsample(x)
             x = self.conv_last(self.upsample(x))
 
-        x = x / self.img_range + self.mean
-
-        return x
+        return x / self.img_range + self.mean
 
 
 @ARCH_REGISTRY.register()

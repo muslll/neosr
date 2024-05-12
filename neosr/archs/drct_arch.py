@@ -19,7 +19,7 @@ class ChannelAttention(nn.Module):
     """
 
     def __init__(self, num_feat, squeeze_factor=16):
-        super(ChannelAttention, self).__init__()
+        super().__init__()
         self.attention = nn.Sequential(
             nn.AdaptiveAvgPool2d(1),
             nn.Conv2d(num_feat, num_feat // squeeze_factor, 1, padding=0),
@@ -35,7 +35,7 @@ class ChannelAttention(nn.Module):
 
 class CAB(nn.Module):
     def __init__(self, num_feat, compress_ratio=3, squeeze_factor=30):
-        super(CAB, self).__init__()
+        super().__init__()
 
         self.cab = nn.Sequential(
             nn.Conv2d(num_feat, num_feat // compress_ratio, 3, 1, 1),
@@ -70,8 +70,7 @@ class Mlp(nn.Module):
         x = self.act(x)
         x = self.drop(x)
         x = self.fc2(x)
-        x = self.drop(x)
-        return x
+        return self.drop(x)
 
 
 def window_partition(x, window_size):
@@ -84,10 +83,9 @@ def window_partition(x, window_size):
     """
     B, H, W, C = x.shape
     x = x.view(B, H // window_size, window_size, W // window_size, window_size, C)
-    windows = (
+    return (
         x.permute(0, 1, 3, 2, 4, 5).contiguous().view(-1, window_size, window_size, C)
     )
-    return windows
 
 
 def window_reverse(windows, window_size, H, W):
@@ -104,8 +102,7 @@ def window_reverse(windows, window_size, H, W):
     x = windows.view(
         B, H // window_size, W // window_size, window_size, window_size, -1
     )
-    x = x.permute(0, 1, 3, 2, 4, 5).contiguous().view(B, H, W, -1)
-    return x
+    return x.permute(0, 1, 3, 2, 4, 5).contiguous().view(B, H, W, -1)
 
 
 class WindowAttention(nn.Module):
@@ -187,7 +184,7 @@ class WindowAttention(nn.Module):
             qkv[2],
         )  # make torchscript happy (cannot use tensor as tuple)
 
-        q = q * self.scale
+        q *= self.scale
         attn = q @ k.transpose(-2, -1)
 
         relative_position_bias = self.relative_position_bias_table[
@@ -200,7 +197,7 @@ class WindowAttention(nn.Module):
         relative_position_bias = relative_position_bias.permute(
             2, 0, 1
         ).contiguous()  # nH, Wh*Ww, Wh*Ww
-        attn = attn + relative_position_bias.unsqueeze(0)
+        attn += relative_position_bias.unsqueeze(0)
 
         if mask is not None:
             nW = mask.shape[0]
@@ -216,8 +213,7 @@ class WindowAttention(nn.Module):
 
         x = (attn @ v).transpose(1, 2).reshape(B_, N, C)
         x = self.proj(x)
-        x = self.proj_drop(x)
-        return x
+        return self.proj_drop(x)
 
     def extra_repr(self) -> str:
         return f"dim={self.dim}, window_size={self.window_size}, num_heads={self.num_heads}"
@@ -243,7 +239,7 @@ class RDG(nn.Module):
         patch_size,
         img_size,
     ):
-        super(RDG, self).__init__()
+        super().__init__()
 
         self.swin1 = SwinTransformerBlock(
             dim=dim,
@@ -475,15 +471,13 @@ class SwinTransformerBlock(nn.Module):
         )  # nW, window_size, window_size, 1
         mask_windows = mask_windows.view(-1, self.window_size * self.window_size)
         attn_mask = mask_windows.unsqueeze(1) - mask_windows.unsqueeze(2)
-        attn_mask = attn_mask.masked_fill(attn_mask != 0, -100.0).masked_fill(
+        return attn_mask.masked_fill(attn_mask != 0, -100.0).masked_fill(
             attn_mask == 0, 0.0
         )
 
-        return attn_mask
-
     def forward(self, x, x_size):
         H, W = x_size
-        B, L, C = x.shape
+        B, _L, C = x.shape
         # assert L == H * W, "input feature has wrong size"
 
         shortcut = x
@@ -531,9 +525,7 @@ class SwinTransformerBlock(nn.Module):
 
         # FFN
         x = shortcut + self.drop_path(x)
-        x = x + self.drop_path(self.mlp(self.norm2(x)))
-
-        return x
+        return x + self.drop_path(self.mlp(self.norm2(x)))
 
     def extra_repr(self) -> str:
         return (
@@ -576,9 +568,7 @@ class PatchMerging(nn.Module):
         x = x.view(B, -1, 4 * C)  # B H/2*W/2 4*C
 
         x = self.norm(x)
-        x = self.reduction(x)
-
-        return x
+        return self.reduction(x)
 
     def extra_repr(self) -> str:
         return f"input_resolution={self.input_resolution}, dim={self.dim}"
@@ -619,9 +609,7 @@ class PatchMerging(nn.Module):
         x = x.view(b, -1, 4 * c)  # b h/2*w/2 4*c
 
         x = self.norm(x)
-        x = self.reduction(x)
-
-        return x
+        return self.reduction(x)
 
 
 class PatchEmbed(nn.Module):
@@ -695,11 +683,10 @@ class PatchUnEmbed(nn.Module):
         self.embed_dim = embed_dim
 
     def forward(self, x, x_size):
-        B, HW, C = x.shape
-        x = x.transpose(1, 2).view(
+        B, _HW, _C = x.shape
+        return x.transpose(1, 2).view(
             B, -1, x_size[0], x_size[1]
         )  # structured as [B, Ph*Pw, C]
-        return x
 
 
 class Upsample(nn.Sequential):
@@ -714,16 +701,15 @@ class Upsample(nn.Sequential):
         m = []
         if (scale & (scale - 1)) == 0:  # scale = 2^n
             for _ in range(int(math.log2(scale))):
-                m.append(nn.Conv2d(num_feat, 4 * num_feat, 3, 1, 1))
-                m.append(nn.PixelShuffle(2))
+                m.extend((nn.Conv2d(num_feat, 4 * num_feat, 3, 1, 1), nn.PixelShuffle(2)))
         elif scale == 3:
-            m.append(nn.Conv2d(num_feat, 9 * num_feat, 3, 1, 1))
-            m.append(nn.PixelShuffle(3))
+            m.extend((nn.Conv2d(num_feat, 9 * num_feat, 3, 1, 1), nn.PixelShuffle(3)))
         else:
+            msg = f"scale {scale} is not supported. " "Supported scales: 2^n and 3."
             raise ValueError(
-                f"scale {scale} is not supported. " "Supported scales: 2^n and 3."
+                msg
             )
-        super(Upsample, self).__init__(*m)
+        super().__init__(*m)
 
 
 @ARCH_REGISTRY.register()
@@ -757,7 +743,7 @@ class drct(nn.Module):
         gc=32,
         **kwargs,
     ):
-        super(drct, self).__init__()
+        super().__init__()
 
         self.window_size = window_size
         self.shift_size = window_size // 2
@@ -885,16 +871,14 @@ class drct(nn.Module):
 
         x = self.patch_embed(x)
         if self.ape:
-            x = x + self.absolute_pos_embed
+            x += self.absolute_pos_embed
         x = self.pos_drop(x)
 
         for layer in self.layers:
             x = layer(x, x_size)
 
         x = self.norm(x)  # b seq_len c
-        x = self.patch_unembed(x, x_size)
-
-        return x
+        return self.patch_unembed(x, x_size)
 
     def forward(self, x):
         self.mean = self.mean.type_as(x)
@@ -907,9 +891,7 @@ class drct(nn.Module):
             x = self.conv_before_upsample(x)
             x = self.conv_last(self.upsample(x))
 
-        x = x / self.img_range + self.mean
-
-        return x
+        return x / self.img_range + self.mean
 
 
 @ARCH_REGISTRY.register()

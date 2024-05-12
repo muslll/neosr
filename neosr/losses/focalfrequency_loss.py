@@ -28,7 +28,7 @@ class focalfrequencyloss(nn.Module):
         log_matrix: bool = False,
         batch_matrix: bool = False,
     ) -> None:
-        super(focalfrequencyloss, self).__init__()
+        super().__init__()
         self.loss_weight = loss_weight
         self.alpha = alpha
         self.patch_factor = patch_factor
@@ -66,9 +66,7 @@ class focalfrequencyloss(nn.Module):
 
         # perform 2D DFT (real-to-complex, orthonormalization)
         freq = torch.fft.fft2(y, norm="ortho")
-        freq = torch.stack([freq.real, freq.imag], -1)
-
-        return freq
+        return torch.stack([freq.real, freq.imag], -1)
 
     def loss_formulation(
         self,
@@ -93,12 +91,9 @@ class focalfrequencyloss(nn.Module):
 
             # whether to calculate the spectrum weight matrix using batch-based statistics
             if self.batch_matrix:
-                matrix_tmp = matrix_tmp / matrix_tmp.max()
+                matrix_tmp /= matrix_tmp.max()
             else:
-                matrix_tmp = (
-                    matrix_tmp
-                    / matrix_tmp.max(-1).values.max(-1).values[:, :, :, None, None]
-                )
+                matrix_tmp /= matrix_tmp.max(-1).values.max(-1).values[:, :, :, None, None]
 
             matrix_tmp[torch.isnan(matrix_tmp)] = 0.0
             matrix_tmp = torch.clamp(matrix_tmp, min=0.0, max=1.0)
@@ -106,8 +101,7 @@ class focalfrequencyloss(nn.Module):
 
         assert weight_matrix.min().item() >= 0 and weight_matrix.max().item() <= 1, (
             "The values of spectrum weight matrix should be in the range [0, 1], "
-            "but got Min: %.10f Max: %.10f"
-            % (weight_matrix.min().item(), weight_matrix.max().item())
+            f"but got Min: {weight_matrix.min().item():.10f} Max: {weight_matrix.max().item():.10f}"
         )
 
         # frequency distance using (squared) Euclidean distance

@@ -18,7 +18,7 @@ class unet(nn.Module):
     """
 
     def __init__(self, num_in_ch=3, num_feat=64, skip_connection=True):
-        super(unet, self).__init__()
+        super().__init__()
         self.skip_connection = skip_connection
         norm = spectral_norm
         # the first convolution
@@ -56,23 +56,21 @@ class unet(nn.Module):
         x4 = F.leaky_relu(self.conv4(x3), negative_slope=0.2, inplace=True)
 
         if self.skip_connection:
-            x4 = x4 + x2
+            x4 += x2
         x4 = F.interpolate(x4, scale_factor=2,
                            mode="bilinear", align_corners=False)
         x5 = F.leaky_relu(self.conv5(x4), negative_slope=0.2, inplace=True)
 
         if self.skip_connection:
-            x5 = x5 + x1
+            x5 += x1
         x5 = F.interpolate(x5, scale_factor=2,
                            mode="bilinear", align_corners=False)
         x6 = F.leaky_relu(self.conv6(x5), negative_slope=0.2, inplace=True)
 
         if self.skip_connection:
-            x6 = x6 + x0
+            x6 += x0
 
         # extra convolutions
         out = F.leaky_relu(self.conv7(x6), negative_slope=0.2, inplace=True)
         out = F.leaky_relu(self.conv8(out), negative_slope=0.2, inplace=True)
-        out = self.conv9(out)
-
-        return out
+        return self.conv9(out)

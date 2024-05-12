@@ -30,7 +30,7 @@ def to_4d(x, h, w):
 
 class FeedForward(nn.Module):
     def __init__(self, dim, ffn_expansion_factor, bias):
-        super(FeedForward, self).__init__()
+        super().__init__()
         hidden_features = int(dim * ffn_expansion_factor)
         self.project_in = nn.Conv2d(dim, hidden_features * 2, kernel_size=1, bias=bias)
 
@@ -42,13 +42,12 @@ class FeedForward(nn.Module):
         x = self.project_in(x)
         x1, x2 = self.dwconv(x).chunk(2, dim=1)
         x = F.gelu(x1) * x2
-        x = self.project_out(x)
-        return x
+        return self.project_out(x)
 
 
 class BiasFree_LayerNorm(nn.Module):
     def __init__(self, normalized_shape):
-        super(BiasFree_LayerNorm, self).__init__()
+        super().__init__()
         if isinstance(normalized_shape, numbers.Integral):
             normalized_shape = (normalized_shape,)
         normalized_shape = torch.Size(normalized_shape)
@@ -65,7 +64,7 @@ class BiasFree_LayerNorm(nn.Module):
 
 class WithBias_LayerNorm(nn.Module):
     def __init__(self, normalized_shape):
-        super(WithBias_LayerNorm, self).__init__()
+        super().__init__()
         if isinstance(normalized_shape, numbers.Integral):
             normalized_shape = (normalized_shape,)
         normalized_shape = torch.Size(normalized_shape)
@@ -84,7 +83,7 @@ class WithBias_LayerNorm(nn.Module):
 
 class LayerNorm(nn.Module):
     def __init__(self, dim, LayerNorm_type):
-        super(LayerNorm, self).__init__()
+        super().__init__()
         if LayerNorm_type == "BiasFree":
             self.body = BiasFree_LayerNorm(dim)
         else:
@@ -97,7 +96,7 @@ class LayerNorm(nn.Module):
 
 class ISA(nn.Module):
     def __init__(self, dim, bias):
-        super(ISA, self).__init__()
+        super().__init__()
         self.temperature = nn.Parameter(torch.ones(1, 1, 1))
         self.qkv = nn.Linear(dim, dim * 3)
         self.project_out = nn.Conv2d(dim, dim, kernel_size=1, bias=bias)
@@ -123,13 +122,12 @@ class ISA(nn.Module):
         # out = (attn @ v)
         out = out.view(b, c, h, w)
 
-        out = self.project_out(out)
-        return out
+        return self.project_out(out)
 
 
 class SDA(nn.Module):
     def __init__(self, n_feats, LayerNorm_type="WithBias"):
-        super(SDA, self).__init__()
+        super().__init__()
         i_feats = 2 * n_feats
         self.scale = nn.Parameter(torch.zeros((1, n_feats, 1, 1)), requires_grad=True)
 
@@ -149,14 +147,12 @@ class SDA(nn.Module):
         x = self.proj_first(x)
         a, x = torch.chunk(x, 2, dim=1)
         a = self.DConvs(a)
-        x = self.proj_last(x * a) * self.scale
-
-        return x
+        return self.proj_last(x * a) * self.scale
 
 
 class ITL(nn.Module):
     def __init__(self, n_feats, ffn_expansion_factor, bias, LayerNorm_type):
-        super(ITL, self).__init__()
+        super().__init__()
         self.attn = ISA(n_feats, bias)
         self.act = nn.Tanh()
         self.conv1 = nn.Conv2d(n_feats, n_feats, 1)
@@ -165,14 +161,13 @@ class ITL(nn.Module):
         self.ffn = FeedForward(n_feats, ffn_expansion_factor, bias)
 
     def forward(self, x):
-        x = x + self.attn(self.conv1(self.act(x)))
-        x = x + self.ffn(self.conv2(self.act(x)))
-        return x
+        x += self.attn(self.conv1(self.act(x)))
+        return x + self.ffn(self.conv2(self.act(x)))
 
 
 class SAL(nn.Module):
     def __init__(self, n_feats, ffn_expansion_factor, bias, LayerNorm_type):
-        super(SAL, self).__init__()
+        super().__init__()
         self.SDA = SDA(n_feats)
         self.ffn = FeedForward(n_feats, ffn_expansion_factor, bias)
         self.act = nn.Tanh()
@@ -180,24 +175,22 @@ class SAL(nn.Module):
         self.conv2 = nn.Conv2d(n_feats, n_feats, 1)
 
     def forward(self, x):
-        x = x + self.SDA(self.conv1(self.act(x)))
-        x = x + self.ffn(self.conv2(self.act(x)))
-        return x
+        x += self.SDA(self.conv1(self.act(x)))
+        return x + self.ffn(self.conv2(self.act(x)))
 
 
 class UpsampleOneStep(nn.Sequential):
     def __init__(self, scale, num_feat, num_out_ch):
         self.num_feat = num_feat
         m = []
-        m.append(nn.Conv2d(num_feat, (scale ** 2) * num_out_ch, 3, 1, 1))
-        m.append(nn.PixelShuffle(scale))
+        m.extend((nn.Conv2d(num_feat, scale ** 2 * num_out_ch, 3, 1, 1), nn.PixelShuffle(scale)))
 
-        super(UpsampleOneStep, self).__init__(*m)
+        super().__init__(*m)
 
 
 class UFONE(nn.Module):
     def __init__(self, dim, ffn_expansion_factor, bias, LayerNorm_type, ITL_blocks, SAL_blocks, patch_size):
-        super(UFONE, self).__init__()
+        super().__init__()
         ITL_body = [ITL(dim, ffn_expansion_factor, bias, LayerNorm_type) for _ in range(ITL_blocks)]
         self.ITLs = nn.Sequential(*ITL_body)
         SAL_body = [SAL(dim, ffn_expansion_factor, bias, LayerNorm_type) for _ in range(SAL_blocks)]
@@ -211,8 +204,7 @@ class UFONE(nn.Module):
         local_features = self.ITLs(local_features)
         local_features = local_features.view(B, H // self.patch_size, W // self.patch_size, C, self.patch_size, self.patch_size)
         local_features = local_features.permute(0, 3, 1, 4, 2, 5).contiguous().view(B, C, H, W)
-        local_features = self.SALs(local_features)
-        return local_features
+        return self.SALs(local_features)
 
 
 @ARCH_REGISTRY.register()
@@ -230,7 +222,7 @@ class ditn(nn.Module):
         upscale=upscale,
         **kwargs):
 
-        super(ditn, self).__init__()
+        super().__init__()
         self.patch_size = patch_size
         self.sft = nn.Conv2d(inp_channels, dim, 3, 1, 1)
 
@@ -255,8 +247,7 @@ class ditn(nn.Module):
             wsize = wsize * self.patch_sizes[i] // math.gcd(wsize, self.patch_sizes[i])
         mod_pad_h = (wsize - h % wsize) % wsize
         mod_pad_w = (wsize - w % wsize) % wsize
-        x = F.pad(x, (0, mod_pad_w, 0, mod_pad_h), "reflect")
-        return x
+        return F.pad(x, (0, mod_pad_w, 0, mod_pad_h), "reflect")
 
     def forward(self, inp_img):
         _, _, old_h, old_w = inp_img.shape

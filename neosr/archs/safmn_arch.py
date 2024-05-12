@@ -17,7 +17,7 @@ class LayerNorm(nn.Module):
         self.bias = nn.Parameter(torch.zeros(normalized_shape))
         self.eps = eps
         self.data_format = data_format
-        if self.data_format not in ["channels_last", "channels_first"]:
+        if self.data_format not in {"channels_last", "channels_first"}:
             raise NotImplementedError
         self.normalized_shape = (normalized_shape,)
 
@@ -30,8 +30,8 @@ class LayerNorm(nn.Module):
             u = x.mean(1, keepdim=True)
             s = (x - u).pow(2).mean(1, keepdim=True)
             x = (x - u) / torch.sqrt(s + self.eps)
-            x = self.weight[:, None, None] * x + self.bias[:, None, None]
-            return x
+            return self.weight[:, None, None] * x + self.bias[:, None, None]
+        return None
 
 
 # SE
@@ -138,8 +138,7 @@ class SAFM(nn.Module):
             out.append(s)
 
         out = self.aggr(torch.cat(out, dim=1))
-        out = self.act(out) * x
-        return out
+        return self.act(out) * x
 
 
 class AttBlock(nn.Module):
@@ -156,8 +155,7 @@ class AttBlock(nn.Module):
 
     def forward(self, x):
         x = self.safm(self.norm1(x)) + x
-        x = self.ccm(self.norm2(x)) + x
-        return x
+        return self.ccm(self.norm2(x)) + x
 
 
 class BasicLayer(nn.Module):
@@ -205,8 +203,7 @@ class safmn(nn.Module):
     def forward(self, x):
         x = self.to_feat(x)
         x = self.feats(x) + x
-        x = self.to_img(x)
-        return x
+        return self.to_img(x)
 
 
 @ARCH_REGISTRY.register()

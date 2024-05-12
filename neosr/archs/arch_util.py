@@ -22,10 +22,7 @@ def net_opt():
 
     if args.input is None:
         upscale = opt["scale"]
-        if "train" in opt["datasets"]:
-            training = True
-        else:
-            training = False
+        training = "train" in opt["datasets"]
     else:
         upscale = args.scale
         training = False
@@ -87,15 +84,14 @@ class Upsample(nn.Sequential):
         m = []
         if (scale & (scale - 1)) == 0:  # scale = 2^n
             for _ in range(int(math.log2(scale))):
-                m.append(nn.Conv2d(num_feat, 4 * num_feat, 3, 1, 1))
-                m.append(nn.PixelShuffle(2))
+                m.extend((nn.Conv2d(num_feat, 4 * num_feat, 3, 1, 1), nn.PixelShuffle(2)))
         elif scale == 3:
-            m.append(nn.Conv2d(num_feat, 9 * num_feat, 3, 1, 1))
-            m.append(nn.PixelShuffle(3))
+            m.extend((nn.Conv2d(num_feat, 9 * num_feat, 3, 1, 1), nn.PixelShuffle(3)))
         else:
+            msg = f"scale {scale} is not supported. Supported scales: 2^n and 3."
             raise ValueError(
-                f"scale {scale} is not supported. Supported scales: 2^n and 3.")
-        super(Upsample, self).__init__(*m)
+                msg)
+        super().__init__(*m)
 
 
 # TODO: may write a cpp file
@@ -111,7 +107,8 @@ def pixel_unshuffle(x, scale):
     """
     b, c, hh, hw = x.size()
     out_channel = c * (scale**2)
-    assert hh % scale == 0 and hw % scale == 0
+    assert hh % scale == 0
+    assert hw % scale == 0
     h = hh // scale
     w = hw // scale
     x_view = x.view(b, c, h, scale, w, scale)
@@ -187,7 +184,7 @@ class DropPath(nn.Module):
     """
 
     def __init__(self, drop_prob: float = 0., scale_by_keep: bool = True):
-        super(DropPath, self).__init__()
+        super().__init__()
         self.drop_prob = drop_prob
         self.scale_by_keep = scale_by_keep
         __, training = net_opt()

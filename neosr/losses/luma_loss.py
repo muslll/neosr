@@ -25,7 +25,7 @@ class lumaloss(nn.Module):
         scale: int = 2,
         loss_weight: float = 1.0,
     ) -> None:
-        super(lumaloss, self).__init__()
+        super().__init__()
         self.loss_weight = loss_weight
         self.criterion_type = criterion
         self.avgpool = avgpool
@@ -40,7 +40,8 @@ class lumaloss(nn.Module):
         elif self.criterion_type == "chc":
             self.criterion = chc()
         else:
-            raise NotImplementedError(f"{criterion} criterion has not been supported.")
+            msg = f"{criterion} criterion has not been supported."
+            raise NotImplementedError(msg)
 
     def forward(self, input: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
         input_luma = rgb_to_luma(input)

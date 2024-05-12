@@ -28,8 +28,7 @@ class Mlp(nn.Module):
         x = self.act(x)
         x = self.drop(x)
         x = self.fc2(x)
-        x = self.drop(x)
-        return x
+        return self.drop(x)
 
 
 def window_partition(x, window_size):
@@ -44,9 +43,8 @@ def window_partition(x, window_size):
     b, h, w, c = x.shape
     x = x.view(b, h // window_size, window_size,
                w // window_size, window_size, c)
-    windows = x.permute(0, 1, 3, 2, 4, 5).contiguous(
+    return x.permute(0, 1, 3, 2, 4, 5).contiguous(
     ).view(-1, window_size, window_size, c)
-    return windows
 
 
 def window_reverse(windows, window_size, h, w):
@@ -63,8 +61,7 @@ def window_reverse(windows, window_size, h, w):
     b = int(windows.shape[0] / (h * w / window_size / window_size))
     x = windows.view(b, h // window_size, w // window_size,
                      window_size, window_size, -1)
-    x = x.permute(0, 1, 3, 2, 4, 5).contiguous().view(b, h, w, -1)
-    return x
+    return x.permute(0, 1, 3, 2, 4, 5).contiguous().view(b, h, w, -1)
 
 
 # @torch.cuda.amp.custom_fwd(cast_inputs=torch.bfloat16)
@@ -150,14 +147,14 @@ class WindowAttention(nn.Module):
                     x = x.transpose(1, 2).reshape(b_, n, c)
 
         else:
-            q = q * self.scale
+            q *= self.scale
             attn = (q @ k.transpose(-2, -1))
 
             relative_position_bias = self.relative_position_bias_table[self.relative_position_index.view(-1)].view(
                 self.window_size[0] * self.window_size[1], self.window_size[0] * self.window_size[1], -1)  # Wh*Ww,Wh*Ww,nH
             relative_position_bias = relative_position_bias.permute(
                 2, 0, 1).contiguous()  # nH, Wh*Ww, Wh*Ww
-            attn = attn + relative_position_bias.unsqueeze(0)
+            attn += relative_position_bias.unsqueeze(0)
 
             if mask is not None:
                 nw = mask.shape[0]
@@ -172,8 +169,7 @@ class WindowAttention(nn.Module):
             x = (attn @ v).transpose(1, 2).reshape(b_, n, c)
 
         x = self.proj(x)
-        x = self.proj_drop(x)
-        return x
+        return self.proj_drop(x)
 
     def extra_repr(self) -> str:
         return f"dim={self.dim}, window_size={self.window_size}, num_heads={self.num_heads}"
@@ -283,10 +279,8 @@ class SwinTransformerBlock(nn.Module):
         mask_windows = mask_windows.view(-1,
                                          self.window_size * self.window_size)
         attn_mask = mask_windows.unsqueeze(1) - mask_windows.unsqueeze(2)
-        attn_mask = attn_mask.masked_fill(
+        return attn_mask.masked_fill(
             attn_mask != 0, -100.0).masked_fill(attn_mask == 0, 0.0)
-
-        return attn_mask
 
     def forward(self, x, x_size):
         h, w = x_size
@@ -334,9 +328,7 @@ class SwinTransformerBlock(nn.Module):
 
         # FFN
         x = shortcut + self.drop_path(x)
-        x = x + self.drop_path(self.mlp(self.norm2(x)))
-
-        return x
+        return x + self.drop_path(self.mlp(self.norm2(x)))
 
     def extra_repr(self) -> str:
         return (f"dim={self.dim}, input_resolution={self.input_resolution}, num_heads={self.num_heads}, "
@@ -392,9 +384,7 @@ class PatchMerging(nn.Module):
         x = x.view(b, -1, 4 * c)  # b h/2*w/2 4*c
 
         x = self.norm(x)
-        x = self.reduction(x)
-
-        return x
+        return self.reduction(x)
 
     def extra_repr(self) -> str:
         return f"input_resolution={self.input_resolution}, dim={self.dim}"
@@ -477,10 +467,7 @@ class BasicLayer(nn.Module):
 
     def forward(self, x, x_size):
         for blk in self.blocks:
-            if self.use_checkpoint:
-                x = checkpoint.checkpoint(blk, x)
-            else:
-                x = blk(x, x_size)
+            x = checkpoint.checkpoint(blk, x) if self.use_checkpoint else blk(x, x_size)
         if self.downsample is not None:
             x = self.downsample(x)
         return x
@@ -539,7 +526,7 @@ class RSTB(nn.Module):
                  img_size=224,
                  patch_size=4,
                  resi_connection="1conv"):
-        super(RSTB, self).__init__()
+        super().__init__()
 
         self.dim = dim
         self.input_resolution = input_resolution
@@ -662,13 +649,11 @@ class PatchUnEmbed(nn.Module):
         self.embed_dim = embed_dim
 
     def forward(self, x, x_size):
-        x = x.transpose(1, 2).view(
+        return x.transpose(1, 2).view(
             x.shape[0], self.embed_dim, x_size[0], x_size[1])  # b Ph*Pw c
-        return x
 
     def flops(self):
-        flops = 0
-        return flops
+        return 0
 
 
 class Upsample(nn.Sequential):
@@ -683,15 +668,14 @@ class Upsample(nn.Sequential):
         m = []
         if (scale & (scale - 1)) == 0:  # scale = 2^n
             for _ in range(int(math.log2(scale))):
-                m.append(nn.Conv2d(num_feat, 4 * num_feat, 3, 1, 1))
-                m.append(nn.PixelShuffle(2))
+                m.extend((nn.Conv2d(num_feat, 4 * num_feat, 3, 1, 1), nn.PixelShuffle(2)))
         elif scale == 3:
-            m.append(nn.Conv2d(num_feat, 9 * num_feat, 3, 1, 1))
-            m.append(nn.PixelShuffle(3))
+            m.extend((nn.Conv2d(num_feat, 9 * num_feat, 3, 1, 1), nn.PixelShuffle(3)))
         else:
+            msg = f"scale {scale} is not supported. Supported scales: 2^n and 3."
             raise ValueError(
-                f"scale {scale} is not supported. Supported scales: 2^n and 3.")
-        super(Upsample, self).__init__(*m)
+                msg)
+        super().__init__(*m)
 
 
 class UpsampleOneStep(nn.Sequential):
@@ -708,14 +692,12 @@ class UpsampleOneStep(nn.Sequential):
         self.num_feat = num_feat
         self.input_resolution = input_resolution
         m = []
-        m.append(nn.Conv2d(num_feat, (scale**2) * num_out_ch, 3, 1, 1))
-        m.append(nn.PixelShuffle(scale))
-        super(UpsampleOneStep, self).__init__(*m)
+        m.extend((nn.Conv2d(num_feat, scale ** 2 * num_out_ch, 3, 1, 1), nn.PixelShuffle(scale)))
+        super().__init__(*m)
 
     def flops(self):
         h, w = self.input_resolution
-        flops = h * w * self.num_feat * 3 * 9
-        return flops
+        return h * w * self.num_feat * 3 * 9
 
 
 class swinir(nn.Module):
@@ -770,7 +752,7 @@ class swinir(nn.Module):
                  upsampler="pixelshuffle",
                  resi_connection="1conv",
                  **kwargs):
-        super(swinir, self).__init__()
+        super().__init__()
         num_in_ch = in_chans
         num_out_ch = in_chans
         num_feat = 64
@@ -912,16 +894,14 @@ class swinir(nn.Module):
         x_size = (x.shape[2], x.shape[3])
         x = self.patch_embed(x)
         if self.ape:
-            x = x + self.absolute_pos_embed
+            x += self.absolute_pos_embed
         x = self.pos_drop(x)
 
         for layer in self.layers:
             x = layer(x, x_size)
 
         x = self.norm(x)  # b seq_len c
-        x = self.patch_unembed(x, x_size)
-
-        return x
+        return self.patch_unembed(x, x_size)
 
     def forward(self, x):
         self.mean = self.mean.type_as(x)
@@ -953,11 +933,9 @@ class swinir(nn.Module):
             x_first = self.conv_first(x)
             res = self.conv_after_body(
                 self.forward_features(x_first)) + x_first
-            x = x + self.conv_last(res)
+            x += self.conv_last(res)
 
-        x = x / self.img_range + self.mean
-
-        return x
+        return x / self.img_range + self.mean
 
     def flops(self):
         flops = 0

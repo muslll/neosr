@@ -1,4 +1,5 @@
 import math
+import sys
 
 import numpy as np
 import torch
@@ -23,10 +24,9 @@ def img2windows(img, H_sp, W_sp):
     """
     B, C, H, W = img.shape
     img_reshape = img.view(B, C, H // H_sp, H_sp, W // W_sp, W_sp)
-    img_perm = (
+    return (
         img_reshape.permute(0, 2, 4, 3, 5, 1).contiguous().reshape(-1, H_sp * W_sp, C)
     )
-    return img_perm
 
 
 def windows2img(img_splits_hw, H_sp, W_sp, H, W):
@@ -36,8 +36,7 @@ def windows2img(img_splits_hw, H_sp, W_sp, H, W):
     B = int(img_splits_hw.shape[0] / (H * W / H_sp / W_sp))
 
     img = img_splits_hw.view(B, H // H_sp, W // W_sp, H_sp, W_sp, -1)
-    img = img.permute(0, 1, 3, 2, 4, 5).contiguous().view(B, H, W, -1)
-    return img
+    return img.permute(0, 1, 3, 2, 4, 5).contiguous().view(B, H, W, -1)
 
 
 class Gate(nn.Module):
@@ -51,7 +50,7 @@ class Gate(nn.Module):
     def forward(self, x, H, W):
         # Split
         x1, x2 = x.chunk(2, dim=-1)
-        B, N, C = x.shape
+        B, _N, C = x.shape
         x2 = (
             self.conv(self.norm(x2).transpose(1, 2).contiguous().view(B, C // 2, H, W))
             .flatten(2)
@@ -92,8 +91,7 @@ class MLP(nn.Module):
         x = self.drop(x)
 
         x = self.fc2(x)
-        x = self.drop(x)
-        return x
+        return self.drop(x)
 
 
 class DynamicPosBias(nn.Module):
@@ -132,8 +130,8 @@ class DynamicPosBias(nn.Module):
     def forward(self, biases):
         if self.residual:
             pos = self.pos_proj(biases)  # 2Gh-1 * 2Gw-1, heads
-            pos = pos + self.pos1(pos)
-            pos = pos + self.pos2(pos)
+            pos += self.pos1(pos)
+            pos += self.pos2(pos)
             pos = self.pos3(pos)
         else:
             pos = self.pos3(self.pos2(self.pos1(self.pos_proj(biases))))
@@ -145,7 +143,7 @@ class WindowAttention(nn.Module):
         self,
         dim,
         idx,
-        split_size=[8, 8],
+        split_size=None,
         dim_out=None,
         num_heads=6,
         attn_drop=0.0,
@@ -153,6 +151,8 @@ class WindowAttention(nn.Module):
         qk_scale=None,
         position_bias=True,
     ):
+        if split_size is None:
+            split_size = [8, 8]
         super().__init__()
         self.dim = dim
         self.dim_out = dim_out or dim
@@ -170,7 +170,7 @@ class WindowAttention(nn.Module):
             W_sp, H_sp = self.split_size[0], self.split_size[1]
         else:
             print("ERROR MODE", idx)
-            exit(0)
+            sys.exit(0)
         self.H_sp = H_sp
         self.W_sp = W_sp
 
@@ -201,15 +201,14 @@ class WindowAttention(nn.Module):
         self.attn_drop = nn.Dropout(attn_drop)
 
     def im2win(self, x, H, W):
-        B, N, C = x.shape
+        B, _N, C = x.shape
         x = x.transpose(-2, -1).contiguous().view(B, C, H, W)
         x = img2windows(x, self.H_sp, self.W_sp)
-        x = (
+        return (
             x.reshape(-1, self.H_sp * self.W_sp, self.num_heads, C // self.num_heads)
             .permute(0, 2, 1, 3)
             .contiguous()
         )
-        return x
 
     def forward(self, qkv, H, W, mask=None):
         """Input: qkv: (B, 3*L, C), H, W, mask: (B, N, N), N is the window size
@@ -225,7 +224,7 @@ class WindowAttention(nn.Module):
         k = self.im2win(k, H, W)
         v = self.im2win(v, H, W)
 
-        q = q * self.scale
+        q *= self.scale
         attn = q @ k.transpose(-2, -1)  # B head N C @ B head C N --> B head N N
 
         # calculate drpe
@@ -238,7 +237,7 @@ class WindowAttention(nn.Module):
             relative_position_bias = relative_position_bias.permute(
                 2, 0, 1
             ).contiguous()
-            attn = attn + relative_position_bias.unsqueeze(0)
+            attn += relative_position_bias.unsqueeze(0)
 
         N = attn.shape[3]
 
@@ -259,9 +258,7 @@ class WindowAttention(nn.Module):
         )  # B head N N @ B head N C
 
         # merge the window, window to image
-        x = windows2img(x, self.H_sp, self.W_sp, H, W)  # B H' W' C
-
-        return x
+        return windows2img(x, self.H_sp, self.W_sp, H, W)  # B H' W' C
 
 
 class L_SA(nn.Module):
@@ -270,8 +267,8 @@ class L_SA(nn.Module):
         self,
         dim,
         num_heads,
-        split_size=[2, 4],
-        shift_size=[1, 2],
+        split_size=None,
+        shift_size=None,
         qkv_bias=False,
         qk_scale=None,
         drop=0.0,
@@ -280,6 +277,10 @@ class L_SA(nn.Module):
         reso=64,
         rs_id=0,
     ):
+        if shift_size is None:
+            shift_size = [1, 2]
+        if split_size is None:
+            split_size = [2, 4]
         super().__init__()
         self.dim = dim
         self.num_heads = num_heads
@@ -502,9 +503,7 @@ class L_SA(nn.Module):
         x = attened_x + lcm
 
         x = self.proj(x)
-        x = self.proj_drop(x)
-
-        return x
+        return self.proj_drop(x)
 
 
 class RG_SA(nn.Module):
@@ -531,7 +530,7 @@ class RG_SA(nn.Module):
         proj_drop=0.0,
         c_ratio=0.5,
     ):
-        super(RG_SA, self).__init__()
+        super().__init__()
         assert (
             dim % num_heads == 0
         ), f"dim {dim} should be divided by num_heads {num_heads}."
@@ -615,21 +614,11 @@ class RG_SA(nn.Module):
 
         # CPE
         # v_shape=(B, H, N', C//H)
-        v = v + self.cpe(
-            v.transpose(1, 2)
-            .reshape(B, -1, C)
-            .transpose(1, 2)
-            .contiguous()
-            .view(B, C, H // _scale, W // _scale)
-        ).view(B, C, -1).view(B, self.num_heads, int(C / self.num_heads), -1).transpose(
-            -1, -2
-        )
+        v += self.cpe(v.transpose(1, 2).reshape(B, -1, C).transpose(1, 2).contiguous().view(B, C, H // _scale, W // _scale)).view(B, C, -1).view(B, self.num_heads, int(C / self.num_heads), -1).transpose(-1, -2)
 
         x = (attn @ v).transpose(1, 2).reshape(B, N, C)
         x = self.proj(x)
-        x = self.proj_drop(x)
-
-        return x
+        return self.proj_drop(x)
 
 
 class Block(nn.Module):
@@ -647,12 +636,16 @@ class Block(nn.Module):
         norm_layer=nn.LayerNorm,
         idx=0,
         rs_id=0,
-        split_size=[2, 4],
-        shift_size=[1, 2],
+        split_size=None,
+        shift_size=None,
         reso=64,
         c_ratio=0.5,
         layerscale_value=1e-4,
     ):
+        if shift_size is None:
+            shift_size = [1, 2]
+        if split_size is None:
+            split_size = [2, 4]
         super().__init__()
         self.norm1 = norm_layer(dim)
         if idx % 2 == 0:
@@ -700,13 +693,11 @@ class Block(nn.Module):
 
         res = x
 
-        x = x + self.drop_path(self.attn(self.norm1(x), H, W))
-        x = x + self.drop_path(self.mlp(self.norm2(x), H, W))
+        x += self.drop_path(self.attn(self.norm1(x), H, W))
+        x += self.drop_path(self.mlp(self.norm2(x), H, W))
 
         # HAI
-        x = x + (res * self.gamma)
-
-        return x
+        return x + (res * self.gamma)
 
 
 class ResidualGroup(nn.Module):
@@ -727,9 +718,11 @@ class ResidualGroup(nn.Module):
         use_chk=False,
         resi_connection="1conv",
         rs_id=0,
-        split_size=[8, 8],
+        split_size=None,
         c_ratio=0.5,
     ):
+        if split_size is None:
+            split_size = [8, 8]
         super().__init__()
         self.use_chk = use_chk
         self.reso = reso
@@ -780,9 +773,7 @@ class ResidualGroup(nn.Module):
         x = rearrange(x, "b (h w) c -> b c h w", h=H, w=W)
         x = self.conv(x)
         x = rearrange(x, "b c h w -> b (h w) c")
-        x = res + x
-
-        return x
+        return res + x
 
 
 class Upsample(nn.Sequential):
@@ -798,16 +789,15 @@ class Upsample(nn.Sequential):
         m = []
         if (scale & (scale - 1)) == 0:  # scale = 2^n
             for _ in range(int(math.log2(scale))):
-                m.append(nn.Conv2d(num_feat, 4 * num_feat, 3, 1, 1))
-                m.append(nn.PixelShuffle(2))
+                m.extend((nn.Conv2d(num_feat, 4 * num_feat, 3, 1, 1), nn.PixelShuffle(2)))
         elif scale == 3:
-            m.append(nn.Conv2d(num_feat, 9 * num_feat, 3, 1, 1))
-            m.append(nn.PixelShuffle(3))
+            m.extend((nn.Conv2d(num_feat, 9 * num_feat, 3, 1, 1), nn.PixelShuffle(3)))
         else:
+            msg = f"scale {scale} is not supported. " "Supported scales: 2^n and 3."
             raise ValueError(
-                f"scale {scale} is not supported. " "Supported scales: 2^n and 3."
+                msg
             )
-        super(Upsample, self).__init__(*m)
+        super().__init__(*m)
 
 
 @ARCH_REGISTRY.register()
@@ -817,8 +807,8 @@ class rgt(nn.Module):
         img_size=64,
         in_chans=3,
         embed_dim=180,
-        depth=[6, 6, 6, 6, 6, 6, 6, 6],
-        num_heads=[6, 6, 6, 6, 6, 6, 6, 6],
+        depth=None,
+        num_heads=None,
         mlp_ratio=2,
         qkv_bias=True,
         qk_scale=None,
@@ -831,10 +821,16 @@ class rgt(nn.Module):
         upscale=upscale,
         img_range=1.0,
         resi_connection="1conv",
-        split_size=[8, 32],
+        split_size=None,
         c_ratio=0.5,
         **kwargs,
     ):
+        if split_size is None:
+            split_size = [8, 32]
+        if num_heads is None:
+            num_heads = [6, 6, 6, 6, 6, 6, 6, 6]
+        if depth is None:
+            depth = [6, 6, 6, 6, 6, 6, 6, 6]
         super().__init__()
 
         num_in_ch = in_chans
@@ -920,7 +916,7 @@ class rgt(nn.Module):
             if isinstance(m, nn.Linear) and m.bias is not None:
                 nn.init.constant_(m.bias, 0)
         elif isinstance(
-            m, (nn.LayerNorm, nn.BatchNorm2d, nn.GroupNorm, nn.InstanceNorm2d)
+            m, nn.LayerNorm | nn.BatchNorm2d | nn.GroupNorm | nn.InstanceNorm2d
         ):
             nn.init.constant_(m.bias, 0)
             nn.init.constant_(m.weight, 1.0)
@@ -932,9 +928,7 @@ class rgt(nn.Module):
         for layer in self.layers:
             x = layer(x, x_size)
         x = self.norm(x)
-        x = rearrange(x, "b (h w) c -> b c h w", h=H, w=W)
-
-        return x
+        return rearrange(x, "b (h w) c -> b c h w", h=H, w=W)
 
     def forward(self, x):
         """Input: x: (B, C, H, W)
@@ -947,8 +941,7 @@ class rgt(nn.Module):
         x = self.conv_before_upsample(x)
         x = self.conv_last(self.upsample(x))
 
-        x = x / self.img_range + self.mean
-        return x
+        return x / self.img_range + self.mean
 
 
 @ARCH_REGISTRY.register()

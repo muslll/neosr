@@ -90,12 +90,12 @@ class MessageLogger:
             f"[ epoch:{epoch:4d} ] [ iter:{current_iter:7,d} ]")
 
         # time and estimated time
-        if "time" in log_vars.keys():
+        if "time" in log_vars:
             iter_time = log_vars.pop("time")
             # iters per second
-            iter_time = iter_time * 100
+            iter_time *= 100
             iter_time = 100 / iter_time
-            iter_time = iter_time / self.accumulate
+            iter_time /= self.accumulate
 
             total_time = time.time() - self.start_time
             time_sec_avg = total_time / (current_iter - (self.start_iter / self.accumulate) + 1)
@@ -122,8 +122,7 @@ class MessageLogger:
 @master_only
 def init_tb_logger(log_dir):
     from torch.utils.tensorboard import SummaryWriter
-    tb_logger = SummaryWriter(log_dir=log_dir)
-    return tb_logger
+    return SummaryWriter(log_dir=log_dir)
 
 
 @master_only

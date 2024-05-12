@@ -1,6 +1,6 @@
 import torch
 import torch.nn
-from torch import nn as nn
+from torch import nn
 from torch.nn import functional as F
 
 from neosr.utils.registry import ARCH_REGISTRY
@@ -66,7 +66,7 @@ class BSConvU(torch.nn.Sequential):
 
 class EMSSA(nn.Module):
     def __init__(self, channels):
-        super(EMSSA, self).__init__()
+        super().__init__()
         self.BSConv3 = BSConvU(channels // 4, channels // 4, kernel_size=3, padding=1)
         self.BSConv5 = BSConvU(channels // 4, channels // 4, kernel_size=5, padding=2)
         self.BSConv7 = BSConvU(channels // 4, channels // 4, kernel_size=7, padding=3)
@@ -121,8 +121,7 @@ class EMSSA(nn.Module):
             self.conv1(torch.cat((s0, s1, s2, s3), dim=1)), self.conv1_up(x)
         )
         out = self.sigmoid(self.conv1(out))
-        out = x0 * out
-        return out
+        return x0 * out
 
 
 class SAFM(nn.Module):
@@ -154,13 +153,12 @@ class SAFM(nn.Module):
                 s = self.mfr[i](xc[i])
             out.append(s)
         out = self.aggr(torch.cat(out, dim=1))
-        out = self.act(out) * x
-        return out
+        return self.act(out) * x
 
 
 class ESA(nn.Module):
     def __init__(self, channels):
-        super(ESA, self).__init__()
+        super().__init__()
         f = channels // 4
         self.conv1 = nn.Conv2d(channels, f, kernel_size=1)
         self.conv_f = nn.Conv2d(f, f, kernel_size=1)
@@ -190,7 +188,7 @@ class ESA(nn.Module):
 
 class EBFB(nn.Module):
     def __init__(self, channels):
-        super(EBFB, self).__init__()
+        super().__init__()
         self.BSConv3 = BSConvU(channels, channels, kernel_size=3, padding=1)
         self.BSConv5 = BSConvU(channels, channels, kernel_size=5, padding=2)
         self.BSConv7 = BSConvU(channels, channels, kernel_size=7, padding=3)
@@ -220,13 +218,12 @@ class EBFB(nn.Module):
         out2 = torch.add(x3, x4)
         x5 = self.conv1(out2)
         x6 = torch.mul(self.sigmoid(self.conv1(out2)), self.GELU(self.BSConv7(out2)))
-        out = self.conv1_down(torch.cat((x1, x3, x5, x6), 1))
-        return out
+        return self.conv1_down(torch.cat((x1, x3, x5, x6), 1))
 
 
 class EBFB_SRB(nn.Module):
     def __init__(self, channels):
-        super(EBFB_SRB, self).__init__()
+        super().__init__()
         self.conv3 = nn.Conv2d(channels, channels, kernel_size=3, padding=1)
         self.conv1 = nn.Conv2d(
             in_channels=channels,
@@ -253,13 +250,12 @@ class EBFB_SRB(nn.Module):
         out2 = torch.add(x3, x4)
         x5 = self.conv1(out2)
         x6 = self.ReLU(torch.add(out2, self.conv3(out2)))
-        out = self.conv1_down(torch.cat((x1, x3, x5, x6), 1))
-        return out
+        return self.conv1_down(torch.cat((x1, x3, x5, x6), 1))
 
 
 class RFDB_WOA(nn.Module):
     def __init__(self, channels):
-        super(RFDB_WOA, self).__init__()
+        super().__init__()
         self.conv3 = nn.Conv2d(channels, channels, kernel_size=3, padding=1)
         self.conv3_half = nn.Conv2d(channels, channels // 2, kernel_size=3, padding=1)
         self.conv1 = nn.Conv2d(
@@ -295,13 +291,12 @@ class RFDB_WOA(nn.Module):
             self.conv3_half(self.ReLU(torch.add(x4, self.conv3(x4))))
         )  # 24 channels
         out = torch.cat((x1, x3, x5, x6), 1)  # 96 channels
-        out = self.ReLU(self.conv1_down(out))  # 48 channels
-        return out
+        return self.ReLU(self.conv1_down(out))  # 48 channels
 
 
 class RFDB_PAB(nn.Module):
     def __init__(self, channels):
-        super(RFDB_PAB, self).__init__()
+        super().__init__()
         self.BSConv3 = BSConvU(channels, channels, kernel_size=3, padding=1)
         self.conv3_half = nn.Conv2d(channels, channels // 2, kernel_size=3, padding=1)
         self.conv1 = nn.Conv2d(
@@ -345,13 +340,12 @@ class RFDB_PAB(nn.Module):
             )
         )  # 24 channels
         out = torch.cat((x1, x3, x5, x6), 1)  # 96 channels
-        out = self.ReLU(self.conv1_down(out))  # 48 channels
-        return out
+        return self.ReLU(self.conv1_down(out))  # 48 channels
 
 
 class upsampler(nn.Module):
     def __init__(self, channels, upscale_factor, mid_channels=54):
-        super(upsampler, self).__init__()
+        super().__init__()
         self.BSConv_2 = BSConvU(channels, channels, kernel_size=3, padding=1)  # x2
         self.BSConv1_2 = BSConvU(
             channels // 4, channels, kernel_size=3, padding=1
@@ -370,14 +364,12 @@ class upsampler(nn.Module):
             x = self.BSConv_2(x)
             x = self.up_2(x)
             x = self.BSConv1_2(x)
-            x = self.GELU(x)
-            return x
+            return self.GELU(x)
         if self.upscale_factor == 3:
             x = self.BSConv_3(x)
             x = self.up_3(x)
             x = self.BSConv1_3(x)
-            x = self.GELU(x)
-            return x
+            return self.GELU(x)
         if self.upscale_factor == 4:
             x = self.BSConv_2(x)
             x = self.up_2(x)
@@ -386,13 +378,13 @@ class upsampler(nn.Module):
             x = self.BSConv_2(x)
             x = self.up_2(x)
             x = self.BSConv1_2(x)
-            x = self.GELU(x)
-            return x
+            return self.GELU(x)
+        return None
 
 
 class DFEB(nn.Module):
     def __init__(self, channels):
-        super(DFEB, self).__init__()
+        super().__init__()
 
         self.EBFB = EBFB(channels)
         # self.EBFB_SRB = EBFB_SRB(channels)
@@ -412,14 +404,13 @@ class DFEB(nn.Module):
         x = self.EMSSA(x)
         # x = self.SAFM(x)
         # x = self.ESA(x)
-        x = torch.add(x, x0)
-        return x
+        return torch.add(x, x0)
 
 
 @ARCH_REGISTRY.register()
 class efen(nn.Module):
     def __init__(self, channels=48, num_DFEB=8, upscale_factor=upscale):
-        super(efen, self).__init__()
+        super().__init__()
         self.layers = make_layer(
             basic_block=DFEB, num_basic_block=num_DFEB, channels=channels
         )
@@ -441,5 +432,4 @@ class efen(nn.Module):
         if self.upscale_factor == 4:
             x = self.upsampler(x)  # x4
             x_up = F.interpolate(x0, scale_factor=4, mode="bicubic")  # x4
-        out = torch.add(x_up, self.BSConv_last(x))
-        return out
+        return torch.add(x_up, self.BSConv_last(x))

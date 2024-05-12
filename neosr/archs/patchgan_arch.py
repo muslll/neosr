@@ -51,7 +51,7 @@ class patchgan(nn.Module):
         use_sn=True,
         **kwargs,
     ):
-        super(patchgan, self).__init__()
+        super().__init__()
 
         norm_layer = self._get_norm_layer(norm_type)
         if (
@@ -135,7 +135,8 @@ class patchgan(nn.Module):
         elif norm_type == "none":
             norm_layer = nn.Identity
         else:
-            raise NotImplementedError(f"normalization layer [{norm_type}] is not found")
+            msg = f"normalization layer [{norm_type}] is not found"
+            raise NotImplementedError(msg)
 
         return norm_layer
 

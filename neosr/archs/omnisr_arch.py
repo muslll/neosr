@@ -15,7 +15,7 @@ upscale, training = net_opt()
 
 class CA_layer(nn.Module):
     def __init__(self, channel, reduction=16):
-        super(CA_layer, self).__init__()
+        super().__init__()
         # global average pooling
         self.gap = nn.AdaptiveAvgPool2d(1)
         self.fc = nn.Sequential(
@@ -32,7 +32,7 @@ class CA_layer(nn.Module):
 
 class Simple_CA_layer(nn.Module):
     def __init__(self, channel):
-        super(Simple_CA_layer, self).__init__()
+        super().__init__()
         self.gap = nn.AdaptiveAvgPool2d(1)
         self.fc = nn.Conv2d(in_channels=channel, out_channels=channel, kernel_size=1, padding=0, stride=1,
                       groups=1, bias=True)
@@ -48,7 +48,7 @@ class ECA_layer(nn.Module):
         k_size: Adaptive selection of kernel size
     """
     def __init__(self, channel):
-        super(ECA_layer, self).__init__()
+        super().__init__()
 
         b = 1
         gamma = 2
@@ -81,7 +81,7 @@ class ECA_MaxPool_layer(nn.Module):
         k_size: Adaptive selection of kernel size
     """
     def __init__(self, channel):
-        super(ECA_MaxPool_layer, self).__init__()
+        super().__init__()
 
         b = 1
         gamma = 2
@@ -115,7 +115,7 @@ def pixelshuffle_block(in_channels,
     """
     Upsample features according to `upscale_factor`.
     """
-    padding = kernel_size // 2
+    kernel_size // 2
     conv = nn.Conv2d(in_channels,
                      out_channels * (upscale_factor ** 2),
                      kernel_size,
@@ -130,19 +130,18 @@ class LayerNormFunction(torch.autograd.Function):
     @staticmethod
     def forward(ctx, x, weight, bias, eps):
         ctx.eps = eps
-        N, C, H, W = x.size()
+        _N, C, _H, _W = x.size()
         mu = x.mean(1, keepdim=True)
         var = (x - mu).pow(2).mean(1, keepdim=True)
         y = (x - mu) / (var + eps).sqrt()
         ctx.save_for_backward(y, var, weight)
-        y = weight.view(1, C, 1, 1) * y + bias.view(1, C, 1, 1)
-        return y
+        return weight.view(1, C, 1, 1) * y + bias.view(1, C, 1, 1)
 
     @staticmethod
     def backward(ctx, grad_output):
         eps = ctx.eps
 
-        N, C, H, W = grad_output.size()
+        _N, C, _H, _W = grad_output.size()
         y, var, weight = ctx.saved_variables
         g = grad_output * weight.view(1, C, 1, 1)
         mean_g = g.mean(dim=1, keepdim=True)
@@ -156,7 +155,7 @@ class LayerNormFunction(torch.autograd.Function):
 class LayerNorm2d(nn.Module):
 
     def __init__(self, channels, eps=1e-6):
-        super(LayerNorm2d, self).__init__()
+        super().__init__()
         self.register_parameter("weight", nn.Parameter(torch.ones(channels)))
         self.register_parameter("bias", nn.Parameter(torch.zeros(channels)))
         self.eps = eps
@@ -182,20 +181,19 @@ class GRN(nn.Module):
 def moment(x, dim=(2, 3), k=2):
     assert len(x.size()) == 4
     mean = torch.mean(x, dim=dim).unsqueeze(-1).unsqueeze(-1)
-    mk = (1 / (x.size(2) * x.size(3))) * torch.sum(torch.pow(x - mean, k), dim=dim)
-    return mk
+    return (1 / (x.size(2) * x.size(3))) * torch.sum(torch.pow(x - mean, k), dim=dim)
 
 
 class ESA(nn.Module):
     """
-    Modification of Enhanced Spatial Attention (ESA), which is proposed by 
+    Modification of Enhanced Spatial Attention (ESA), which is proposed by
     `Residual Feature Aggregation Network for Image Super-Resolution`
     Note: `conv_max` and `conv3_` are NOT used here, so the corresponding codes
     are deleted.
     """
 
     def __init__(self, esa_channels, n_feats, conv=nn.Conv2d):
-        super(ESA, self).__init__()
+        super().__init__()
         f = esa_channels
         self.conv1 = conv(n_feats, f, kernel_size=1)
         self.conv_f = conv(f, f, kernel_size=1)
@@ -221,7 +219,7 @@ class ESA(nn.Module):
 class LK_ESA(nn.Module):
 
     def __init__(self, esa_channels, n_feats, conv=nn.Conv2d, kernel_expand=1, bias=True):
-        super(LK_ESA, self).__init__()
+        super().__init__()
         f = esa_channels
         self.conv1 = conv(n_feats, f, kernel_size=1)
         self.conv_f = conv(f, f, kernel_size=1)
@@ -260,7 +258,7 @@ class LK_ESA(nn.Module):
 class LK_ESA_LN(nn.Module):
 
     def __init__(self, esa_channels, n_feats, conv=nn.Conv2d, kernel_expand=1, bias=True):
-        super(LK_ESA_LN, self).__init__()
+        super().__init__()
         f = esa_channels
         self.conv1 = conv(n_feats, f, kernel_size=1)
         self.conv_f = conv(f, f, kernel_size=1)
@@ -302,7 +300,7 @@ class LK_ESA_LN(nn.Module):
 class AdaGuidedFilter(nn.Module):
 
     def __init__(self, esa_channels, n_feats, conv=nn.Conv2d, kernel_expand=1, bias=True):
-        super(AdaGuidedFilter, self).__init__()
+        super().__init__()
 
         self.gap = nn.AdaptiveAvgPool2d(1)
         self.fc = nn.Conv2d(in_channels=n_feats, out_channels=1, kernel_size=1, padding=0, stride=1,
@@ -315,8 +313,7 @@ class AdaGuidedFilter(nn.Module):
         kernel_size = (2 * r + 1)
         weight = 1.0 / (kernel_size**2)
         box_kernel = weight * torch.ones((channel, 1, kernel_size, kernel_size), dtype=torch.float32, device=x.device)
-        output = F.conv2d(x, weight=box_kernel, stride=1, padding=r, groups=channel)
-        return output
+        return F.conv2d(x, weight=box_kernel, stride=1, padding=r, groups=channel)
 
     def forward(self, x):
 
@@ -343,7 +340,7 @@ class AdaGuidedFilter(nn.Module):
 class AdaConvGuidedFilter(nn.Module):
 
     def __init__(self, esa_channels, n_feats, conv=nn.Conv2d, kernel_expand=1, bias=True):
-        super(AdaConvGuidedFilter, self).__init__()
+        super().__init__()
         f = esa_channels
 
         self.conv_f = conv(f, f, kernel_size=1)
@@ -461,8 +458,7 @@ class Gated_Conv_FeedForward(nn.Module):
         x = self.project_in(x)
         x1, x2 = self.dwconv(x).chunk(2, dim=1)
         x = F.gelu(x1) * x2
-        x = self.project_out(x)
-        return x
+        return self.project_out(x)
 
 # MBConv
 
@@ -586,7 +582,7 @@ class Attention(nn.Module):
             self.register_buffer("rel_pos_indices", rel_pos_indices, persistent=False)
 
     def forward(self, x):
-        batch, height, width, window_height, window_width, _, device, h = *x.shape, x.device, self.heads
+        _batch, height, width, window_height, window_width, _, _device, h = *x.shape, x.device, self.heads
 
         # flatten
 
@@ -598,11 +594,11 @@ class Attention(nn.Module):
 
         # split heads
 
-        q, k, v = map(lambda t: rearrange(t, "b n (h d ) -> b h n d", h=h), (q, k, v))
+        q, k, v = (rearrange(t, "b n (h d ) -> b h n d", h=h) for t in (q, k, v))
 
         # scale
 
-        q = q * self.scale
+        q *= self.scale
 
         # sim
 
@@ -611,7 +607,7 @@ class Attention(nn.Module):
         # add positional bias
         if self.with_pe:
             bias = self.rel_pos_bias(self.rel_pos_indices)
-            sim = sim + rearrange(bias, "i j h -> h i j")
+            sim += rearrange(bias, "i j h -> h i j")
 
         # attention
 
@@ -662,18 +658,18 @@ class Block_Attention(nn.Module):
     def forward(self, x):
 
         # project for queries, keys, values
-        b, c, h, w = x.shape
+        _b, _c, h, w = x.shape
 
         qkv = self.qkv_dwconv(self.qkv(x))
         q, k, v = qkv.chunk(3, dim=1)
 
         # split heads
 
-        q, k, v = map(lambda t: rearrange(t, "b (h d) (x w1) (y w2) -> (b x y) h (w1 w2) d", h=self.heads, w1=self.ps, w2=self.ps), (q, k, v))
+        q, k, v = (rearrange(t, "b (h d) (x w1) (y w2) -> (b x y) h (w1 w2) d", h=self.heads, w1=self.ps, w2=self.ps) for t in (q, k, v))
 
         # scale
 
-        q = q * self.scale
+        q *= self.scale
 
         # sim
 
@@ -689,8 +685,7 @@ class Block_Attention(nn.Module):
         # merge heads
         out = rearrange(out, "(b x y) head (w1 w2) d -> b (head d) (x w1) (y w2)", x=h // self.ps, y=w // self.ps, head=self.heads, w1=self.ps, w2=self.ps)
 
-        out = self.to_out(out)
-        return out
+        return self.to_out(out)
 
 
 class Channel_Attention(nn.Module):
@@ -702,7 +697,7 @@ class Channel_Attention(nn.Module):
         dropout=0.,
         window_size=7
     ):
-        super(Channel_Attention, self).__init__()
+        super().__init__()
         self.heads = heads
 
         self.temperature = nn.Parameter(torch.ones(heads, 1, 1))
@@ -714,12 +709,12 @@ class Channel_Attention(nn.Module):
         self.project_out = nn.Conv2d(dim, dim, kernel_size=1, bias=bias)
 
     def forward(self, x):
-        b, c, h, w = x.shape
+        _b, _c, h, w = x.shape
 
         qkv = self.qkv_dwconv(self.qkv(x))
         qkv = qkv.chunk(3, dim=1)
 
-        q, k, v = map(lambda t: rearrange(t, "b (head d) (h ph) (w pw) -> b (h w) head d (ph pw)", ph=self.ps, pw=self.ps, head=self.heads), qkv)
+        q, k, v = (rearrange(t, "b (head d) (h ph) (w pw) -> b (h w) head d (ph pw)", ph=self.ps, pw=self.ps, head=self.heads) for t in qkv)
 
         q = F.normalize(q, dim=-1)
         k = F.normalize(k, dim=-1)
@@ -730,9 +725,7 @@ class Channel_Attention(nn.Module):
 
         out = rearrange(out, "b (h w) head d (ph pw) -> b (head d) (h ph) (w pw)", h=h // self.ps, w=w // self.ps, ph=self.ps, pw=self.ps, head=self.heads)
 
-        out = self.project_out(out)
-
-        return out
+        return self.project_out(out)
 
 
 class Channel_Attention_grid(nn.Module):
@@ -744,7 +737,7 @@ class Channel_Attention_grid(nn.Module):
         dropout=0.,
         window_size=7
     ):
-        super(Channel_Attention_grid, self).__init__()
+        super().__init__()
         self.heads = heads
 
         self.temperature = nn.Parameter(torch.ones(heads, 1, 1))
@@ -756,12 +749,12 @@ class Channel_Attention_grid(nn.Module):
         self.project_out = nn.Conv2d(dim, dim, kernel_size=1, bias=bias)
 
     def forward(self, x):
-        b, c, h, w = x.shape
+        _b, _c, h, w = x.shape
 
         qkv = self.qkv_dwconv(self.qkv(x))
         qkv = qkv.chunk(3, dim=1)
 
-        q, k, v = map(lambda t: rearrange(t, "b (head d) (h ph) (w pw) -> b (ph pw) head d (h w)", ph=self.ps, pw=self.ps, head=self.heads), qkv)
+        q, k, v = (rearrange(t, "b (head d) (h ph) (w pw) -> b (ph pw) head d (h w)", ph=self.ps, pw=self.ps, head=self.heads) for t in qkv)
 
         q = F.normalize(q, dim=-1)
         k = F.normalize(k, dim=-1)
@@ -772,14 +765,12 @@ class Channel_Attention_grid(nn.Module):
 
         out = rearrange(out, "b (ph pw) head d (h w) -> b (head d) (h ph) (w pw)", h=h // self.ps, w=w // self.ps, ph=self.ps, pw=self.ps, head=self.heads)
 
-        out = self.project_out(out)
-
-        return out
+        return self.project_out(out)
 
 
 class OSA_Block(nn.Module):
     def __init__(self, channel_num=64, bias=True, ffn_bias=True, window_size=8, with_pe=False, dropout=0.0):
-        super(OSA_Block, self).__init__()
+        super().__init__()
 
         w = window_size
 
@@ -816,13 +807,12 @@ class OSA_Block(nn.Module):
 
     def forward(self, x):
 
-        out = self.layer(x)
-        return out
+        return self.layer(x)
 
 
 class OSAG(nn.Module):
     def __init__(self, channel_num=64, bias=True, block_num=4, **kwargs):
-        super(OSAG, self).__init__()
+        super().__init__()
 
         ffn_bias = kwargs.get("ffn_bias", False)
         window_size = kwargs.get("window_size", 0)
@@ -839,13 +829,13 @@ class OSAG(nn.Module):
 
     def forward(self, x):
         out = self.residual_layer(x)
-        out = out + x
+        out += x
         return self.esa(out)
 
 
 class omnisr_net(nn.Module):
     def __init__(self, num_in_ch=3, num_out_ch=3, num_feat=64, **kwargs):
-        super(omnisr_net, self).__init__()
+        super().__init__()
 
         res_num = kwargs["res_num"]
         up_scale = kwargs["upsampling"]
@@ -878,8 +868,7 @@ class omnisr_net(nn.Module):
         mod_pad_h = (self.window_size - h % self.window_size) % self.window_size
         mod_pad_w = (self.window_size - w % self.window_size) % self.window_size
         # x = F.pad(x, (0, mod_pad_w, 0, mod_pad_h), 'reflect')
-        x = F.pad(x, (0, mod_pad_w, 0, mod_pad_h), "constant", 0)
-        return x
+        return F.pad(x, (0, mod_pad_w, 0, mod_pad_h), "constant", 0)
 
     def forward(self, x):
         H, W = x.shape[2:]
@@ -892,8 +881,7 @@ class omnisr_net(nn.Module):
         out = torch.add(self.output(out), residual)
         out = self.up(out)
 
-        out = out[:, :, :H * self.up_scale, :W * self.up_scale]
-        return out
+        return out[:, :, :H * self.up_scale, :W * self.up_scale]
 
 
 @ARCH_REGISTRY.register()

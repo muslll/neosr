@@ -38,7 +38,7 @@ class PerceptualLoss(nn.Module):
         criterion: str = "huber",
         **kwargs,
     ) -> None:
-        super(PerceptualLoss, self).__init__()
+        super().__init__()
         self.perceptual_weight = perceptual_weight
         self.layer_weights = layer_weights
 
@@ -59,7 +59,8 @@ class PerceptualLoss(nn.Module):
         elif self.criterion_type == "fro":
             self.criterion = None
         else:
-            raise NotImplementedError(f"{criterion} criterion not supported.")
+            msg = f"{criterion} criterion not supported."
+            raise NotImplementedError(msg)
 
     def forward(
         self, x: torch.Tensor, gt: torch.Tensor
@@ -80,7 +81,7 @@ class PerceptualLoss(nn.Module):
         # calculate perceptual loss
         if self.perceptual_weight > 0:
             percep_loss = 0
-            for k in x_features.keys():
+            for k in x_features:
                 if self.criterion_type == "fro":
                     # note: linalg.norm uses Frobenius norm by default
                     percep_loss += (

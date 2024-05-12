@@ -202,8 +202,8 @@ def apply_augment(
     img_gt,
     img_lq,
     scale=1,
-    augs=["none", "mixup", "cutmix", "resizemix", "cutblur"],
-    prob=[0.1, 0.3, 0.2, 0.7, 0.8],
+    augs=None,
+    prob=None,
     multi_prob=0.3,
 ):
     r"""Applies Augmentations.
@@ -221,6 +221,10 @@ def apply_augment(
 
     """
 
+    if prob is None:
+        prob = [0.1, 0.3, 0.2, 0.7, 0.8]
+    if augs is None:
+        augs = ["none", "mixup", "cutmix", "resizemix", "cutblur"]
     if len(augs) != len(prob):
         msg = "Length of 'augmentation' and aug_prob don't match!"
         raise ValueError(msg)

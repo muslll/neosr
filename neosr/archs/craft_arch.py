@@ -1,5 +1,6 @@
 
 import numbers
+import sys
 
 import torch
 import torch.nn.functional as F
@@ -21,9 +22,7 @@ def img2windows(img, H_sp, W_sp):
     """
     B, C, H, W = img.shape
     img_reshape = img.view(B, C, H // H_sp, H_sp, W // W_sp, W_sp)
-    img_perm = img_reshape.permute(0, 2, 4, 3, 5, 1).contiguous().reshape(-1, H_sp * W_sp, C)
-
-    return img_perm
+    return img_reshape.permute(0, 2, 4, 3, 5, 1).contiguous().reshape(-1, H_sp * W_sp, C)
 
 
 def windows2img(img_splits_hw, H_sp, W_sp, H, W):
@@ -34,8 +33,7 @@ def windows2img(img_splits_hw, H_sp, W_sp, H, W):
     B = int(img_splits_hw.shape[0] / (H * W / H_sp / W_sp))
 
     img = img_splits_hw.view(B, H // H_sp, W // W_sp, H_sp, W_sp, -1)
-    img = img.permute(0, 1, 3, 2, 4, 5).contiguous().view(B, H, W, -1)
-    return img
+    return img.permute(0, 1, 3, 2, 4, 5).contiguous().view(B, H, W, -1)
 
 
 class Mlp(nn.Module):
@@ -55,8 +53,7 @@ class Mlp(nn.Module):
         self.N = n
         x = self.fc1(x)
         x = self.act(x)
-        x = self.fc2(x)
-        return x
+        return self.fc2(x)
 
 
 class DynamicPosBias(nn.Module):
@@ -93,8 +90,8 @@ class DynamicPosBias(nn.Module):
         self.l, self.c = biases.shape
         if self.residual:
             pos = self.pos_proj(biases)  # 2Gh-1 * 2Gw-1, heads
-            pos = pos + self.pos1(pos)
-            pos = pos + self.pos2(pos)
+            pos += self.pos1(pos)
+            pos += self.pos2(pos)
             pos = self.pos3(pos)
         else:
             pos = self.pos3(self.pos2(self.pos1(self.pos_proj(biases))))
@@ -114,7 +111,9 @@ class Attention_regular(nn.Module):
         qk_scale (float | None): Override default qk scale of head_dim ** -0.5 if set
         position_bias (bool): The dynamic relative position bias. Default: True
     """
-    def __init__(self, dim, idx, flash_attn, split_size=[2, 4], dim_out=None, num_heads=6, qk_scale=None, position_bias=True):
+    def __init__(self, dim, idx, flash_attn, split_size=None, dim_out=None, num_heads=6, qk_scale=None, position_bias=True):
+        if split_size is None:
+            split_size = [2, 4]
         super().__init__()
         self.dim = dim
         self.dim_out = dim_out or dim
@@ -132,7 +131,7 @@ class Attention_regular(nn.Module):
             W_sp, H_sp = self.split_size[0], self.split_size[1]
         else:
             print("ERROR MODE", idx)
-            exit(0)
+            sys.exit(0)
         self.H_sp = H_sp
         self.W_sp = W_sp
 
@@ -140,11 +139,10 @@ class Attention_regular(nn.Module):
         self.softmax = nn.Softmax(dim=-1)
 
     def im2win(self, x, H, W):
-        B, N, C = x.shape
+        B, _N, C = x.shape
         x = x.transpose(-2, -1).contiguous().view(B, C, H, W)
         x = img2windows(x, self.H_sp, self.W_sp)
-        x = x.reshape(-1, self.H_sp * self.W_sp, self.num_heads, C // self.num_heads).permute(0, 2, 1, 3).contiguous()
-        return x
+        return x.reshape(-1, self.H_sp * self.W_sp, self.num_heads, C // self.num_heads).permute(0, 2, 1, 3).contiguous()
 
     def forward(self, qkv, H, W, mask=None, rpi=None, rpe_biases=None):
         """
@@ -168,7 +166,7 @@ class Attention_regular(nn.Module):
             x = F.scaled_dot_product_attention(q, k, v, attn_mask=mask, scale=self.scale)
             x = x.transpose(1, 2).reshape(-1, self.H_sp * self.W_sp, C)
         else:
-            q = q * self.scale
+            q *= self.scale
             attn = (q @ k.transpose(-2, -1))  # B head N C @ B head C N --> B head N N
 
             # calculate drpe
@@ -177,7 +175,7 @@ class Attention_regular(nn.Module):
             relative_position_bias = pos[rpi.view(-1)].view(
                 self.H_sp * self.W_sp, self.H_sp * self.W_sp, -1)
             relative_position_bias = relative_position_bias.permute(2, 0, 1).contiguous()
-            attn = attn + relative_position_bias.unsqueeze(0)
+            attn += relative_position_bias.unsqueeze(0)
 
             N = attn.shape[3]
 
@@ -192,9 +190,7 @@ class Attention_regular(nn.Module):
             x = x.transpose(1, 2).reshape(-1, self.H_sp * self.W_sp, C)  # B head N N @ B head N C
 
         # merge the window, window to image
-        x = windows2img(x, self.H_sp, self.W_sp, H, W)  # B H' W' C
-
-        return x
+        return windows2img(x, self.H_sp, self.W_sp, H, W)  # B H' W' C
 
 
 class SRWAB(nn.Module):
@@ -249,7 +245,7 @@ class SRWAB(nn.Module):
         h, w = x_size
         self.h, self.w = x_size
 
-        b, l, c = x.shape
+        b, _l, c = x.shape
         shortcut = x
         x = self.norm1(x)
         qkv = self.qkv(x).reshape(b, -1, 3, c).permute(2, 0, 1, 3)  # 3, B, HW, C
@@ -288,14 +284,13 @@ class SRWAB(nn.Module):
         lcm = self.get_v(v)
         lcm = lcm.permute(0, 2, 3, 1).contiguous().view(b, -1, c)
 
-        attened_x = attened_x + lcm
+        attened_x += lcm
 
         attened_x = self.proj(attened_x)
 
         # FFN
         x = shortcut + attened_x
-        x = x + self.mlp(self.norm2(x))
-        return x
+        return x + self.mlp(self.norm2(x))
 
 
 class HFERB(nn.Module):
@@ -324,15 +319,14 @@ class HFERB(nn.Module):
         hfe = self.act(self.fc(self.max_pool(x[:, self.mid_dim:, :, :])))
 
         x = torch.cat([lfe, hfe], dim=1)
-        x = short + self.last_fc(x)
-        return x
+        return short + self.last_fc(x)
 
 
 ##########################################################################
 # High-frequency prior query inter attention layer
 class Attention(nn.Module):
     def __init__(self, dim, num_heads, bias, train_size=(1, 3, 48, 48), base_size=(int(48 * 1.5), int(48 * 1.5))):
-        super(Attention, self).__init__()
+        super().__init__()
         self.num_heads = num_heads
         self.train_size = train_size
         self.base_size = base_size
@@ -357,9 +351,7 @@ class Attention(nn.Module):
 
         attn = (q @ k.transpose(-2, -1)) * self.temperature
         attn = self.softmax(attn)
-        out = (attn @ v)
-
-        return out
+        return (attn @ v)
 
     def forward(self, low, high):
         self.h, self.w = low.shape[2:]
@@ -368,8 +360,7 @@ class Attention(nn.Module):
         kv = self.kv_dwconv(self.kv(low))
         out = self._forward(q, kv)
         out = rearrange(out, "b head c (h w) -> b (head c) h w", head=self.num_heads, h=kv.shape[-2], w=kv.shape[-1])
-        out = self.project_out(out)
-        return out
+        return self.project_out(out)
 
 
 def to_3d(x):
@@ -382,7 +373,7 @@ def to_4d(x, h, w):
 
 class BiasFree_LayerNorm(nn.Module):
     def __init__(self, normalized_shape):
-        super(BiasFree_LayerNorm, self).__init__()
+        super().__init__()
         if isinstance(normalized_shape, numbers.Integral):
             normalized_shape = (normalized_shape,)
         normalized_shape = torch.Size(normalized_shape)
@@ -399,7 +390,7 @@ class BiasFree_LayerNorm(nn.Module):
 
 class WithBias_LayerNorm(nn.Module):
     def __init__(self, normalized_shape):
-        super(WithBias_LayerNorm, self).__init__()
+        super().__init__()
         if isinstance(normalized_shape, numbers.Integral):
             normalized_shape = (normalized_shape,)
         normalized_shape = torch.Size(normalized_shape)
@@ -418,7 +409,7 @@ class WithBias_LayerNorm(nn.Module):
 
 class LayerNorm(nn.Module):
     def __init__(self, dim, LayerNorm_type):
-        super(LayerNorm, self).__init__()
+        super().__init__()
         if LayerNorm_type == "BiasFree":
             self.body = BiasFree_LayerNorm(dim)
         else:
@@ -433,7 +424,7 @@ class LayerNorm(nn.Module):
 # Improved feed-forward network
 class FeedForward(nn.Module):
     def __init__(self, dim, ffn_expansion_factor, bias):
-        super(FeedForward, self).__init__()
+        super().__init__()
 
         hidden_features = int(dim * ffn_expansion_factor)
         self.hid_fea = hidden_features
@@ -450,8 +441,7 @@ class FeedForward(nn.Module):
         x = self.project_in(x)
         x1, x2 = self.dwconv(x).chunk(2, dim=1)
         x = F.gelu(x1) * x2
-        x = self.project_out(x)
-        return x
+        return self.project_out(x)
 
 
 ##########################################################################
@@ -466,7 +456,7 @@ class HFB(nn.Module):
         LayerNorm_type (float): Ratio of mlp hidden dim to embedding dim.
     """
     def __init__(self, dim, num_heads, ffn_expansion_factor, bias, LayerNorm_type):
-        super(HFB, self).__init__()
+        super().__init__()
 
         self.norm1 = LayerNorm(dim, LayerNorm_type)
         self.attn = Attention(dim, num_heads, bias)
@@ -477,9 +467,7 @@ class HFB(nn.Module):
     def forward(self, low, high):
         self.h, self.w = low.shape[2:]
         x = low + self.attn(self.norm1(low), high)
-        x = x + self.ffn(self.norm2(x))
-
-        return x
+        return x + self.ffn(self.norm2(x))
 
 
 class CRFB(nn.Module):
@@ -579,7 +567,7 @@ class RCRFG(nn.Module):
                  split_size_1=2,
                  norm_layer=nn.LayerNorm
                  ):
-        super(RCRFG, self).__init__()
+        super().__init__()
 
         self.dim = dim
 
@@ -618,9 +606,8 @@ class UpsampleOneStep(nn.Sequential):
         self.input_resolution = input_resolution
         self.scale = scale
         m = []
-        m.append(nn.Conv2d(num_feat, (scale ** 2) * num_out_ch, 3, 1, 1))
-        m.append(nn.PixelShuffle(scale))
-        super(UpsampleOneStep, self).__init__(*m)
+        m.extend((nn.Conv2d(num_feat, scale ** 2 * num_out_ch, 3, 1, 1), nn.PixelShuffle(scale)))
+        super().__init__(*m)
 
 
 @ARCH_REGISTRY.register()
@@ -646,8 +633,8 @@ class craft(nn.Module):
                  img_size=64,
                  window_size=16,
                  embed_dim=48,
-                 depths=[2, 2, 2, 2],
-                 num_heads=[6, 6, 6, 6],
+                 depths=None,
+                 num_heads=None,
                  split_size_0=4,
                  split_size_1=16,
                  mlp_ratio=2.,
@@ -659,7 +646,11 @@ class craft(nn.Module):
                  img_range=1.,
                  resi_connection="1conv",
                  **kwargs):
-        super(craft, self).__init__()
+        if num_heads is None:
+            num_heads = [6, 6, 6, 6]
+        if depths is None:
+            depths = [2, 2, 2, 2]
+        super().__init__()
 
         self.split_size = (split_size_0, split_size_1)
         self.window_size = window_size
@@ -787,9 +778,7 @@ class craft(nn.Module):
         for layer in self.layers:
             x = layer(x, x_size, params)
 
-        x = self.norm(x)
-
-        return x
+        return self.norm(x)
 
     def forward(self, x):
         _, _, h_old, w_old = x.size()

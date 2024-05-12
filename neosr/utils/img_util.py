@@ -68,8 +68,9 @@ def tensor2img(tensor, rgb2bgr=True, out_type=np.uint8, min_max=(0, 1)):
         shape (H x W). The channel order is BGR.
     """
     if not (torch.is_tensor(tensor) or (isinstance(tensor, list) and all(torch.is_tensor(t) for t in tensor))):
+        msg = f"tensor or list of tensors expected, got {type(tensor)}"
         raise TypeError(
-            f"tensor or list of tensors expected, got {type(tensor)}")
+            msg)
 
     if torch.is_tensor(tensor):
         tensor = [tensor]
@@ -95,8 +96,9 @@ def tensor2img(tensor, rgb2bgr=True, out_type=np.uint8, min_max=(0, 1)):
         elif n_dim == 2:
             img_np = _tensor.numpy()
         else:
+            msg = f"Only support 4D, 3D or 2D tensor. But received with dimension: {n_dim}"
             raise TypeError(
-                f"Only support 4D, 3D or 2D tensor. But received with dimension: {n_dim}")
+                msg)
         if out_type == np.uint8:
             # Unlike MATLAB, numpy.unit8() WILL NOT round by default.
             img_np = (img_np * 255.0).round()
@@ -165,7 +167,8 @@ def imwrite(img, file_path, params=None, auto_mkdir=True):
     try:
         cv2.imencode(os.path.splitext(file_path)[1], img, params)[1].tofile(file_path)
     except Exception:
-        raise OSError("Failed to write images.")
+        msg = "Failed to write images."
+        raise OSError(msg)
 
 
 def crop_border(imgs, crop_border):

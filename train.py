@@ -99,7 +99,8 @@ def create_train_val_dataloader(opt, logger):
             )
             val_loaders.append(val_loader)
         else:
-            raise ValueError(f"Dataset phase {phase} is not recognized.")
+            msg = f"Dataset phase {phase} is not recognized."
+            raise ValueError(msg)
 
     return train_loader, train_sampler, val_loaders, total_epochs, total_iters
 
