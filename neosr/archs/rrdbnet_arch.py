@@ -4,7 +4,8 @@ from torch import nn
 from torch.nn import functional as F
 
 from neosr.utils.registry import ARCH_REGISTRY
-from .arch_util import default_init_weights, make_layer, pixel_unshuffle, net_opt
+
+from .arch_util import default_init_weights, make_layer, net_opt, pixel_unshuffle
 
 upscale, training = net_opt()
 
@@ -121,8 +122,8 @@ class esrgan(nn.Module):
         feat = feat + body_feat
         # upsample
         feat = self.lrelu(self.conv_up1(F.interpolate(
-            feat, scale_factor=2, mode='nearest')))
+            feat, scale_factor=2, mode="nearest")))
         feat = self.lrelu(self.conv_up2(F.interpolate(
-            feat, scale_factor=2, mode='nearest')))
+            feat, scale_factor=2, mode="nearest")))
         out = self.conv_last(self.lrelu(self.conv_hr(feat)))
         return out

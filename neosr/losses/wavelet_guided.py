@@ -40,49 +40,46 @@ def mypad(x, pad, mode="constant", value=0):
             xe = reflect(np.arange(-m1, l + m2, dtype="int32"), -0.5, l - 0.5)
             return x[:, :, xe]
         # horizontal only
-        elif pad[2] == 0 and pad[3] == 0:
+        if pad[2] == 0 and pad[3] == 0:
             m1, m2 = pad[0], pad[1]
             l = x.shape[-1]
             xe = reflect(np.arange(-m1, l + m2, dtype="int32"), -0.5, l - 0.5)
             return x[:, :, :, xe]
         # Both
-        else:
-            m1, m2 = pad[0], pad[1]
-            l1 = x.shape[-1]
-            xe_row = reflect(np.arange(-m1, l1 + m2, dtype="int32"), -0.5, l1 - 0.5)
-            m1, m2 = pad[2], pad[3]
-            l2 = x.shape[-2]
-            xe_col = reflect(np.arange(-m1, l2 + m2, dtype="int32"), -0.5, l2 - 0.5)
-            i = np.outer(xe_col, np.ones(xe_row.shape[0]))
-            j = np.outer(np.ones(xe_col.shape[0]), xe_row)
-            return x[:, :, i, j]
-    elif mode == "periodic":
+        m1, m2 = pad[0], pad[1]
+        l1 = x.shape[-1]
+        xe_row = reflect(np.arange(-m1, l1 + m2, dtype="int32"), -0.5, l1 - 0.5)
+        m1, m2 = pad[2], pad[3]
+        l2 = x.shape[-2]
+        xe_col = reflect(np.arange(-m1, l2 + m2, dtype="int32"), -0.5, l2 - 0.5)
+        i = np.outer(xe_col, np.ones(xe_row.shape[0]))
+        j = np.outer(np.ones(xe_col.shape[0]), xe_row)
+        return x[:, :, i, j]
+    if mode == "periodic":
         # Vertical only
         if pad[0] == 0 and pad[1] == 0:
             xe = np.arange(x.shape[-2])
             xe = np.pad(xe, (pad[2], pad[3]), mode="wrap")
             return x[:, :, xe]
         # Horizontal only
-        elif pad[2] == 0 and pad[3] == 0:
+        if pad[2] == 0 and pad[3] == 0:
             xe = np.arange(x.shape[-1])
             xe = np.pad(xe, (pad[0], pad[1]), mode="wrap")
             return x[:, :, :, xe]
         # Both
-        else:
-            xe_col = np.arange(x.shape[-2])
-            xe_col = np.pad(xe_col, (pad[2], pad[3]), mode="wrap")
-            xe_row = np.arange(x.shape[-1])
-            xe_row = np.pad(xe_row, (pad[0], pad[1]), mode="wrap")
-            i = np.outer(xe_col, np.ones(xe_row.shape[0]))
-            j = np.outer(np.ones(xe_col.shape[0]), xe_row)
-            return x[:, :, i, j]
+        xe_col = np.arange(x.shape[-2])
+        xe_col = np.pad(xe_col, (pad[2], pad[3]), mode="wrap")
+        xe_row = np.arange(x.shape[-1])
+        xe_row = np.pad(xe_row, (pad[0], pad[1]), mode="wrap")
+        i = np.outer(xe_col, np.ones(xe_row.shape[0]))
+        j = np.outer(np.ones(xe_col.shape[0]), xe_row)
+        return x[:, :, i, j]
 
-    elif mode == "constant" or mode == "reflect" or mode == "replicate":
+    if mode == "constant" or mode == "reflect" or mode == "replicate":
         return F.pad(x, pad, mode, value)
-    elif mode == "zero":
+    if mode == "zero":
         return F.pad(x, pad)
-    else:
-        raise ValueError(f"Unkown pad type: {mode}")
+    raise ValueError(f"Unkown pad type: {mode}")
 
 
 def prep_filt_afb2d(h0_col, h1_col, h0_row=None, h1_row=None, device=None):
@@ -373,13 +370,12 @@ class SWTForward(nn.Module):
         if isinstance(wave, pywt.Wavelet):
             h0_col, h1_col = wave.dec_lo, wave.dec_hi
             h0_row, h1_row = h0_col, h1_col
-        else:
-            if len(wave) == 2:
-                h0_col, h1_col = wave[0], wave[1]
-                h0_row, h1_row = h0_col, h1_col
-            elif len(wave) == 4:
-                h0_col, h1_col = wave[0], wave[1]
-                h0_row, h1_row = wave[2], wave[3]
+        elif len(wave) == 2:
+            h0_col, h1_col = wave[0], wave[1]
+            h0_row, h1_row = h0_col, h1_col
+        elif len(wave) == 4:
+            h0_col, h1_col = wave[0], wave[1]
+            h0_row, h1_row = wave[2], wave[3]
 
         # Prepare the filters
         filts = prep_filt_afb2d(h0_col, h1_col, h0_row, h1_row)
@@ -429,13 +425,12 @@ class SWTInverse(nn.Module):
         if isinstance(wave, pywt.Wavelet):
             g0_col, g1_col = wave.rec_lo, wave.rec_hi
             g0_row, g1_row = g0_col, g1_col
-        else:
-            if len(wave) == 2:
-                g0_col, g1_col = wave[0], wave[1]
-                g0_row, g1_row = g0_col, g1_col
-            elif len(wave) == 4:
-                g0_col, g1_col = wave[0], wave[1]
-                g0_row, g1_row = wave[2], wave[3]
+        elif len(wave) == 2:
+            g0_col, g1_col = wave[0], wave[1]
+            g0_row, g1_row = g0_col, g1_col
+        elif len(wave) == 4:
+            g0_col, g1_col = wave[0], wave[1]
+            g0_row, g1_row = wave[2], wave[3]
         # Prepare the filters
 
         filts = prep_filt_sfb2d(g0_col, g1_col, g0_row, g1_row)

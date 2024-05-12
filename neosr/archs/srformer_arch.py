@@ -2,14 +2,14 @@
 import math
 
 import torch
-import torch.utils.checkpoint as checkpoint
 import torch.nn.functional as F
-
 from torch import nn
 from torch.nn.init import trunc_normal_
+from torch.utils import checkpoint
 
 from neosr.utils.registry import ARCH_REGISTRY
-from .arch_util import to_2tuple, DropPath, net_opt
+
+from .arch_util import DropPath, net_opt, to_2tuple
 
 upscale, training = net_opt()
 
@@ -18,21 +18,24 @@ class emptyModule(nn.Module):
     def __init__(self):
         super().__init__()
 
-    def forward(self,x):
+    def forward(self, x):
         return x
 
+
 class dwconv(nn.Module):
-    def __init__(self,hidden_features):
+    def __init__(self, hidden_features):
         super(dwconv, self).__init__()
         self.depthwise_conv = nn.Sequential(
             nn.Conv2d(hidden_features, hidden_features, kernel_size=5, stride=1, padding=2, dilation=1,
                       groups=hidden_features), nn.GELU())
         self.hidden_features = hidden_features
-    def forward(self,x,x_size):
+
+    def forward(self, x, x_size):
         x = x.transpose(1, 2).view(x.shape[0], self.hidden_features, x_size[0], x_size[1]).contiguous()  # b Ph*Pw c
         x = self.depthwise_conv(x)
         x = x.flatten(2).transpose(1, 2).contiguous()
         return x
+
 
 class ConvFFN(nn.Module):
 
@@ -48,17 +51,17 @@ class ConvFFN(nn.Module):
         self.fc2 = nn.Linear(hidden_features, out_features)
         self.drop = nn.Dropout(drop)
 
-
-    def forward(self, x,x_size):
+    def forward(self, x, x_size):
         x = self.fc1(x)
         x = self.act(x)
         x = self.before_add(x)
-        x = x + self.dwconv(x,x_size)
+        x = x + self.dwconv(x, x_size)
         x = self.after_add(x)
         x = self.drop(x)
         x = self.fc2(x)
         x = self.drop(x)
         return x
+
 
 def window_partition(x, window_size):
     """
@@ -109,8 +112,8 @@ class PSA(nn.Module):
 
         super().__init__()
         self.dim = dim
-        self.window_size = window_size# Wh, Ww
-        self.permuted_window_size = (window_size[0] // 2,window_size[1] // 2)
+        self.window_size = window_size  # Wh, Ww
+        self.permuted_window_size = (window_size[0] // 2, window_size[1] // 2)
         self.num_heads = num_heads
         head_dim = dim // num_heads
         self.scale = qk_scale or head_dim**-0.5
@@ -130,13 +133,12 @@ class PSA(nn.Module):
         relative_coords[:, :, 1] += self.permuted_window_size[1] - 1
         relative_coords[:, :, 0] *= 2 * self.permuted_window_size[1] - 1
         aligned_relative_position_index = relative_coords.sum(-1)  # Wh*Ww, Wh*Ww
-        aligned_relative_position_index = aligned_relative_position_index.reshape\
-            (self.permuted_window_size[0],self.permuted_window_size[1],1,1,self.permuted_window_size[0]*self.permuted_window_size[1]).repeat(1,1,2,2,1)\
-            .permute(0,2,1,3,4).reshape(4*self.permuted_window_size[0]*self.permuted_window_size[1],self.permuted_window_size[0]*self.permuted_window_size[1]) #  FN*FN,WN*WN
-        self.register_buffer('aligned_relative_position_index', aligned_relative_position_index)
+        aligned_relative_position_index = aligned_relative_position_index.reshape(self.permuted_window_size[0], self.permuted_window_size[1], 1, 1, self.permuted_window_size[0] * self.permuted_window_size[1]).repeat(1, 1, 2, 2, 1)\
+            .permute(0, 2, 1, 3, 4).reshape(4 * self.permuted_window_size[0] * self.permuted_window_size[1], self.permuted_window_size[0] * self.permuted_window_size[1])  # FN*FN,WN*WN
+        self.register_buffer("aligned_relative_position_index", aligned_relative_position_index)
         # compresses the channel dimension of KV
-        self.kv = nn.Linear(dim, dim//2, bias=qkv_bias)
-        self.q = nn.Linear(dim,dim,bias=qkv_bias)
+        self.kv = nn.Linear(dim, dim // 2, bias=qkv_bias)
+        self.q = nn.Linear(dim, dim, bias=qkv_bias)
         self.attn_drop = nn.Dropout(attn_drop)
         self.proj = nn.Linear(dim, dim)
         self.proj_drop = nn.Dropout(proj_drop)
@@ -152,7 +154,7 @@ class PSA(nn.Module):
         """
         b_, n, c = x.shape
         # compress the channel dimension of KV :(num_windows*b, num_heads, n//4, c//num_heads)
-        kv = self.kv(x).reshape(b_,self.permuted_window_size[0],2,self.permuted_window_size[1],2,2,c//4).permute(0,1,3,5,2,4,6).reshape(b_, n//4, 2, self.num_heads, c // self.num_heads).permute(2, 0, 3, 1, 4)
+        kv = self.kv(x).reshape(b_, self.permuted_window_size[0], 2, self.permuted_window_size[1], 2, 2, c // 4).permute(0, 1, 3, 5, 2, 4, 6).reshape(b_, n // 4, 2, self.num_heads, c // self.num_heads).permute(2, 0, 3, 1, 4)
         k, v = kv[0], kv[1]
         # keep the channel dimension of Q: (num_windows*b, num_heads, n, c//num_heads)
         q = self.q(x).reshape(b_, n, 1, self.num_heads, c // self.num_heads).permute(2, 0, 3, 1, 4)[0]
@@ -166,8 +168,8 @@ class PSA(nn.Module):
 
         if mask is not None:
             nw = mask.shape[0]
-            attn = attn.view(b_ // nw, nw, self.num_heads, n, n//4) + mask.unsqueeze(1).unsqueeze(0)
-            attn = attn.view(-1, self.num_heads, n, n//4)
+            attn = attn.view(b_ // nw, nw, self.num_heads, n, n // 4) + mask.unsqueeze(1).unsqueeze(0)
+            attn = attn.view(-1, self.num_heads, n, n // 4)
             attn = self.softmax(attn)
         else:
             attn = self.softmax(attn)
@@ -180,7 +182,7 @@ class PSA(nn.Module):
         return x
 
     def extra_repr(self) -> str:
-        return f'dim={self.dim}, window_size={self.permuted_window_size}, num_heads={self.num_heads}'
+        return f"dim={self.dim}, window_size={self.permuted_window_size}, num_heads={self.num_heads}"
 
     def flops(self, n):
         # calculate flops for 1 window with token length of n
@@ -188,9 +190,9 @@ class PSA(nn.Module):
         # qkv = self.qkv(x)
         flops += n * self.dim * 1.5 * self.dim
         # attn = (q @ k.transpose(-2, -1))
-        flops += self.num_heads * n * (self.dim // self.num_heads) * n/4
+        flops += self.num_heads * n * (self.dim // self.num_heads) * n / 4
         #  x = (attn @ v)
-        flops += self.num_heads * n * n/4 * (self.dim // self.num_heads)
+        flops += self.num_heads * n * n / 4 * (self.dim // self.num_heads)
         # x = self.proj(x)
         flops += n * self.dim * self.dim
         return flops
@@ -234,14 +236,14 @@ class PSA_Block(nn.Module):
         self.input_resolution = input_resolution
         self.num_heads = num_heads
         self.window_size = window_size
-        self.permuted_window_size = window_size//2
+        self.permuted_window_size = window_size // 2
         self.shift_size = shift_size
         self.mlp_ratio = mlp_ratio
         if min(self.input_resolution) <= self.window_size:
             # if window size is larger than input resolution, we don't partition windows
             self.shift_size = 0
             self.window_size = min(self.input_resolution)
-        assert 0 <= self.shift_size < self.window_size, 'shift_size must in 0-window_size'
+        assert 0 <= self.shift_size < self.window_size, "shift_size must in 0-window_size"
         self.norm1 = norm_layer(dim)
 
         self.attn = PSA(
@@ -263,7 +265,7 @@ class PSA_Block(nn.Module):
             attn_mask = self.calculate_mask(self.input_resolution)
         else:
             attn_mask = None
-        self.register_buffer('attn_mask', attn_mask)
+        self.register_buffer("attn_mask", attn_mask)
 
         # emptyModule for Power Spectrum Based Evaluation
         self.after_norm1 = emptyModule()
@@ -307,7 +309,7 @@ class PSA_Block(nn.Module):
         permuted_windows = permuted_windows.view(-1, self.permuted_window_size * self.permuted_window_size)
         # calculate attention mask
         attn_mask = mask_windows.unsqueeze(2) - permuted_windows.unsqueeze(1)
-        attn_mask = attn_mask.masked_fill(attn_mask != 0, float(-100.0)).masked_fill(attn_mask == 0, float(0.0))
+        attn_mask = attn_mask.masked_fill(attn_mask != 0, -100.0).masked_fill(attn_mask == 0, 0.0)
 
         return attn_mask
 
@@ -352,13 +354,13 @@ class PSA_Block(nn.Module):
         # FFN
         x = shortcut + self.drop_path(x)
         x = self.residual_after_attention(x)
-        x = self.residual_after_mlp(x + self.drop_path(self.after_mlp(self.mlp(self.after_norm2(self.norm2(x)),x_size))))
+        x = self.residual_after_mlp(x + self.drop_path(self.after_mlp(self.mlp(self.after_norm2(self.norm2(x)), x_size))))
 
         return x
 
     def extra_repr(self) -> str:
-        return (f'dim={self.dim}, input_resolution={self.input_resolution}, num_heads={self.num_heads}, '
-                f'window_size={self.window_size}, shift_size={self.shift_size}, mlp_ratio={self.mlp_ratio}')
+        return (f"dim={self.dim}, input_resolution={self.input_resolution}, num_heads={self.num_heads}, "
+                f"window_size={self.window_size}, shift_size={self.shift_size}, mlp_ratio={self.mlp_ratio}")
 
     def flops(self):
         flops = 0
@@ -398,8 +400,8 @@ class PatchMerging(nn.Module):
         """
         h, w = self.input_resolution
         b, seq_len, c = x.shape
-        assert seq_len == h * w, 'input feature has wrong size'
-        assert h % 2 == 0 and w % 2 == 0, f'x size ({h}*{w}) are not even.'
+        assert seq_len == h * w, "input feature has wrong size"
+        assert h % 2 == 0 and w % 2 == 0, f"x size ({h}*{w}) are not even."
 
         x = x.view(b, h, w, c)
 
@@ -416,7 +418,7 @@ class PatchMerging(nn.Module):
         return x
 
     def extra_repr(self) -> str:
-        return f'input_resolution={self.input_resolution}, dim={self.dim}'
+        return f"input_resolution={self.input_resolution}, dim={self.dim}"
 
     def flops(self):
         h, w = self.input_resolution
@@ -501,7 +503,7 @@ class BasicLayer(nn.Module):
         return x
 
     def extra_repr(self) -> str:
-        return f'dim={self.dim}, input_resolution={self.input_resolution}, depth={self.depth}'
+        return f"dim={self.dim}, input_resolution={self.input_resolution}, depth={self.depth}"
 
     def flops(self):
         flops = 0
@@ -552,7 +554,7 @@ class PSA_Group(nn.Module):
                  use_checkpoint=False,
                  img_size=224,
                  patch_size=4,
-                 resi_connection='1conv'):
+                 resi_connection="1conv"):
         super(PSA_Group, self).__init__()
 
         self.dim = dim
@@ -574,9 +576,9 @@ class PSA_Group(nn.Module):
             downsample=downsample,
             use_checkpoint=use_checkpoint)
 
-        if resi_connection == '1conv':
+        if resi_connection == "1conv":
             self.conv = nn.Conv2d(dim, dim, 3, 1, 1)
-        elif resi_connection == '3conv':
+        elif resi_connection == "3conv":
             # to save parameters and memory
             self.conv = nn.Sequential(
                 nn.Conv2d(dim, dim // 4, 3, 1, 1), nn.LeakyReLU(negative_slope=0.2, inplace=True),
@@ -618,10 +620,10 @@ class PatchEmbed(nn.Module):
         norm_layer (nn.Module, optional): Normalization layer. Default: None
     """
 
-    def __init__(self, img_size=224,window_size =22,patch_size=4, in_chans=3, embed_dim=96, norm_layer=None):
+    def __init__(self, img_size=224, window_size=22, patch_size=4, in_chans=3, embed_dim=96, norm_layer=None):
         super().__init__()
         if img_size % window_size != 0:
-            img_size = img_size+(window_size -img_size%window_size)
+            img_size = img_size + (window_size - img_size % window_size)
         img_size = to_2tuple(img_size)
         patch_size = to_2tuple(patch_size)
         patches_resolution = [img_size[0] // patch_size[0], img_size[1] // patch_size[1]]
@@ -663,10 +665,10 @@ class PatchUnEmbed(nn.Module):
         norm_layer (nn.Module, optional): Normalization layer. Default: None
     """
 
-    def __init__(self, img_size=224, window_size =24,patch_size=4, in_chans=3, embed_dim=96, norm_layer=None):
+    def __init__(self, img_size=224, window_size=24, patch_size=4, in_chans=3, embed_dim=96, norm_layer=None):
         super().__init__()
         if img_size % window_size != 0:
-            img_size = img_size+(window_size -img_size%window_size)
+            img_size = img_size + (window_size - img_size % window_size)
         img_size = to_2tuple(img_size)
         patch_size = to_2tuple(patch_size)
         patches_resolution = [img_size[0] // patch_size[0], img_size[1] // patch_size[1]]
@@ -697,14 +699,14 @@ class Upsample(nn.Sequential):
     def __init__(self, scale, num_feat):
         m = []
         if (scale & (scale - 1)) == 0:  # scale = 2^n
-            for _ in range(int(math.log(scale, 2))):
+            for _ in range(int(math.log2(scale))):
                 m.append(nn.Conv2d(num_feat, 4 * num_feat, 3, 1, 1))
                 m.append(nn.PixelShuffle(2))
         elif scale == 3:
             m.append(nn.Conv2d(num_feat, 9 * num_feat, 3, 1, 1))
             m.append(nn.PixelShuffle(3))
         else:
-            raise ValueError(f'scale {scale} is not supported. Supported scales: 2^n and 3.')
+            raise ValueError(f"scale {scale} is not supported. Supported scales: 2^n and 3.")
         super(Upsample, self).__init__(*m)
 
 
@@ -780,8 +782,8 @@ class srformer(nn.Module):
                  use_checkpoint=False,
                  upscale=upscale,
                  img_range=1.,
-                 upsampler='pixelshuffledirect',
-                 resi_connection='1conv',
+                 upsampler="pixelshuffledirect",
+                 resi_connection="1conv",
                  **kwargs):
         super(srformer, self).__init__()
         num_in_ch = in_chans
@@ -863,9 +865,9 @@ class srformer(nn.Module):
         self.norm = norm_layer(self.num_features)
 
         # build the last conv layer in deep feature extraction
-        if resi_connection == '1conv':
+        if resi_connection == "1conv":
             self.conv_after_body = nn.Conv2d(embed_dim, embed_dim, 3, 1, 1)
-        elif resi_connection == '3conv':
+        elif resi_connection == "3conv":
             # to save parameters and memory
             self.conv_after_body = nn.Sequential(
                 nn.Conv2d(embed_dim, embed_dim // 4, 3, 1, 1), nn.LeakyReLU(negative_slope=0.2, inplace=True),
@@ -873,19 +875,19 @@ class srformer(nn.Module):
                 nn.Conv2d(embed_dim // 4, embed_dim, 3, 1, 1))
 
         # ------------------------- 3, high quality image reconstruction ------------------------- #
-        if self.upsampler == 'pixelshuffle':
+        if self.upsampler == "pixelshuffle":
             # for classical SR
             self.conv_before_upsample = nn.Sequential(
                 nn.Conv2d(embed_dim, num_feat, 3, 1, 1), nn.LeakyReLU(inplace=True))
             self.upsample = Upsample(upscale, num_feat)
             self.conv_last = nn.Conv2d(num_feat, num_out_ch, 3, 1, 1)
-        elif self.upsampler == 'pixelshuffledirect':
+        elif self.upsampler == "pixelshuffledirect":
             # for lightweight SR (to save parameters)
             self.upsample = UpsampleOneStep(upscale, embed_dim, num_out_ch,
                                             (patches_resolution[0], patches_resolution[1]))
-        elif self.upsampler == 'nearest+conv':
+        elif self.upsampler == "nearest+conv":
             # for real-world SR (less artifacts)
-            assert self.upscale == 4, 'only support x4 now.'
+            assert self.upscale == 4, "only support x4 now."
             self.conv_before_upsample = nn.Sequential(
                 nn.Conv2d(embed_dim, num_feat, 3, 1, 1), nn.LeakyReLU(inplace=True))
             self.conv_up1 = nn.Conv2d(num_feat, num_feat, 3, 1, 1)
@@ -910,11 +912,11 @@ class srformer(nn.Module):
 
     @torch.jit.ignore
     def no_weight_decay(self):
-        return {'absolute_pos_embed'}
+        return {"absolute_pos_embed"}
 
     @torch.jit.ignore
     def no_weight_decay_keywords(self):
-        return {'relative_position_bias_table'}
+        return {"relative_position_bias_table"}
 
     def forward_features(self, x):
         x_size = (x.shape[2], x.shape[3])
@@ -935,7 +937,7 @@ class srformer(nn.Module):
         _, _, h, w = x.size()
         mod_pad_h = (self.window_size - h % self.window_size) % self.window_size
         mod_pad_w = (self.window_size - w % self.window_size) % self.window_size
-        x = F.pad(x, (0, mod_pad_w, 0, mod_pad_h), 'reflect')
+        x = F.pad(x, (0, mod_pad_w, 0, mod_pad_h), "reflect")
         return x
 
     def forward(self, x):
@@ -944,24 +946,24 @@ class srformer(nn.Module):
         self.mean = self.mean.type_as(x)
         x = (x - self.mean) * self.img_range
 
-        if self.upsampler == 'pixelshuffle':
+        if self.upsampler == "pixelshuffle":
             # for classical SR
             x = self.conv_first(x)
             x = self.conv_after_body(self.forward_features(x)) + x
             x = self.conv_before_upsample(x)
             x = self.conv_last(self.upsample(x))
-        elif self.upsampler == 'pixelshuffledirect':
+        elif self.upsampler == "pixelshuffledirect":
             # for lightweight SR
             x = self.conv_first(x)
             x = self.conv_after_body(self.forward_features(x)) + x
             x = self.upsample(x)
-        elif self.upsampler == 'nearest+conv':
+        elif self.upsampler == "nearest+conv":
             # for real-world SR
             x = self.conv_first(x)
             x = self.conv_after_body(self.forward_features(x)) + x
             x = self.conv_before_upsample(x)
-            x = self.lrelu(self.conv_up1(torch.nn.functional.interpolate(x, scale_factor=2, mode='nearest')))
-            x = self.lrelu(self.conv_up2(torch.nn.functional.interpolate(x, scale_factor=2, mode='nearest')))
+            x = self.lrelu(self.conv_up1(torch.nn.functional.interpolate(x, scale_factor=2, mode="nearest")))
+            x = self.lrelu(self.conv_up2(torch.nn.functional.interpolate(x, scale_factor=2, mode="nearest")))
             x = self.conv_last(self.lrelu(self.conv_hr(x)))
         else:
             # for image denoising and JPEG compression artifact reduction
@@ -996,10 +998,11 @@ def srformer_light(**kwargs):
             embed_dim=60,
             num_heads=[6, 6, 6, 6],
             mlp_ratio=2,
-            upsampler='pixelshuffledirect',
-            resi_connection='1conv',
+            upsampler="pixelshuffledirect",
+            resi_connection="1conv",
             **kwargs
             )
+
 
 @ARCH_REGISTRY.register()
 def srformer_medium(**kwargs):
@@ -1012,8 +1015,7 @@ def srformer_medium(**kwargs):
             embed_dim=180,
             num_heads=[6, 6, 6, 6, 6, 6],
             mlp_ratio=2,
-            upsampler='pixelshuffle',
-            resi_connection='1conv',
+            upsampler="pixelshuffle",
+            resi_connection="1conv",
             **kwargs
             )
-

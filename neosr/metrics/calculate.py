@@ -2,14 +2,14 @@ import cv2
 import numpy as np
 import torch
 
-from neosr.metrics.metric_util import reorder_image, to_y_channel
 from neosr.losses.dists_loss import dists
+from neosr.metrics.metric_util import reorder_image, to_y_channel
 from neosr.utils.img_util import img2tensor
 from neosr.utils.registry import METRIC_REGISTRY
 
 
 @METRIC_REGISTRY.register()
-def calculate_psnr(img, img2, crop_border=4, input_order='HWC', test_y_channel=False, **kwargs):
+def calculate_psnr(img, img2, crop_border=4, input_order="HWC", test_y_channel=False, **kwargs):
     """Calculate PSNR (Peak Signal-to-Noise Ratio).
 
     Reference: https://en.wikipedia.org/wiki/Peak_signal-to-noise_ratio
@@ -26,8 +26,8 @@ def calculate_psnr(img, img2, crop_border=4, input_order='HWC', test_y_channel=F
     """
 
     assert img.shape == img2.shape, (
-        f'Image shapes are different: {img.shape}, {img2.shape}.')
-    if input_order not in ['HWC', 'CHW']:
+        f"Image shapes are different: {img.shape}, {img2.shape}.")
+    if input_order not in ["HWC", "CHW"]:
         raise ValueError(
             f'Wrong input_order {input_order}. Supported input_orders are "HWC" and "CHW"')
     img = reorder_image(img, input_order=input_order)
@@ -46,12 +46,12 @@ def calculate_psnr(img, img2, crop_border=4, input_order='HWC', test_y_channel=F
 
     mse = np.mean((img - img2)**2)
     if mse == 0:
-        return float('inf')
+        return float("inf")
     return 10. * np.log10(255. * 255. / mse)
 
 
 @METRIC_REGISTRY.register()
-def calculate_ssim(img, img2, crop_border=4, input_order='HWC', test_y_channel=False, **kwargs):
+def calculate_ssim(img, img2, crop_border=4, input_order="HWC", test_y_channel=False, **kwargs):
     """Calculate SSIM (structural similarity).
 
     ``Paper: Image quality assessment: From error visibility to structural similarity``
@@ -75,8 +75,8 @@ def calculate_ssim(img, img2, crop_border=4, input_order='HWC', test_y_channel=F
     """
 
     assert img.shape == img2.shape, (
-        f'Image shapes are different: {img.shape}, {img2.shape}.')
-    if input_order not in ['HWC', 'CHW']:
+        f"Image shapes are different: {img.shape}, {img2.shape}.")
+    if input_order not in ["HWC", "CHW"]:
         raise ValueError(
             f'Wrong input_order {input_order}. Supported input_orders are "HWC" and "CHW"')
     img = reorder_image(img, input_order=input_order)
@@ -135,12 +135,12 @@ def _ssim(img, img2):
 @METRIC_REGISTRY.register()
 def calculate_dists(img, img2, **kwargs):
     assert img.shape == img2.shape, (
-        f'Image shapes are different: {img.shape}, {img2.shape}.')
+        f"Image shapes are different: {img.shape}, {img2.shape}.")
 
     # to tensor
     img, img2 = img2tensor([img, img2], bgr2rgb=True, float32=True, color=True)
     # normalize to [0, 1]
-    img, img2 = img/255, img2/255
+    img, img2 = img / 255, img2 / 255
     # add dim
     img, img2 = img.unsqueeze_(0), img2.unsqueeze_(0)
     # to cuda

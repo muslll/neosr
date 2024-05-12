@@ -4,6 +4,7 @@ from torch import nn as nn
 from torch.nn import functional as F
 
 from neosr.utils.registry import ARCH_REGISTRY
+
 from .arch_util import net_opt
 
 upscale, training = net_opt()
@@ -252,6 +253,7 @@ class UNet2(nn.Module):
         z = self.conv_bottom(x5)
         return z
 
+
 @ARCH_REGISTRY.register()
 class cugan(nn.Module):
     def __init__(self, in_channels=3, out_channels=3, scale=upscale, pro=True):
@@ -266,7 +268,7 @@ class cugan(nn.Module):
             self.pro = None
 
         if self.scale == 1:
-            raise ValueError(f'1x scale ratio is unsupported. Please use 2x, 3x or 4x.')
+            raise ValueError("1x scale ratio is unsupported. Please use 2x, 3x or 4x.")
 
         if self.scale == 2:
             self.unet1 = UNet1(in_channels, out_channels, deconv=True)
@@ -297,7 +299,7 @@ class cugan(nn.Module):
 
         if self.scale == 3:
             ph = ((h0 - 1) // 4 + 1) * 4
-            pw = ((w0 - 1) // 4 + 1) * 4 
+            pw = ((w0 - 1) // 4 + 1) * 4
         else:
             ph = ((h0 - 1) // 2 + 1) * 2
             pw = ((w0 - 1) // 2 + 1) * 2
@@ -329,4 +331,3 @@ class cugan(nn.Module):
             x = (x - 0.15) / 0.7
 
         return x
-

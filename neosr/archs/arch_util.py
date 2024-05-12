@@ -21,8 +21,8 @@ def net_opt():
     # conditions needed due to convert.py
 
     if args.input is None:
-        upscale = opt['scale']
-        if 'train' in opt['datasets']:
+        upscale = opt["scale"]
+        if "train" in opt["datasets"]:
             training = True
         else:
             training = False
@@ -31,6 +31,7 @@ def net_opt():
         training = False
 
     return upscale, training
+
 
 @torch.no_grad()
 def default_init_weights(module_list, scale=1, bias_fill=0, **kwargs):
@@ -47,12 +48,7 @@ def default_init_weights(module_list, scale=1, bias_fill=0, **kwargs):
         module_list = [module_list]
     for module in module_list:
         for m in module.modules():
-            if isinstance(m, nn.Conv2d):
-                init.kaiming_normal_(m.weight, **kwargs)
-                m.weight.data *= scale
-                if m.bias is not None:
-                    m.bias.data.fill_(bias_fill)
-            elif isinstance(m, nn.Linear):
+            if isinstance(m, nn.Conv2d | nn.Linear):
                 init.kaiming_normal_(m.weight, **kwargs)
                 m.weight.data *= scale
                 if m.bias is not None:
@@ -90,7 +86,7 @@ class Upsample(nn.Sequential):
     def __init__(self, scale, num_feat):
         m = []
         if (scale & (scale - 1)) == 0:  # scale = 2^n
-            for _ in range(int(math.log(scale, 2))):
+            for _ in range(int(math.log2(scale))):
                 m.append(nn.Conv2d(num_feat, 4 * num_feat, 3, 1, 1))
                 m.append(nn.PixelShuffle(2))
         elif scale == 3:
@@ -98,7 +94,7 @@ class Upsample(nn.Sequential):
             m.append(nn.PixelShuffle(3))
         else:
             raise ValueError(
-                f'scale {scale} is not supported. Supported scales: 2^n and 3.')
+                f"scale {scale} is not supported. Supported scales: 2^n and 3.")
         super(Upsample, self).__init__(*m)
 
 
@@ -130,8 +126,8 @@ def _no_grad_trunc_normal_(tensor, mean, std, a, b):
 
     if (mean < a - 2 * std) or (mean > b + 2 * std):
         warnings.warn(
-            'mean is more than 2 std from [a, b] in nn.init.trunc_normal_. '
-            'The distribution of values may be incorrect.',
+            "mean is more than 2 std from [a, b] in nn.init.trunc_normal_. "
+            "The distribution of values may be incorrect.",
             stacklevel=2)
 
     with torch.no_grad():
@@ -169,13 +165,13 @@ def drop_path(x, drop_prob: float = 0., training: bool = False, scale_by_keep: b
     # work with diff dim tensors, not just 2D ConvNets
     shape = (x.shape[0], ) + (1, ) * (x.ndim - 1)
 
-    '''
+    """
     # old implementation
     random_tensor = keep_prob + \
         torch.rand(shape, dtype=x.dtype, device=x.device)
     random_tensor.floor_()  # binarize
     output = x.div(keep_prob) * random_tensor
-    '''
+    """
 
     random_tensor = x.new_empty(shape).bernoulli_(keep_prob)
     if keep_prob > 0.0 and scale_by_keep:

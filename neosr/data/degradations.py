@@ -1,11 +1,13 @@
-import random
 import math
+import random
+
 import cv2
 import numpy as np
 import torch
 from scipy import special
 from scipy.stats import multivariate_normal
 from torchvision.transforms.functional import rgb_to_grayscale
+
 from neosr.utils.rng import rng
 
 rng = rng()
@@ -202,13 +204,13 @@ def random_bivariate_Gaussian(kernel_size,
     Returns:
         kernel (ndarray):
     """
-    assert kernel_size % 2 == 1, 'Kernel size must be an odd number.'
-    assert sigma_x_range[0] < sigma_x_range[1], 'Wrong sigma_x_range.'
+    assert kernel_size % 2 == 1, "Kernel size must be an odd number."
+    assert sigma_x_range[0] < sigma_x_range[1], "Wrong sigma_x_range."
 
     sigma_x = rng.uniform(sigma_x_range[0], sigma_x_range[1])
     if isotropic is False:
-        assert sigma_y_range[0] < sigma_y_range[1], 'Wrong sigma_y_range.'
-        assert rotation_range[0] < rotation_range[1], 'Wrong rotation_range.'
+        assert sigma_y_range[0] < sigma_y_range[1], "Wrong sigma_y_range."
+        assert rotation_range[0] < rotation_range[1], "Wrong rotation_range."
         sigma_y = rng.uniform(sigma_y_range[0], sigma_y_range[1])
         rotation = rng.uniform(rotation_range[0], rotation_range[1])
     else:
@@ -220,7 +222,7 @@ def random_bivariate_Gaussian(kernel_size,
 
     # add multiplicative noise
     if noise_range is not None:
-        assert noise_range[0] < noise_range[1], 'Wrong noise range.'
+        assert noise_range[0] < noise_range[1], "Wrong noise range."
         noise = rng.uniform(
             noise_range[0], noise_range[1], size=kernel.shape)
         kernel = kernel * noise
@@ -251,12 +253,12 @@ def random_bivariate_generalized_Gaussian(kernel_size,
     Returns:
         kernel (ndarray):
     """
-    assert kernel_size % 2 == 1, 'Kernel size must be an odd number.'
-    assert sigma_x_range[0] < sigma_x_range[1], 'Wrong sigma_x_range.'
+    assert kernel_size % 2 == 1, "Kernel size must be an odd number."
+    assert sigma_x_range[0] < sigma_x_range[1], "Wrong sigma_x_range."
     sigma_x = rng.uniform(sigma_x_range[0], sigma_x_range[1])
     if isotropic is False:
-        assert sigma_y_range[0] < sigma_y_range[1], 'Wrong sigma_y_range.'
-        assert rotation_range[0] < rotation_range[1], 'Wrong rotation_range.'
+        assert sigma_y_range[0] < sigma_y_range[1], "Wrong sigma_y_range."
+        assert rotation_range[0] < rotation_range[1], "Wrong rotation_range."
         sigma_y = rng.uniform(sigma_y_range[0], sigma_y_range[1])
         rotation = rng.uniform(rotation_range[0], rotation_range[1])
     else:
@@ -274,7 +276,7 @@ def random_bivariate_generalized_Gaussian(kernel_size,
 
     # add multiplicative noise
     if noise_range is not None:
-        assert noise_range[0] < noise_range[1], 'Wrong noise range.'
+        assert noise_range[0] < noise_range[1], "Wrong noise range."
         noise = rng.uniform(
             noise_range[0], noise_range[1], size=kernel.shape)
         kernel = kernel * noise
@@ -305,12 +307,12 @@ def random_bivariate_plateau(kernel_size,
     Returns:
         kernel (ndarray):
     """
-    assert kernel_size % 2 == 1, 'Kernel size must be an odd number.'
-    assert sigma_x_range[0] < sigma_x_range[1], 'Wrong sigma_x_range.'
+    assert kernel_size % 2 == 1, "Kernel size must be an odd number."
+    assert sigma_x_range[0] < sigma_x_range[1], "Wrong sigma_x_range."
     sigma_x = rng.uniform(sigma_x_range[0], sigma_x_range[1])
     if isotropic is False:
-        assert sigma_y_range[0] < sigma_y_range[1], 'Wrong sigma_y_range.'
-        assert rotation_range[0] < rotation_range[1], 'Wrong rotation_range.'
+        assert sigma_y_range[0] < sigma_y_range[1], "Wrong sigma_y_range."
+        assert rotation_range[0] < rotation_range[1], "Wrong rotation_range."
         sigma_y = rng.uniform(sigma_y_range[0], sigma_y_range[1])
         rotation = rng.uniform(rotation_range[0], rotation_range[1])
     else:
@@ -327,7 +329,7 @@ def random_bivariate_plateau(kernel_size,
         kernel_size, sigma_x, sigma_y, rotation, beta, isotropic=isotropic)
     # add multiplicative noise
     if noise_range is not None:
-        assert noise_range[0] < noise_range[1], 'Wrong noise range.'
+        assert noise_range[0] < noise_range[1], "Wrong noise range."
         noise = rng.uniform(
             noise_range[0], noise_range[1], size=kernel.shape)
         kernel = kernel * noise
@@ -365,13 +367,13 @@ def random_mixed_kernels(kernel_list,
         kernel (ndarray):
     """
     kernel_type = random.choices(kernel_list, kernel_prob)[0]
-    if kernel_type == 'iso':
+    if kernel_type == "iso":
         kernel = random_bivariate_Gaussian(
             kernel_size, sigma_x_range, sigma_y_range, rotation_range, noise_range=noise_range, isotropic=True)
-    elif kernel_type == 'aniso':
+    elif kernel_type == "aniso":
         kernel = random_bivariate_Gaussian(
             kernel_size, sigma_x_range, sigma_y_range, rotation_range, noise_range=noise_range, isotropic=False)
-    elif kernel_type == 'generalized_iso':
+    elif kernel_type == "generalized_iso":
         kernel = random_bivariate_generalized_Gaussian(
             kernel_size,
             sigma_x_range,
@@ -380,7 +382,7 @@ def random_mixed_kernels(kernel_list,
             betag_range,
             noise_range=noise_range,
             isotropic=True)
-    elif kernel_type == 'generalized_aniso':
+    elif kernel_type == "generalized_aniso":
         kernel = random_bivariate_generalized_Gaussian(
             kernel_size,
             sigma_x_range,
@@ -389,16 +391,16 @@ def random_mixed_kernels(kernel_list,
             betag_range,
             noise_range=noise_range,
             isotropic=False)
-    elif kernel_type == 'plateau_iso':
+    elif kernel_type == "plateau_iso":
         kernel = random_bivariate_plateau(
             kernel_size, sigma_x_range, sigma_y_range, rotation_range, betap_range, noise_range=None, isotropic=True)
-    elif kernel_type == 'plateau_aniso':
+    elif kernel_type == "plateau_aniso":
         kernel = random_bivariate_plateau(
             kernel_size, sigma_x_range, sigma_y_range, rotation_range, betap_range, noise_range=None, isotropic=False)
     return kernel
 
 
-np.seterr(divide='ignore', invalid='ignore')
+np.seterr(divide="ignore", invalid="ignore")
 
 
 def circular_lowpass_kernel(cutoff, kernel_size, pad_to=0):
@@ -411,7 +413,7 @@ def circular_lowpass_kernel(cutoff, kernel_size, pad_to=0):
         kernel_size (int): horizontal and vertical size, must be odd.
         pad_to (int): pad kernel size to desired size, must be odd or zero.
     """
-    assert kernel_size % 2 == 1, 'Kernel size must be an odd number.'
+    assert kernel_size % 2 == 1, "Kernel size must be an odd number."
     kernel = np.fromfunction(
         lambda x, y: cutoff * special.j1(cutoff * np.sqrt(
             (x - (kernel_size - 1) / 2)**2 + (y - (kernel_size - 1) / 2)**2)) / (2 * np.pi * np.sqrt(
@@ -760,7 +762,7 @@ def add_jpg_compression(img, quality=90):
     """
     img = np.clip(img, 0, 1)
     encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), quality]
-    _, encimg = cv2.imencode('.jpg', img * 255., encode_param)
+    _, encimg = cv2.imencode(".jpg", img * 255., encode_param)
     img = np.float32(cv2.imdecode(encimg, 1)) / 255.
     return img
 

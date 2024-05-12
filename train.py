@@ -3,7 +3,6 @@ import logging
 import math
 import sys
 import time
-import os
 from os import path as osp
 
 import torch
@@ -118,9 +117,8 @@ def load_resume_state(opt):
                 resume_state_path = osp.join(state_path, f"{max(states):.0f}.state")
                 opt["path"]["resume_state"] = resume_state_path
 
-    else:
-        if opt["path"].get("resume_state"):
-            resume_state_path = opt["path"]["resume_state"]
+    elif opt["path"].get("resume_state"):
+        resume_state_path = opt["path"]["resume_state"]
 
     if resume_state_path is None:
         resume_state = None
@@ -188,7 +186,7 @@ def train_pipeline(root_path):
         )
         start_epoch = resume_state["epoch"]
         current_iter = int(resume_state["iter"] * opt["datasets"]["train"].get("accumulate", 1))
-        #current_iter = resume_state["iter"]
+        # current_iter = resume_state["iter"]
         torch.cuda.empty_cache()
     else:
         start_epoch = 0
@@ -215,7 +213,7 @@ def train_pipeline(root_path):
 
     # training
     logger.info(f"Start training from epoch: {start_epoch}, iter: {int(current_iter / accumulate)}")
-    #data_timer, iter_timer = AvgTimer(), AvgTimer()
+    # data_timer, iter_timer = AvgTimer(), AvgTimer()
     iter_timer = AvgTimer()
     start_time = time.time()
 
@@ -226,7 +224,7 @@ def train_pipeline(root_path):
             train_data = prefetcher.next()
 
             while train_data is not None:
-                #data_timer.record()
+                # data_timer.record()
 
                 current_iter += 1
                 if current_iter > total_iters:
@@ -255,7 +253,7 @@ def train_pipeline(root_path):
                     log_vars.update({"lrs": model.get_current_learning_rate()})
                     log_vars.update({
                         "time": iter_timer.get_avg_time(),
-                        #"data_time": data_timer.get_avg_time(),
+                        # "data_time": data_timer.get_avg_time(),
                     })
                     log_vars.update(model.get_current_log())
                     msg_logger(log_vars)
@@ -275,7 +273,7 @@ def train_pipeline(root_path):
                             opt["val"]["save_img"],
                         )
 
-                #data_timer.start()
+                # data_timer.start()
                 iter_timer.start()
                 train_data = prefetcher.next()
             # end of iter

@@ -2,13 +2,13 @@
 import math
 
 import torch
-import torch.utils.checkpoint as checkpoint
-
 from torch import nn
 from torch.nn.init import trunc_normal_
+from torch.utils import checkpoint
 
 from neosr.utils.registry import ARCH_REGISTRY
-from .arch_util import to_2tuple, DropPath, net_opt
+
+from .arch_util import DropPath, net_opt, to_2tuple
 
 upscale, training = net_opt()
 
@@ -66,7 +66,8 @@ def window_reverse(windows, window_size, h, w):
     x = x.permute(0, 1, 3, 2, 4, 5).contiguous().view(b, h, w, -1)
     return x
 
-#@torch.cuda.amp.custom_fwd(cast_inputs=torch.bfloat16)
+
+# @torch.cuda.amp.custom_fwd(cast_inputs=torch.bfloat16)
 class WindowAttention(nn.Module):
     r""" Window based multi-head self attention (W-MSA) module with relative position bias.
     It supports both of shifted and non-shifted window.
@@ -108,7 +109,7 @@ class WindowAttention(nn.Module):
         relative_coords[:, :, 1] += self.window_size[1] - 1
         relative_coords[:, :, 0] *= 2 * self.window_size[1] - 1
         relative_position_index = relative_coords.sum(-1)  # Wh*Ww, Wh*Ww
-        self.register_buffer('relative_position_index',
+        self.register_buffer("relative_position_index",
                              relative_position_index)
 
         self.qkv = nn.Linear(dim, dim * 3, bias=qkv_bias)
@@ -143,7 +144,7 @@ class WindowAttention(nn.Module):
 
             with torch.no_grad():
                 # TODO
-                #with nn.attention.sdpa_kernel(nn.attention.SDPBackend.FLASH_ATTENTION):
+                # with nn.attention.sdpa_kernel(nn.attention.SDPBackend.FLASH_ATTENTION):
                 with torch.backends.cuda.sdp_kernel(enable_math=False):
                     x = nn.functional.scaled_dot_product_attention(q, k, v, scale=self.scale, dropout_p=self.dropout_p)
                     x = x.transpose(1, 2).reshape(b_, n, c)
@@ -175,7 +176,7 @@ class WindowAttention(nn.Module):
         return x
 
     def extra_repr(self) -> str:
-        return f'dim={self.dim}, window_size={self.window_size}, num_heads={self.num_heads}'
+        return f"dim={self.dim}, window_size={self.window_size}, num_heads={self.num_heads}"
 
     def flops(self, n):
         # calculate flops for 1 window with token length of n
@@ -236,7 +237,7 @@ class SwinTransformerBlock(nn.Module):
             # if window size is larger than input resolution, we don't partition windows
             self.shift_size = 0
             self.window_size = min(self.input_resolution)
-        assert 0 <= self.shift_size < self.window_size, 'shift_size must in 0-window_size'
+        assert 0 <= self.shift_size < self.window_size, "shift_size must in 0-window_size"
 
         self.norm1 = norm_layer(dim)
         self.attn = WindowAttention(
@@ -261,7 +262,7 @@ class SwinTransformerBlock(nn.Module):
         else:
             attn_mask = None
 
-        self.register_buffer('attn_mask', attn_mask)
+        self.register_buffer("attn_mask", attn_mask)
 
     def calculate_mask(self, x_size):
         # calculate attention mask for SW-MSA
@@ -283,7 +284,7 @@ class SwinTransformerBlock(nn.Module):
                                          self.window_size * self.window_size)
         attn_mask = mask_windows.unsqueeze(1) - mask_windows.unsqueeze(2)
         attn_mask = attn_mask.masked_fill(
-            attn_mask != 0, float(-100.0)).masked_fill(attn_mask == 0, float(0.0))
+            attn_mask != 0, -100.0).masked_fill(attn_mask == 0, 0.0)
 
         return attn_mask
 
@@ -338,8 +339,8 @@ class SwinTransformerBlock(nn.Module):
         return x
 
     def extra_repr(self) -> str:
-        return (f'dim={self.dim}, input_resolution={self.input_resolution}, num_heads={self.num_heads}, '
-                f'window_size={self.window_size}, shift_size={self.shift_size}, mlp_ratio={self.mlp_ratio}')
+        return (f"dim={self.dim}, input_resolution={self.input_resolution}, num_heads={self.num_heads}, "
+                f"window_size={self.window_size}, shift_size={self.shift_size}, mlp_ratio={self.mlp_ratio}")
 
     def flops(self):
         flops = 0
@@ -378,8 +379,8 @@ class PatchMerging(nn.Module):
         """
         h, w = self.input_resolution
         b, seq_len, c = x.shape
-        assert seq_len == h * w, 'input feature has wrong size'
-        assert h % 2 == 0 and w % 2 == 0, f'x size ({h}*{w}) are not even.'
+        assert seq_len == h * w, "input feature has wrong size"
+        assert h % 2 == 0 and w % 2 == 0, f"x size ({h}*{w}) are not even."
 
         x = x.view(b, h, w, c)
 
@@ -396,7 +397,7 @@ class PatchMerging(nn.Module):
         return x
 
     def extra_repr(self) -> str:
-        return f'input_resolution={self.input_resolution}, dim={self.dim}'
+        return f"input_resolution={self.input_resolution}, dim={self.dim}"
 
     def flops(self):
         h, w = self.input_resolution
@@ -485,7 +486,7 @@ class BasicLayer(nn.Module):
         return x
 
     def extra_repr(self) -> str:
-        return f'dim={self.dim}, input_resolution={self.input_resolution}, depth={self.depth}'
+        return f"dim={self.dim}, input_resolution={self.input_resolution}, depth={self.depth}"
 
     def flops(self):
         flops = 0
@@ -537,7 +538,7 @@ class RSTB(nn.Module):
                  use_checkpoint=False,
                  img_size=224,
                  patch_size=4,
-                 resi_connection='1conv'):
+                 resi_connection="1conv"):
         super(RSTB, self).__init__()
 
         self.dim = dim
@@ -560,9 +561,9 @@ class RSTB(nn.Module):
             downsample=downsample,
             use_checkpoint=use_checkpoint)
 
-        if resi_connection == '1conv':
+        if resi_connection == "1conv":
             self.conv = nn.Conv2d(dim, dim, 3, 1, 1)
-        elif resi_connection == '3conv':
+        elif resi_connection == "3conv":
             # to save parameters and memory
             self.conv = nn.Sequential(
                 nn.Conv2d(dim, dim // 4, 3, 1,
@@ -681,7 +682,7 @@ class Upsample(nn.Sequential):
     def __init__(self, scale, num_feat):
         m = []
         if (scale & (scale - 1)) == 0:  # scale = 2^n
-            for _ in range(int(math.log(scale, 2))):
+            for _ in range(int(math.log2(scale))):
                 m.append(nn.Conv2d(num_feat, 4 * num_feat, 3, 1, 1))
                 m.append(nn.PixelShuffle(2))
         elif scale == 3:
@@ -689,7 +690,7 @@ class Upsample(nn.Sequential):
             m.append(nn.PixelShuffle(3))
         else:
             raise ValueError(
-                f'scale {scale} is not supported. Supported scales: 2^n and 3.')
+                f"scale {scale} is not supported. Supported scales: 2^n and 3.")
         super(Upsample, self).__init__(*m)
 
 
@@ -766,8 +767,8 @@ class swinir(nn.Module):
                  use_checkpoint=False,
                  upscale=upscale,
                  img_range=1.,
-                 upsampler='pixelshuffle',
-                 resi_connection='1conv',
+                 upsampler="pixelshuffle",
+                 resi_connection="1conv",
                  **kwargs):
         super(swinir, self).__init__()
         num_in_ch = in_chans
@@ -852,9 +853,9 @@ class swinir(nn.Module):
         self.norm = norm_layer(self.num_features)
 
         # build the last conv layer in deep feature extraction
-        if resi_connection == '1conv':
+        if resi_connection == "1conv":
             self.conv_after_body = nn.Conv2d(embed_dim, embed_dim, 3, 1, 1)
-        elif resi_connection == '3conv':
+        elif resi_connection == "3conv":
             # to save parameters and memory
             self.conv_after_body = nn.Sequential(
                 nn.Conv2d(embed_dim, embed_dim // 4, 3, 1,
@@ -864,19 +865,19 @@ class swinir(nn.Module):
                 nn.Conv2d(embed_dim // 4, embed_dim, 3, 1, 1))
 
         # ------------------------- 3, high quality image reconstruction ------------------------- #
-        if self.upsampler == 'pixelshuffle':
+        if self.upsampler == "pixelshuffle":
             # for classical SR
             self.conv_before_upsample = nn.Sequential(
                 nn.Conv2d(embed_dim, num_feat, 3, 1, 1), nn.LeakyReLU(inplace=True))
             self.upsample = Upsample(upscale, num_feat)
             self.conv_last = nn.Conv2d(num_feat, num_out_ch, 3, 1, 1)
-        elif self.upsampler == 'pixelshuffledirect':
+        elif self.upsampler == "pixelshuffledirect":
             # for lightweight SR (to save parameters)
             self.upsample = UpsampleOneStep(upscale, embed_dim, num_out_ch,
                                             (patches_resolution[0], patches_resolution[1]))
-        elif self.upsampler == 'nearest+conv':
+        elif self.upsampler == "nearest+conv":
             # for real-world SR (less artifacts)
-            assert self.upscale == 4, 'only support x4 now.'
+            assert self.upscale == 4, "only support x4 now."
             self.conv_before_upsample = nn.Sequential(
                 nn.Conv2d(embed_dim, num_feat, 3, 1, 1), nn.LeakyReLU(inplace=True))
             self.conv_up1 = nn.Conv2d(num_feat, num_feat, 3, 1, 1)
@@ -901,11 +902,11 @@ class swinir(nn.Module):
 
     @torch.jit.ignore
     def no_weight_decay(self):
-        return {'absolute_pos_embed'}
+        return {"absolute_pos_embed"}
 
     @torch.jit.ignore
     def no_weight_decay_keywords(self):
-        return {'relative_position_bias_table'}
+        return {"relative_position_bias_table"}
 
     def forward_features(self, x):
         x_size = (x.shape[2], x.shape[3])
@@ -926,26 +927,26 @@ class swinir(nn.Module):
         self.mean = self.mean.type_as(x)
         x = (x - self.mean) * self.img_range
 
-        if self.upsampler == 'pixelshuffle':
+        if self.upsampler == "pixelshuffle":
             # for classical SR
             x = self.conv_first(x)
             x = self.conv_after_body(self.forward_features(x)) + x
             x = self.conv_before_upsample(x)
             x = self.conv_last(self.upsample(x))
-        elif self.upsampler == 'pixelshuffledirect':
+        elif self.upsampler == "pixelshuffledirect":
             # for lightweight SR
             x = self.conv_first(x)
             x = self.conv_after_body(self.forward_features(x)) + x
             x = self.upsample(x)
-        elif self.upsampler == 'nearest+conv':
+        elif self.upsampler == "nearest+conv":
             # for real-world SR
             x = self.conv_first(x)
             x = self.conv_after_body(self.forward_features(x)) + x
             x = self.conv_before_upsample(x)
             x = self.lrelu(self.conv_up1(torch.nn.functional.interpolate(
-                x, scale_factor=2, mode='nearest')))
+                x, scale_factor=2, mode="nearest")))
             x = self.lrelu(self.conv_up2(torch.nn.functional.interpolate(
-                x, scale_factor=2, mode='nearest')))
+                x, scale_factor=2, mode="nearest")))
             x = self.conv_last(self.lrelu(self.conv_hr(x)))
         else:
             # for image denoising and JPEG compression artifact reduction
@@ -969,6 +970,7 @@ class swinir(nn.Module):
         flops += self.upsample.flops()
         return flops
 
+
 @ARCH_REGISTRY.register()
 def swinir_small(**kwargs):
     return swinir(
@@ -985,6 +987,7 @@ def swinir_small(**kwargs):
             **kwargs
             )
 
+
 @ARCH_REGISTRY.register()
 def swinir_medium(**kwargs):
     return swinir(
@@ -1000,4 +1003,3 @@ def swinir_medium(**kwargs):
             resi_connection="1conv",
             **kwargs
             )
-

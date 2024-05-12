@@ -1,9 +1,10 @@
 from copy import deepcopy
 
 from neosr.utils.registry import METRIC_REGISTRY
-from .calculate import calculate_psnr, calculate_ssim, calculate_dists
 
-__all__ = ['calculate_psnr', 'calculate_ssim', 'calculate_dists']
+from .calculate import calculate_dists, calculate_psnr, calculate_ssim
+
+__all__ = ["calculate_dists", "calculate_psnr", "calculate_ssim"]
 
 
 def calculate_metric(data, opt):
@@ -14,6 +15,6 @@ def calculate_metric(data, opt):
             type (str): Model type.
     """
     opt = deepcopy(opt)
-    metric_type = opt.pop('type')
+    metric_type = opt.pop("type")
     metric = METRIC_REGISTRY.get(metric_type)(**data, **opt)
     return metric

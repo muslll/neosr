@@ -103,5 +103,4 @@ class MultiScaleGANLoss(GANLoss):
                 loss_tensor = super().forward(pred_i, target_is_real, is_disc).mean()
                 loss += loss_tensor
             return loss / len(input)
-        else:
-            return super().forward(input, target_is_real, is_disc)
+        return super().forward(input, target_is_real, is_disc)

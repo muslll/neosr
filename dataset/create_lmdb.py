@@ -1,5 +1,4 @@
 import argparse
-from os import path as osp
 
 from neosr.utils import scandir
 from neosr.utils.lmdb_util import make_lmdb_from_imgs
@@ -28,18 +27,17 @@ def prepare_keys(folder_path):
         list[str]: Key list.
     """
 
-    print('Reading image path list ...')
-    img_path_list = sorted(list(scandir(folder_path, suffix='png', recursive=False)))
-    keys = [img_path.split('.png')[0] for img_path in sorted(img_path_list)]
+    print("Reading image path list ...")
+    img_path_list = sorted(list(scandir(folder_path, suffix="png", recursive=False)))
+    keys = [img_path.split(".png")[0] for img_path in sorted(img_path_list)]
 
     return img_path_list, keys
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--input', type=str, help=("Input Path"))
-    parser.add_argument('--output', type=str, help=("Output Path"))
+    parser.add_argument("--input", type=str, help=("Input Path"))
+    parser.add_argument("--output", type=str, help=("Output Path"))
     args = parser.parse_args()
     create_lmdb()
-

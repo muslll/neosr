@@ -1,7 +1,6 @@
 import functools
 
 from torch import nn
-from torch.nn import functional as F
 from torch.nn.utils import spectral_norm
 
 from neosr.utils.registry import ARCH_REGISTRY
@@ -142,4 +141,3 @@ class patchgan(nn.Module):
 
     def forward(self, x):
         return self.model(x)
-

@@ -7,6 +7,7 @@ from torch.nn import functional as F
 from torch.nn.init import trunc_normal_
 
 from neosr.utils.registry import ARCH_REGISTRY
+
 from .arch_util import net_opt, to_2tuple
 
 upscale, training = net_opt()
@@ -1126,7 +1127,7 @@ class atd(nn.Module):
         )  # nw, window_size, window_size, 1
         mask_windows = mask_windows.view(-1, self.window_size * self.window_size)
         attn_mask = mask_windows.unsqueeze(1) - mask_windows.unsqueeze(2)
-        attn_mask = attn_mask.masked_fill(attn_mask != 0, float(-100.0)).masked_fill(
+        attn_mask = attn_mask.masked_fill(attn_mask != 0, -100.0).masked_fill(
             attn_mask == 0, 0.0
         )
 

@@ -165,9 +165,7 @@ def _convert_input_type_range(img):
 
     img_type = img.dtype
     img = img.astype(np.float32)
-    if img_type == np.float32:
-        pass
-    elif img_type == np.float16:
+    if img_type == np.float32 or img_type == np.float16:
         pass
     elif img_type == np.uint8:
         img /= 255.0

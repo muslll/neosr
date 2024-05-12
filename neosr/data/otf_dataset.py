@@ -1,8 +1,9 @@
+import math
 import os
 import os.path as osp
 import random
 import time
-import math
+
 import cv2
 import numpy as np
 import torch
@@ -15,6 +16,7 @@ from neosr.utils.registry import DATASET_REGISTRY
 from neosr.utils.rng import rng
 
 rng = rng()
+
 
 @DATASET_REGISTRY.register()
 class otf(data.Dataset):
@@ -38,27 +40,27 @@ class otf(data.Dataset):
         super(otf, self).__init__()
         self.opt = opt
         self.file_client = None
-        self.io_backend_opt = opt['io_backend']
-        self.color = False if 'color' in self.opt and self.opt['color'] == 'y' else True
-        self.gt_folder = opt['dataroot_gt']
+        self.io_backend_opt = opt["io_backend"]
+        self.color = False if "color" in self.opt and self.opt["color"] == "y" else True
+        self.gt_folder = opt["dataroot_gt"]
 
-        if opt.get('dataroot_lq', None) is not None:
+        if opt.get("dataroot_lq", None) is not None:
             raise ValueError("'dataroot_lq' not supported by otf, please switch to paired")
 
         # file client (lmdb io backend)
-        if self.io_backend_opt['type'] == 'lmdb':
-            self.io_backend_opt['db_paths'] = [self.gt_folder]
-            self.io_backend_opt['client_keys'] = ['gt']
-            if not self.gt_folder.endswith('.lmdb'):
+        if self.io_backend_opt["type"] == "lmdb":
+            self.io_backend_opt["db_paths"] = [self.gt_folder]
+            self.io_backend_opt["client_keys"] = ["gt"]
+            if not self.gt_folder.endswith(".lmdb"):
                 raise ValueError(
                     f"'dataroot_gt' should end with '.lmdb', but received {self.gt_folder}")
-            with open(osp.join(self.gt_folder, 'meta_info.txt')) as fin:
-                self.paths = [line.split('.')[0] for line in fin]
-        elif 'meta_info' in self.opt and self.opt['meta_info'] is not None:
+            with open(osp.join(self.gt_folder, "meta_info.txt")) as fin:
+                self.paths = [line.split(".")[0] for line in fin]
+        elif "meta_info" in self.opt and self.opt["meta_info"] is not None:
             # disk backend with meta_info
             # Each line in the meta_info describes the relative path to an image
-            with open(self.opt['meta_info']) as fin:
-                paths = [line.strip().split(' ')[0] for line in fin]
+            with open(self.opt["meta_info"]) as fin:
+                paths = [line.strip().split(" ")[0] for line in fin]
                 self.paths = [os.path.join(self.gt_folder, v) for v in paths]
         else:
             # disk backend
@@ -67,28 +69,28 @@ class otf(data.Dataset):
             self.paths = sorted(list(scandir(self.gt_folder, full_path=True)))
 
         # blur settings for the first degradation
-        self.blur_kernel_size = opt['blur_kernel_size']
-        self.kernel_list = opt['kernel_list']
+        self.blur_kernel_size = opt["blur_kernel_size"]
+        self.kernel_list = opt["kernel_list"]
         # a list for each kernel probability
-        self.kernel_prob = opt['kernel_prob']
-        self.blur_sigma = opt['blur_sigma']
+        self.kernel_prob = opt["kernel_prob"]
+        self.blur_sigma = opt["blur_sigma"]
         # betag used in generalized Gaussian blur kernels
-        self.betag_range = opt['betag_range']
+        self.betag_range = opt["betag_range"]
         # betap used in plateau blur kernels
-        self.betap_range = opt['betap_range']
-        self.sinc_prob = opt['sinc_prob']  # the probability for sinc filters
+        self.betap_range = opt["betap_range"]
+        self.sinc_prob = opt["sinc_prob"]  # the probability for sinc filters
 
         # blur settings for the second degradation
-        self.blur_kernel_size2 = opt['blur_kernel_size2']
-        self.kernel_list2 = opt['kernel_list2']
-        self.kernel_prob2 = opt['kernel_prob2']
-        self.blur_sigma2 = opt['blur_sigma2']
-        self.betag_range2 = opt['betag_range2']
-        self.betap_range2 = opt['betap_range2']
-        self.sinc_prob2 = opt['sinc_prob2']
+        self.blur_kernel_size2 = opt["blur_kernel_size2"]
+        self.kernel_list2 = opt["kernel_list2"]
+        self.kernel_prob2 = opt["kernel_prob2"]
+        self.blur_sigma2 = opt["blur_sigma2"]
+        self.betag_range2 = opt["betag_range2"]
+        self.betap_range2 = opt["betap_range2"]
+        self.sinc_prob2 = opt["sinc_prob2"]
 
         # a final sinc filter
-        self.final_sinc_prob = opt['final_sinc_prob']
+        self.final_sinc_prob = opt["final_sinc_prob"]
 
         # kernel size ranges from 7 to 21
         self.kernel_range = [2 * v + 1 for v in range(3, 11)]
@@ -96,14 +98,14 @@ class otf(data.Dataset):
         # convolving with pulse tensor brings no blurry effect
 
         # Note: this operation must run on cpu, otherwise CUDAPrefetcher will fail
-        with torch.device('cpu'):
+        with torch.device("cpu"):
             self.pulse_tensor = torch.zeros(21, 21, dtype=torch.float32)
         self.pulse_tensor[10, 10] = 1
 
     def __getitem__(self, index):
         if self.file_client is None:
             self.file_client = FileClient(
-                self.io_backend_opt.pop('type'), **self.io_backend_opt)
+                self.io_backend_opt.pop("type"), **self.io_backend_opt)
 
         # -------------------------------- Load gt images -------------------------------- #
         # Shape: (h, w, c); channel order: BGR; image range: [0, 1], float32.
@@ -112,13 +114,13 @@ class otf(data.Dataset):
         retry = 3
         while retry > 0:
             try:
-                img_bytes = self.file_client.get(gt_path, 'gt')
+                img_bytes = self.file_client.get(gt_path, "gt")
                 if img_bytes is None:
-                    raise ValueError(f'No data returned from path: {gt_path}')
-            except (IOError, OSError) as e:
+                    raise ValueError(f"No data returned from path: {gt_path}")
+            except OSError as e:
                 logger = get_root_logger()
-                logger.warn(
-                    f'File client error: {e} in path {gt_path}, remaining retry times: {retry - 1}')
+                logger.warning(
+                    f"File client error: {e} in path {gt_path}, remaining retry times: {retry - 1}")
                 # change another file to read
                 index = random.randint(0, self.__len__())
                 gt_path = self.paths[index]
@@ -133,9 +135,8 @@ class otf(data.Dataset):
         except AttributeError:
             raise AttributeError(gt_path)
 
-
         # -------------------- Do augmentation for training: flip, rotation -------------------- #
-        img_gt = basic_augment(img_gt, self.opt['use_hflip'], self.opt['use_rot'])
+        img_gt = basic_augment(img_gt, self.opt["use_hflip"], self.opt["use_rot"])
 
         # crop or pad to 512
         # TODO: 512 is hard-coded. You may change it accordingly
@@ -158,7 +159,7 @@ class otf(data.Dataset):
 
         # ------------------------ Generate kernels (used in the first degradation) ------------------------ #
         kernel_size = random.choice(self.kernel_range)
-        if rng.uniform() < self.opt['sinc_prob']:
+        if rng.uniform() < self.opt["sinc_prob"]:
             # this sinc filter setting is for kernels ranging from [7, 21]
             if kernel_size < 13:
                 omega_c = rng.uniform(np.pi / 3, np.pi)
@@ -182,7 +183,7 @@ class otf(data.Dataset):
 
         # ------------------------ Generate kernels (used in the second degradation) ------------------------ #
         kernel_size = random.choice(self.kernel_range)
-        if rng.uniform() < self.opt['sinc_prob2']:
+        if rng.uniform() < self.opt["sinc_prob2"]:
             if kernel_size < 13:
                 omega_c = rng.uniform(np.pi / 3, np.pi)
             else:
@@ -205,7 +206,7 @@ class otf(data.Dataset):
         kernel2 = np.pad(kernel2, ((pad_size, pad_size), (pad_size, pad_size)))
 
         # ------------------------------------- the final sinc kernel ------------------------------------- #
-        if rng.uniform() < self.opt['final_sinc_prob']:
+        if rng.uniform() < self.opt["final_sinc_prob"]:
             kernel_size = random.choice(self.kernel_range)
             omega_c = rng.uniform(np.pi / 3, np.pi)
             sinc_kernel = circular_lowpass_kernel(
@@ -221,8 +222,8 @@ class otf(data.Dataset):
         kernel = torch.FloatTensor(kernel)
         kernel2 = torch.FloatTensor(kernel2)
 
-        return_d = {'gt': img_gt, 'kernel1': kernel, 'kernel2': kernel2,
-                    'sinc_kernel': sinc_kernel, 'gt_path': gt_path}
+        return_d = {"gt": img_gt, "kernel1": kernel, "kernel2": kernel2,
+                    "sinc_kernel": sinc_kernel, "gt_path": gt_path}
         return return_d
 
     def __len__(self):

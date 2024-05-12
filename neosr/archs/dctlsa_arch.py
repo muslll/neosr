@@ -1,33 +1,38 @@
 
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
+from torch import nn
 
 from neosr.utils.registry import ARCH_REGISTRY
-from .arch_util import to_2tuple, net_opt
+
+from .arch_util import net_opt, to_2tuple
 
 upscale, training = net_opt()
 
 
 class LSAB(nn.Module):
-    def __init__(self, in_channels=55,num_head=5):
+    def __init__(self, in_channels=55, num_head=5):
         super(LSAB, self).__init__()
         m_body = []
         for i in range(2):
-            m_body.append(SwinT(num_head=num_head,n_feats=in_channels))
+            m_body.append(SwinT(num_head=num_head, n_feats=in_channels))
         self.body = nn.Sequential(*m_body)
+
     def forward(self, input):
         out_fused = self.body(input)
         return out_fused
+
+
 def conv_layer(in_channels, out_channels, kernel_size, stride=1, dilation=1, groups=1):
     padding = int((kernel_size - 1) / 2) * dilation
     return nn.Conv2d(in_channels, out_channels, kernel_size, stride, padding=padding, bias=True, dilation=dilation,
                      groups=groups)
 
+
 def sequential(*args):
     if len(args) == 1:
         if isinstance(args[0], OrderedDict):
-            raise NotImplementedError('sequential does not support OrderedDict input.')
+            raise NotImplementedError("sequential does not support OrderedDict input.")
         return args[0]
     modules = []
     for module in args:
@@ -38,6 +43,7 @@ def sequential(*args):
             modules.append(module)
     return nn.Sequential(*modules)
 
+
 def pixelshuffle_block(in_channels, out_channels, upscale_factor=2, kernel_size=3, stride=1):
     # import pdb
     # pdb.set_trace()
@@ -45,54 +51,62 @@ def pixelshuffle_block(in_channels, out_channels, upscale_factor=2, kernel_size=
     pixel_shuffle = nn.PixelShuffle(upscale_factor)
     return sequential(conv, pixel_shuffle)
 
+
 def get_valid_padding(kernel_size, dilation):
     kernel_size = kernel_size + (kernel_size - 1) * (dilation - 1)
     padding = (kernel_size - 1) // 2
     return padding
+
+
 def pad(pad_type, padding):
     pad_type = pad_type.lower()
     if padding == 0:
         return None
-    if pad_type == 'reflect':
+    if pad_type == "reflect":
         layer = nn.ReflectionPad2d(padding)
-    elif pad_type == 'replicate':
+    elif pad_type == "replicate":
         layer = nn.ReplicationPad2d(padding)
     else:
-        raise NotImplementedError('padding layer [{:s}] is not implemented'.format(pad_type))
+        raise NotImplementedError(f"padding layer [{pad_type:s}] is not implemented")
     return layer
+
+
 def activation(act_type, inplace=True, neg_slope=0.05, n_prelu=1):
     act_type = act_type.lower()
-    if act_type == 'relu':
+    if act_type == "relu":
         layer = nn.ReLU(inplace)
-    elif act_type == 'lrelu':
+    elif act_type == "lrelu":
         layer = nn.LeakyReLU(neg_slope, inplace)
-    elif act_type == 'prelu':
+    elif act_type == "prelu":
         layer = nn.PReLU(num_parameters=n_prelu, init=neg_slope)
     else:
-        raise NotImplementedError('activation layer [{:s}] is not found'.format(act_type))
+        raise NotImplementedError(f"activation layer [{act_type:s}] is not found")
     return layer
+
 
 def norm(norm_type, nc):
     norm_type = norm_type.lower()
-    if norm_type == 'batch':
+    if norm_type == "batch":
         layer = nn.BatchNorm2d(nc, affine=True)
-    elif norm_type == 'instance':
+    elif norm_type == "instance":
         layer = nn.InstanceNorm2d(nc, affine=False)
     else:
-        raise NotImplementedError('normalization layer [{:s}] is not found'.format(norm_type))
+        raise NotImplementedError(f"normalization layer [{norm_type:s}] is not found")
     return layer
 
+
 def conv_block(in_nc, out_nc, kernel_size, stride=1, dilation=1, groups=1, bias=True,
-               pad_type='zero', norm_type=None, act_type='relu'):
+               pad_type="zero", norm_type=None, act_type="relu"):
     padding = get_valid_padding(kernel_size, dilation)
-    p = pad(pad_type, padding) if pad_type and pad_type != 'zero' else None
-    padding = padding if pad_type == 'zero' else 0
+    p = pad(pad_type, padding) if pad_type and pad_type != "zero" else None
+    padding = padding if pad_type == "zero" else 0
 
     c = nn.Conv2d(in_nc, out_nc, kernel_size=kernel_size, stride=stride, padding=padding,
                   dilation=dilation, bias=bias, groups=groups)
     a = activation(act_type) if act_type else None
     n = norm(norm_type, out_nc) if norm_type else None
     return sequential(p, c, n, a)
+
 
 class SwinT(nn.Module):
     def __init__(
@@ -118,6 +132,7 @@ class SwinT(nn.Module):
     def forward(self, x):
         res = self.transformer_body(x)
         return res
+
 
 class BasicLayer(nn.Module):
     def __init__(self, dim, resolution, embed_dim=50, depth=2, num_heads=8, window_size=8,
@@ -146,7 +161,7 @@ class BasicLayer(nn.Module):
         mod_pad_h = (self.window_size - h % self.window_size) % self.window_size
         mod_pad_w = (self.window_size - w % self.window_size) % self.window_size
         if mod_pad_h != 0 or mod_pad_w != 0:
-            x = F.pad(x, (0, mod_pad_w, 0, mod_pad_h), 'reflect')
+            x = F.pad(x, (0, mod_pad_w, 0, mod_pad_h), "reflect")
         return x, h, w
 
     def forward(self, x):
@@ -160,6 +175,7 @@ class BasicLayer(nn.Module):
         if h != H or w != W:
             x = x[:, :, 0:h, 0:w].contiguous()
         return x
+
 
 class SwinTransformerBlock(nn.Module):
 
@@ -181,7 +197,6 @@ class SwinTransformerBlock(nn.Module):
 
         mlp_hidden_dim = int(dim * mlp_ratio)
         self.mlp = Mlp(in_features=dim, hidden_features=mlp_hidden_dim, act_layer=act_layer)
-
 
     def forward(self, x, x_size):
         H, W = x_size
@@ -207,15 +222,18 @@ class SwinTransformerBlock(nn.Module):
         # FFN
         x = (x + self.mlp(x))
         return x
+
+
 class LocalModule(nn.Sequential):
     def __init__(self, channels):
         super().__init__()
-        self.add_module('pointwise_prenorm_0', nn.BatchNorm2d(channels))
-        self.add_module('pointwise_conv_0', nn.Conv2d(channels, channels, kernel_size=1, bias=False))
-        self.add_module('depthwise_conv',
+        self.add_module("pointwise_prenorm_0", nn.BatchNorm2d(channels))
+        self.add_module("pointwise_conv_0", nn.Conv2d(channels, channels, kernel_size=1, bias=False))
+        self.add_module("depthwise_conv",
                         nn.Conv2d(channels, channels, padding=1, kernel_size=3, groups=channels, bias=False))
-        self.add_module('pointwise_prenorm_1', nn.BatchNorm2d(channels))
-        self.add_module('pointwise_conv_1', nn.Conv2d(channels, channels, kernel_size=1, bias=False))
+        self.add_module("pointwise_prenorm_1", nn.BatchNorm2d(channels))
+        self.add_module("pointwise_conv_1", nn.Conv2d(channels, channels, kernel_size=1, bias=False))
+
 
 class WindowAttention(nn.Module):
 
@@ -235,12 +253,11 @@ class WindowAttention(nn.Module):
         self.softmax = nn.Softmax(dim=-2)
         self.local = LocalModule(dim)
 
-
     def forward(self, x, H, W, mask=None):
-        temp = x.permute(0,3,1,2).contiguous()
+        temp = x.permute(0, 3, 1, 2).contiguous()
         local = self.local(temp)
         local = local + temp
-        local = local.permute(0,2,3,1).contiguous()
+        local = local.permute(0, 2, 3, 1).contiguous()
         qkv = self.qkv(local)
         # partition windows
         qkv = window_partition(qkv, self.window_size[0])  # nW*B, window_size, window_size, C
@@ -266,7 +283,7 @@ class WindowAttention(nn.Module):
         # merge windows
         x = x.view(-1, self.window_size[0], self.window_size[1], C)
         x = window_reverse(x, self.window_size[0], H, W)  # B H' W' C
-        x = x+local
+        x = x + local
         return x
 
 
@@ -291,6 +308,7 @@ class Mlp(nn.Module):
         x = self.act(x)
         x = self.fc2(x)
         return x
+
 
 def window_partition(x, window_size):
     B, H, W, C = x.shape
@@ -385,7 +403,7 @@ class PatchUnEmbed(nn.Module):
 
 
 def make_model(args, parent=False):
-    model = dctlsa(in_nc=args.n_colors, nf=args.channel, num_modules=args.num_modules, out_nc=args.n_colors, upscale=args.scale[0],num_head=args.num_head)
+    model = dctlsa(in_nc=args.n_colors, nf=args.channel, num_modules=args.num_modules, out_nc=args.n_colors, upscale=args.scale[0], num_head=args.num_head)
     return model
 
 
@@ -396,18 +414,18 @@ class dctlsa(nn.Module):
         self.fea_conv = conv_layer(in_nc, nf, kernel_size=3)
         # self.dctb = DCTB(nf=nf,num_modules=num_modules)
         # //The DCTB code Start
-        self.B1 = LSAB(in_channels=nf,num_head=num_head)
-        self.B2 = LSAB(in_channels=nf,num_head=num_head)
-        self.B3 = LSAB(in_channels=nf,num_head=num_head)
-        self.B4 = LSAB(in_channels=nf,num_head=num_head)
-        self.B5 = LSAB(in_channels=nf,num_head=num_head)
-        self.B6 = LSAB(in_channels=nf,num_head=num_head)
-        self.c = conv_block(nf * num_modules, nf, kernel_size=1, act_type='lrelu')
-        self.c1 = conv_block(nf * 2, nf, kernel_size=1, act_type='lrelu')
-        self.c2 = conv_block(nf * 3, nf, kernel_size=1, act_type='lrelu')
-        self.c3 = conv_block(nf * 4, nf, kernel_size=1, act_type='lrelu')
-        self.c4 = conv_block(nf * 5, nf, kernel_size=1, act_type='lrelu')
-        self.c5 = conv_block(nf * 6, nf, kernel_size=1, act_type='lrelu')
+        self.B1 = LSAB(in_channels=nf, num_head=num_head)
+        self.B2 = LSAB(in_channels=nf, num_head=num_head)
+        self.B3 = LSAB(in_channels=nf, num_head=num_head)
+        self.B4 = LSAB(in_channels=nf, num_head=num_head)
+        self.B5 = LSAB(in_channels=nf, num_head=num_head)
+        self.B6 = LSAB(in_channels=nf, num_head=num_head)
+        self.c = conv_block(nf * num_modules, nf, kernel_size=1, act_type="lrelu")
+        self.c1 = conv_block(nf * 2, nf, kernel_size=1, act_type="lrelu")
+        self.c2 = conv_block(nf * 3, nf, kernel_size=1, act_type="lrelu")
+        self.c3 = conv_block(nf * 4, nf, kernel_size=1, act_type="lrelu")
+        self.c4 = conv_block(nf * 5, nf, kernel_size=1, act_type="lrelu")
+        self.c5 = conv_block(nf * 6, nf, kernel_size=1, act_type="lrelu")
         # //The DCTB code End
         self.LR_conv = conv_layer(nf, nf, kernel_size=3)
         self.dropout = nn.Dropout2d(p=0.5)
@@ -416,28 +434,27 @@ class dctlsa(nn.Module):
         self.upsampler = upsample_block(nf, out_nc, upscale_factor=upscale)
         self.scale_idx = 0
 
-
     def forward(self, input):
         out_fea = self.fea_conv(input)
-        
+
         out_B1 = self.B1(out_fea)
-        out_B10 = torch.cat([out_fea , out_B1], dim=1)
+        out_B10 = torch.cat([out_fea, out_B1], dim=1)
         out_B11 = self.c1(out_B10)
 
         out_B2 = self.B2(out_B11)
-        out_B20 = torch.cat([out_B10 , out_B2], dim=1)
+        out_B20 = torch.cat([out_B10, out_B2], dim=1)
         out_B22 = self.c2(out_B20)
 
         out_B3 = self.B3(out_B22)
-        out_B30 = torch.cat([out_B20 , out_B3], dim=1)
+        out_B30 = torch.cat([out_B20, out_B3], dim=1)
         out_B33 = self.c3(out_B30)
 
         out_B4 = self.B4(out_B33)
-        out_B40 = torch.cat([out_B30 , out_B4], dim=1)
+        out_B40 = torch.cat([out_B30, out_B4], dim=1)
         out_B44 = self.c4(out_B40)
 
         out_B5 = self.B5(out_B44)
-        out_B50 = torch.cat([out_B40 , out_B5], dim=1)
+        out_B50 = torch.cat([out_B40, out_B5], dim=1)
         out_B55 = self.c5(out_B50)
 
         out_B6 = self.B6(out_B55)

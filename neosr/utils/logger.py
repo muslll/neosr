@@ -7,7 +7,7 @@ from .dist_util import get_dist_info, master_only
 initialized_logger = {}
 
 
-class AvgTimer():
+class AvgTimer:
 
     def __init__(self, window=200):
         self.window = window  # average window
@@ -42,7 +42,7 @@ class AvgTimer():
         return self.avg_time
 
 
-class MessageLogger():
+class MessageLogger:
     """Message logger for printing.
 
     Args:
@@ -56,12 +56,12 @@ class MessageLogger():
     """
 
     def __init__(self, opt, start_iter=1, tb_logger=None):
-        self.exp_name = opt['name']
-        self.interval = opt['logger']['print_freq']
-        self.accumulate = opt['datasets']['train'].get('accumulate', 1)
+        self.exp_name = opt["name"]
+        self.interval = opt["logger"]["print_freq"]
+        self.accumulate = opt["datasets"]["train"].get("accumulate", 1)
         self.start_iter = start_iter
-        self.max_iters = opt['train']['total_iter']
-        self.use_tb_logger = opt['logger']['use_tb_logger']
+        self.max_iters = opt["train"]["total_iter"]
+        self.use_tb_logger = opt["logger"]["use_tb_logger"]
         self.tb_logger = tb_logger
         self.start_time = time.time()
         self.logger = get_root_logger()
@@ -82,16 +82,16 @@ class MessageLogger():
                 time (float): Iter time.
         """
         # epoch, iter, learning rates
-        epoch = log_vars.pop('epoch')
-        current_iter = int(log_vars.pop('iter'))
-        lrs = log_vars.pop('lrs')
+        epoch = log_vars.pop("epoch")
+        current_iter = int(log_vars.pop("iter"))
+        lrs = log_vars.pop("lrs")
 
         message = (
-            f'[ epoch:{epoch:4d} ] [ iter:{current_iter:7,d} ]')
+            f"[ epoch:{epoch:4d} ] [ iter:{current_iter:7,d} ]")
 
         # time and estimated time
-        if 'time' in log_vars.keys():
-            iter_time = log_vars.pop('time')
+        if "time" in log_vars.keys():
+            iter_time = log_vars.pop("time")
             # iters per second
             iter_time = iter_time * 100
             iter_time = 100 / iter_time
@@ -101,19 +101,19 @@ class MessageLogger():
             time_sec_avg = total_time / (current_iter - (self.start_iter / self.accumulate) + 1)
             eta_sec = time_sec_avg * (self.max_iters - current_iter - 1)
             eta_str = str(datetime.timedelta(seconds=int(eta_sec)))
-            message += f' [ performance: {iter_time:.3f} it/s ] [ lr: '
+            message += f" [ performance: {iter_time:.3f} it/s ] [ lr: "
             for v in lrs:
-                message += f'{v:.2e}'
-            message += ' ] '
-            message += f'[ eta: {eta_str} ] '
+                message += f"{v:.2e}"
+            message += " ] "
+            message += f"[ eta: {eta_str} ] "
 
         # other items, especially losses
         for k, v in log_vars.items():
-            message += f'{k}: {v:.4e} '
+            message += f"{k}: {v:.4e} "
             # tensorboard logger
-            if self.use_tb_logger and 'debug' not in self.exp_name:
-                if k.startswith('l_'):
-                    self.tb_logger.add_scalar(f'losses/{k}', v, current_iter)
+            if self.use_tb_logger and "debug" not in self.exp_name:
+                if k.startswith("l_"):
+                    self.tb_logger.add_scalar(f"losses/{k}", v, current_iter)
                 else:
                     self.tb_logger.add_scalar(k, v, current_iter)
         self.logger.info(message)
@@ -132,22 +132,23 @@ def init_wandb_logger(opt):
     import wandb
     logger = get_root_logger()
 
-    project = opt['logger']['wandb']['project']
-    resume_id = opt['logger']['wandb'].get('resume_id')
+    project = opt["logger"]["wandb"]["project"]
+    resume_id = opt["logger"]["wandb"].get("resume_id")
     if resume_id:
         wandb_id = resume_id
-        resume = 'allow'
-        logger.warning(f'Resume wandb logger with id={wandb_id}.')
+        resume = "allow"
+        logger.warning(f"Resume wandb logger with id={wandb_id}.")
     else:
         wandb_id = wandb.util.generate_id()
-        resume = 'never'
+        resume = "never"
 
     wandb.init(id=wandb_id, resume=resume,
-               name=opt['name'], config=opt, project=project, sync_tensorboard=True)
+               name=opt["name"], config=opt, project=project, sync_tensorboard=True)
 
-    logger.info(f'Use wandb logger with id={wandb_id}; project={project}.')
+    logger.info(f"Use wandb logger with id={wandb_id}; project={project}.")
 
-def get_root_logger(logger_name='neosr', log_level=logging.INFO, log_file=None):
+
+def get_root_logger(logger_name="neosr", log_level=logging.INFO, log_file=None):
     """Get the root logger.
 
     The logger will be initialized if it has not been initialized. By default a
@@ -170,18 +171,18 @@ def get_root_logger(logger_name='neosr', log_level=logging.INFO, log_file=None):
     if logger_name in initialized_logger:
         return logger
 
-    format_str = f'%(asctime)s %(levelname)s: %(message)s'
+    format_str = "%(asctime)s %(levelname)s: %(message)s"
     stream_handler = logging.StreamHandler()
-    stream_handler.setFormatter(logging.Formatter(format_str, datefmt='%d-%m-%Y %I:%M %p |'))
+    stream_handler.setFormatter(logging.Formatter(format_str, datefmt="%d-%m-%Y %I:%M %p |"))
     logger.addHandler(stream_handler)
     logger.propagate = False
     rank, _ = get_dist_info()
     if rank != 0:
-        logger.setLevel('ERROR')
+        logger.setLevel("ERROR")
     elif log_file is not None:
         logger.setLevel(log_level)
         # add file handler
-        file_handler = logging.FileHandler(log_file, 'w')
+        file_handler = logging.FileHandler(log_file, "w")
         file_handler.setFormatter(logging.Formatter(format_str))
         file_handler.setLevel(log_level)
         logger.addHandler(file_handler)

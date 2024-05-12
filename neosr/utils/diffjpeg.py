@@ -5,9 +5,9 @@ For images not divisible by 8
 https://dsp.stackexchange.com/questions/35339/jpeg-dct-padding/35343#35343
 """
 import itertools
+
 import numpy as np
 import torch
-
 from torch import nn
 from torch.nn import functional as F
 
@@ -25,7 +25,8 @@ c_table[:4, :4] = np.array([[17, 18, 24, 47], [18, 21, 26, 66], [
                            24, 26, 56, 99], [47, 66, 99, 99]]).T
 c_table = nn.Parameter(torch.from_numpy(c_table))
 
-device = torch.device('cuda')
+device = torch.device("cuda")
+
 
 def diff_round(x):
     """ Differentiable rounding function
@@ -237,17 +238,17 @@ class CompressJpeg(nn.Module):
             dict(tensor): Compressed tensor with batch x h*w/64 x 8 x 8.
         """
         y, cb, cr = self.l1(image * 255)
-        components = {'y': y, 'cb': cb, 'cr': cr}
-        for k in components.keys():
+        components = {"y": y, "cb": cb, "cr": cr}
+        for k in components:
             comp = self.l2(components[k])
-            if k in ('cb', 'cr'):
+            if k in ("cb", "cr"):
                 comp = self.c_quantize(comp, factor=factor)
             else:
                 comp = self.y_quantize(comp, factor=factor)
 
             components[k] = comp
 
-        return components['y'], components['cb'], components['cr']
+        return components["y"], components["cb"], components["cr"]
 
 
 # ------------------------ decompression ------------------------#
@@ -438,9 +439,9 @@ class DeCompressJpeg(nn.Module):
         Returns:
             Tensor: batch x 3 x height x width
         """
-        components = {'y': y, 'cb': cb, 'cr': cr}
-        for k in components.keys():
-            if k in ('cb', 'cr'):
+        components = {"y": y, "cb": cb, "cr": cr}
+        for k in components:
+            if k in ("cb", "cr"):
                 comp = self.c_dequantize(components[k], factor=factor)
                 height, width = int(imgh / 2), int(imgw / 2)
             else:
@@ -448,9 +449,8 @@ class DeCompressJpeg(nn.Module):
                 height, width = imgh, imgw
             comp = self.idct(comp)
             components[k] = self.merging(comp, height, width)
-            #
         image = self.chroma(
-            components['y'], components['cb'], components['cr'])
+            components["y"], components["cb"], components["cr"])
         image = self.colors(image)
 
         image = torch.min(255 * torch.ones_like(image),
@@ -498,7 +498,7 @@ class DiffJPEG(nn.Module):
             h_pad = 16 - h % 16
         if w % 16 != 0:
             w_pad = 16 - w % 16
-        x = F.pad(x, (0, w_pad, 0, h_pad), mode='constant', value=0)
+        x = F.pad(x, (0, w_pad, 0, h_pad), mode="constant", value=0)
 
         y, cb, cr = self.compress(x, factor=factor)
         recovered = self.decompress(
@@ -507,18 +507,18 @@ class DiffJPEG(nn.Module):
         return recovered
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import cv2
 
     from neosr.utils import img2tensor, tensor2img
 
-    img_gt = cv2.imread('test.png') / 255.
+    img_gt = cv2.imread("test.png") / 255.
 
     # -------------- cv2 -------------- #
     encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 20]
-    _, encimg = cv2.imencode('.jpg', img_gt * 255., encode_param)
+    _, encimg = cv2.imencode(".jpg", img_gt * 255., encode_param)
     img_lq = np.float32(cv2.imdecode(encimg, 1))
-    cv2.imwrite('cv2_JPEG_20.png', img_lq)
+    cv2.imwrite("cv2_JPEG_20.png", img_lq)
 
     # -------------- DiffJPEG -------------- #
     jpeger = DiffJPEG(differentiable=False).cuda()
@@ -527,5 +527,5 @@ if __name__ == '__main__':
     quality = img_gt.new_tensor([20, 40])
     out = jpeger(img_gt, quality=quality)
 
-    cv2.imwrite('pt_JPEG_20.png', tensor2img(out[0]))
-    cv2.imwrite('pt_JPEG_40.png', tensor2img(out[1]))
+    cv2.imwrite("pt_JPEG_20.png", tensor2img(out[0]))
+    cv2.imwrite("pt_JPEG_40.png", tensor2img(out[1]))

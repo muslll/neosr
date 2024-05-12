@@ -2,13 +2,12 @@
 import math
 
 import torch
-import torch.nn as nn
-
-from torch.nn.init import trunc_normal_
 from einops import rearrange
+from torch import nn
+from torch.nn.init import trunc_normal_
 
+from neosr.archs.arch_util import DropPath, net_opt, to_2tuple
 from neosr.utils.registry import ARCH_REGISTRY
-from neosr.archs.arch_util import to_2tuple, DropPath, net_opt
 
 upscale, training = net_opt()
 
@@ -219,7 +218,7 @@ class HAB(nn.Module):
             # if window size is larger than input resolution, we don't partition windows
             self.shift_size = 0
             self.window_size = min(self.input_resolution)
-        assert 0 <= self.shift_size < self.window_size, 'shift_size must in 0-window_size'
+        assert 0 <= self.shift_size < self.window_size, "shift_size must in 0-window_size"
 
         self.norm1 = norm_layer(dim)
         self.attn = WindowAttention(
@@ -307,8 +306,8 @@ class PatchMerging(nn.Module):
         """
         h, w = self.input_resolution
         b, seq_len, c = x.shape
-        assert seq_len == h * w, 'input feature has wrong size'
-        assert h % 2 == 0 and w % 2 == 0, f'x size ({h}*{w}) are not even.'
+        assert seq_len == h * w, "input feature has wrong size"
+        assert h % 2 == 0 and w % 2 == 0, f"x size ({h}*{w}) are not even."
 
         x = x.view(b, h, w, c)
 
@@ -349,8 +348,8 @@ class OCAB(nn.Module):
         self.overlap_win_size = int(window_size * overlap_ratio) + window_size
 
         self.norm1 = norm_layer(dim)
-        self.qkv = nn.Linear(dim, dim * 3,  bias=qkv_bias)
-        self.unfold = nn.Unfold(kernel_size=(self.overlap_win_size, self.overlap_win_size), stride=window_size, padding=(self.overlap_win_size-window_size)//2)
+        self.qkv = nn.Linear(dim, dim * 3, bias=qkv_bias)
+        self.unfold = nn.Unfold(kernel_size=(self.overlap_win_size, self.overlap_win_size), stride=window_size, padding=(self.overlap_win_size - window_size) // 2)
 
         # define a parameter table of relative position bias
         self.relative_position_bias_table = nn.Parameter(
@@ -359,7 +358,7 @@ class OCAB(nn.Module):
         trunc_normal_(self.relative_position_bias_table, std=.02)
         self.softmax = nn.Softmax(dim=-1)
 
-        self.proj = nn.Linear(dim,dim)
+        self.proj = nn.Linear(dim, dim)
 
         self.norm2 = norm_layer(dim)
         mlp_hidden_dim = int(dim * mlp_ratio)
@@ -373,24 +372,24 @@ class OCAB(nn.Module):
         x = self.norm1(x)
         x = x.view(b, h, w, c)
 
-        qkv = self.qkv(x).reshape(b, h, w, 3, c).permute(3, 0, 4, 1, 2) # 3, b, c, h, w
-        q = qkv[0].permute(0, 2, 3, 1) # b, h, w, c
-        kv = torch.cat((qkv[1], qkv[2]), dim=1) # b, 2*c, h, w
+        qkv = self.qkv(x).reshape(b, h, w, 3, c).permute(3, 0, 4, 1, 2)  # 3, b, c, h, w
+        q = qkv[0].permute(0, 2, 3, 1)  # b, h, w, c
+        kv = torch.cat((qkv[1], qkv[2]), dim=1)  # b, 2*c, h, w
 
         # partition windows
         q_windows = window_partition(q, self.window_size)  # nw*b, window_size, window_size, c
         q_windows = q_windows.view(-1, self.window_size * self.window_size, c)  # nw*b, window_size*window_size, c
 
-        kv_windows = self.unfold(kv) # b, c*w*w, nw
-        kv_windows = rearrange(kv_windows, 'b (nc ch owh oww) nw -> nc (b nw) (owh oww) ch', nc=2, ch=c, owh=self.overlap_win_size, oww=self.overlap_win_size).contiguous() # 2, nw*b, ow*ow, c
-        k_windows, v_windows = kv_windows[0], kv_windows[1] # nw*b, ow*ow, c
+        kv_windows = self.unfold(kv)  # b, c*w*w, nw
+        kv_windows = rearrange(kv_windows, "b (nc ch owh oww) nw -> nc (b nw) (owh oww) ch", nc=2, ch=c, owh=self.overlap_win_size, oww=self.overlap_win_size).contiguous()  # 2, nw*b, ow*ow, c
+        k_windows, v_windows = kv_windows[0], kv_windows[1]  # nw*b, ow*ow, c
 
         b_, nq, _ = q_windows.shape
         _, n, _ = k_windows.shape
         d = self.dim // self.num_heads
-        q = q_windows.reshape(b_, nq, self.num_heads, d).permute(0, 2, 1, 3) # nw*b, nH, nq, d
-        k = k_windows.reshape(b_, n, self.num_heads, d).permute(0, 2, 1, 3) # nw*b, nH, n, d
-        v = v_windows.reshape(b_, n, self.num_heads, d).permute(0, 2, 1, 3) # nw*b, nH, n, d
+        q = q_windows.reshape(b_, nq, self.num_heads, d).permute(0, 2, 1, 3)  # nw*b, nH, nq, d
+        k = k_windows.reshape(b_, n, self.num_heads, d).permute(0, 2, 1, 3)  # nw*b, nH, n, d
+        v = v_windows.reshape(b_, n, self.num_heads, d).permute(0, 2, 1, 3)  # nw*b, nH, n, d
 
         q = q * self.scale
         attn = (q @ k.transpose(-2, -1))
@@ -498,9 +497,9 @@ class AttenBlocks(nn.Module):
 
     def forward(self, x, x_size, params):
         for blk in self.blocks:
-            x = blk(x, x_size, params['rpi_sa'], params['attn_mask'])
+            x = blk(x, x_size, params["rpi_sa"], params["attn_mask"])
 
-        x = self.overlap_attn(x, x_size, params['rpi_oca'])
+        x = self.overlap_attn(x, x_size, params["rpi_oca"])
 
         if self.downsample is not None:
             x = self.downsample(x)
@@ -549,7 +548,7 @@ class RHAG(nn.Module):
                  downsample=None,
                  img_size=224,
                  patch_size=4,
-                 resi_connection='1conv'):
+                 resi_connection="1conv"):
         super(RHAG, self).__init__()
 
         self.dim = dim
@@ -574,9 +573,9 @@ class RHAG(nn.Module):
             norm_layer=norm_layer,
             downsample=downsample)
 
-        if resi_connection == '1conv':
+        if resi_connection == "1conv":
             self.conv = nn.Conv2d(dim, dim, 3, 1, 1)
-        elif resi_connection == 'identity':
+        elif resi_connection == "identity":
             self.conv = nn.Identity()
 
         self.patch_embed = PatchEmbed(
@@ -665,14 +664,14 @@ class Upsample(nn.Sequential):
     def __init__(self, scale, num_feat):
         m = []
         if (scale & (scale - 1)) == 0:  # scale = 2^n
-            for _ in range(int(math.log(scale, 2))):
+            for _ in range(int(math.log2(scale))):
                 m.append(nn.Conv2d(num_feat, 4 * num_feat, 3, 1, 1))
                 m.append(nn.PixelShuffle(2))
         elif scale == 3:
             m.append(nn.Conv2d(num_feat, 9 * num_feat, 3, 1, 1))
             m.append(nn.PixelShuffle(3))
         else:
-            raise ValueError(f'scale {scale} is not supported. ' 'Supported scales: 2^n and 3.')
+            raise ValueError(f"scale {scale} is not supported. " "Supported scales: 2^n and 3.")
         super(Upsample, self).__init__(*m)
 
 
@@ -726,8 +725,8 @@ class hat(nn.Module):
                  patch_norm=True,
                  upscale=upscale,
                  img_range=1.,
-                 upsampler='',
-                 resi_connection='1conv',
+                 upsampler="",
+                 resi_connection="1conv",
                  **kwargs):
         super(hat, self).__init__()
 
@@ -750,8 +749,8 @@ class hat(nn.Module):
         # relative position index
         relative_position_index_SA = self.calculate_rpi_sa()
         relative_position_index_OCA = self.calculate_rpi_oca()
-        self.register_buffer('relative_position_index_SA', relative_position_index_SA)
-        self.register_buffer('relative_position_index_OCA', relative_position_index_OCA)
+        self.register_buffer("relative_position_index_SA", relative_position_index_SA)
+        self.register_buffer("relative_position_index_OCA", relative_position_index_OCA)
 
         # ------------------------- 1, shallow feature extraction ------------------------- #
         self.conv_first = nn.Conv2d(num_in_ch, embed_dim, 3, 1, 1)
@@ -821,13 +820,13 @@ class hat(nn.Module):
         self.norm = norm_layer(self.num_features)
 
         # build the last conv layer in deep feature extraction
-        if resi_connection == '1conv':
+        if resi_connection == "1conv":
             self.conv_after_body = nn.Conv2d(embed_dim, embed_dim, 3, 1, 1)
-        elif resi_connection == 'identity':
+        elif resi_connection == "identity":
             self.conv_after_body = nn.Identity()
 
         # ------------------------- 3, high quality image reconstruction ------------------------- #
-        if self.upsampler == 'pixelshuffle':
+        if self.upsampler == "pixelshuffle":
             # for classical SR
             self.conv_before_upsample = nn.Sequential(
                 nn.Conv2d(embed_dim, num_feat, 3, 1, 1), nn.LeakyReLU(inplace=True))
@@ -901,25 +900,25 @@ class hat(nn.Module):
         mask_windows = window_partition(img_mask, self.window_size)  # nw, window_size, window_size, 1
         mask_windows = mask_windows.view(-1, self.window_size * self.window_size)
         attn_mask = mask_windows.unsqueeze(1) - mask_windows.unsqueeze(2)
-        attn_mask = attn_mask.masked_fill(attn_mask != 0, float(-100.0)).masked_fill(attn_mask == 0, float(0.0))
+        attn_mask = attn_mask.masked_fill(attn_mask != 0, -100.0).masked_fill(attn_mask == 0, 0.0)
 
         return attn_mask
 
     @torch.jit.ignore
     def no_weight_decay(self):
-        return {'absolute_pos_embed'}
+        return {"absolute_pos_embed"}
 
     @torch.jit.ignore
     def no_weight_decay_keywords(self):
-        return {'relative_position_bias_table'}
+        return {"relative_position_bias_table"}
 
     def forward_features(self, x):
         x_size = (x.shape[2], x.shape[3])
 
-        # Calculate attention mask and relative position index in advance to speed up inference. 
+        # Calculate attention mask and relative position index in advance to speed up inference.
         # The original code is very time-cosuming for large window size.
         attn_mask = self.calculate_mask(x_size).to(x.device)
-        params = {'attn_mask': attn_mask, 'rpi_sa': self.relative_position_index_SA, 'rpi_oca': self.relative_position_index_OCA}
+        params = {"attn_mask": attn_mask, "rpi_sa": self.relative_position_index_SA, "rpi_oca": self.relative_position_index_OCA}
 
         x = self.patch_embed(x)
         if self.ape:
@@ -938,7 +937,7 @@ class hat(nn.Module):
         self.mean = self.mean.type_as(x)
         x = (x - self.mean) * self.img_range
 
-        if self.upsampler == 'pixelshuffle':
+        if self.upsampler == "pixelshuffle":
             # for classical SR
             x = self.conv_first(x)
             x = self.conv_after_body(self.forward_features(x)) + x
@@ -948,6 +947,7 @@ class hat(nn.Module):
         x = x / self.img_range + self.mean
 
         return x
+
 
 @ARCH_REGISTRY.register()
 def hat_s(**kwargs):
@@ -959,14 +959,15 @@ def hat_s(**kwargs):
             conv_scale=0.01,
             overlap_ratio=0.5,
             img_range=1.,
-            depths=[6,6,6,6,6,6],
+            depths=[6, 6, 6, 6, 6, 6],
             embed_dim=144,
-            num_heads=[6,6,6,6,6,6],
+            num_heads=[6, 6, 6, 6, 6, 6],
             mlp_ratio=2,
-            upsampler='pixelshuffle',
-            resi_connection='1conv',
+            upsampler="pixelshuffle",
+            resi_connection="1conv",
             **kwargs
             )
+
 
 @ARCH_REGISTRY.register()
 def hat_m(**kwargs):
@@ -978,14 +979,15 @@ def hat_m(**kwargs):
             conv_scale=0.01,
             overlap_ratio=0.5,
             img_range=1.,
-            depths=[6,6,6,6,6,6],
+            depths=[6, 6, 6, 6, 6, 6],
             embed_dim=180,
-            num_heads=[6,6,6,6,6,6],
+            num_heads=[6, 6, 6, 6, 6, 6],
             mlp_ratio=2,
-            upsampler='pixelshuffle',
-            resi_connection='1conv',
+            upsampler="pixelshuffle",
+            resi_connection="1conv",
             **kwargs
             )
+
 
 @ARCH_REGISTRY.register()
 def hat_l(**kwargs):
@@ -997,12 +999,11 @@ def hat_l(**kwargs):
             conv_scale=0.01,
             overlap_ratio=0.5,
             img_range=1.,
-            depths=[6,6,6,6,6,6,6,6,6,6,6,6],
+            depths=[6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6],
             embed_dim=180,
-            num_heads=[6,6,6,6,6,6,6,6,6,6,6,6],
+            num_heads=[6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6],
             mlp_ratio=2,
-            upsampler='pixelshuffle',
-            resi_connection='1conv',
+            upsampler="pixelshuffle",
+            resi_connection="1conv",
             **kwargs
             )
-

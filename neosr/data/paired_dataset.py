@@ -1,8 +1,6 @@
 import os
 import random
 
-import torch
-from torch.nn import functional as F
 from torch.utils import data
 from torchvision.transforms.functional import normalize
 
@@ -48,7 +46,7 @@ class paired(data.Dataset):
         # mean and std for normalizing the input images
         self.mean = opt["mean"] if "mean" in opt else None
         self.std = opt["std"] if "std" in opt else None
-        self.color = not self.opt.get("color", None) == "y"
+        self.color = self.opt.get("color", None) != "y"
 
         self.gt_folder, self.lq_folder = opt["dataroot_gt"], opt["dataroot_lq"]
         self.filename_tmpl = opt["filename_tmpl"] if "filename_tmpl" in opt else "{}"
@@ -124,7 +122,6 @@ class paired(data.Dataset):
                 break
             finally:
                 retry -= 1
-
 
         scale = self.opt["scale"]
         # augmentation for training

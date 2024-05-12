@@ -3,6 +3,7 @@ from torch import nn
 from torch.nn import functional as F
 
 from neosr.utils.registry import ARCH_REGISTRY
+
 from .arch_util import net_opt
 
 upscale, training = net_opt()
@@ -24,7 +25,7 @@ class compact(nn.Module):
         act_type (str): Activation type, options: 'relu', 'prelu', 'leakyrelu'. Default: prelu.
     """
 
-    def __init__(self, num_in_ch=3, num_out_ch=3, num_feat=64, num_conv=16, upscale=upscale, act_type='prelu', **kwargs):
+    def __init__(self, num_in_ch=3, num_out_ch=3, num_feat=64, num_conv=16, upscale=upscale, act_type="prelu", **kwargs):
         super(compact, self).__init__()
         self.num_in_ch = num_in_ch
         self.num_out_ch = num_out_ch
@@ -37,11 +38,11 @@ class compact(nn.Module):
         # the first conv
         self.body.append(nn.Conv2d(num_in_ch, num_feat, 3, 1, 1))
         # the first activation
-        if act_type == 'relu':
+        if act_type == "relu":
             activation = nn.ReLU(inplace=True)
-        elif act_type == 'prelu':
+        elif act_type == "prelu":
             activation = nn.PReLU(num_parameters=num_feat)
-        elif act_type == 'leakyrelu':
+        elif act_type == "leakyrelu":
             activation = nn.LeakyReLU(negative_slope=0.1, inplace=True)
         self.body.append(activation)
 
@@ -49,11 +50,11 @@ class compact(nn.Module):
         for _ in range(num_conv):
             self.body.append(nn.Conv2d(num_feat, num_feat, 3, 1, 1))
             # activation
-            if act_type == 'relu':
+            if act_type == "relu":
                 activation = nn.ReLU(inplace=True)
-            elif act_type == 'prelu':
+            elif act_type == "prelu":
                 activation = nn.PReLU(num_parameters=num_feat)
-            elif act_type == 'leakyrelu':
+            elif act_type == "leakyrelu":
                 activation = nn.LeakyReLU(negative_slope=0.1, inplace=True)
             self.body.append(activation)
 
@@ -65,11 +66,11 @@ class compact(nn.Module):
 
     def forward(self, x):
         out = x
-        for i in range(0, len(self.body)):
+        for i in range(len(self.body)):
             out = self.body[i](out)
 
         out = self.upsampler(out)
         # add the nearest upsampled image, so that the network learns the residual
-        base = F.interpolate(x, scale_factor=self.upscale, mode='nearest')
+        base = F.interpolate(x, scale_factor=self.upscale, mode="nearest")
         out += base
         return out

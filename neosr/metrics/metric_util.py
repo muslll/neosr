@@ -3,7 +3,7 @@ import numpy as np
 from neosr.utils import bgr2ycbcr
 
 
-def reorder_image(img, input_order='HWC'):
+def reorder_image(img, input_order="HWC"):
     """Reorder images to 'HWC' order.
 
     If the input_order is (h, w), return (h, w, 1);
@@ -20,12 +20,12 @@ def reorder_image(img, input_order='HWC'):
         ndarray: reordered image.
     """
 
-    if input_order not in ['HWC', 'CHW']:
+    if input_order not in ["HWC", "CHW"]:
         raise ValueError(
             f"Wrong input_order {input_order}. Supported input_orders are 'HWC' and 'CHW'")
     if len(img.shape) == 2:
         img = img[..., None]
-    if input_order == 'CHW':
+    if input_order == "CHW":
         img = img.transpose(1, 2, 0)
     return img
 

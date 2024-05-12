@@ -5,6 +5,7 @@ import torch.nn.functional as F
 from torch import nn
 
 from neosr.utils.registry import ARCH_REGISTRY
+
 from .arch_util import net_opt
 
 upscale, training = net_opt()
@@ -49,15 +50,15 @@ def activation(act_type, inplace=True, neg_slope=0.05, n_prelu=1):
     ----------
     """
     act_type = act_type.lower()
-    if act_type == 'relu':
+    if act_type == "relu":
         layer = nn.ReLU(inplace)
-    elif act_type == 'lrelu':
+    elif act_type == "lrelu":
         layer = nn.LeakyReLU(neg_slope, inplace)
-    elif act_type == 'prelu':
+    elif act_type == "prelu":
         layer = nn.PReLU(num_parameters=n_prelu, init=neg_slope)
     else:
         raise NotImplementedError(
-            'activation layer [{:s}] is not found'.format(act_type))
+            f"activation layer [{act_type:s}] is not found")
     return layer
 
 
@@ -74,7 +75,7 @@ def sequential(*args):
     if len(args) == 1:
         if isinstance(args[0], OrderedDict):
             raise NotImplementedError(
-                'sequential does not support OrderedDict input.')
+                "sequential does not support OrderedDict input.")
         return args[0]
     modules = []
     for module in args:
@@ -98,6 +99,7 @@ def pixelshuffle_block(in_channels,
                       kernel_size)
     pixel_shuffle = nn.PixelShuffle(upscale_factor)
     return sequential(conv, pixel_shuffle)
+
 
 class Conv3XC(nn.Module):
     def __init__(self, c_in, c_out, gain1=1, gain2=0, s=1, bias=True, relu=False):
@@ -152,7 +154,6 @@ class Conv3XC(nn.Module):
         self.eval_conv.weight.data = self.weight_concat
         self.eval_conv.bias.data = self.bias_concat
 
-
     def forward(self, x):
         if self.training:
             pad = 1
@@ -165,6 +166,7 @@ class Conv3XC(nn.Module):
         if self.has_relu:
             out = F.leaky_relu(out, negative_slope=0.05)
         return out
+
 
 class SPAB(nn.Module):
     def __init__(self,
@@ -183,7 +185,7 @@ class SPAB(nn.Module):
         self.c2_r = Conv3XC(mid_channels, mid_channels, gain1=2, s=1)
         self.c3_r = Conv3XC(mid_channels, out_channels, gain1=2, s=1)
         self.act1 = torch.nn.SiLU(inplace=True)
-        self.act2 = activation('lrelu', neg_slope=0.1, inplace=True)
+        self.act2 = activation("lrelu", neg_slope=0.1, inplace=True)
 
     def forward(self, x):
         out1 = (self.c1_r(x))
@@ -198,6 +200,7 @@ class SPAB(nn.Module):
         out = (out3 + x) * sim_att
 
         return out, out1, sim_att
+
 
 @ARCH_REGISTRY.register()
 class span(nn.Module):
@@ -266,4 +269,3 @@ class span(nn.Module):
         output = self.upsampler(out)
 
         return output
-
