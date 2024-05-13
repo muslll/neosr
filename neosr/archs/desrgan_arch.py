@@ -95,7 +95,7 @@ class ResidualDenseDeformableBlock(nn.Module):
         x1= deform_conv2d(x, offset=self.offset1(x), weight=self.conv1.weight,
                                           bias=self.conv1.bias,stride=1,padding=1)
         #x2 = self.lrelu(self.conv2(torch.cat((x, x1), 1)))
-        o1 = torch.cat((x, x1), 1))
+        o1 = torch.cat((x, x1), 1)
         x2= self.lrelu( deform_conv2d(o1, offset=self.offset2(o1), weight=self.conv2.weight,
                                           bias=self.conv2.bias,stride=1,padding=1) )
         #x3 = self.lrelu(self.conv3(torch.cat((x, x1, x2), 1)))
@@ -107,7 +107,7 @@ class ResidualDenseDeformableBlock(nn.Module):
         x4= self.lrelu(deform_conv2d(o3, offset=self.offset4(o3), weight=self.conv4.weight,
                                           bias=self.conv4.bias,stride=1,padding=1))
         #x5 = self.conv5(torch.cat((x, x1, x2, x3, x4), 1))
-        o4 = torch.cat((x, x1, x2, x3, x4), 1
+        o4 = torch.cat((x, x1, x2, x3, x4), 1)
         x5= self.lrelu( deform_conv2d(o4, offset=self.offset5(o4), weight=self.conv5.weight,
                                           bias=self.conv5.bias,stride=1,padding=1) )
         # Empirically, we use 0.2 to scale the residual for better performance
