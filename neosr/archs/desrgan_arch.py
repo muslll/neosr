@@ -23,7 +23,7 @@ class ResidualDenseDeformableBlock(nn.Module):
     def __init__(self, num_feat=64, num_grow_ch=32):
         super(ResidualDenseDeformableBlock, self).__init__()
         #self.conv1 = nn.Conv2d(num_feat, num_grow_ch, 3, 1, 1)
-        self.conv1 = nn.DeformConv2d(num_feat, num_grow_ch, 3, 1, 1)
+        self.conv1 = DeformConv2d(num_feat, num_grow_ch, 3, 1, 1)
 
         self.offset1 = nn.Conv2d(num_feat,
                                      2 * 3 * 3,
@@ -36,7 +36,7 @@ class ResidualDenseDeformableBlock(nn.Module):
         nn.init.constant_(self.offset1.bias, 0.)
 
         #self.conv2 = nn.Conv2d(num_feat + num_grow_ch, num_grow_ch, 3, 1, 1)
-        self.conv2 = nn.DeformConv2d(num_feat + num_grow_ch, num_grow_ch, 3, 1, 1)
+        self.conv2 = DeformConv2d(num_feat + num_grow_ch, num_grow_ch, 3, 1, 1)
 
         self.offset2 = nn.Conv2d(num_feat + num_grow_ch,
                                      2 * 3 * 3,
@@ -49,7 +49,7 @@ class ResidualDenseDeformableBlock(nn.Module):
         nn.init.constant_(self.offset2.bias, 0.)
 
         #self.conv3 = nn.Conv2d(num_feat + 2 * num_grow_ch, num_grow_ch, 3, 1, 1)
-        self.conv3 = nn.DeformConv2d(num_feat + 2 * num_grow_ch, num_grow_ch, 3, 1, 1)
+        self.conv3 = DeformConv2d(num_feat + 2 * num_grow_ch, num_grow_ch, 3, 1, 1)
         
         self.offset3 = nn.Conv2d(num_feat + 2 * num_grow_ch,
                                      2 * 3 * 3,
@@ -62,7 +62,7 @@ class ResidualDenseDeformableBlock(nn.Module):
 
         
         #self.conv4 = nn.Conv2d(num_feat + 3 * num_grow_ch, num_grow_ch, 3, 1, 1)
-        self.conv4 = nn.DeformConv2d(num_feat + 3 * num_grow_ch, num_grow_ch, 3, 1, 1)
+        self.conv4 = DeformConv2d(num_feat + 3 * num_grow_ch, num_grow_ch, 3, 1, 1)
         
         self.offset4 = nn.Conv2d(num_feat + 3 * num_grow_ch,
                                      2 * 3 * 3,
@@ -74,7 +74,7 @@ class ResidualDenseDeformableBlock(nn.Module):
         nn.init.constant_(self.offset4.bias, 0.)
         
         #self.conv5 = nn.Conv2d(num_feat + 4 * num_grow_ch, num_feat, 3, 1, 1)
-        self.conv5 = nn.DeformConv2d(num_feat + 4 * num_grow_ch, num_feat, 3, 1, 1)
+        self.conv5 = DeformConv2d(num_feat + 4 * num_grow_ch, num_feat, 3, 1, 1)
 
         self.offset5 = nn.Conv2d(num_feat + 4 * num_grow_ch,
                                      2 * 3 * 3,
