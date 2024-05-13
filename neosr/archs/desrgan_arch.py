@@ -21,7 +21,7 @@ class ResidualDenseDeformableBlock(nn.Module):
     """
 
     def __init__(self, num_feat=64, num_grow_ch=32):
-        super(ResidualDenseBlock, self).__init__()
+        super(ResidualDenseDeformableBlock, self).__init__()
         self.conv1 = nn.Conv2d(num_feat, num_grow_ch, 3, 1, 1)
 
         self.offset1 = nn.Conv2d(num_feat,
