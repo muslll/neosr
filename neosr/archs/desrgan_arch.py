@@ -101,7 +101,7 @@ class ResidualDenseDeformableBlock(nn.Module):
         #x2 = self.lrelu(self.conv2(torch.cat((x, x1), 1)))
         o1 = torch.cat((x, x1), 1)
         #x2= self.lrelu( deform_conv2d(o1, offset=self.offset2(o1), weight=self.conv2.weight,bias=self.conv2.bias,stride=1,padding=1) )
-        x2 = self.lrelu(self.conv2(torch.cat((x, x1), 1)), offset=self.offset2(torch.cat((x, x1), 1))))
+        x2 = self.lrelu(self.conv2(torch.cat((x, x1), 1)), offset=self.offset2(torch.cat((x, x1), 1)))
         #x3 = self.lrelu(self.conv3(torch.cat((x, x1, x2), 1)))
         o2 = torch.cat((x, x1, x2), 1)
         #x3= self.lrelu( deform_conv2d(o2, offset=self.offset3(o2), weight=self.conv3.weight,bias=self.conv3.bias,stride=1,padding=1))
