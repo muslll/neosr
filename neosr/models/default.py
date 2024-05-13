@@ -699,7 +699,7 @@ class default():
                                                  f'{img_name}_{self.opt["name"]}.png')
                 imwrite(sr_img, save_img_path)
                 if not with_metrics:
-                    tb_logger.add_image(f'{img_name}_{current_iter}', sr_img, global_step=current_iter, dataformats='HWC')
+                    tb_logger.add_image(f'{img_name}/{current_iter}', sr_img, global_step=current_iter, dataformats='HWC')
 
             if with_metrics:
                 # calculate metrics
