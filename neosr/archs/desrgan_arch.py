@@ -2,7 +2,7 @@
 import torch
 from torch import nn
 from torch.nn import functional as F
-from torchvision.ops import deform_conv2d
+from torchvision.ops import deform_conv2d, DeformConv2d
 
 from neosr.utils.registry import ARCH_REGISTRY
 from .arch_util import default_init_weights, make_layer, pixel_unshuffle, net_opt
@@ -22,7 +22,8 @@ class ResidualDenseDeformableBlock(nn.Module):
 
     def __init__(self, num_feat=64, num_grow_ch=32):
         super(ResidualDenseDeformableBlock, self).__init__()
-        self.conv1 = nn.Conv2d(num_feat, num_grow_ch, 3, 1, 1)
+        #self.conv1 = nn.Conv2d(num_feat, num_grow_ch, 3, 1, 1)
+        self.conv1 = nn.DeformConv2d(num_feat, num_grow_ch, 3, 1, 1)
 
         self.offset1 = nn.Conv2d(num_feat,
                                      2 * 3 * 3,
@@ -34,7 +35,8 @@ class ResidualDenseDeformableBlock(nn.Module):
         nn.init.constant_(self.offset1.weight, 0.)
         nn.init.constant_(self.offset1.bias, 0.)
 
-        self.conv2 = nn.Conv2d(num_feat + num_grow_ch, num_grow_ch, 3, 1, 1)
+        #self.conv2 = nn.Conv2d(num_feat + num_grow_ch, num_grow_ch, 3, 1, 1)
+        self.conv2 = nn.DeformConv2d(num_feat + num_grow_ch, num_grow_ch, 3, 1, 1)
 
         self.offset2 = nn.Conv2d(num_feat + num_grow_ch,
                                      2 * 3 * 3,
@@ -46,8 +48,8 @@ class ResidualDenseDeformableBlock(nn.Module):
         nn.init.constant_(self.offset2.weight, 0.)
         nn.init.constant_(self.offset2.bias, 0.)
 
-        self.conv3 = nn.Conv2d(
-            num_feat + 2 * num_grow_ch, num_grow_ch, 3, 1, 1)
+        #self.conv3 = nn.Conv2d(num_feat + 2 * num_grow_ch, num_grow_ch, 3, 1, 1)
+        self.conv3 = nn.DeformConv2d(num_feat + 2 * num_grow_ch, num_grow_ch, 3, 1, 1)
         
         self.offset3 = nn.Conv2d(num_feat + 2 * num_grow_ch,
                                      2 * 3 * 3,
@@ -58,8 +60,9 @@ class ResidualDenseDeformableBlock(nn.Module):
         nn.init.constant_(self.offset3.weight, 0.)
         nn.init.constant_(self.offset3.bias, 0.)
 
-        self.conv4 = nn.Conv2d(
-            num_feat + 3 * num_grow_ch, num_grow_ch, 3, 1, 1)
+        
+        #self.conv4 = nn.Conv2d(num_feat + 3 * num_grow_ch, num_grow_ch, 3, 1, 1)
+        self.conv4 = nn.DeformConv2d(num_feat + 3 * num_grow_ch, num_grow_ch, 3, 1, 1)
         
         self.offset4 = nn.Conv2d(num_feat + 3 * num_grow_ch,
                                      2 * 3 * 3,
@@ -70,7 +73,8 @@ class ResidualDenseDeformableBlock(nn.Module):
         nn.init.constant_(self.offset4.weight, 0.)
         nn.init.constant_(self.offset4.bias, 0.)
         
-        self.conv5 = nn.Conv2d(num_feat + 4 * num_grow_ch, num_feat, 3, 1, 1)
+        #self.conv5 = nn.Conv2d(num_feat + 4 * num_grow_ch, num_feat, 3, 1, 1)
+        self.conv5 = nn.DeformConv2d(num_feat + 4 * num_grow_ch, num_feat, 3, 1, 1)
 
         self.offset5 = nn.Conv2d(num_feat + 4 * num_grow_ch,
                                      2 * 3 * 3,
@@ -92,24 +96,29 @@ class ResidualDenseDeformableBlock(nn.Module):
 
     def forward(self, x):
         #x1 = self.lrelu(self.conv1(x))
-        x1= deform_conv2d(x, offset=self.offset1(x), weight=self.conv1.weight,
+        #x1= deform_conv2d(x, offset=self.offset1(x), weight=self.conv1.weight,
                                           bias=self.conv1.bias,stride=1,padding=1)
+        x1 = self.lrelu(self.conv1(x), offset=self.offset1(x))
         #x2 = self.lrelu(self.conv2(torch.cat((x, x1), 1)))
         o1 = torch.cat((x, x1), 1)
-        x2= self.lrelu( deform_conv2d(o1, offset=self.offset2(o1), weight=self.conv2.weight,
+        #x2= self.lrelu( deform_conv2d(o1, offset=self.offset2(o1), weight=self.conv2.weight,
                                           bias=self.conv2.bias,stride=1,padding=1) )
+        x2 = self.lrelu(self.conv2(torch.cat((x, x1), 1)), offset=self.offset2(torch.cat((x, x1), 1))))
         #x3 = self.lrelu(self.conv3(torch.cat((x, x1, x2), 1)))
         o2 = torch.cat((x, x1, x2), 1)
-        x3= self.lrelu( deform_conv2d(o2, offset=self.offset3(o2), weight=self.conv3.weight,
+        #x3= self.lrelu( deform_conv2d(o2, offset=self.offset3(o2), weight=self.conv3.weight,
                                           bias=self.conv3.bias,stride=1,padding=1))
+        x3 = self.lrelu(self.conv3(torch.cat((x, x1, x2), 1)), offset=self.offset3(torch.cat((x, x1, x2), 1)))
         #x4 = self.lrelu(self.conv4(torch.cat((x, x1, x2, x3), 1)))
         o3 = torch.cat((x, x1, x2, x3), 1)
-        x4= self.lrelu(deform_conv2d(o3, offset=self.offset4(o3), weight=self.conv4.weight,
+        #x4= self.lrelu(deform_conv2d(o3, offset=self.offset4(o3), weight=self.conv4.weight,
                                           bias=self.conv4.bias,stride=1,padding=1))
+        x4 = self.lrelu(self.conv4(torch.cat((x, x1, x2, x3), 1)), offset=self.offset4( torch.cat((x, x1, x2, x3), 1) )
         #x5 = self.conv5(torch.cat((x, x1, x2, x3, x4), 1))
         o4 = torch.cat((x, x1, x2, x3, x4), 1)
-        x5= self.lrelu( deform_conv2d(o4, offset=self.offset5(o4), weight=self.conv5.weight,
+        #x5= self.lrelu( deform_conv2d(o4, offset=self.offset5(o4), weight=self.conv5.weight,
                                           bias=self.conv5.bias,stride=1,padding=1) )
+        x5 = self.conv5(torch.cat((x, x1, x2, x3, x4), 1), offset=self.offset5(torch.cat((x, x1, x2, x3, x4), 1) )
         # Empirically, we use 0.2 to scale the residual for better performance
         return x5 * self.scale_residual + x
 
