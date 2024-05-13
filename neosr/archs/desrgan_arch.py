@@ -67,7 +67,7 @@ class ResidualDenseDeformableBlock(nn.Module):
                                      1,
                                      1,
                                      bias=True)
-        nn.init.constant_(self.offse4.weight, 0.)
+        nn.init.constant_(self.offset4.weight, 0.)
         nn.init.constant_(self.offset4.bias, 0.)
         
         self.conv5 = nn.Conv2d(num_feat + 4 * num_grow_ch, num_feat, 3, 1, 1)
