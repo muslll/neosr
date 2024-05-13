@@ -698,7 +698,7 @@ class default():
                         save_img_path = osp.join(self.opt['path']['visualization'], dataset_name,
                                                  f'{img_name}_{self.opt["name"]}.png')
                 imwrite(sr_img, save_img_path)
-                if not with_metric:
+                if not with_metrics:
                     tb_logger.add_image(f'{img_name}_{current_iter}', sr_img, global_step=current_iter, dataformats='HWC')
 
             if with_metrics:
