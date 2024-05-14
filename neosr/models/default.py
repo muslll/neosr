@@ -633,7 +633,11 @@ class default():
         self.is_train = False
 
         dataset_name = dataloader.dataset.opt['name']
-        with_metrics = self.opt['val'].get('metrics') is not None
+        dataset_type = dataloader.dataset.opt['type']
+        if dataset_type == 'single':
+            with_metrics = False
+        else:
+            with_metrics = self.opt['val'].get('metrics') is not None
         use_pbar = self.opt['val'].get('pbar', False)
 
         if with_metrics:
