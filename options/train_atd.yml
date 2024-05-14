@@ -82,7 +82,7 @@ train:
   warmup_iter: -1  # no warm up
 
   # losses
-  wavelet_guided: false
+  wavelet_guided: "off" # "disc", "on"
   mssim_opt:
     type: mssim
     loss_weight: 1.0

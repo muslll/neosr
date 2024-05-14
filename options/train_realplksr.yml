@@ -83,7 +83,7 @@ train:
   warmup_iter: -1  # no warm up
 
   # losses
-  wavelet_guided: false
+  wavelet_guided: "off" # "disc", "on"
   mssim_opt:
     type: mssim
     loss_weight: 1.0
@@ -100,7 +100,7 @@ train:
   gan_opt:
     type: GANLoss
     gan_type: vanilla
-    loss_weight: 0.05
+    loss_weight: 0.1
   #dists_opt:
   #  type: dists
   #  loss_weight: 0.5
