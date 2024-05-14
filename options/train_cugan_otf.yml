@@ -149,6 +149,7 @@ train:
   #gw_opt:
   #  type: gw_loss
   #  loss_weight: 1.0
+  #  criterion: chc
 
   match_lq: false
   color_opt:
