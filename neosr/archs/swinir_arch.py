@@ -997,10 +997,10 @@ def swinir_medium(**kwargs):
 def swinir_large(**kwargs):
     return swinir(
             img_size=64,
-            embed_dim=180,
-            depths=[6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6],
-            num_heads=[6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6],
-            upsampler="pixelshuffle",
-            resi_connection="1conv",
+            embed_dim=240,
+            depths=[6, 6, 6, 6, 6, 6, 6, 6, 6],
+            num_heads=[8, 8, 8, 8, 8, 8, 8, 8, 8],
+            upsampler="nearest+conv",
+            resi_connection="3conv",
             **kwargs
             )
