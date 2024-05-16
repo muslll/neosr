@@ -16,6 +16,7 @@ datasets:
 network_g:
   type: swinir_small
   #type: swinir_medium
+  #type: swinir_large
   #flash_attn: true
 
 path:
