@@ -33,9 +33,6 @@ class default():
         self.is_train = opt['is_train']
         self.optimizers = []
         self.schedulers = []
-        self.loss_g_sum = 0
-        self.loss_d_real_sum = 0
-        self.loss_d_fake_sum = 0
 
         # define network net_g
         self.net_g = build_network(opt['network_g'])
@@ -402,7 +399,7 @@ class default():
 
         # add total generator loss for tensorboard tracking
         loss_dict['l_g_total'] = l_g_total
-        self.loss_g_sum += l_g_total           
+                   
         # divide losses by accumulation factor
         l_g_total = l_g_total / self.accum_iters
         self.gradscaler.scale(l_g_total).backward()
@@ -430,7 +427,6 @@ class default():
                         real_d_pred = self.net_d(self.gt)
                     l_d_real = self.cri_gan(real_d_pred, True, is_disc=True)
                     loss_dict['l_d_real'] = l_d_real
-                    self.loss_d_real_sum += l_d_real
                     loss_dict['out_d_real'] = torch.mean(real_d_pred.detach())
                 # fake
                     if self.wavelet_guided:
@@ -439,7 +435,6 @@ class default():
                         fake_d_pred = self.net_d(self.output.detach().clone())
                     l_d_fake = self.cri_gan(fake_d_pred, False, is_disc=True)
                     loss_dict['l_d_fake'] = l_d_fake
-                    self.loss_d_fake_sum += l_d_fake
                     loss_dict['out_d_fake'] = torch.mean(fake_d_pred.detach())
 
             if self.cri_gan:
@@ -459,7 +454,6 @@ class default():
 
             # add total discriminator loss for tensorboard tracking
             loss_dict['l_d_total'] = (l_d_real + l_d_fake) / 2
-            
 
         # update gradscaler and zero grads
         if (self.n_accumulated) % self.accum_iters == 0:
@@ -476,19 +470,7 @@ class default():
                   https://github.com/muslll/neosr/wiki/Configuration-Walkthrough
                   """
             raise ValueError(msg)
-            
-        #avg losses
-        print_freq = self.opt['logger']['print_freq']
-        if current_iter % print_freq == 0:
-            loss_dict['l_g_tot_mean'] = torch.tensor(self.loss_g_sum / print_freq)
-            self.loss_g_sum = 0
-            loss_dict['l_d_fake_mean'] = torch.tensor(self.loss_d_fake_sum / print_freq)
-            self.loss_d_fake_sum = 0
-            loss_dict['l_d_real_mean'] = torch.tensor(self.loss_d_real_sum / print_freq)
-            self.loss_d_real_sum = 0
-            l_d_loss = torch.tensor( ((self.loss_d_fake_sum + self.loss_d_real_sum) / 2 ) / print_freq )
-            loss_dict['l_d_tot_mean'] = l_d_loss
-            
+
         self.log_dict = self.reduce_loss_dict(loss_dict)
 
 
@@ -706,7 +688,6 @@ class default():
                         save_img_path = osp.join(self.opt['path']['visualization'], dataset_name,
                                                  f'{img_name}_{self.opt["name"]}.png')
                 imwrite(sr_img, save_img_path)
-
             # check for dataset option save_tb, to save images on tb_logger    
             save_tb = dataloader.dataset.opt.get('save_tb', False)
             if save_tb:

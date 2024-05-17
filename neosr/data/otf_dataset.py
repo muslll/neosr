@@ -91,7 +91,7 @@ class otf(data.Dataset):
         self.final_sinc_prob = opt['final_sinc_prob']
 
         # kernel size ranges from 7 to 21
-        self.kernel_range = opt.get('kernel_range', [2 * v + 1 for v in range(3, 11)])  # kernel size ranges from 7 to 21
+        self.kernel_range = [2 * v + 1 for v in range(3, 11)]
         # TODO: kernel range is now hard-coded, should be in the configure file
         # convolving with pulse tensor brings no blurry effect
 
@@ -140,7 +140,7 @@ class otf(data.Dataset):
         # crop or pad to 512
         # TODO: 512 is hard-coded. You may change it accordingly
         h, w = img_gt.shape[0:2]
-        crop_pad_size = self.opt.get('crop_pad_size', 512)
+        crop_pad_size = 512
         # pad
         if h < crop_pad_size or w < crop_pad_size:
             pad_h = max(0, crop_pad_size - h)
