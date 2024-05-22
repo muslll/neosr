@@ -54,6 +54,7 @@ path:
 network_g:
   type: swinir_small
   #type: swinir_medium
+  #type: swinir_large
   #flash_attn: true
 
 network_d:
@@ -82,7 +83,7 @@ train:
   warmup_iter: -1  # no warm up
 
   # losses
-  wavelet_guided: false
+  wavelet_guided: "off" # "disc", "on"
   mssim_opt:
     type: mssim
     loss_weight: 1.0
@@ -112,6 +113,7 @@ train:
   #gw_opt:
   #  type: gw_loss
   #  loss_weight: 1.0
+  #  criterion: chc
 
   match_lq: false
   color_opt:

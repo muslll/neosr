@@ -60,11 +60,10 @@ network_d:
 
 train:
   optim_g:
-    type: nadam
+    type: adamw
     lr: !!float 5e-4
-    betas: [0.98, 0.99]
-    weight_decay: 0.01
-    decoupled_weight_decay: true
+    weight_decay: 0
+    betas: [0.9, 0.99]
   optim_d:
     type: nadam
     lr: !!float 1e-4
@@ -82,7 +81,7 @@ train:
   grad_clip: false
 
   # losses
-  wavelet_guided: false
+  wavelet_guided: "off" # "disc", "on"
   mssim_opt:
     type: mssim
     loss_weight: 1.0
@@ -112,6 +111,7 @@ train:
   #gw_opt:
   #  type: gw_loss
   #  loss_weight: 1.0
+  #  criterion: chc
 
   match_lq: false
   color_opt:

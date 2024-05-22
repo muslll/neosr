@@ -754,7 +754,7 @@ class swinir(nn.Module):
                  num_heads=(6, 6, 6, 6),
                  flash_attn=False,
                  window_size=8,
-                 mlp_ratio=2.,
+                 mlp_ratio=2.0,
                  qkv_bias=True,
                  qk_scale=None,
                  drop_rate=0.,
@@ -765,7 +765,7 @@ class swinir(nn.Module):
                  patch_norm=True,
                  use_checkpoint=False,
                  upscale=upscale,
-                 img_range=1.,
+                 img_range=1.0,
                  upsampler='pixelshuffle',
                  resi_connection='1conv',
                  **kwargs):
@@ -972,14 +972,10 @@ class swinir(nn.Module):
 @ARCH_REGISTRY.register()
 def swinir_small(**kwargs):
     return swinir(
-            in_chans=3,
             img_size=64,
-            window_size=8,
-            img_range=1.0,
             depths=[6, 6, 6, 6],
             embed_dim=60,
             num_heads=[6, 6, 6, 6],
-            mlp_ratio=2,
             upsampler="pixelshuffledirect",
             resi_connection="1conv",
             **kwargs
@@ -988,16 +984,23 @@ def swinir_small(**kwargs):
 @ARCH_REGISTRY.register()
 def swinir_medium(**kwargs):
     return swinir(
-            in_chans=3,
             img_size=48,
-            window_size=8,
-            img_range=1.0,
             depths=[6, 6, 6, 6, 6, 6],
             embed_dim=180,
             num_heads=[6, 6, 6, 6, 6, 6],
-            mlp_ratio=2,
             upsampler="pixelshuffle",
             resi_connection="1conv",
             **kwargs
             )
 
+@ARCH_REGISTRY.register()
+def swinir_large(**kwargs):
+    return swinir(
+            img_size=64,
+            embed_dim=240,
+            depths=[6, 6, 6, 6, 6, 6, 6, 6, 6],
+            num_heads=[8, 8, 8, 8, 8, 8, 8, 8, 8],
+            upsampler="nearest+conv",
+            resi_connection="3conv",
+            **kwargs
+            )
