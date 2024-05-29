@@ -160,7 +160,11 @@ def train_pipeline(root_path):
             )
 
     # copy the yml file to the experiment root
-    copy_opt_file(args.opt, opt["path"]["experiments_root"])
+    try:
+        copy_opt_file(args.opt, opt["path"]["experiments_root"])
+    except Exception as e:
+        msg = "Failed. Make sure the option 'name' in your config file is the same as the previous state!"
+        raise ValueError(msg)
 
     # WARNING: should not use get_root_logger in the above codes, including the called functions
     # Otherwise the logger will not be properly initialized
