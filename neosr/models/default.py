@@ -633,9 +633,9 @@ class default():
         self.is_train = False
 
         dataset_name = dataloader.dataset.opt['name']
-        
+
         dataset_type = dataloader.dataset.opt['type'] 
-        if dataset_type == 'single':
+        if dataset_type == "single":
             with_metrics = False
         else:
             with_metrics = self.opt['val'].get('metrics') is not None
@@ -675,7 +675,7 @@ class default():
             torch.cuda.empty_cache()
             
             # check if dataset has save_img option, and if so overwrite global save_img option
-            save_img = dataloader.dataset.opt.get('save_img', save_img)
+            save_img = self.opt["val"].get("save_img", False)
             if save_img:
                 if self.opt['is_train']:
                     save_img_path = osp.join(self.opt['path']['visualization'], img_name,
@@ -688,8 +688,10 @@ class default():
                         save_img_path = osp.join(self.opt['path']['visualization'], dataset_name,
                                                  f'{img_name}_{self.opt["name"]}.png')
                 imwrite(sr_img, save_img_path)
+
             # check for dataset option save_tb, to save images on tb_logger    
-            save_tb = dataloader.dataset.opt.get('save_tb', False)
+            save_tb = self.opt["val"].get("save_tb", False)
+
             if save_tb:
                 tb_logger.add_image(f'{img_name}/{current_iter}', sr_img, global_step=current_iter, dataformats='HWC')
                 
