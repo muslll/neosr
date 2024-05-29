@@ -3,7 +3,7 @@ from torch import nn
 from torch.nn import functional as F
 
 from neosr.utils.registry import ARCH_REGISTRY
-from .arch_util import net_opt
+from neosr.archs.arch_util import net_opt
 
 upscale, training = net_opt()
 

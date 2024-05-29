@@ -3,8 +3,8 @@ import torch.nn.functional as F
 from einops.layers.torch import Rearrange
 from torch import nn
 
-from neosr.archs.arch_util import net_opt
 from neosr.utils.registry import ARCH_REGISTRY
+from neosr.archs.arch_util import net_opt
 
 upscale, training = net_opt()
 
