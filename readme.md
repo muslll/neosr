@@ -120,8 +120,6 @@ Where `options.yml` is a configuration file. Templates can be found in [options]
 | [Adam](https://pytorch.org/docs/stable/generated/torch.optim.Adam.html)   | `Adam` or `adam`   |
 | [AdamW](https://pytorch.org/docs/stable/generated/torch.optim.AdamW.html) | `AdamW` or `adamw` |
 | [NAdam](https://pytorch.org/docs/stable/generated/torch.optim.NAdam.html) | `NAdam` or `nadam` |
-| [Lion](https://arxiv.org/abs/2302.06675)                                  | `Lion` or `lion`   |
-| [LAMB](https://arxiv.org/abs/1904.00962)                                  | `Lamb` or `lamb`   |
 | [Adan](https://github.com/sail-sg/Adan)                                   | `Adan` or `adan`   |
 
 ### Supported losses:

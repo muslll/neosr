@@ -15,7 +15,6 @@
 | [`DITN`](https://github.com/yongliuy/DITN)                                                          		| [Apache 2.0](https://github.com/yongliuy/DITN/blob/main/LICENSE)                      			|
 | [`Focal Frequency Loss`](https://github.com/EndlessSora/focal-frequency-loss)                       		| [MIT](https://github.com/EndlessSora/focal-frequency-loss/blob/master/LICENSE.md)     			|
 | [`LDL`](https://github.com/csjliang/LDL)                                                            		| [Apache 2.0](https://github.com/csjliang/LDL/blob/master/LICENSE)                     			|
-| [`pytorch-optimizer`](https://github.com/kozistr/pytorch_optimizer)                                 		| [Apache 2.0](https://github.com/kozistr/pytorch_optimizer/blob/main/LICENSE)          			|
 | [`DiffJPEG`](https://github.com/mlomnitz/DiffJPEG)                                                  		| [MIT](https://github.com/mlomnitz/DiffJPEG/blob/master/LICENSE)                       			|
 | `DropPath` from [`timm`](https://github.com/huggingface/pytorch-image-models)                       		| [Apache 2.0](https://github.com/huggingface/pytorch-image-models/blob/main/LICENSE)   			|
 | [`DCTLSA`](https://github.com/zengkun301/DCTLSA)						      		| [Apache 2.0](https://github.com/zengkun301/DCTLSA?tab=readme-ov-file#license)		      			|
@@ -39,3 +38,4 @@
 | [`DRCT`](https://github.com/ming053l/DRCT)							      		| [MIT](https://github.com/ming053l/DRCT/blob/main/LICENSE)							|
 | [`EFEN`](https://github.com/Supereeeee/EFEN)							      		| Unknown													|
 | [`GW loss`](https://github.com/xiezw5/Component-Divide-and-Conquer-for-Real-World-Image-Super-Resolution/)	| Unknown													|
+| [`Adan`](https://github.com/sail-sg/Adan) optimizer								| [Apache 2.0](https://github.com/sail-sg/Adan/blob/main/LICENSE)						|

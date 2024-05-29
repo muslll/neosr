@@ -5,18 +5,17 @@ from copy import deepcopy
 from os import path as osp
 
 import torch
-import pytorch_optimizer
 from tqdm import tqdm
 from torch.nn.parallel import DataParallel, DistributedDataParallel
 from torch.nn import functional as F
 
 from neosr.archs import build_network
 from neosr.losses import build_loss
-from neosr.optimizers import build_optimizer
 from neosr.losses.wavelet_guided import wavelet_guided
 from neosr.losses.loss_util import get_refined_artifact_map
 from neosr.data.augmentations import apply_augment
 from neosr.metrics import calculate_metric
+from neosr.optimizers.adan import adan
 
 from neosr.utils import get_root_logger, imwrite, tensor2img
 from neosr.utils.dist_util import master_only
@@ -216,11 +215,7 @@ class default():
         elif optim_type in {'NAdam', 'nadam'}:
             optimizer = torch.optim.NAdam(params, lr, **kwargs)
         elif optim_type in {'Adan', 'adan'}:
-            optimizer = pytorch_optimizer.Adan(params, lr, **kwargs)
-        elif optim_type in {'Lamb', 'lamb'}:
-            optimizer = pytorch_optimizer.Lamb(params, lr, **kwargs)
-        elif optim_type in {'Lion', 'lion'}:
-            optimizer = pytorch_optimizer.Lion(params, lr, **kwargs)
+            optimizer = adan(params, lr, **kwargs)
         else:
             raise NotImplementedError(
                 f'optimizer {optim_type} is not supported yet.')
