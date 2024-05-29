@@ -134,7 +134,7 @@ class WindowAttention(nn.Module):
         # make torchscript happy (cannot use tensor as tuple)
         q, k, v = qkv[0], qkv[1], qkv[2]
 
-        if self.flash_attn is True:
+        if self.flash_attn:
             # flash attention
             # NOTE: at time of writing, FlashAttention won't be enabled by SDPA
             # unless fp16 or bf16 is casted, and attention_mask is None.
@@ -142,11 +142,10 @@ class WindowAttention(nn.Module):
             # solution seems to use it outside SDPA instead.
 
             with torch.no_grad():
-                # TODO
+                # force flash attention
                 #with nn.attention.sdpa_kernel(nn.attention.SDPBackend.FLASH_ATTENTION):
-                with torch.backends.cuda.sdp_kernel(enable_math=False):
-                    x = nn.functional.scaled_dot_product_attention(q, k, v, scale=self.scale, dropout_p=self.dropout_p)
-                    x = x.transpose(1, 2).reshape(b_, n, c)
+                x = nn.functional.scaled_dot_product_attention(q, k, v, scale=self.scale, dropout_p=self.dropout_p)
+                x = x.transpose(1, 2).reshape(b_, n, c)
 
         else:
             q = q * self.scale
