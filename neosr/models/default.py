@@ -200,9 +200,6 @@ class default():
             msg = "The gt_size value must be a multiple of 4. Please change it."
             raise ValueError(msg)
 
-        self.net_d_iters = train_opt.get('net_d_iters', 1)
-        self.net_d_init_iters = train_opt.get('net_d_init_iters', 0)
-
         # set up optimizers and schedulers
         self.setup_optimizers()
         self.setup_schedulers()
@@ -317,80 +314,79 @@ class default():
             l_g_total = 0
             loss_dict = OrderedDict()
 
-            if (current_iter % self.net_d_iters == 0 and current_iter > self.net_d_init_iters):
-                # pixel loss
-                if self.cri_pix:
-                    if self.wavelet_guided == "on":
-                        l_g_pix = self.wg_pw * self.cri_pix(LL, LL_gt)
-                        l_g_pix_lh = self.wg_pw_lh * self.cri_pix(LH, LH_gt)
-                        l_g_pix_hl = self.wg_pw_hl * self.cri_pix(HL, HL_gt)
-                        l_g_pix_hh = self.wg_pw_hh * self.cri_pix(HH, HH_gt)
-                        l_g_total = l_g_total + l_g_pix + l_g_pix_lh + l_g_pix_hl + l_g_pix_hh
-                    else:
-                        l_g_pix = self.cri_pix(self.output, self.gt)
-                        l_g_total += l_g_pix
-                    loss_dict['l_g_pix'] = l_g_pix
-                # ssim loss
-                if self.cri_mssim:
-                    if self.wavelet_guided == "on":
-                        l_g_mssim = self.wg_pw * self.cri_mssim(LL, LL_gt)
-                        l_g_mssim_lh = self.wg_pw_lh * self.cri_mssim(LH, LH_gt)
-                        l_g_mssim_hl = self.wg_pw_hl * self.cri_mssim(HL, HL_gt)
-                        l_g_mssim_hh = self.wg_pw_hh * self.cri_mssim(HH, HH_gt)
-                        l_g_total = l_g_total + l_g_mssim + l_g_mssim_lh + l_g_mssim_hl + l_g_mssim_hh
-                    else:
-                        l_g_mssim = self.cri_mssim(self.output, self.gt)
-                        l_g_total += l_g_mssim
-                    loss_dict['l_g_mssim'] = l_g_mssim
-                # perceptual loss
-                if self.cri_perceptual:
-                    l_g_percep = self.cri_perceptual(self.output, self.gt)
-                    l_g_total += l_g_percep
-                    loss_dict['l_g_percep'] = l_g_percep
-                # dists loss
-                if self.cri_dists:
-                    l_g_dists = self.cri_dists(self.output, self.gt)
-                    l_g_total += l_g_dists
-                    loss_dict['l_g_dists'] = l_g_dists
-                # ldl loss
-                if self.cri_ldl:
-                    pixel_weight = get_refined_artifact_map(self.gt, self.output, 7)
-                    l_g_ldl = self.cri_ldl(
-                        torch.mul(pixel_weight, self.output), torch.mul(pixel_weight, self.gt))
-                    l_g_total += l_g_ldl
-                    loss_dict['l_g_ldl'] = l_g_ldl
-                # focal frequency loss
-                if self.cri_ff:
-                    l_g_ff = self.cri_ff(self.output, self.gt)
-                    l_g_total += l_g_ff
-                    loss_dict['l_g_ff'] = l_g_ff
-                # gradient-weighted loss
-                if self.cri_gw:
-                    l_g_gw = self.cri_gw(self.output, self.gt)
-                    l_g_total += l_g_gw
-                    loss_dict['l_g_gw'] = l_g_gw
-                # color loss
-                if self.cri_color:
-                    if self.match_lq:
-                        l_g_color = self.cri_color(self.output, self.lq_interp)
-                    else:
-                        l_g_color = self.cri_color(self.output, self.gt)
-                    l_g_total += l_g_color
-                    loss_dict['l_g_color'] = l_g_color
-                # luma loss
-                if self.cri_luma:
-                    if self.match_lq:
-                        l_g_luma = self.cri_luma(self.output, self.lq_interp)
-                    else:
-                        l_g_luma = self.cri_luma(self.output, self.gt)
-                    l_g_total += l_g_luma
-                    loss_dict['l_g_luma'] = l_g_luma
-                # GAN loss
-                if self.cri_gan:
-                    fake_g_pred = self.net_d(self.output)
-                    l_g_gan = self.cri_gan(fake_g_pred, True, is_disc=False)
-                    l_g_total += l_g_gan
-                    loss_dict['l_g_gan'] = l_g_gan
+            # pixel loss
+            if self.cri_pix:
+                if self.wavelet_guided == "on":
+                    l_g_pix = self.wg_pw * self.cri_pix(LL, LL_gt)
+                    l_g_pix_lh = self.wg_pw_lh * self.cri_pix(LH, LH_gt)
+                    l_g_pix_hl = self.wg_pw_hl * self.cri_pix(HL, HL_gt)
+                    l_g_pix_hh = self.wg_pw_hh * self.cri_pix(HH, HH_gt)
+                    l_g_total = l_g_total + l_g_pix + l_g_pix_lh + l_g_pix_hl + l_g_pix_hh
+                else:
+                    l_g_pix = self.cri_pix(self.output, self.gt)
+                    l_g_total += l_g_pix
+                loss_dict['l_g_pix'] = l_g_pix
+            # ssim loss
+            if self.cri_mssim:
+                if self.wavelet_guided == "on":
+                    l_g_mssim = self.wg_pw * self.cri_mssim(LL, LL_gt)
+                    l_g_mssim_lh = self.wg_pw_lh * self.cri_mssim(LH, LH_gt)
+                    l_g_mssim_hl = self.wg_pw_hl * self.cri_mssim(HL, HL_gt)
+                    l_g_mssim_hh = self.wg_pw_hh * self.cri_mssim(HH, HH_gt)
+                    l_g_total = l_g_total + l_g_mssim + l_g_mssim_lh + l_g_mssim_hl + l_g_mssim_hh
+                else:
+                    l_g_mssim = self.cri_mssim(self.output, self.gt)
+                    l_g_total += l_g_mssim
+                loss_dict['l_g_mssim'] = l_g_mssim
+            # perceptual loss
+            if self.cri_perceptual:
+                l_g_percep = self.cri_perceptual(self.output, self.gt)
+                l_g_total += l_g_percep
+                loss_dict['l_g_percep'] = l_g_percep
+            # dists loss
+            if self.cri_dists:
+                l_g_dists = self.cri_dists(self.output, self.gt)
+                l_g_total += l_g_dists
+                loss_dict['l_g_dists'] = l_g_dists
+            # ldl loss
+            if self.cri_ldl:
+                pixel_weight = get_refined_artifact_map(self.gt, self.output, 7)
+                l_g_ldl = self.cri_ldl(
+                    torch.mul(pixel_weight, self.output), torch.mul(pixel_weight, self.gt))
+                l_g_total += l_g_ldl
+                loss_dict['l_g_ldl'] = l_g_ldl
+            # focal frequency loss
+            if self.cri_ff:
+                l_g_ff = self.cri_ff(self.output, self.gt)
+                l_g_total += l_g_ff
+                loss_dict['l_g_ff'] = l_g_ff
+            # gradient-weighted loss
+            if self.cri_gw:
+                l_g_gw = self.cri_gw(self.output, self.gt)
+                l_g_total += l_g_gw
+                loss_dict['l_g_gw'] = l_g_gw
+            # color loss
+            if self.cri_color:
+                if self.match_lq:
+                    l_g_color = self.cri_color(self.output, self.lq_interp)
+                else:
+                    l_g_color = self.cri_color(self.output, self.gt)
+                l_g_total += l_g_color
+                loss_dict['l_g_color'] = l_g_color
+            # luma loss
+            if self.cri_luma:
+                if self.match_lq:
+                    l_g_luma = self.cri_luma(self.output, self.lq_interp)
+                else:
+                    l_g_luma = self.cri_luma(self.output, self.gt)
+                l_g_total += l_g_luma
+                loss_dict['l_g_luma'] = l_g_luma
+            # GAN loss
+            if self.cri_gan:
+                fake_g_pred = self.net_d(self.output)
+                l_g_gan = self.cri_gan(fake_g_pred, True, is_disc=False)
+                l_g_total += l_g_gan
+                loss_dict['l_g_gan'] = l_g_gan
 
         # add total generator loss for tensorboard tracking
         loss_dict['l_g_total'] = l_g_total

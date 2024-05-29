@@ -92,8 +92,10 @@ class dists(nn.Module):
         self.beta.data.normal_(0.1, 0.01)
 
         if load_weights:
-            if osp.exists("neosr/losses/dists_weights.pth"):
-                weights = torch.load("neosr/losses/dists_weights.pth")
+            current_dir = osp.dirname(osp.abspath(__file__))
+            model_path = osp.join(current_dir, "dists_weights.pth")
+            if osp.exists(model_path):
+                weights = torch.load(model_path)
             else:
                 weights = None
 

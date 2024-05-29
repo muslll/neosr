@@ -31,7 +31,7 @@ class adan(Optimizer):
     def __init__(
         self,
         params,
-        lr=1e-3,
+        lr=5e-4,
         betas=(0.98, 0.92, 0.99),
         eps=1e-8,
         weight_decay=0.02,
