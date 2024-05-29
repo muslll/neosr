@@ -39,3 +39,4 @@
 | [`EFEN`](https://github.com/Supereeeee/EFEN)							      		| Unknown													|
 | [`GW loss`](https://github.com/xiezw5/Component-Divide-and-Conquer-for-Real-World-Image-Super-Resolution/)	| Unknown													|
 | [`Adan`](https://github.com/sail-sg/Adan) optimizer								| [Apache 2.0](https://github.com/sail-sg/Adan/blob/main/LICENSE)						|
+| [`SeemoRe`](https://github.com/eduardzamfir/seemoredetails)							| Unknown													| 
