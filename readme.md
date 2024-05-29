@@ -135,7 +135,7 @@ Where `options.yml` is a configuration file. Templates can be found in [options]
 | Perceptual Loss                                                        						| `perceptual_opt`, `PerceptualLoss`        |
 | GAN                                                                    						| `gan_opt`, `GANLoss`, `MultiScaleGANLoss` |
 | Y**CbCr** Color Loss (bt601)                                           						| `color_opt`, `colorloss`                  |
-| Luma Loss (CIE L*)						 						| `luma_opt` `lumaloss`		     	    |
+| Luma Loss (CIE L*)						 							| `luma_opt` `lumaloss`		     	    |
 | [MS-SSIM](https://github.com/lartpang/mssim.pytorch)			 						| `mssim_opt` `mssim`			    |
 | [LDL Loss](https://github.com/csjliang/LDL)                            						| `ldl_opt`  			            |
 | [Focal Frequency](https://github.com/EndlessSora/focal-frequency-loss) 						| `ff_opt`, `focalfrequencyloss`            |
@@ -208,24 +208,22 @@ pie
 
 ### community datasets
 
-Datasets made by the upscaling community. More info can be found in the [Enhance Everything discord](https://discord.gg/cpAUpDK)
+Datasets made by the upscaling community. More info can be found in author's repository.
 
 - `FaceUp`: Curated version of [FFHQ](https://github.com/NVlabs/ffhq-dataset)
 - `SSDIR`: Curated version of [LSDIR](https://data.vision.ee.ethz.ch/yawli/).
-- `kim's 8k Dataset V2`: Video Game Dataset
 
 | dataset                                                | download 												      |
 |--------------------------------------------------------|------------------------------------------------------------------------------------------------------------|
-| [@Kim2091](https://github.com/Kim2091) 8k Dataset V2	 | [GDrive (33.5GB)](https://drive.google.com/drive/folders/1z6-UFJPciU5ysTaRXUPTfC9QrqW517G6?usp=drive_link) |
 | [@Phhofm](https://github.com/Phhofm) FaceUp            | [GDrive (4GB)](https://drive.google.com/file/d/1WFY0siR_ERVSnE2p7ouiCfV3wQizpAKr/view)                     |
 | [@Phhofm](https://github.com/Phhofm) SSDIR             | [Gdrive (4.5GB)](https://drive.google.com/file/d/1FA8Q-T3xZ6_KA7SHYgoa6idIS7xpdrl4/view)                   |
 
 ## resources
 
+- [Training Guide](https://github.com/Sirosky/Upscale-Hub/wiki/%F0%9F%93%88-Training-a-Model-in-NeoSR) from [@Sirosky](https://github.com/Sirosky) 
+- Philip's [youtube channel](https://www.youtube.com/@philip_hofmann/videos)
 - [OpenModelDB](https://openmodeldb.info/)
 - [chaiNNer](https://chainner.app/)
-- [Training Guide](https://github.com/Sirosky/Upscale-Hub/wiki/%F0%9F%93%88-Training-a-Model-in-NeoSR) from [@Sirosky](https://github.com/Sirosky) 
-- [Training Info](https://github.com/Kim2091/training-info) from [@Kim](https://github.com/Kim2091)
 
 ## 📄 license and acknowledgements
 
@@ -235,4 +233,4 @@ This code was originally based on [BasicSR](https://github.com/XPixelGroup/Basic
 
 Thanks to [victorca25/traiNNer](https://github.com/victorca25/traiNNer), [styler00dollar/Colab-traiNNer](https://github.com/styler00dollar/Colab-traiNNer/) and [timm](https://github.com/huggingface/pytorch-image-models) for providing helpful insights into some problems.
 
-Thanks to contributors [@Phhofm](https://github.com/Phhofm), [@Sirosky](https://github.com/Sirosky), [@Kim2091](https://github.com/Kim2091), [@terrainer](https://github.com/terrainer), [@Corpsecreate](https://github.com/Corpsecreate) and [@umzi2](https://github.com/umzi2) for helping with tests and bug reporting. 
+Thanks to contributors [@Phhofm](https://github.com/Phhofm), [@Sirosky](https://github.com/Sirosky), [@terrainer](https://github.com/terrainer), [@Corpsecreate](https://github.com/Corpsecreate) and [@umzi2](https://github.com/umzi2) for helping with tests and bug reporting. 

@@ -100,7 +100,7 @@ class default():
         self.n_accumulated = 0
         self.accum_iters = self.opt["datasets"]["train"].get("accumulate", 1) 
         if self.accum_iters == 0 or self.accum_iters == None:
-            self.accum_ters = 1
+            self.accum_iters = 1
 
         # define losses
         if train_opt.get('pixel_opt'):
