@@ -789,7 +789,7 @@ class srformer(nn.Module):
         num_feat = 64
         self.img_range = img_range
         if in_chans == 3:
-            rgb_mean = (0.4488, 0.4371, 0.4040)
+            rgb_mean = (0.5, 0.5, 0.5)
             self.mean = torch.Tensor(rgb_mean).view(1, 3, 1, 1)
         else:
             self.mean = torch.zeros(1, 1, 1, 1)

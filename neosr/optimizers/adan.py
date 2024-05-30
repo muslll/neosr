@@ -37,7 +37,6 @@ class adan(Optimizer):
         weight_decay=0.02,
         max_grad_norm=0.0,
         no_prox=True,
-        mc=True,
         foreach: bool = True,
         **kwargs,
     ):
@@ -61,13 +60,12 @@ class adan(Optimizer):
             weight_decay=weight_decay,
             max_grad_norm=max_grad_norm,
             no_prox=no_prox,
-            mc=mc,
             foreach=foreach,
         )
         super().__init__(params, defaults)
 
     def __setstate__(self, state):
-        super(Adan, self).__setstate__(state)
+        super(adan, self).__setstate__(state)
         for group in self.param_groups:
             group.setdefault("no_prox", False)
 
@@ -176,7 +174,6 @@ class adan(Optimizer):
                 weight_decay=group["weight_decay"],
                 eps=group["eps"],
                 no_prox=group["no_prox"],
-                mc=group["mc"],
                 clip_global_grad_norm=clip_global_grad_norm,
             )
 
@@ -206,7 +203,6 @@ def _single_tensor_adan(
     weight_decay: float,
     eps: float,
     no_prox: bool,
-    mc: bool,
     clip_global_grad_norm: Tensor,
 ):
     for i, param in enumerate(params):
@@ -223,12 +219,6 @@ def _single_tensor_adan(
         neg_grad_or_diff.add_(grad)
 
         exp_avg.mul_(beta1).add_(grad, alpha=1 - beta1)  # m_t
-
-        # Moment Centralization:
-        # https://arxiv.org/abs/2207.09066
-        if mc:
-            exp_avg = exp_avg - torch.mean(exp_avg)
-
         exp_avg_diff.mul_(beta2).add_(neg_grad_or_diff, alpha=1 - beta2)  # diff_t
 
         neg_grad_or_diff.mul_(beta2).add_(grad)
@@ -270,7 +260,6 @@ def _multi_tensor_adan(
     weight_decay: float,
     eps: float,
     no_prox: bool,
-    mc: bool,
     clip_global_grad_norm: Tensor,
 ):
     if len(params) == 0:
@@ -284,19 +273,6 @@ def _multi_tensor_adan(
 
     torch._foreach_mul_(exp_avgs, beta1)
     torch._foreach_add_(exp_avgs, grads, alpha=1 - beta1)  # m_t
-
-    # Moment Centralization:
-    # https://arxiv.org/abs/2207.09066
-    if mc:
-        exp_avg_mean = []
-        for i, param in enumerate(params):
-            exp_avg = exp_avgs[i]
-            # calculate the mean of each tensor in the list
-            exp_avg_ = torch.mean(exp_avg)
-            # append to list
-            exp_avg_mean.append(exp_avg_)
-        # subtract exp_avgs by the means
-        torch._foreach_add_(exp_avgs, exp_avg_mean, alpha=-1)
 
     torch._foreach_mul_(exp_avg_diffs, beta2)
     torch._foreach_add_(exp_avg_diffs, neg_pre_grads, alpha=1 - beta2)  # diff_t
