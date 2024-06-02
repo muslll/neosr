@@ -16,6 +16,7 @@ from neosr.losses.loss_util import get_refined_artifact_map
 from neosr.data.augmentations import apply_augment
 from neosr.metrics import calculate_metric
 from neosr.optimizers.adan import adan
+from neosr.optimizers.adamw_win import adamw_win
 
 from neosr.utils import get_root_logger, imwrite, tensor2img
 from neosr.utils.dist_util import master_only
@@ -213,6 +214,8 @@ class default():
             optimizer = torch.optim.NAdam(params, lr, **kwargs)
         elif optim_type in {'Adan', 'adan'}:
             optimizer = adan(params, lr, **kwargs)
+        elif optim_type in {'AdamW_Win', 'adamw_win'}:
+            optimizer = adamw_win(params, lr, **kwargs)
         else:
             raise NotImplementedError(
                 f'optimizer {optim_type} is not supported yet.')
@@ -294,7 +297,8 @@ class default():
 
             self.output = self.net_g(self.lq)
             # lq match
-            self.lq_interp = F.interpolate(self.lq, scale_factor=self.scale, mode='bicubic')
+            if self.match_lq:
+                self.lq_interp = F.interpolate(self.lq, scale_factor=self.scale, mode='bicubic')
 
             # wavelet guided loss
             if self.wavelet_guided == "on" or self.wavelet_guided == "disc":

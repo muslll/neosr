@@ -14,7 +14,7 @@ class adan(Optimizer):
         params (iterable): iterable of parameters to optimize or
             dicts defining parameter groups.
         lr (float, optional): learning rate. (default: 1e-3)
-        betas (Tuple[float, float, flot], optional): coefficients used for
+        betas (Tuple[float, float, float], optional): coefficients used for
             first- and second-order moments. (default: (0.98, 0.92, 0.99))
         eps (float, optional): term added to the denominator to improve
             numerical stability. (default: 1e-8)
