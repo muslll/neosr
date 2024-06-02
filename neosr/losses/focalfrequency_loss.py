@@ -118,7 +118,7 @@ class focalfrequencyloss(nn.Module):
         loss = weight_matrix * freq_distance
         return torch.mean(loss)
 
-    @torch.cuda.amp.custom_fwd(cast_inputs=torch.float32)
+    @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type='cuda')
     def forward(
         self,
         pred: torch.Tensor,

@@ -7,9 +7,8 @@ license = "Apache 2.0"
 readme = "readme.md"
 
 [tool.poetry.dependencies]
-python = "^3.11,<3.12"
+python = "^3.12"
 numpy = "^1.25.2"
-lmdb = "^1.4.1"
 einops = "^0.6.1"
 scipy = "^1.11.1"
 PyYAML = "^6.0.1"
@@ -24,7 +23,7 @@ select = ["ALL"]
 ignore = [ "E501", "T201", "D", "CPY001",
 	   "TD002", "TD003", "COM812", "ISC001",
 	   "N8", "ANN", "S101" ]
-target-version = "py311"
+target-version = "py312"
 preview = true
 
 [tool.ruff.format]

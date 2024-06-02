@@ -66,7 +66,6 @@ def window_reverse(windows, window_size, h, w):
     x = x.permute(0, 1, 3, 2, 4, 5).contiguous().view(b, h, w, -1)
     return x
 
-#@torch.cuda.amp.custom_fwd(cast_inputs=torch.bfloat16)
 class WindowAttention(nn.Module):
     r""" Window based multi-head self attention (W-MSA) module with relative position bias.
     It supports both of shifted and non-shifted window.
