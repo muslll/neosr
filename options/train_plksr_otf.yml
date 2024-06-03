@@ -57,6 +57,7 @@ datasets:
 #val:
 #  val_freq: 1000
 #  save_img: true
+#  save_tb: true
 #  tile: -1 # 200
 #  metrics:
 #    psnr:
@@ -100,16 +101,10 @@ network_d:
 train:
   optim_g:
     type: adan
-    lr: !!float 1e-4
-    weight_decay: 0.02
-    weight_decouple: true
-    use_gc: true
+    lr: !!float 3e-4
   optim_d:
     type: adan
     lr: !!float 1e-4
-    weight_decay: 0.02
-    weight_decouple: true
-    use_gc: true
 
   scheduler:
     type: multisteplr

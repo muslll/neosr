@@ -116,12 +116,13 @@ Where `options.yml` is a configuration file. Templates can be found in [options]
 
 ### Supported Optimizers:
 
-| optimizer                                                                 | option             |
-|---------------------------------------------------------------------------|--------------------|
-| [Adam](https://pytorch.org/docs/stable/generated/torch.optim.Adam.html)   | `Adam` or `adam`   |
-| [AdamW](https://pytorch.org/docs/stable/generated/torch.optim.AdamW.html) | `AdamW` or `adamw` |
-| [NAdam](https://pytorch.org/docs/stable/generated/torch.optim.NAdam.html) | `NAdam` or `nadam` |
-| [Adan](https://github.com/sail-sg/Adan)                                   | `Adan` or `adan`   |
+| optimizer                                                                 | option             	 |
+|---------------------------------------------------------------------------|----------------------------|
+| [Adam](https://pytorch.org/docs/stable/generated/torch.optim.Adam.html)   | `Adam` or `adam`   	 |
+| [AdamW](https://pytorch.org/docs/stable/generated/torch.optim.AdamW.html) | `AdamW` or `adamw` 	 |
+| [NAdam](https://pytorch.org/docs/stable/generated/torch.optim.NAdam.html) | `NAdam` or `nadam` 	 |
+| [Adan](https://github.com/sail-sg/Adan)                                   | `Adan` or `adan`   	 |
+| [AdamW Win2](https://github.com/sail-sg/win)				    | `AdamW_Win` or `adamw_win` |
 
 ### Supported losses:
 
