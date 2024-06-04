@@ -21,7 +21,7 @@ Join our <a href="https://discord.gg/NN2HGtJ3d6">Discord</a>
 ## 💻 installation
 
 Requires Python 3.12 and CUDA =>11.8.
-Install latest [Pytorch (=>2.1) and TorchVision](https://pytorch.org/get-started/locally/) (required).
+Install latest [Pytorch (=>2.3) and TorchVision](https://pytorch.org/get-started/locally/) (required).
 
 Clone the repository:
 
@@ -72,7 +72,7 @@ Where `options.yml` is a configuration file. Templates can be found in [options]
 
 ## features
 
-### Supported archs:
+### [Supported Archs](https://github.com/muslll/neosr/wiki/Arch%E2%80%90specific-options):
 
 | arch                                                                                              | option                                 		|
 |---------------------------------------------------------------------------------------------------|---------------------------------------------------|
@@ -111,10 +111,10 @@ Where `options.yml` is a configuration file. Templates can be found in [options]
 | net                               				  | option 		        |
 |-----------------------------------------------------------------|-----------------------------|
 | U-Net w/ SN 							  | `unet` 		        |
-| [A2-FPN](https://github.com/lironui/A2-FPN) w/ SN		  | `a2fpn`			|
 | [PatchGAN](https://github.com/NVIDIA/pix2pixHD) w/ SN		  | `patchgan`			|
+| [A2-FPN](https://github.com/lironui/A2-FPN) w/ SN		  | `a2fpn`			|
 
-### Supported Optimizers:
+### [Supported Optimizers](https://github.com/muslll/neosr/wiki/Optimizer-Options):
 
 | optimizer                                                                 | option             	 |
 |---------------------------------------------------------------------------|----------------------------|
@@ -123,8 +123,9 @@ Where `options.yml` is a configuration file. Templates can be found in [options]
 | [NAdam](https://pytorch.org/docs/stable/generated/torch.optim.NAdam.html) | `NAdam` or `nadam` 	 |
 | [Adan](https://github.com/sail-sg/Adan)                                   | `Adan` or `adan`   	 |
 | [AdamW Win2](https://github.com/sail-sg/win)				    | `AdamW_Win` or `adamw_win` |
+| [ECO strategy](https://github.com/2minkyulee/ECO)			    | `eco`, `eco_iters`	 |
 
-### Supported losses:
+### [Supported Losses](https://github.com/muslll/neosr/wiki/Losses):
 
 | loss                                                                   						| option               		      	    |
 |-----------------------------------------------------------------------------------------------------------------------|-------------------------------------------|
@@ -154,7 +155,7 @@ Where `options.yml` is a configuration file. Templates can be found in [options]
 | [ResizeMix](https://arxiv.org/abs/2012.11101)		| `resizemix`	|
 | [CutBlur](https://github.com/clovaai/cutblur/)	| `cutblur`	|
 
-### Supported models:
+### Supported Models:
 
 | model   | description                                                            | option    |
 |---------|------------------------------------------------------------------------|-----------|

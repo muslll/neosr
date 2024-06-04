@@ -95,7 +95,15 @@ class default():
 
         # LQ matching for Color/Luma losses
         self.match_lq = self.opt['train'].get('match_lq', False)
-        
+
+        # Total expected iters
+        self.total_iter = self.opt["train"].get("total_iter", 200000)
+
+        # enable ECO optimization:
+        self.eco = self.opt["train"].get("eco", False)
+        # ECO amount of iters
+        self.eco_iters = self.opt["train"].get("eco_iters", 125000)
+
         # initialise counter of how many batches has to be accumulated
         self.n_accumulated = 0
         self.accum_iters = self.opt["datasets"]["train"].get("accumulate", 1) 
@@ -281,6 +289,25 @@ class default():
             for param_group, lr in zip(optimizer.param_groups, lr_groups, strict=True):
                 param_group['lr'] = lr
 
+    def eco_strategy(self, current_iter):
+        """ ECO ("Empirical Centroid-oriented Optimization"):
+            https://arxiv.org/abs/2312.17526
+        """
+        # define alpha
+        a = min(current_iter / self.eco_iters, 1.0)
+        # network prediction
+        self.net_output = self.net_g(self.lq)
+        # downsampled prediction
+        self.lq_scaled = F.interpolate(self.net_output, scale_factor=1/self.scale, mode="bicubic")
+        # define lq centroid
+        self.output = ((1 - a) * self.lq_scaled) + (a * self.lq)
+        # predict from lq centroid
+        self.output = self.net_g(self.output)
+        # define gt centroid
+        self.gt = ((1 - a) * self.net_output) + (a * self.gt)
+
+        return self.output, self.gt
+
     def optimize_parameters(self, current_iter):
 
         if self.net_d is not None:
@@ -295,8 +322,12 @@ class default():
 
         with torch.autocast(device_type='cuda', dtype=self.amp_dtype, enabled=self.use_amp):
 
-            self.output = self.net_g(self.lq)
-            # lq match
+            if self.eco and current_iter < self.eco_iters:
+                self.output, self.gt = self.eco_strategy(current_iter)
+            else:
+                self.output = self.net_g(self.lq)
+
+           # lq match
             if self.match_lq:
                 self.lq_interp = F.interpolate(self.lq, scale_factor=self.scale, mode='bicubic')
 
@@ -417,9 +448,9 @@ class default():
                 if self.cri_gan:
                 # real
                     if self.wavelet_guided == "on" or self.wavelet_guided == "disc":
-                        real_d_pred = self.net_d(combined_HF_gt)
+                        real_d_pred = self.net_d(combined_HF_gt.detach())
                     else:
-                        real_d_pred = self.net_d(self.gt)
+                        real_d_pred = self.net_d(self.gt.detach())
                     l_d_real = self.cri_gan(real_d_pred, True, is_disc=True)
                     loss_dict['l_d_real'] = l_d_real
                     loss_dict['out_d_real'] = torch.mean(real_d_pred.detach())
@@ -698,6 +729,7 @@ class default():
             if use_pbar:
                 pbar.update(1)
                 pbar.set_description(f'Test {img_name}')
+
         if use_pbar:
             pbar.close()
 
