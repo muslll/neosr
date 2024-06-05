@@ -78,7 +78,7 @@ train:
   grad_clip: false
 
   # losses
-  wavelet_guided: "off" # "disc", "on"
+  #wavelet_guided: "disc" # "off", "on"
   mssim_opt:
     type: mssim
     loss_weight: 1.0
@@ -110,7 +110,7 @@ train:
   #  loss_weight: 1.0
   #  criterion: chc
 
-  match_lq: false
+  #match_lq: true
   color_opt:
     type: colorloss
     loss_weight: 1.0

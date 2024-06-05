@@ -644,7 +644,10 @@ class default():
 
         # augmentation
         if self.is_train and self.aug is not None:
-            self.gt, self.lq = apply_augment(self.gt, self.lq, scale=self.scale, augs=self.aug, prob=self.aug_prob)
+            if len(self.aug) == 1 and "none" in self.aug:
+                pass
+            else:
+                self.gt, self.lq = apply_augment(self.gt, self.lq, scale=self.scale, augs=self.aug, prob=self.aug_prob)
 
     def dist_validation(self, dataloader, current_iter, tb_logger, save_img):
         if self.opt['rank'] == 0:
