@@ -102,6 +102,8 @@ class default():
 
         # enable ECO optimization:
         self.eco = self.opt["train"].get("eco", False)
+        # ECO alpha scheduling
+        self.eco_schedule = self.opt["train"].get("eco_schedule", "sigmoid")
         # ECO amount of iters
         self.eco_iters = self.opt["train"].get("eco_iters", 80000)
         # ECO init iters
@@ -301,7 +303,10 @@ class default():
 
         with torch.no_grad():
             # define alpha with sigmoid-like curve, slope/skew at 0.25
-            a = 1 / (1 + math.exp(-1 * (10 * (current_iter / self.eco_iters - 0.25))))
+            if self.eco_schedule == "sigmoid":
+                a = 1 / (1 + math.exp(-1 * (10 * (current_iter / self.eco_iters - 0.25))))
+            else:
+                a = min(current_iter / self.eco_iters, 1.0)
             # network prediction
             self.net_output = self.net_g(self.lq)
             # define gt centroid
