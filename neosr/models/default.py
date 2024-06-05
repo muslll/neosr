@@ -295,23 +295,35 @@ class default():
                 param_group['lr'] = lr
 
     def eco_strategy(self, current_iter):
-        """ ECO ("Empirical Centroid-oriented Optimization"):
+        """ Adapted version of "Empirical Centroid-oriented Optimization":
             https://arxiv.org/abs/2312.17526
         """
-        # define alpha with sigmoid-like curve, slope/skew at 0.25
-        a = 1 / (1 + math.exp(-1 * (10 * (current_iter / self.eco_iters - 0.25))))
-        # network prediction
-        self.net_output = self.net_g(self.lq)
-        # downsampled prediction
-        self.lq_scaled = F.interpolate(self.net_output, scale_factor=1/self.scale, mode="bicubic")
-        # define lq centroid
-        self.output = ((1 - a) * self.lq_scaled) + (a * self.lq)
+
+        with torch.no_grad():
+            # define alpha with sigmoid-like curve, slope/skew at 0.25
+            a = 1 / (1 + math.exp(-1 * (10 * (current_iter / self.eco_iters - 0.25))))
+            # network prediction
+            self.net_output = self.net_g(self.lq)
+            # define gt centroid
+            self.gt = ((1 - a) * self.net_output) + (a * self.gt)
+            # downsampled prediction
+            self.lq_scaled = torch.clamp(
+                F.interpolate(
+                    self.net_output,
+                    scale_factor=1 / self.scale,
+                    mode="bicubic",
+                    antialias=True,
+                ),
+                0,
+                1,
+            )
+            # define lq centroid
+            self.output = ((1 - a) * self.lq_scaled) + (a * self.lq)
+
         # predict from lq centroid
         self.output = self.net_g(self.output)
-        # define gt centroid
-        self.gt = ((1 - a) * self.net_output) + (a * self.gt)
 
-        return self.output, self.gt
+        return self.output, self.gt 
 
     def optimize_parameters(self, current_iter):
 
@@ -338,7 +350,8 @@ class default():
 
            # lq match
             if self.match_lq:
-                self.lq_interp = F.interpolate(self.lq, scale_factor=self.scale, mode='bicubic')
+                with torch.no_grad():
+                    self.lq_interp = F.interpolate(self.lq, scale_factor=self.scale, mode='bicubic', antialias=True)
 
             # wavelet guided loss
             if self.wavelet_guided == "on" or self.wavelet_guided == "disc":
@@ -457,9 +470,9 @@ class default():
                 if self.cri_gan:
                 # real
                     if self.wavelet_guided == "on" or self.wavelet_guided == "disc":
-                        real_d_pred = self.net_d(combined_HF_gt.detach())
+                        real_d_pred = self.net_d(combined_HF_gt)
                     else:
-                        real_d_pred = self.net_d(self.gt.detach())
+                        real_d_pred = self.net_d(self.gt)
                     l_d_real = self.cri_gan(real_d_pred, True, is_disc=True)
                     loss_dict['l_d_real'] = l_d_real
                     loss_dict['out_d_real'] = torch.mean(real_d_pred.detach())
