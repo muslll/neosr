@@ -104,6 +104,8 @@ class default():
         self.eco = self.opt["train"].get("eco", False)
         # ECO amount of iters
         self.eco_iters = self.opt["train"].get("eco_iters", 80000)
+        # ECO init iters
+        self.eco_init = self.opt["train"].get("eco_init", 15000)
         # using pretrain?
         self.pretrain = self.opt["path"].get("pretrain_network_g", None)
 
@@ -296,7 +298,7 @@ class default():
         """ ECO ("Empirical Centroid-oriented Optimization"):
             https://arxiv.org/abs/2312.17526
         """
-        # define alpha with sigmoid-like curve, slope at 0.25
+        # define alpha with sigmoid-like curve, slope/skew at 0.25
         a = 1 / (1 + math.exp(-1 * (10 * (current_iter / self.eco_iters - 0.25))))
         # network prediction
         self.net_output = self.net_g(self.lq)
@@ -327,7 +329,7 @@ class default():
 
             # eco
             if self.eco and current_iter <= self.eco_iters:
-                if current_iter < 3000 and self.pretrain is None:
+                if current_iter < self.eco_init and self.pretrain is None:
                     self.output = self.net_g(self.lq)
                 else:
                     self.output, self.gt = self.eco_strategy(current_iter)
@@ -532,7 +534,8 @@ class default():
             self._set_lr(warm_up_lr_l)
 
     def test(self):
-        self.tile = self.opt['val'].get('tile', -1)
+        self.tile = self.opt["val"].get("tile", -1)
+        scale = self.opt["scale"]
         if self.tile == -1:
             self.net_g.eval()
             with torch.inference_mode():
@@ -600,25 +603,25 @@ class default():
                 for chop in img_chops:
                     out = self.net_g(chop)  # image processing of each partition
                     outputs.append(out)
-                _img = torch.zeros(1, C, H * self.scale, W * self.scale)
+                _img = torch.zeros(1, C, H * scale, W * scale)
                 # merge
                 for i in range(ral):
                     for j in range(row):
-                        top = slice(i * split_h * self.scale, (i + 1) * split_h * self.scale)
-                        left = slice(j * split_w * self.scale, (j + 1) * split_w * self.scale)
+                        top = slice(i * split_h * scale, (i + 1) * split_h * scale)
+                        left = slice(j * split_w * scale, (j + 1) * split_w * scale)
                         if i == 0:
-                            _top = slice(0, split_h * self.scale)
+                            _top = slice(0, split_h * scale)
                         else:
-                            _top = slice(shave_h * self.scale, (shave_h + split_h) * self.scale)
+                            _top = slice(shave_h * scale, (shave_h + split_h) * scale)
                         if j == 0:
-                            _left = slice(0, split_w * self.scale)
+                            _left = slice(0, split_w * scale)
                         else:
-                            _left = slice(shave_w * self.scale, (shave_w + split_w) * self.scale)
+                            _left = slice(shave_w * scale, (shave_w + split_w) * scale)
                         _img[..., top, left] = outputs[i * row + j][..., _top, _left]
                 self.output = _img
             self.net_g.train()
             _, _, h, w = self.output.size()
-            self.output = self.output[:, :, 0:h - mod_pad_h * self.scale, 0:w - mod_pad_w * self.scale]
+            self.output = self.output[:, :, 0:h - mod_pad_h * scale, 0:w - mod_pad_w * scale]
 
     @torch.no_grad()
     def feed_data(self, data):

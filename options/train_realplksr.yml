@@ -62,6 +62,7 @@ network_d:
   type: unet
 
 train:
+  #eco: true
   optim_g:
     type: adan
     lr: !!float 3e-4
