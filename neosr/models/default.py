@@ -1,5 +1,6 @@
 import os
 import time
+import math
 from collections import OrderedDict
 from copy import deepcopy
 from os import path as osp
@@ -102,7 +103,9 @@ class default():
         # enable ECO optimization:
         self.eco = self.opt["train"].get("eco", False)
         # ECO amount of iters
-        self.eco_iters = self.opt["train"].get("eco_iters", 125000)
+        self.eco_iters = self.opt["train"].get("eco_iters", 80000)
+        # using pretrain?
+        self.pretrain = self.opt["path"].get("pretrain_network_g", None)
 
         # initialise counter of how many batches has to be accumulated
         self.n_accumulated = 0
@@ -293,8 +296,8 @@ class default():
         """ ECO ("Empirical Centroid-oriented Optimization"):
             https://arxiv.org/abs/2312.17526
         """
-        # define alpha
-        a = min(current_iter / self.eco_iters, 1.0)
+        # define alpha with sigmoid-like curve, slope at 0.25
+        a = 1 / (1 + math.exp(-1 * (10 * (current_iter / self.eco_iters - 0.25))))
         # network prediction
         self.net_output = self.net_g(self.lq)
         # downsampled prediction
@@ -322,8 +325,12 @@ class default():
 
         with torch.autocast(device_type='cuda', dtype=self.amp_dtype, enabled=self.use_amp):
 
-            if self.eco and current_iter < self.eco_iters:
-                self.output, self.gt = self.eco_strategy(current_iter)
+            # eco
+            if self.eco and current_iter <= self.eco_iters:
+                if current_iter < 3000 and self.pretrain is None:
+                    self.output = self.net_g(self.lq)
+                else:
+                    self.output, self.gt = self.eco_strategy(current_iter)
             else:
                 self.output = self.net_g(self.lq)
 
