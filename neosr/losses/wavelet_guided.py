@@ -447,7 +447,8 @@ class SWTInverse(nn.Module):
 
         self.mode = mode
 
-    @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type='cuda')
+    #@torch.amp.custom_fwd(cast_inputs=torch.float32, device_type='cuda')
+    @torch.cuda.amp.custom_fwd(cast_inputs=torch.float32)
     def forward(self, coeffs):
         """
         Args:
