@@ -6,7 +6,7 @@ from torch.nn import functional as F
 from neosr.utils.registry import ARCH_REGISTRY
 from neosr.archs.arch_util import net_opt
 
-upscale, training = net_opt()
+upscale, __ = net_opt()
 
 
 class SEBlock(nn.Module):

@@ -12,7 +12,7 @@ from torch.utils import checkpoint
 from neosr.utils.registry import ARCH_REGISTRY
 from neosr.archs.arch_util import DropPath, net_opt
 
-upscale, training = net_opt()
+upscale, __ = net_opt()
 
 
 def img2windows(img, H_sp, W_sp):
@@ -538,7 +538,6 @@ class RG_SA(nn.Module):
         head_dim = dim // num_heads
 
         self.cr = int(dim * c_ratio)  # scaled channel dimension
-        self.training = training
 
         # self.scale = qk_scale or head_dim ** -0.5
         self.scale = qk_scale or (head_dim * c_ratio) ** -0.5

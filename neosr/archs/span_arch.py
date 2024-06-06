@@ -7,7 +7,7 @@ from torch import nn
 from neosr.utils.registry import ARCH_REGISTRY
 from neosr.archs.arch_util import net_opt
 
-upscale, training = net_opt()
+upscale, __ = net_opt()
 
 
 def _make_pair(value):
@@ -108,7 +108,6 @@ class Conv3XC(nn.Module):
         self.stride = s
         self.has_relu = relu
         gain = gain1
-        self.training = training
 
         self.sk = nn.Conv2d(in_channels=c_in, out_channels=c_out, kernel_size=1, padding=0, stride=s, bias=bias)
         self.conv = nn.Sequential(

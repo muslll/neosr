@@ -10,7 +10,7 @@ from einops import rearrange
 from neosr.utils.registry import ARCH_REGISTRY
 from neosr.archs.arch_util import net_opt
 
-upscale, training = net_opt()
+upscale, __ = net_opt()
 
 
 def img2windows(img, H_sp, W_sp):

@@ -12,7 +12,7 @@ from einops.layers.torch import Rearrange, Reduce
 from neosr.utils.registry import ARCH_REGISTRY
 from neosr.archs.arch_util import net_opt
 
-upscale, training = net_opt()
+upscale, __ = net_opt()
 
 
 class CA_layer(nn.Module):
@@ -489,7 +489,6 @@ class Dropsample(nn.Module):
     def forward(self, x):
         device = x.device
 
-        self.training = training
         if self.prob == 0. or (not self.training):
             return x
 

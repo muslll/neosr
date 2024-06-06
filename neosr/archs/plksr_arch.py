@@ -10,7 +10,7 @@ from torch.nn.init import trunc_normal_
 from neosr.utils.registry import ARCH_REGISTRY
 from neosr.archs.arch_util import net_opt
 
-upscale, training = net_opt()
+upscale, __ = net_opt()
 
 
 def repeat_interleave(x, n):
@@ -66,7 +66,6 @@ class PLKConv2d(nn.Module):
         trunc_normal_(self.conv.weight, std=0.02)
         self.idx = dim
         self.is_convert = False
-        self.training = training
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         if self.is_convert:

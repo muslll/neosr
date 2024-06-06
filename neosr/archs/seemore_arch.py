@@ -6,7 +6,7 @@ from torch import nn
 from neosr.utils.registry import ARCH_REGISTRY
 from neosr.archs.arch_util import net_opt
 
-upscale, training = net_opt()
+upscale, __ = net_opt()
 
 
 ######################
@@ -285,7 +285,6 @@ class MoELayer(nn.Module):
         self.experts = nn.ModuleList(experts)
         self.gate = gate
         self.num_expert = num_expert
-        self.training = training
 
     def forward(self, inputs: torch.Tensor, k: torch.Tensor):
         out = self.gate(inputs)

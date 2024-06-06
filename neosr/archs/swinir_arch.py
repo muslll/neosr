@@ -10,7 +10,7 @@ from torch.nn.init import trunc_normal_
 from neosr.utils.registry import ARCH_REGISTRY
 from neosr.archs.arch_util import to_2tuple, DropPath, net_opt
 
-upscale, training = net_opt()
+upscale, __ = net_opt()
 
 
 class Mlp(nn.Module):

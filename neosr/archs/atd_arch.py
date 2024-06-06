@@ -9,7 +9,7 @@ from torch.nn.init import trunc_normal_
 from neosr.utils.registry import ARCH_REGISTRY
 from neosr.archs.arch_util import net_opt, to_2tuple
 
-upscale, training = net_opt()
+upscale, __ = net_opt()
 
 
 # Shuffle operation for Categorization and UnCategorization operations.
