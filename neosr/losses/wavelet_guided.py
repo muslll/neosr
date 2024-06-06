@@ -391,7 +391,8 @@ class SWTForward(nn.Module):
         self.J = J
         self.mode = mode
 
-    @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type='cuda')
+    #@torch.amp.custom_fwd(cast_inputs=torch.float32, device_type='cuda')
+    @torch.cuda.amp.custom_fwd(cast_inputs=torch.float32)
     def forward(self, x):
         """Forward pass of the SWT.
         Args:
@@ -482,27 +483,28 @@ class SWTInverse(nn.Module):
 
 
 def wavelet_guided(output, gt):
-    wavelet = pywt.Wavelet("sym7")
-    device = torch.device("cuda")
 
-    dlo = wavelet.dec_lo
-    an_lo = np.divide(dlo, sum(dlo))
-    an_hi = wavelet.dec_hi
-    rlo = wavelet.rec_lo
-    syn_lo = 2 * np.divide(rlo, sum(rlo))
-    syn_hi = wavelet.rec_hi
+    with torch.no_grad():
+        wavelet = pywt.Wavelet("sym7")
+        device = torch.device("cuda")
 
-    filters = pywt.Wavelet("wavelet_normalized", [an_lo, an_hi, syn_lo, syn_hi])
-    sfm = SWTForward(1, filters, "periodic").to(device)
-    ifm = SWTInverse(filters, "periodic").to(device)
+        dlo = wavelet.dec_lo
+        an_lo = np.divide(dlo, sum(dlo))
+        an_hi = wavelet.dec_hi
+        rlo = wavelet.rec_lo
+        syn_lo = 2 * np.divide(rlo, sum(rlo))
+        syn_hi = wavelet.rec_hi
 
-    # wavelet bands of sr image
-    sr_img_y = 16.0 + (
-        output[:, 0:1, :, :] * 65.481
-        + output[:, 1:2, :, :] * 128.553
-        + output[:, 2:, :, :] * 24.966
-    )
-    wavelet_sr = sfm(sr_img_y)[0]
+        filters = pywt.Wavelet("wavelet_normalized", [an_lo, an_hi, syn_lo, syn_hi])
+        sfm = SWTForward(1, filters, "periodic").to(device, memory_format=torch.channels_last, non_blocking=True)
+
+        # wavelet bands of sr image
+        sr_img_y = 16.0 + (
+            output[:, 0:1, :, :] * 65.481
+            + output[:, 1:2, :, :] * 128.553
+            + output[:, 2:, :, :] * 24.966
+        )
+        wavelet_sr = sfm(sr_img_y)[0]
 
     LL = wavelet_sr[:, 0:1, :, :]
     LH = wavelet_sr[:, 1:2, :, :]
@@ -511,19 +513,19 @@ def wavelet_guided(output, gt):
 
     combined_HF = torch.cat((LH, HL, HH), axis=1)
 
-    # wavelet bands of hr image
-    hr_img_y = 16.0 + (
-        gt[:, 0:1, :, :] * 65.481
-        + gt[:, 1:2, :, :] * 128.553
-        + gt[:, 2:, :, :] * 24.966
-    )
-    wavelet_hr = sfm(hr_img_y)[0]
+    with torch.no_grad():
+        # wavelet bands of hr image
+        hr_img_y = 16.0 + (
+            gt[:, 0:1, :, :] * 65.481
+            + gt[:, 1:2, :, :] * 128.553
+            + gt[:, 2:, :, :] * 24.966
+        )
+        wavelet_hr = sfm(hr_img_y)[0]
 
-    LL_gt = wavelet_hr[:, 0:1, :, :]
-    LH_gt = wavelet_hr[:, 1:2, :, :]
-    HL_gt = wavelet_hr[:, 2:3, :, :]
-    HH_gt = wavelet_hr[:, 3:, :, :]
-
-    combined_HF_gt = torch.cat((LH_gt, HL_gt, HH_gt), axis=1)
+        LL_gt = wavelet_hr[:, 0:1, :, :]
+        LH_gt = wavelet_hr[:, 1:2, :, :]
+        HL_gt = wavelet_hr[:, 2:3, :, :]
+        HH_gt = wavelet_hr[:, 3:, :, :]
+        combined_HF_gt = torch.cat((LH_gt, HL_gt, HH_gt), axis=1)
 
     return (LL, LH, HL, HH, combined_HF, LL_gt, LH_gt, HL_gt, HH_gt, combined_HF_gt)

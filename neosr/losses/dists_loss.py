@@ -121,7 +121,8 @@ class dists(nn.Module):
         h_relu5_3 = h
         return [x, h_relu1_2, h_relu2_2, h_relu3_3, h_relu4_3, h_relu5_3]
 
-    @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type='cuda')
+    #@torch.amp.custom_fwd(cast_inputs=torch.float32, device_type='cuda')
+    @torch.cuda.amp.custom_fwd(cast_inputs=torch.float32)
     def forward(self, x, y):
         feats0 = self.forward_once(x)
         feats1 = self.forward_once(y)
