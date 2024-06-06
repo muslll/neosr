@@ -3,7 +3,7 @@ import random
 import torch
 from torch.nn import functional as F
 
-from neosr.models.default import default
+from neosr.models.sisr import sisr
 from neosr.data.degradations import random_add_gaussian_noise_pt, random_add_poisson_noise_pt
 from neosr.data.transforms import paired_random_crop
 from neosr.utils import DiffJPEG
@@ -16,7 +16,7 @@ rng = rng()
 
 
 @MODEL_REGISTRY.register()
-class otf(default):
+class otf(sisr):
     """On The Fly degradations, based on RealESRGAN pipeline."""
 
     def __init__(self, opt):
