@@ -103,7 +103,6 @@ class RectSparsePLKConv2d(nn.Module):
 
     def __init__(self, dim, kernel_size):
         super().__init__()
-        self.training = training
         self.idx = dim
         m = kernel_size
         n = kernel_size // 3

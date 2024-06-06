@@ -116,7 +116,7 @@ class realplksr(nn.Module):
     ):
         super().__init__()
 
-        if not training:
+        if not self.training:
             dropout = 0
 
         self.feats = nn.Sequential(
