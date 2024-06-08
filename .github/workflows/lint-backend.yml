@@ -1,4 +1,4 @@
-name: Lint
+name: Format & Lint
 
 on:
   pull_request:
@@ -15,7 +15,7 @@ on:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  backend-formatting:
+  format:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -27,7 +27,7 @@ jobs:
       - run: poetry install
       - run: poetry run ruff format neosr --check
 
-  backend-lint:
+  lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
