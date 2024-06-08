@@ -25,7 +25,7 @@ jobs:
           cache: "pip"
       - run: pip install poetry
       - run: poetry install
-      - run: poetry run ruff format backend --check
+      - run: poetry run ruff format neosr --check
 
   backend-lint:
     runs-on: ubuntu-latest
@@ -37,4 +37,4 @@ jobs:
           cache: "pip"
       - run: pip install poetry
       - run: poetry install
-      - run: poetry run ruff check backend
+      - run: poetry run ruff check neosr
