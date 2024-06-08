@@ -23,6 +23,7 @@ jobs:
         with:
           python-version: "3.12"
           cache: "pip"
+      - run: pip install poetry
       - run: poetry install
       - run: ruff format backend --check
 
@@ -34,5 +35,6 @@ jobs:
         with:
           python-version: "3.12"
           cache: "pip"
+      - run: pip install poetry
       - run: poetry install
       - run: ruff check backend
