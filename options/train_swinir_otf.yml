@@ -19,7 +19,7 @@ datasets:
     io_backend:
       type: disk
 
-    batch_size: 6
+    batch_size: 8
     accumulate: 1
     dataset_enlarge_ratio: 1
 
@@ -57,6 +57,7 @@ datasets:
 #val:
 #  val_freq: 1000
 #  save_img: true
+#  save_tb: true
 #  tile: -1 # 200
 #  metrics:
 #    psnr:
@@ -100,29 +101,24 @@ network_d:
   type: unet
 
 train:
+  #eco: true
   optim_g:
-    type: nadam
+    type: adan
     lr: !!float 5e-4
-    betas: [0.98, 0.99]
-    weight_decay: 0.01
-    decoupled_weight_decay: true
   optim_d:
-    type: nadam
+    type: adan
     lr: !!float 1e-4
-    betas: [0.98, 0.99]
-    weight_decay: 0.01
-    decoupled_weight_decay: true
 
   scheduler:
     type: multisteplr
     milestones: [60000, 120000]
     gamma: 0.5
 
-  total_iter: 500000
+  total_iter: 1000000
   warmup_iter: -1 # no warm up
 
   # losses
-  wavelet_guided: "off" # "disc", "on"
+  #wavelet_guided: "disc" # "off", "on"
   mssim_opt:
     type: mssim
     loss_weight: 1.0
@@ -154,7 +150,7 @@ train:
   #  loss_weight: 1.0
   #  criterion: chc
 
-  match_lq: false
+  #match_lq: true
   color_opt:
     type: colorloss
     loss_weight: 1.0

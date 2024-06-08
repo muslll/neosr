@@ -26,7 +26,7 @@ def mkdir_and_rename(path):
     """
     if osp.exists(path):
         new_name = path + '_archived_' + get_time_str()
-        print(f'Path already exists. Rename it to {new_name}', flush=True)
+        print(f'Path already exists. Renaming it to {new_name}', flush=True)
         os.rename(path, new_name)
     os.makedirs(path, exist_ok=True)
 
@@ -103,7 +103,7 @@ def check_resume(opt, resume_iter):
             if opt['path'].get(f'pretrain_{network}') is not None:
                 flag_pretrain = True
         if flag_pretrain:
-            print('pretrain_network path will be ignored during resuming.')
+            print('NOTICE: pretrain_network_* is ignored during resuming.')
         # set pretrained model paths
         for network in networks:
             name = f'pretrain_{network}'
@@ -112,7 +112,7 @@ def check_resume(opt, resume_iter):
                                                                      not in opt['path']['ignore_resume_networks']):
                 opt['path'][name] = osp.join(
                     opt['path']['models'], f'net_{basename}_{resume_iter}.pth')
-                print(f"Set {name} to {opt['path'][name]}")
+                #print(f"Set {name} to {opt['path'][name]}")
 
         # change param_key to params in resume
         param_keys = [key for key in opt['path'].keys()
@@ -120,7 +120,7 @@ def check_resume(opt, resume_iter):
         for param_key in param_keys:
             if opt['path'][param_key] == 'params_ema':
                 opt['path'][param_key] = 'params'
-                print(f'Set {param_key} to params')
+                #print(f'Set {param_key} to params')
 
 
 def sizeof_fmt(size, suffix='B'):

@@ -13,9 +13,9 @@ from einops.layers.torch import Rearrange
 from einops import rearrange
 
 from neosr.utils.registry import ARCH_REGISTRY
-from .arch_util import DropPath, net_opt
+from neosr.archs.arch_util import DropPath, net_opt
 
-upscale, training = net_opt()
+upscale, __ = net_opt()
 
 
 def img2windows(img, H_sp, W_sp):

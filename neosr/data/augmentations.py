@@ -3,9 +3,11 @@ import random
 import numpy as np
 import torch
 from torch.nn import functional as F
+
 from neosr.utils.rng import rng
 
-rng = rng() 
+rng = rng()
+
 
 @torch.no_grad()
 def mixup(img_gt, img_lq, alpha_min=0.4, alpha_max=0.6):
@@ -136,11 +138,19 @@ def resizemix(img_gt, img_lq, scope=(0.2, 0.9)):
     bbx1, bby1, bbx2, bby2 = rand_bbox_tao(img_gt.size(), tao)
 
     # resize
-    img_gt_resize = F.interpolate(
-        img_gt_resize, (bby2 - bby1, bbx2 - bbx1), mode="bicubic"
+    img_gt_resize = torch.clamp(
+        F.interpolate(
+            img_gt_resize, (bby2 - bby1, bbx2 - bbx1), mode="bicubic", antialias=True
+        ),
+        0,
+        1,
     )
-    img_lq_resize = F.interpolate(
-        img_lq_resize, (bby2 - bby1, bbx2 - bbx1), mode="bicubic"
+    img_lq_resize = torch.clamp(
+        F.interpolate(
+            img_lq_resize, (bby2 - bby1, bbx2 - bbx1), mode="bicubic", antialias=True
+        ),
+        0,
+        1,
     )
 
     # mix
@@ -229,7 +239,13 @@ def apply_augment(
     # match resolutions
     modes = ["bilinear", "bicubic"]
     if scale > 1:
-        img_lq = F.interpolate(img_lq, scale_factor=scale, mode=random.choice(modes))
+        img_lq = torch.clamp(
+            F.interpolate(
+                img_lq, scale_factor=scale, mode=random.choice(modes), antialias=True
+            ),
+            0,
+            1,
+        )
 
     if rng.random() < multi_prob:
         num_augs = rng.integers(2, len(augs)) if len(augs) > 2 else len(augs)
@@ -265,6 +281,12 @@ def apply_augment(
 
     # back to original resolution
     if scale > 1:
-        img_lq = F.interpolate(img_lq, scale_factor=1 / scale, mode="bicubic")
+        img_lq = torch.clamp(
+            F.interpolate(
+                img_lq, scale_factor=1 / scale, mode="bicubic", antialias=True
+            ),
+            0,
+            1,
+        )
 
     return img_gt, img_lq

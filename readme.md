@@ -20,8 +20,8 @@ Join our <a href="https://discord.gg/NN2HGtJ3d6">Discord</a>
 
 ## 💻 installation
 
-Requires Python 3.11 and CUDA =>11.8.
-Install latest [Pytorch (=>2.1) and TorchVision](https://pytorch.org/get-started/locally/) (required).
+Requires Python 3.12 and CUDA =>11.8.
+Install latest [Pytorch (=>2.3) and TorchVision](https://pytorch.org/get-started/locally/) (required).
 
 Clone the repository:
 
@@ -72,7 +72,7 @@ Where `options.yml` is a configuration file. Templates can be found in [options]
 
 ## features
 
-### Supported archs:
+### [Supported Archs](https://github.com/muslll/neosr/wiki/Arch%E2%80%90specific-options):
 
 | arch                                                                                              | option                                 		|
 |---------------------------------------------------------------------------------------------------|---------------------------------------------------|
@@ -101,8 +101,9 @@ Where `options.yml` is a configuration file. Templates can be found in [options]
 
 #### Under Testing
 
-| arch                                          		     | option               	     |
-|--------------------------------------------------------------------|-------------------------------|
+| arch                                          		     | option               	     	    |
+|--------------------------------------------------------------------|--------------------------------------|
+| [SeemoRe](https://github.com/eduardzamfir/seemoredetails)	     | `seemore`, `seemore_t`, `seemore_l`  |
 
 
 ### Supported Discriminators:
@@ -110,21 +111,21 @@ Where `options.yml` is a configuration file. Templates can be found in [options]
 | net                               				  | option 		        |
 |-----------------------------------------------------------------|-----------------------------|
 | U-Net w/ SN 							  | `unet` 		        |
-| [A2-FPN](https://github.com/lironui/A2-FPN) w/ SN		  | `a2fpn`			|
 | [PatchGAN](https://github.com/NVIDIA/pix2pixHD) w/ SN		  | `patchgan`			|
+| [A2-FPN](https://github.com/lironui/A2-FPN) w/ SN		  | `a2fpn`			|
 
-### Supported Optimizers:
+### [Supported Optimizers](https://github.com/muslll/neosr/wiki/Optimizer-Options):
 
-| optimizer                                                                 | option             |
-|---------------------------------------------------------------------------|--------------------|
-| [Adam](https://pytorch.org/docs/stable/generated/torch.optim.Adam.html)   | `Adam` or `adam`   |
-| [AdamW](https://pytorch.org/docs/stable/generated/torch.optim.AdamW.html) | `AdamW` or `adamw` |
-| [NAdam](https://pytorch.org/docs/stable/generated/torch.optim.NAdam.html) | `NAdam` or `nadam` |
-| [Lion](https://arxiv.org/abs/2302.06675)                                  | `Lion` or `lion`   |
-| [LAMB](https://arxiv.org/abs/1904.00962)                                  | `Lamb` or `lamb`   |
-| [Adan](https://github.com/sail-sg/Adan)                                   | `Adan` or `adan`   |
+| optimizer                                                                 | option             	 |
+|---------------------------------------------------------------------------|----------------------------|
+| [Adam](https://pytorch.org/docs/stable/generated/torch.optim.Adam.html)   | `Adam` or `adam`   	 |
+| [AdamW](https://pytorch.org/docs/stable/generated/torch.optim.AdamW.html) | `AdamW` or `adamw` 	 |
+| [NAdam](https://pytorch.org/docs/stable/generated/torch.optim.NAdam.html) | `NAdam` or `nadam` 	 |
+| [Adan](https://github.com/sail-sg/Adan)                                   | `Adan` or `adan`   	 |
+| [AdamW Win2](https://github.com/sail-sg/win)				    | `AdamW_Win` or `adamw_win` |
+| [ECO strategy](https://github.com/2minkyulee/ECO)			    | `eco`, `eco_iters`	 |
 
-### Supported losses:
+### [Supported Losses](https://github.com/muslll/neosr/wiki/Losses):
 
 | loss                                                                   						| option               		      	    |
 |-----------------------------------------------------------------------------------------------------------------------|-------------------------------------------|
@@ -135,7 +136,7 @@ Where `options.yml` is a configuration file. Templates can be found in [options]
 | Perceptual Loss                                                        						| `perceptual_opt`, `PerceptualLoss`        |
 | GAN                                                                    						| `gan_opt`, `GANLoss`, `MultiScaleGANLoss` |
 | Y**CbCr** Color Loss (bt601)                                           						| `color_opt`, `colorloss`                  |
-| Luma Loss (CIE L*)						 						| `luma_opt` `lumaloss`		     	    |
+| Luma Loss (CIE L*)						 							| `luma_opt` `lumaloss`		     	    |
 | [MS-SSIM](https://github.com/lartpang/mssim.pytorch)			 						| `mssim_opt` `mssim`			    |
 | [LDL Loss](https://github.com/csjliang/LDL)                            						| `ldl_opt`  			            |
 | [Focal Frequency](https://github.com/EndlessSora/focal-frequency-loss) 						| `ff_opt`, `focalfrequencyloss`            |
@@ -154,7 +155,7 @@ Where `options.yml` is a configuration file. Templates can be found in [options]
 | [ResizeMix](https://arxiv.org/abs/2012.11101)		| `resizemix`	|
 | [CutBlur](https://github.com/clovaai/cutblur/)	| `cutblur`	|
 
-### Supported models:
+### Supported Models:
 
 | model   | description                                                            | option    |
 |---------|------------------------------------------------------------------------|-----------|
@@ -208,24 +209,22 @@ pie
 
 ### community datasets
 
-Datasets made by the upscaling community. More info can be found in the [Enhance Everything discord](https://discord.gg/cpAUpDK)
+Datasets made by the upscaling community. More info can be found in author's repository.
 
 - `FaceUp`: Curated version of [FFHQ](https://github.com/NVlabs/ffhq-dataset)
 - `SSDIR`: Curated version of [LSDIR](https://data.vision.ee.ethz.ch/yawli/).
-- `kim's 8k Dataset V2`: Video Game Dataset
 
 | dataset                                                | download 												      |
 |--------------------------------------------------------|------------------------------------------------------------------------------------------------------------|
-| [@Kim2091](https://github.com/Kim2091) 8k Dataset V2	 | [GDrive (33.5GB)](https://drive.google.com/drive/folders/1z6-UFJPciU5ysTaRXUPTfC9QrqW517G6?usp=drive_link) |
 | [@Phhofm](https://github.com/Phhofm) FaceUp            | [GDrive (4GB)](https://drive.google.com/file/d/1WFY0siR_ERVSnE2p7ouiCfV3wQizpAKr/view)                     |
 | [@Phhofm](https://github.com/Phhofm) SSDIR             | [Gdrive (4.5GB)](https://drive.google.com/file/d/1FA8Q-T3xZ6_KA7SHYgoa6idIS7xpdrl4/view)                   |
 
 ## resources
 
+- [Training Guide](https://github.com/Sirosky/Upscale-Hub/wiki/%F0%9F%93%88-Training-a-Model-in-NeoSR) from [@Sirosky](https://github.com/Sirosky) 
+- Philip's [youtube channel](https://www.youtube.com/@philip_hofmann/videos)
 - [OpenModelDB](https://openmodeldb.info/)
 - [chaiNNer](https://chainner.app/)
-- [Training Guide](https://github.com/Sirosky/Upscale-Hub/wiki/%F0%9F%93%88-Training-a-Model-in-NeoSR) from [@Sirosky](https://github.com/Sirosky) 
-- [Training Info](https://github.com/Kim2091/training-info) from [@Kim](https://github.com/Kim2091)
 
 ## 📄 license and acknowledgements
 
@@ -235,4 +234,4 @@ This code was originally based on [BasicSR](https://github.com/XPixelGroup/Basic
 
 Thanks to [victorca25/traiNNer](https://github.com/victorca25/traiNNer), [styler00dollar/Colab-traiNNer](https://github.com/styler00dollar/Colab-traiNNer/) and [timm](https://github.com/huggingface/pytorch-image-models) for providing helpful insights into some problems.
 
-Thanks to contributors [@Phhofm](https://github.com/Phhofm), [@Sirosky](https://github.com/Sirosky), [@Kim2091](https://github.com/Kim2091), [@terrainer](https://github.com/terrainer), [@Corpsecreate](https://github.com/Corpsecreate) and [@umzi2](https://github.com/umzi2) for helping with tests and bug reporting. 
+Thanks to contributors [@Phhofm](https://github.com/Phhofm), [@Sirosky](https://github.com/Sirosky), [@terrainer](https://github.com/terrainer), [@Corpsecreate](https://github.com/Corpsecreate) and [@umzi2](https://github.com/umzi2) for helping with tests and bug reporting. 

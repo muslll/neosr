@@ -1,6 +1,6 @@
 
-name: train_hat
-model_type: default
+name: train_seemore_otf
+model_type: otf
 scale: 4
 use_amp: false
 bfloat16: false
@@ -8,32 +8,52 @@ fast_matmul: false
 compile: false
 #manual_seed: 1024
 
+gt_size: 128
+queue_size: 180
+
 datasets:
   train:
-    type: paired
+    type: otf
     dataroot_gt: 'datasets/gt/'
-    dataroot_lq: 'datasets/lq/'
     #meta_info: 'datasets/meta_info.txt'
     io_backend:
       type: disk
 
-    gt_size: 128
     batch_size: 8
     accumulate: 1
     dataset_enlarge_ratio: 1
 
     use_hflip: true
     use_rot: true
-    augmentation: ['none', 'mixup', 'cutmix', 'resizemix'] #['cutblur']
-    aug_prob: [0.2, 0.3, 0.2, 0.5] #[0.7]
+    augmentation: ['none', 'mixup', 'cutmix', 'resizemix', 'cutblur']
+    aug_prob: [0.2, 0.3, 0.2, 0.5, 0.7]
+
+    blur_kernel_size: 7
+    kernel_list: ["iso", "aniso", "generalized_iso", "generalized_aniso", "plateau_iso", "plateau_aniso"]
+    kernel_prob: [0.45, 0.25, 0.12, 0.03, 0.12, 0.03]
+    sinc_prob: 0.1
+    blur_sigma: [0.2, 3]
+    betag_range: [0.5, 4]
+    betap_range: [1, 2]
+
+    blur_kernel_size2: 9
+    kernel_list2: ["iso", "aniso", "generalized_iso", "generalized_aniso", "plateau_iso", "plateau_aniso"]
+    kernel_prob2: [0.45, 0.25, 0.12, 0.03, 0.12, 0.03]
+    sinc_prob2: 0.1
+    blur_sigma2: [0.2, 1.5]
+    betag_range2: [0.5, 4]
+    betap_range2: [1, 2]
+
+    final_sinc_prob: 0.8
 
 #  val:
 #    name: val_1
-#    type: paired 
+#    type: paired
 #    dataroot_gt: 'datasets/val/gt/'
 #    dataroot_lq: 'datasets/val/lq/'
 #    io_backend:
 #      type: disk
+
 #val:
 #  val_freq: 1000
 #  save_img: true
@@ -48,15 +68,33 @@ datasets:
 #      type: calculate_dists
 #      better: lower
 
+resize_prob: [0.3, 0.4, 0.3] # up, down, keep
+resize_range: [0.5, 1.5]
+gaussian_noise_prob: 0.2
+noise_range: [0, 2]
+poisson_scale_range: [0.05, 0.25]
+gray_noise_prob: 0.1
+jpeg_range: [40, 95]
+
+# the second degradation process
+second_blur_prob: 0.4
+resize_prob2: [0.3, 0.4, 0.3] # up, down, keep
+resize_range2: [0.3, 1.5]
+gaussian_noise_prob2: 0.2
+noise_range2: [0, 2]
+poisson_scale_range2: [0.05, 0.1]
+gray_noise_prob2: 0.1
+jpeg_range2: [35, 95]
+
 path:
   #pretrain_network_g: 'experiments/pretrain.pth'
   resume_state: ~
   #strict_load_g: false # do not uncomment, read docs
 
 network_g:
-  type: hat_m
-  #type: hat_s
-  #type: hat_l
+  type: seemore
+  #type: seemore_t
+  #type: seemore_b
 
 network_d:
   type: unet
@@ -76,7 +114,7 @@ train:
     gamma: 0.5
 
   total_iter: 1000000
-  warmup_iter: -1  # no warm up
+  warmup_iter: -1 # no warm up
 
   # losses
   #wavelet_guided: "disc" # "off", "on"

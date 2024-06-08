@@ -4,9 +4,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from neosr.utils.registry import ARCH_REGISTRY
-from .arch_util import to_2tuple, net_opt
+from neosr.archs.arch_util import to_2tuple, net_opt
 
-upscale, training = net_opt()
+upscale, __ = net_opt()
 
 
 class LSAB(nn.Module):

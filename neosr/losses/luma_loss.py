@@ -1,7 +1,6 @@
 import torch
 from torch import nn
 
-from neosr.losses.basic_loss import chc
 from neosr.utils.color_util import rgb_to_luma
 from neosr.utils.registry import LOSS_REGISTRY
 
@@ -37,8 +36,6 @@ class lumaloss(nn.Module):
             self.criterion = nn.MSELoss()
         elif self.criterion_type == "huber":
             self.criterion = nn.HuberLoss()
-        elif self.criterion_type == "chc":
-            self.criterion = chc()
         else:
             raise NotImplementedError(f"{criterion} criterion has not been supported.")
 

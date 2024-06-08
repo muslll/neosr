@@ -5,10 +5,9 @@ from torch import nn
 from torch.nn.init import trunc_normal_
 
 from neosr.utils.registry import ARCH_REGISTRY
+from neosr.archs.arch_util import net_opt
 
-from .arch_util import net_opt
-
-upscale, training = net_opt()
+upscale, __ = net_opt()
 
 
 class DCCM(nn.Sequential):
@@ -31,7 +30,6 @@ class PLKConv2d(nn.Module):
         self.conv = nn.Conv2d(dim, dim, kernel_size, 1, kernel_size // 2)
         trunc_normal_(self.conv.weight, std=0.02)
         self.idx = dim
-        self.training = training
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         if self.training:
@@ -118,7 +116,7 @@ class realplksr(nn.Module):
     ):
         super().__init__()
 
-        if not training:
+        if not self.training:
             dropout = 0
 
         self.feats = nn.Sequential(

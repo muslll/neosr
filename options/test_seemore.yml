@@ -1,5 +1,5 @@
 # Results will be saved to neosr/experiments/results/
-name: test_atd
+name: test_seemore
 model_type: default
 scale: 4
 use_amp: false
@@ -14,8 +14,9 @@ datasets:
       type: disk
 
 network_g:
-  type: atd
-  #type: atd_light
+  type: seemore
+  #type: seemore_t
+  #type: seemore_b
 
 path:
   pretrain_network_g: 'model.pth'

@@ -5,9 +5,9 @@ from torch import nn
 from torch.nn.init import trunc_normal_
 
 from neosr.utils.registry import ARCH_REGISTRY
-from .arch_util import DropPath, net_opt, to_2tuple
+from neosr.archs.arch_util import DropPath, net_opt, to_2tuple
 
-upscale, training = net_opt()
+upscale, __ = net_opt()
 
 
 class ChannelAttention(nn.Module):

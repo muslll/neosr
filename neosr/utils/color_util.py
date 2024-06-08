@@ -259,7 +259,7 @@ def rgb_to_cbcr(img: torch.Tensor) -> torch.Tensor:
 
     if len(img.shape) < 3 or img.shape[-3] != 3:
         raise ValueError(
-            f"Input size must have a shape of (*, 3, H, W). Got {image.shape}"
+            f"Input size must have a shape of (*, 3, H, W). Got {img.shape}"
         )
 
     # bt.601 matrices in 16-240 range
@@ -287,7 +287,7 @@ def rgb_to_luma(img: torch.Tensor) -> torch.Tensor:
 
     if len(img.shape) < 3 or img.shape[-3] != 3:
         raise ValueError(
-            f"Input size must have a shape of (*, 3, H, W). Got {image.shape}"
+            f"Input size must have a shape of (*, 3, H, W). Got {img.shape}"
         )
 
     # permute

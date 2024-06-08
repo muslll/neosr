@@ -8,9 +8,9 @@ from torch import nn
 from torch.nn.init import trunc_normal_
 
 from neosr.utils.registry import ARCH_REGISTRY
-from .arch_util import to_2tuple, DropPath, net_opt
+from neosr.archs.arch_util import to_2tuple, DropPath, net_opt
 
-upscale, training = net_opt()
+upscale, __ = net_opt()
 
 
 class Mlp(nn.Module):
@@ -66,7 +66,6 @@ def window_reverse(windows, window_size, h, w):
     x = x.permute(0, 1, 3, 2, 4, 5).contiguous().view(b, h, w, -1)
     return x
 
-#@torch.cuda.amp.custom_fwd(cast_inputs=torch.bfloat16)
 class WindowAttention(nn.Module):
     r""" Window based multi-head self attention (W-MSA) module with relative position bias.
     It supports both of shifted and non-shifted window.
@@ -134,7 +133,7 @@ class WindowAttention(nn.Module):
         # make torchscript happy (cannot use tensor as tuple)
         q, k, v = qkv[0], qkv[1], qkv[2]
 
-        if self.flash_attn is True:
+        if self.flash_attn:
             # flash attention
             # NOTE: at time of writing, FlashAttention won't be enabled by SDPA
             # unless fp16 or bf16 is casted, and attention_mask is None.
@@ -142,11 +141,10 @@ class WindowAttention(nn.Module):
             # solution seems to use it outside SDPA instead.
 
             with torch.no_grad():
-                # TODO
+                # force flash attention
                 #with nn.attention.sdpa_kernel(nn.attention.SDPBackend.FLASH_ATTENTION):
-                with torch.backends.cuda.sdp_kernel(enable_math=False):
-                    x = nn.functional.scaled_dot_product_attention(q, k, v, scale=self.scale, dropout_p=self.dropout_p)
-                    x = x.transpose(1, 2).reshape(b_, n, c)
+                x = nn.functional.scaled_dot_product_attention(q, k, v, scale=self.scale, dropout_p=self.dropout_p)
+                x = x.transpose(1, 2).reshape(b_, n, c)
 
         else:
             q = q * self.scale
