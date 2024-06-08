@@ -48,9 +48,7 @@ def activation(act_type, inplace=True, neg_slope=0.05, n_prelu=1):
     elif act_type == "prelu":
         layer = nn.PReLU(num_parameters=n_prelu, init=neg_slope)
     else:
-        raise NotImplementedError(
-            f"activation layer [{act_type:s}] is not found"
-        )
+        raise NotImplementedError(f"activation layer [{act_type:s}] is not found")
     return layer
 
 

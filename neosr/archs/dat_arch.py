@@ -443,9 +443,9 @@ class Axial_Spatial_Attention(nn.Module):
         )  # nW, sw[0], sw[1], 1
         mask_windows_0 = img_mask_0.view(-1, self.split_size[0] * self.split_size[1])
         attn_mask_0 = mask_windows_0.unsqueeze(1) - mask_windows_0.unsqueeze(2)
-        attn_mask_0 = attn_mask_0.masked_fill(
-            attn_mask_0 != 0, -100.0
-        ).masked_fill(attn_mask_0 == 0, 0.0)
+        attn_mask_0 = attn_mask_0.masked_fill(attn_mask_0 != 0, -100.0).masked_fill(
+            attn_mask_0 == 0, 0.0
+        )
 
         # calculate mask for window-1
         img_mask_1 = img_mask_1.view(
@@ -463,9 +463,9 @@ class Axial_Spatial_Attention(nn.Module):
         )  # nW, sw[1], sw[0], 1
         mask_windows_1 = img_mask_1.view(-1, self.split_size[1] * self.split_size[0])
         attn_mask_1 = mask_windows_1.unsqueeze(1) - mask_windows_1.unsqueeze(2)
-        attn_mask_1 = attn_mask_1.masked_fill(
-            attn_mask_1 != 0, -100.0
-        ).masked_fill(attn_mask_1 == 0, 0.0)
+        attn_mask_1 = attn_mask_1.masked_fill(attn_mask_1 != 0, -100.0).masked_fill(
+            attn_mask_1 == 0, 0.0
+        )
 
         return attn_mask_0, attn_mask_1
 

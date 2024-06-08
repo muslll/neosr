@@ -388,9 +388,9 @@ class L_SA(nn.Module):
         )  # nW, sw[0], sw[1], 1
         mask_windows_0 = img_mask_0.view(-1, self.split_size[0] * self.split_size[1])
         attn_mask_0 = mask_windows_0.unsqueeze(1) - mask_windows_0.unsqueeze(2)
-        attn_mask_0 = attn_mask_0.masked_fill(
-            attn_mask_0 != 0, -100.0
-        ).masked_fill(attn_mask_0 == 0, 0.0)
+        attn_mask_0 = attn_mask_0.masked_fill(attn_mask_0 != 0, -100.0).masked_fill(
+            attn_mask_0 == 0, 0.0
+        )
 
         # calculate mask for V-Shift
         img_mask_1 = img_mask_1.view(
@@ -408,9 +408,9 @@ class L_SA(nn.Module):
         )  # nW, sw[1], sw[0], 1
         mask_windows_1 = img_mask_1.view(-1, self.split_size[1] * self.split_size[0])
         attn_mask_1 = mask_windows_1.unsqueeze(1) - mask_windows_1.unsqueeze(2)
-        attn_mask_1 = attn_mask_1.masked_fill(
-            attn_mask_1 != 0, -100.0
-        ).masked_fill(attn_mask_1 == 0, 0.0)
+        attn_mask_1 = attn_mask_1.masked_fill(attn_mask_1 != 0, -100.0).masked_fill(
+            attn_mask_1 == 0, 0.0
+        )
 
         return attn_mask_0, attn_mask_1
 
@@ -573,7 +573,9 @@ class RG_SA(nn.Module):
             _time = max(int(math.log(H // 4, 4)), int(math.log(W // 4, 4)))
         else:
             _time = max(int(math.log(H // 16, 4)), int(math.log(W // 16, 4)))
-            _time = max(_time, 2)  # testing _time must equal or larger than training _time (2)
+            _time = max(
+                _time, 2
+            )  # testing _time must equal or larger than training _time (2)
 
         _scale = 4**_time
 

@@ -77,9 +77,7 @@ def pad(pad_type, padding):
     elif pad_type == "replicate":
         layer = nn.ReplicationPad2d(padding)
     else:
-        raise NotImplementedError(
-            f"padding layer [{pad_type:s}] is not implemented"
-        )
+        raise NotImplementedError(f"padding layer [{pad_type:s}] is not implemented")
     return layer
 
 
@@ -92,9 +90,7 @@ def activation(act_type, inplace=True, neg_slope=0.05, n_prelu=1):
     elif act_type == "prelu":
         layer = nn.PReLU(num_parameters=n_prelu, init=neg_slope)
     else:
-        raise NotImplementedError(
-            f"activation layer [{act_type:s}] is not found"
-        )
+        raise NotImplementedError(f"activation layer [{act_type:s}] is not found")
     return layer
 
 
@@ -105,9 +101,7 @@ def norm(norm_type, nc):
     elif norm_type == "instance":
         layer = nn.InstanceNorm2d(nc, affine=False)
     else:
-        raise NotImplementedError(
-            f"normalization layer [{norm_type:s}] is not found"
-        )
+        raise NotImplementedError(f"normalization layer [{norm_type:s}] is not found")
     return layer
 
 
