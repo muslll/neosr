@@ -1,4 +1,5 @@
 import functools
+
 import torch
 from torch.nn import functional as F
 
@@ -17,10 +18,9 @@ def reduce_loss(loss, reduction):
     # none: 0, elementwise_mean:1, sum: 2
     if reduction_enum == 0:
         return loss
-    elif reduction_enum == 1:
+    if reduction_enum == 1:
         return loss.mean()
-    else:
-        return loss.sum()
+    return loss.sum()
 
 
 def weight_reduce_loss(loss, weight=None, reduction="mean"):

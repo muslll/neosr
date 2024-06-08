@@ -3,8 +3,8 @@ import torch.nn
 from torch import nn as nn
 from torch.nn import functional as F
 
-from neosr.utils.registry import ARCH_REGISTRY
 from neosr.archs.arch_util import make_layer, net_opt
+from neosr.utils.registry import ARCH_REGISTRY
 
 upscale, __ = net_opt()
 

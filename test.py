@@ -19,7 +19,7 @@ def test_pipeline(root_path):
 
     # mkdir and initialize loggers
     make_exp_dirs(opt)
-    log_file = osp.join(opt["path"]["log"], f"test_{opt['name']}_{get_time_str()}.log")
+    log_file = osp.join(opt["path"]["log"], f"test_{opt["name"]}_{get_time_str()}.log")
     logger = get_root_logger(
         logger_name="neosr", log_level=logging.INFO, log_file=log_file
     )
@@ -37,7 +37,7 @@ def test_pipeline(root_path):
             sampler=None,
             seed=opt["manual_seed"],
         )
-        logger.info(f"Number of test images in {dataset_opt['name']}: {len(test_set)}")
+        logger.info(f"Number of test images in {dataset_opt["name"]}: {len(test_set)}")
         test_loaders.append(test_loader)
 
     # create model

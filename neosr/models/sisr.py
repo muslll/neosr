@@ -805,9 +805,10 @@ class sisr(base):
                     )
                     load_net[k + ".ignore"] = load_net.pop(k)
 
+
 @MODEL_REGISTRY.register()
 class default(sisr):
     """For backward compatibility"""
+
     def __init__(self, opt):
         super(default, self).__init__(opt)
-

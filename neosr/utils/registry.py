@@ -1,7 +1,7 @@
-# Modified from: https://github.com/facebookresearch/fvcore/blob/master/fvcore/common/registry.py  # noqa: E501
+# Modified from: https://github.com/facebookresearch/fvcore/blob/master/fvcore/common/registry.py
 
 
-class Registry():
+class Registry:
     """
     The registry that provides name -> object mapping, to support third-party
     users' custom modules.
@@ -37,10 +37,12 @@ class Registry():
 
     def _do_register(self, name, obj, suffix=None):
         if isinstance(suffix, str):
-            name = name + '_' + suffix
+            name = name + "_" + suffix
 
-        assert (name not in self._obj_map), (f"An object named '{name}' was already registered "
-                                             f"in '{self._name}' registry!")
+        assert name not in self._obj_map, (
+            f"An object named '{name}' was already registered "
+            f"in '{self._name}' registry!"
+        )
         self._obj_map[name] = obj
 
     def register(self, obj=None, suffix=None):
@@ -62,14 +64,15 @@ class Registry():
         name = obj.__name__
         self._do_register(name, obj, suffix)
 
-    def get(self, name, suffix='neosr'):
+    def get(self, name, suffix="neosr"):
         ret = self._obj_map.get(name)
         if ret is None:
-            ret = self._obj_map.get(name + '_' + suffix)
-            print(f'Name {name} is not found, use name: {name}_{suffix}!')
+            ret = self._obj_map.get(name + "_" + suffix)
+            print(f"Name {name} is not found, use name: {name}_{suffix}!")
         if ret is None:
             raise KeyError(
-                f"No object named '{name}' found in '{self._name}' registry!")
+                f"No object named '{name}' found in '{self._name}' registry!"
+            )
         return ret
 
     def __contains__(self, name):
@@ -82,8 +85,8 @@ class Registry():
         return self._obj_map.keys()
 
 
-DATASET_REGISTRY = Registry('dataset')
-ARCH_REGISTRY = Registry('arch')
-MODEL_REGISTRY = Registry('model')
-LOSS_REGISTRY = Registry('loss')
-METRIC_REGISTRY = Registry('metric')
+DATASET_REGISTRY = Registry("dataset")
+ARCH_REGISTRY = Registry("arch")
+MODEL_REGISTRY = Registry("model")
+LOSS_REGISTRY = Registry("loss")
+METRIC_REGISTRY = Registry("metric")

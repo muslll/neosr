@@ -108,7 +108,7 @@ class mssim(nn.Module):
             padding=padding,
         )
 
-    #@torch.amp.custom_fwd(cast_inputs=torch.float32, device_type='cuda')
+    # @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type='cuda')
     @torch.cuda.amp.custom_fwd(cast_inputs=torch.float32)
     def forward(self, x, y):
         """x, y (Tensor): tensors of shape (N,C,H,W)

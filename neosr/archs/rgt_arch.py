@@ -9,8 +9,8 @@ from torch.nn import functional as F
 from torch.nn.init import trunc_normal_
 from torch.utils import checkpoint
 
-from neosr.utils.registry import ARCH_REGISTRY
 from neosr.archs.arch_util import DropPath, net_opt
+from neosr.utils.registry import ARCH_REGISTRY
 
 upscale, __ = net_opt()
 
@@ -389,7 +389,7 @@ class L_SA(nn.Module):
         mask_windows_0 = img_mask_0.view(-1, self.split_size[0] * self.split_size[1])
         attn_mask_0 = mask_windows_0.unsqueeze(1) - mask_windows_0.unsqueeze(2)
         attn_mask_0 = attn_mask_0.masked_fill(
-            attn_mask_0 != 0, float(-100.0)
+            attn_mask_0 != 0, -100.0
         ).masked_fill(attn_mask_0 == 0, 0.0)
 
         # calculate mask for V-Shift
@@ -409,7 +409,7 @@ class L_SA(nn.Module):
         mask_windows_1 = img_mask_1.view(-1, self.split_size[1] * self.split_size[0])
         attn_mask_1 = mask_windows_1.unsqueeze(1) - mask_windows_1.unsqueeze(2)
         attn_mask_1 = attn_mask_1.masked_fill(
-            attn_mask_1 != 0, float(-100.0)
+            attn_mask_1 != 0, -100.0
         ).masked_fill(attn_mask_1 == 0, 0.0)
 
         return attn_mask_0, attn_mask_1
@@ -573,8 +573,7 @@ class RG_SA(nn.Module):
             _time = max(int(math.log(H // 4, 4)), int(math.log(W // 4, 4)))
         else:
             _time = max(int(math.log(H // 16, 4)), int(math.log(W // 16, 4)))
-            if _time < 2:
-                _time = 2  # testing _time must equal or larger than training _time (2)
+            _time = max(_time, 2)  # testing _time must equal or larger than training _time (2)
 
         _scale = 4**_time
 
@@ -936,8 +935,7 @@ class rgt(nn.Module):
         return x
 
     def forward(self, x):
-        """Input: x: (B, C, H, W)
-        """
+        """Input: x: (B, C, H, W)"""
         self.mean = self.mean.type_as(x)
         x = (x - self.mean) * self.img_range
 

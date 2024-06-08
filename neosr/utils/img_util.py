@@ -1,5 +1,6 @@
-import os
 import math
+import os
+
 import cv2
 import numpy as np
 import torch
@@ -24,8 +25,8 @@ def img2tensor(imgs, bgr2rgb=True, float32=True, color=True):
     def _totensor(img, bgr2rgb, float32, color):
         if color:
             if img.shape[2] == 3 and bgr2rgb:
-                if img.dtype == 'float64':
-                    img = img.astype('float32')
+                if img.dtype == "float64":
+                    img = img.astype("float32")
                 img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
             img = torch.from_numpy(img.transpose(2, 0, 1))
         else:
@@ -42,8 +43,7 @@ def img2tensor(imgs, bgr2rgb=True, float32=True, color=True):
 
     if isinstance(imgs, list):
         return [_totensor(img, bgr2rgb, float32, color) for img in imgs]
-    else:
-        return _totensor(imgs, bgr2rgb, float32, color)
+    return _totensor(imgs, bgr2rgb, float32, color)
 
 
 def tensor2img(tensor, rgb2bgr=True, out_type=np.uint8, min_max=(0, 1)):
@@ -67,9 +67,11 @@ def tensor2img(tensor, rgb2bgr=True, out_type=np.uint8, min_max=(0, 1)):
         (Tensor or list): 3D ndarray of shape (H x W x C) OR 2D ndarray of
         shape (H x W). The channel order is BGR.
     """
-    if not (torch.is_tensor(tensor) or (isinstance(tensor, list) and all(torch.is_tensor(t) for t in tensor))):
-        raise TypeError(
-            f'tensor or list of tensors expected, got {type(tensor)}')
+    if not (
+        torch.is_tensor(tensor)
+        or (isinstance(tensor, list) and all(torch.is_tensor(t) for t in tensor))
+    ):
+        raise TypeError(f"tensor or list of tensors expected, got {type(tensor)}")
 
     if torch.is_tensor(tensor):
         tensor = [tensor]
@@ -80,8 +82,9 @@ def tensor2img(tensor, rgb2bgr=True, out_type=np.uint8, min_max=(0, 1)):
 
         n_dim = _tensor.dim()
         if n_dim == 4:
-            img_np = make_grid(_tensor, nrow=int(
-                math.sqrt(_tensor.size(0))), normalize=False).numpy()
+            img_np = make_grid(
+                _tensor, nrow=int(math.sqrt(_tensor.size(0))), normalize=False
+            ).numpy()
             img_np = img_np.transpose(1, 2, 0)
             if rgb2bgr:
                 img_np = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
@@ -90,14 +93,14 @@ def tensor2img(tensor, rgb2bgr=True, out_type=np.uint8, min_max=(0, 1)):
             img_np = img_np.transpose(1, 2, 0)
             if img_np.shape[2] == 1:  # gray image
                 img_np = np.squeeze(img_np, axis=2)
-            else:
-                if rgb2bgr:
-                    img_np = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
+            elif rgb2bgr:
+                img_np = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
         elif n_dim == 2:
             img_np = _tensor.numpy()
         else:
             raise TypeError(
-                f'Only support 4D, 3D or 2D tensor. But received with dimension: {n_dim}')
+                f"Only support 4D, 3D or 2D tensor. But received with dimension: {n_dim}"
+            )
         if out_type == np.uint8:
             # Unlike MATLAB, numpy.unit8() WILL NOT round by default.
             img_np = (img_np * 255.0).round()
@@ -125,7 +128,7 @@ def tensor2img_fast(tensor, rgb2bgr=True, min_max=(0, 1)):
     return output
 
 
-def imfrombytes(content, flag='color', float32=False):
+def imfrombytes(content, flag="color", float32=False):
     """Read an image from bytes.
 
     Args:
@@ -139,11 +142,14 @@ def imfrombytes(content, flag='color', float32=False):
         ndarray: Loaded image array.
     """
     img_np = np.frombuffer(content, np.uint8)
-    imread_flags = {'color': cv2.IMREAD_COLOR,
-                    'grayscale': cv2.IMREAD_GRAYSCALE, 'unchanged': cv2.IMREAD_UNCHANGED}
+    imread_flags = {
+        "color": cv2.IMREAD_COLOR,
+        "grayscale": cv2.IMREAD_GRAYSCALE,
+        "unchanged": cv2.IMREAD_UNCHANGED,
+    }
     img = cv2.imdecode(img_np, imread_flags[flag])
     if float32:
-        img = img.astype(np.float32) / 255.
+        img = img.astype(np.float32) / 255.0
     return img
 
 
@@ -166,7 +172,7 @@ def imwrite(img, file_path, params=None, auto_mkdir=True):
     try:
         cv2.imencode(os.path.splitext(file_path)[1], img, params)[1].tofile(file_path)
     except Exception:
-        raise IOError('Failed to write images.')
+        raise OSError("Failed to write images.")
 
 
 def crop_border(imgs, crop_border):
@@ -181,8 +187,8 @@ def crop_border(imgs, crop_border):
     """
     if crop_border == 0:
         return imgs
-    else:
-        if isinstance(imgs, list):
-            return [v[crop_border:-crop_border, crop_border:-crop_border, ...] for v in imgs]
-        else:
-            return imgs[crop_border:-crop_border, crop_border:-crop_border, ...]
+    if isinstance(imgs, list):
+        return [
+            v[crop_border:-crop_border, crop_border:-crop_border, ...] for v in imgs
+        ]
+    return imgs[crop_border:-crop_border, crop_border:-crop_border, ...]

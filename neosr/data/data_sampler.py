@@ -1,4 +1,5 @@
 import math
+
 import torch
 from torch.utils.data.sampler import Sampler
 
@@ -28,15 +29,15 @@ class EnlargedSampler(Sampler):
 
     def __iter__(self):
         # deterministically shuffle based on epoch
-        g = torch.Generator(device='cuda')
+        g = torch.Generator(device="cuda")
         g.manual_seed(self.epoch)
-        indices = torch.randperm(self.total_size, generator=g, device='cuda').tolist()
+        indices = torch.randperm(self.total_size, generator=g, device="cuda").tolist()
 
         dataset_size = len(self.dataset)
         indices = [v % dataset_size for v in indices]
 
         # subsample
-        indices = indices[self.rank:self.total_size:self.num_replicas]
+        indices = indices[self.rank : self.total_size : self.num_replicas]
         assert len(indices) == self.num_samples
 
         return iter(indices)

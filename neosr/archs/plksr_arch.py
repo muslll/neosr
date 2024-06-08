@@ -3,12 +3,12 @@ from functools import partial
 from typing import Literal
 
 import torch
-from torch.nn import functional as F
 from torch import nn
+from torch.nn import functional as F
 from torch.nn.init import trunc_normal_
 
-from neosr.utils.registry import ARCH_REGISTRY
 from neosr.archs.arch_util import net_opt
+from neosr.utils.registry import ARCH_REGISTRY
 
 upscale, __ = net_opt()
 
@@ -147,8 +147,7 @@ class SparsePLKConv2d(nn.Module):
         self.max_kernel_size = max_kernel_size
         for k, d in zip(sub_kernel_sizes, dilations, strict=False):
             m_k = self._calc_rep_kernel_size(k, d)
-            if m_k > self.max_kernel_size:
-                self.max_kernel_size = m_k
+            self.max_kernel_size = max(m_k, self.max_kernel_size)
         self.with_idt = with_idt
 
         convs = [

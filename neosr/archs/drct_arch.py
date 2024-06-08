@@ -4,8 +4,8 @@ import torch
 from torch import nn
 from torch.nn.init import trunc_normal_
 
-from neosr.utils.registry import ARCH_REGISTRY
 from neosr.archs.arch_util import DropPath, net_opt, to_2tuple
+from neosr.utils.registry import ARCH_REGISTRY
 
 upscale, __ = net_opt()
 
@@ -145,7 +145,9 @@ class WindowAttention(nn.Module):
         # get pair-wise relative position index for each token inside the window
         coords_h = torch.arange(self.window_size[0])
         coords_w = torch.arange(self.window_size[1])
-        coords = torch.stack(torch.meshgrid([coords_h, coords_w], indexing="ij"))  # 2, Wh, Ww
+        coords = torch.stack(
+            torch.meshgrid([coords_h, coords_w], indexing="ij")
+        )  # 2, Wh, Ww
         coords_flatten = torch.flatten(coords, 1)  # 2, Wh*Ww
         relative_coords = (
             coords_flatten[:, :, None] - coords_flatten[:, None, :]
@@ -919,11 +921,7 @@ def drct_l(**kwargs):
         **kwargs,
     )
 
+
 @ARCH_REGISTRY.register()
 def drct_s(**kwargs):
-    return drct(
-        embed_dim=48,
-        depths=(2, 2, 2, 2),
-        num_heads=(6, 6, 6, 6),
-        **kwargs,
-    )
+    return drct(embed_dim=48, depths=(2, 2, 2, 2), num_heads=(6, 6, 6, 6), **kwargs)

@@ -156,6 +156,4 @@ def basic_augment(
 
     if return_status:
         return imgs, (hflip, vflip, rot90)
-    else:
-        return imgs
-
+    return imgs

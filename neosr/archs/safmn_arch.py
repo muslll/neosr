@@ -2,8 +2,8 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 
-from neosr.utils.registry import ARCH_REGISTRY
 from neosr.archs.arch_util import net_opt
+from neosr.utils.registry import ARCH_REGISTRY
 
 upscale, __ = net_opt()
 
@@ -25,7 +25,7 @@ class LayerNorm(nn.Module):
             return F.layer_norm(
                 x, self.normalized_shape, self.weight, self.bias, self.eps
             )
-        elif self.data_format == "channels_first":
+        if self.data_format == "channels_first":
             u = x.mean(1, keepdim=True)
             s = (x - u).pow(2).mean(1, keepdim=True)
             x = (x - u) / torch.sqrt(s + self.eps)
