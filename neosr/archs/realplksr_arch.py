@@ -5,7 +5,7 @@ from torch import nn
 from torch.nn.init import trunc_normal_
 
 from neosr.utils.registry import ARCH_REGISTRY
-from neosr.archs.arch_util import net_opt
+from neosr.archs.arch_util import net_opt, DySample
 
 upscale, __ = net_opt()
 
@@ -112,6 +112,7 @@ class realplksr(nn.Module):
         use_ea: bool = True,
         norm_groups: int = 4,
         dropout: float = 0,
+        dysample:bool = True,
         **kwargs,
     ):
         super().__init__()
@@ -135,7 +136,10 @@ class realplksr(nn.Module):
             torch.repeat_interleave, repeats=upscaling_factor**2, dim=1
         )
 
-        self.to_img = nn.PixelShuffle(upscaling_factor)
+        if dysample:
+            self.to_img = DySample(3 * upscaling_factor ** 2, upscaling_factor, dyscope=True)
+        else:
+            self.to_img = nn.PixelShuffle(upscaling_factor)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.feats(x) + self.repeat_op(x)
