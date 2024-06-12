@@ -6,8 +6,8 @@ from copy import deepcopy
 import torch
 from torch.nn.parallel import DataParallel, DistributedDataParallel
 
-#from neosr.optimizers.adan_sf import adan_sf
-#from neosr.optimizers.adamw_sf import adamw_sf
+from neosr.optimizers.adan_sf import adan_sf
+from neosr.optimizers.adamw_sf import adamw_sf
 from neosr.optimizers.adamw_win import adamw_win
 from neosr.optimizers.adan import adan
 from neosr.utils import get_root_logger
@@ -132,14 +132,12 @@ class base:
             optimizer = adan(params, lr, **kwargs)
         elif optim_type in {"AdamW_Win", "adamw_win"}:
             optimizer = adamw_win(params, lr, **kwargs)
-        else:
-            raise NotImplementedError(f"optimizer {optim_type} is not supported yet.")
-        '''
         elif optim_type in {"AdamW_SF", "adamw_sf"}:
             optimizer = adamw_sf(params, lr, **kwargs)
         elif optim_type in {"Adan_SF", "adan_sf"}:
             optimizer = adan_sf(params, lr, **kwargs)
-        '''
+        else:
+            raise NotImplementedError(f"optimizer {optim_type} is not supported yet.")
 
         return optimizer
 

@@ -42,3 +42,6 @@
 | [`SeemoRe`](https://github.com/eduardzamfir/seemoredetails)							| Unknown													| 
 | [`AdamW-Win2`](https://github.com/sail-sg/win)								| [Apache 2.0](https://github.com/sail-sg/win/blob/main/LICENSE)						|
 | [`ECO`](https://github.com/2minkyulee/ECO)									| Unknown													|
+| [AdamW `Schedule-Free`](https://github.com/facebookresearch/schedule_free)					| [Apache 2.0](https://github.com/facebookresearch/schedule_free/blob/main/LICENSE)				|
+| [Adan `Schedule-Free`](https://github.com/muslll/adan_schedule_free)						| [Apache 2.0](https://github.com/muslll/adan_schedule_free/blob/main/license)					|
+

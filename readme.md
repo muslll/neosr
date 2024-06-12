@@ -124,6 +124,8 @@ Where `options.yml` is a configuration file. Templates can be found in [options]
 | [Adan](https://github.com/sail-sg/Adan)                                   | `Adan` or `adan`   	 |
 | [AdamW Win2](https://github.com/sail-sg/win)				    | `AdamW_Win` or `adamw_win` |
 | [ECO strategy](https://github.com/2minkyulee/ECO)			    | `eco`, `eco_iters`	 |
+| [AdamW Schedule-Free](https://github.com/facebookresearch/schedule_free)  | `adamw_sf`		 |
+| [Adan Schedule-Free](https://github.com/muslll/adan_schedule_free)	    | `adan_sf`			 |
 
 ### [Supported Losses](https://github.com/muslll/neosr/wiki/Losses):
 

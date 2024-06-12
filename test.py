@@ -1,4 +1,5 @@
 import logging
+import sys
 from os import path as osp
 from time import time
 
@@ -43,21 +44,25 @@ def test_pipeline(root_path):
     # create model
     model = build_model(opt)
 
-    for test_loader in test_loaders:
-        test_set_name = test_loader.dataset.opt["name"]
-        logger.info(f"Testing {test_set_name}...")
-        start_time = time()
-        model.validation(
-            test_loader,
-            current_iter=opt["name"],
-            tb_logger=None,
-            save_img=opt["val"]["save_img"],
-        )
-        end_time = time()
-        total_time = end_time - start_time
-        n_img = len(test_loader.dataset)
-        fps = n_img / total_time
-        logger.info(f"Inference took {total_time:.2f} seconds, at {fps:.2f} fps.")
+    try:
+        for test_loader in test_loaders:
+            test_set_name = test_loader.dataset.opt["name"]
+            logger.info(f"Testing {test_set_name}...")
+            start_time = time()
+            model.validation(
+                test_loader,
+                current_iter=opt["name"],
+                tb_logger=None,
+                save_img=opt["val"]["save_img"],
+            )
+            end_time = time()
+            total_time = end_time - start_time
+            n_img = len(test_loader.dataset)
+            fps = n_img / total_time
+            logger.info(f"Inference took {total_time:.2f} seconds, at {fps:.2f} fps.")
+    except KeyboardInterrupt:
+        logger.info("Interrupted.")
+        sys.exit(0)
 
 
 if __name__ == "__main__":
