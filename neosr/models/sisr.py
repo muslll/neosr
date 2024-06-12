@@ -67,10 +67,19 @@ class sisr(base):
         # options var
         train_opt = self.opt["train"]
 
+        # set up optimizers and schedulers
+        self.setup_optimizers()
+        self.setup_schedulers()
+
         # set nets to training mode
         self.net_g.train()
+        if self.sf_optim_g and self.is_train:
+            self.optimizer_g.train()
+
         if self.net_d is not None:
             self.net_d.train()
+            if self.sf_optim_d and self.is_train:
+                self.optimizer_d.train()
 
         # scale ratio var
         self.scale = self.opt["scale"]
@@ -237,10 +246,6 @@ class sisr(base):
             msg = "The gt_size value must be a multiple of 4. Please change it."
             raise ValueError(msg)
 
-        # set up optimizers and schedulers
-        self.setup_optimizers()
-        self.setup_schedulers()
-
     def setup_optimizers(self):
         train_opt = self.opt["train"]
         optim_params = []
@@ -282,6 +287,7 @@ class sisr(base):
                     augs=self.aug,
                     prob=self.aug_prob,
                 )
+
 
     def eco_strategy(self, current_iter):
         """Adapted version of "Empirical Centroid-oriented Optimization":
@@ -537,9 +543,13 @@ class sisr(base):
         scale = self.opt["scale"]
         if self.tile == -1:
             self.net_g.eval()
+            if self.sf_optim_g and self.is_train:
+                self.optimizer_g.eval()
             with torch.inference_mode():
                 self.output = self.net_g(self.lq)
             self.net_g.train()
+            if self.sf_optim_g and self.is_train:
+                self.optimizer_g.train()
 
         # test by partitioning
         else:
@@ -597,6 +607,9 @@ class sisr(base):
                 img_chops.append(img[..., top, left])
 
             self.net_g.eval()
+            if self.sf_optim_g and self.is_train:
+                self.optimizer_g.eval()
+
             with torch.inference_mode():
                 outputs = []
                 for chop in img_chops:
@@ -619,6 +632,8 @@ class sisr(base):
                         _img[..., top, left] = outputs[i * row + j][..., _top, _left]
                 self.output = _img
             self.net_g.train()
+            if self.sf_optim_g and self.is_train:
+                self.optimizer_g.train()
             _, _, h, w = self.output.size()
             self.output = self.output[
                 :, :, 0 : h - mod_pad_h * scale, 0 : w - mod_pad_w * scale

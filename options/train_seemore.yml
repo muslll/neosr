@@ -56,7 +56,7 @@ path:
 network_g:
   type: seemore
   #type: seemore_t
-  #type: seemore_b
+  #type: seemore_l
 
 network_d:
   type: unet

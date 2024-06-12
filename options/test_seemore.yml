@@ -16,7 +16,7 @@ datasets:
 network_g:
   type: seemore
   #type: seemore_t
-  #type: seemore_b
+  #type: seemore_l
 
 path:
   pretrain_network_g: 'model.pth'
