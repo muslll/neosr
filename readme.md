@@ -94,7 +94,7 @@ Where `options.yml` is a configuration file. Templates can be found in [options]
 | [PLKSR](https://github.com/dslisleedh/PLKSR)			     				    | `plksr`, `plksr_tiny`	    			|
 | [RealPLKSR](https://github.com/dslisleedh/PLKSR/issues/4)					    | `realplksr`, `realplksr_s`			|
 | [DRCT](https://github.com/ming053l/DRCT)			     				    | `drct`, `drct_l`, `drct_s`   			|
-| [EFEN](https://github.com/Supereeeee/EFEN)			     				    | `efen`			    			|
+| [MSDAN](https://github.com/Supereeeee/MSDAN)			     				    | `msdan`			    			|
 
 > [!NOTE]
 > For all arch-specific parameters, [read the wiki](https://github.com/muslll/neosr/wiki/Arch%E2%80%90specific-options).

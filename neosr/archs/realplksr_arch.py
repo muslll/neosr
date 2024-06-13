@@ -137,7 +137,7 @@ class realplksr(nn.Module):
         )
 
         if dysample:
-            groups = 1 if 3 * upscaling_factor**2 < 4 else 4
+            groups = 3 if 3 * upscaling_factor**2 < 4 else 4
             self.to_img = DySample(
                 3 * upscaling_factor**2, upscaling_factor, groups=groups, dyscope=True
             )

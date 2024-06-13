@@ -1,15 +1,9 @@
-# Copyright (c) Meta Platforms, Inc. and affiliates.
-# All rights reserved.
-#
-# This source code is licensed under the license found in the
-# LICENSE file in the root directory of this source tree.
 import math
-
 import torch
-import torch.optim
+from torch.optim.optimizer import Optimizer
 
 
-class adamw_sf(torch.optim.Optimizer):
+class adamw_sf(Optimizer):
     r"""
     Schedule-Free AdamW
     As the name suggests, no scheduler is needed with this optimizer.

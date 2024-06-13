@@ -186,7 +186,10 @@ class DySample(nn.Module):
         return self.sample(x, offset)
 
     def forward(self, x):
-        return self.end_conv(self.offset_forward(x))
+        if self.scale != 1:
+            return self.end_conv(self.offset_forward(x))
+        else:
+            return self.offset_forward(x)
 
 # TODO: may write a cpp file
 def pixel_unshuffle(x, scale):

@@ -36,7 +36,7 @@
 | [`PLKSR`](https://github.com/dslisleedh/PLKSR)						      		| [MIT](https://github.com/dslisleedh/PLKSR/blob/main/LICENSE)							|
 | [`RealPLKSR`](https://github.com/dslisleedh/PLKSR)						      		| [MIT](https://github.com/dslisleedh/PLKSR/blob/main/LICENSE)							|
 | [`DRCT`](https://github.com/ming053l/DRCT)							      		| [MIT](https://github.com/ming053l/DRCT/blob/main/LICENSE)							|
-| [`EFEN`](https://github.com/Supereeeee/EFEN)							      		| Unknown													|
+| [`MSDAN`](https://github.com/Supereeeee/MSDAN)						      		| Unknown													|
 | [`GW loss`](https://github.com/xiezw5/Component-Divide-and-Conquer-for-Real-World-Image-Super-Resolution/)	| Unknown													|
 | [`Adan`](https://github.com/sail-sg/Adan) optimizer								| [Apache 2.0](https://github.com/sail-sg/Adan/blob/main/LICENSE)						|
 | [`SeemoRe`](https://github.com/eduardzamfir/seemoredetails)							| Unknown													| 
