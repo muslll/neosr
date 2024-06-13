@@ -11,7 +11,7 @@ from typing import Any, Protocol, TypeVar
 import torch
 from torch import nn
 from torch.nn import init
-import torch.nn.functional as F
+from torch.nn import functional as F
 from torch.nn.modules.batchnorm import _BatchNorm
 
 from neosr.utils.options import parse_options
@@ -113,7 +113,6 @@ def normal_init(module, mean=0, std=1, bias=0):
     if hasattr(module, 'bias') and module.bias is not None:
         nn.init.constant_(module.bias, bias)
 
-
 def constant_init(module, val, bias=0):
     if hasattr(module, 'weight') and module.weight is not None:
         nn.init.constant_(module.weight, val)
@@ -122,7 +121,7 @@ def constant_init(module, val, bias=0):
 
 
 class DySample(nn.Module):
-    def __init__(self, in_channels: int, scale: int = 2, style: str = 'lp', groups: int = 4, dyscope: bool = False):
+    def __init__(self, in_channels: int, scale: int = 2, style: str = 'lp', groups: int = 4, dyscope: bool = True):
         super().__init__()
         self.scale = scale
         self.style = style
@@ -151,14 +150,14 @@ class DySample(nn.Module):
 
     def _init_pos(self):
         h = torch.arange((-self.scale + 1) / 2, (self.scale - 1) / 2 + 1) / self.scale
-        return torch.stack(torch.meshgrid([h, h])).transpose(1, 2).repeat(1, self.groups, 1).reshape(1, -1, 1, 1)
+        return torch.stack(torch.meshgrid([h, h], indexing="ij")).transpose(1, 2).repeat(1, self.groups, 1).reshape(1, -1, 1, 1)
 
     def sample(self, x, offset):
         B, _, H, W = offset.shape
         offset = offset.view(B, 2, -1, H, W)
         coords_h = torch.arange(H) + 0.5
         coords_w = torch.arange(W) + 0.5
-        coords = torch.stack(torch.meshgrid([coords_w, coords_h])
+        coords = torch.stack(torch.meshgrid([coords_w, coords_h], indexing="ij")
                              ).transpose(1, 2).unsqueeze(1).unsqueeze(0).type(x.dtype).to(x.device)
         normalizer = torch.tensor([W, H], dtype=x.dtype, device=x.device).view(1, 2, 1, 1, 1)
         coords = 2 * (coords + offset) / normalizer - 1
