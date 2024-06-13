@@ -4,8 +4,8 @@ import torch
 from torch import nn
 from torch.nn.init import trunc_normal_
 
+from neosr.archs.arch_util import DySample, net_opt
 from neosr.utils.registry import ARCH_REGISTRY
-from neosr.archs.arch_util import net_opt, DySample
 
 upscale, __ = net_opt()
 
@@ -137,7 +137,10 @@ class realplksr(nn.Module):
         )
 
         if dysample:
-            self.to_img = DySample(3 * upscaling_factor ** 2, upscaling_factor, dyscope=True)
+            groups = 1 if 3 * upscaling_factor**2 < 4 else 4
+            self.to_img = DySample(
+                3 * upscaling_factor**2, upscaling_factor, groups=groups, dyscope=True
+            )
         else:
             self.to_img = nn.PixelShuffle(upscaling_factor)
 
