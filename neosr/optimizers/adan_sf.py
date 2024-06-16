@@ -207,6 +207,8 @@ class adan_sf(Optimizer):
                 if not group["train_mode"]:
                     msg = "Not in train mode!"
                     raise Exception(msg)
+            else:
+                ckp1 = None
 
             for p in group["params"]:
                 if p.grad is None:

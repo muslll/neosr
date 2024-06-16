@@ -13,6 +13,10 @@ from neosr.losses.loss_util import get_refined_artifact_map
 from neosr.losses.wavelet_guided import wavelet_guided
 from neosr.metrics import calculate_metric
 from neosr.models.base import base
+from neosr.optimizers.adamw_sf import adamw_sf
+from neosr.optimizers.adan import adan
+from neosr.optimizers.adan_sf import adan_sf
+from neosr.optimizers.fsam import fsam
 from neosr.utils import get_root_logger, imwrite, tensor2img
 from neosr.utils.registry import MODEL_REGISTRY
 
@@ -66,6 +70,10 @@ class sisr(base):
     def init_training_settings(self):
         # options var
         train_opt = self.opt["train"]
+
+        # sharpness-aware minimization
+        self.sam = self.opt["train"].get("sam", None)
+        self.sam_init = self.opt["train"].get("sam_init", -1)
 
         # set up optimizers and schedulers
         self.setup_optimizers()
@@ -217,10 +225,23 @@ class sisr(base):
         # gradient clipping
         self.gradclip = self.opt["train"].get("grad_clip", True)
 
+        # log sam
+        if self.sam is not None:
+            logger = get_root_logger()
+            logger.info("Sharpness-Aware Minimization enabled.")
+
         # error handling
         optim_d = self.opt["train"].get("optim_d", None)
         pix_losses_bool = self.cri_pix or self.cri_mssim is not None
         percep_losses_bool = self.cri_perceptual or self.cri_dists is not None
+
+        if self.sam is not None and self.use_amp is True:
+            # Closure not supported:
+            # https://github.com/pytorch/pytorch/blob/main/torch/amp/grad_scaler.py#L384
+            logger = get_root_logger()
+            msg = """SAM does not support GradScaler. As a result, AMP could cause
+                      instability with it. Disable AMP if you get undesirable results."""
+            logger.warning(msg)
 
         if pix_losses_bool is False and percep_losses_bool is False:
             raise ValueError(
@@ -257,13 +278,58 @@ class sisr(base):
                 logger.warning(f"Params {k} will not be optimized.")
         # optimizer g
         optim_type = train_opt["optim_g"].pop("type")
+        # condition for schedule_free
+        if (
+            optim_type in {"AdamW_SF", "adamw_sf", "adan_sf", "Adan_SF"}
+            and "schedule_free" not in train_opt["optim_g"]
+        ):
+            msg = "The option 'schedule_free' must be in the config file"
+            raise ValueError(msg)
+        # get optimizer g
         self.optimizer_g = self.get_optimizer(
             optim_type, optim_params, **train_opt["optim_g"]
         )
         self.optimizers.append(self.optimizer_g)
+
+        # SAM
+        if self.sam is not None: 
+            if optim_type in {"AdamW", "adamw"}:
+                base_optimizer = torch.optim.AdamW
+            elif optim_type in {"Adan", "adan"}:
+                base_optimizer = adan
+            elif optim_type in {"AdamW_SF", "adamw_sf"}:
+                base_optimizer = adamw_sf
+            elif optim_type in {"Adan_SF", "adan_sf"}:
+                base_optimizer = adan_sf
+            else:
+                raise NotImplementedError(f"SAM not supported by optimizer {optim_type} yet.")
+
+        if self.sam in {"FSAM", "fsam"}:
+            self.sam_optimizer_g = fsam(
+                optim_params,
+                base_optimizer,
+                rho=0.5,
+                sigma=1,
+                lmbda=0.9,
+                adaptive=True,
+                **train_opt["optim_g"],
+            )
+        elif self.sam is not None:
+            raise NotImplementedError(f"SAM type {self.sam} not supported yet.")
+        else:
+            pass
+
         # optimizer d
         if self.net_d is not None:
             optim_type = train_opt["optim_d"].pop("type")
+            # condition for schedule_free
+            if (
+                optim_type in {"AdamW_SF", "adamw_sf", "adan_sf", "Adan_SF"}
+                and "schedule_free" not in train_opt["optim_d"]
+            ):
+                msg = "The option 'schedule_free' must be in the config file"
+                raise ValueError(msg)
+            # get optimizer d
             self.optimizer_d = self.get_optimizer(
                 optim_type, self.net_d.parameters(), **train_opt["optim_d"]
             )
@@ -287,7 +353,6 @@ class sisr(base):
                     augs=self.aug,
                     prob=self.aug_prob,
                 )
-
 
     def eco_strategy(self, current_iter):
         """Adapted version of "Empirical Centroid-oriented Optimization":
@@ -325,7 +390,7 @@ class sisr(base):
 
         return self.output, self.gt
 
-    def optimize_parameters(self, current_iter):
+    def closure(self, current_iter):
         if self.net_d is not None:
             for p in self.net_d.parameters():
                 p.requires_grad = False
@@ -387,6 +452,7 @@ class sisr(base):
                     l_g_pix = self.cri_pix(self.output, self.gt)
                     l_g_total += l_g_pix
                 loss_dict["l_g_pix"] = l_g_pix
+
             # ssim loss
             if self.cri_mssim:
                 if self.wavelet_guided == "on":
@@ -405,6 +471,7 @@ class sisr(base):
                     l_g_mssim = self.cri_mssim(self.output, self.gt)
                     l_g_total += l_g_mssim
                 loss_dict["l_g_mssim"] = l_g_mssim
+
             # perceptual loss
             if self.cri_perceptual:
                 l_g_percep = self.cri_perceptual(self.output, self.gt)
@@ -462,17 +529,20 @@ class sisr(base):
 
         # divide losses by accumulation factor
         l_g_total = l_g_total / self.accum_iters
-        self.gradscaler.scale(l_g_total).backward()
+        # backward generator
+        if self.sam and current_iter >= self.sam_init:
+            l_g_total.backward()
+        else:
+            self.gradscaler.scale(l_g_total).backward()
 
         if (self.n_accumulated) % self.accum_iters == 0:
             # gradient clipping on generator
             if self.gradclip:
-                self.gradscaler.unscale_(self.optimizer_g)
+                if not self.sam:
+                    self.gradscaler.unscale_(self.optimizer_g)
                 torch.nn.utils.clip_grad_norm_(
                     self.net_g.parameters(), 1.0, error_if_nonfinite=False
                 )
-
-            self.gradscaler.step(self.optimizer_g)
 
         # optimize net_d
         if self.net_d is not None:
@@ -503,29 +573,28 @@ class sisr(base):
             if self.cri_gan:
                 l_d_real = l_d_real / self.accum_iters
                 l_d_fake = l_d_fake / self.accum_iters
-                self.gradscaler.scale(l_d_real).backward()
-                self.gradscaler.scale(l_d_fake).backward()
+                # backward discriminator
+                if self.sam and current_iter >= self.sam_init:
+                    l_d_real.backward()
+                    l_d_fake.backward()
+                else:
+                    self.gradscaler.scale(l_d_real).backward()
+                    self.gradscaler.scale(l_d_fake).backward()
 
             # clip and step() discriminator
             if (self.n_accumulated) % self.accum_iters == 0:
                 # gradient clipping on discriminator
                 if self.gradclip:
-                    self.gradscaler.unscale_(self.optimizer_d)
+                    if not self.sam or (
+                        self.sam is True and current_iter <= self.sam_init
+                    ):
+                        self.gradscaler.unscale_(self.optimizer_d)
                     torch.nn.utils.clip_grad_norm_(
                         self.net_d.parameters(), 1.0, error_if_nonfinite=False
                     )
 
-                self.gradscaler.step(self.optimizer_d)
-
             # add total discriminator loss for tensorboard tracking
             loss_dict["l_d_total"] = (l_d_real + l_d_fake) / 2
-
-        # update gradscaler and zero grads
-        if (self.n_accumulated) % self.accum_iters == 0:
-            self.gradscaler.update()
-            self.optimizer_g.zero_grad(set_to_none=True)
-            if self.net_d is not None:
-                self.optimizer_d.zero_grad(set_to_none=True)
 
         # error if NaN
         if torch.isnan(l_g_total):
@@ -536,7 +605,43 @@ class sisr(base):
                   """
             raise ValueError(msg)
 
+        # average losses among gpu's, if doing distributed training
         self.log_dict = self.reduce_loss_dict(loss_dict)
+
+        # return generator loss
+        return l_g_total
+
+    def optimize_parameters(self, current_iter):
+        # increment accumulation counter
+        self.n_accumulated += 1
+        # reset accumulation counter
+        if self.n_accumulated >= self.accum_iters:
+            self.n_accumulated = 0
+
+        # run forward-backward
+        self.closure(current_iter)
+
+        if (self.n_accumulated) % self.accum_iters == 0:
+            # step() for generator
+            if self.sam and current_iter >= self.sam_init:
+                self.sam_optimizer_g.step(self.closure, current_iter)
+            else:
+                self.gradscaler.step(self.optimizer_g)
+            # step() for discriminator
+            if self.net_d is not None:
+                self.gradscaler.step(self.optimizer_d)
+
+            # zero generator grads
+            if self.sam and current_iter >= self.sam_init:
+                self.sam_optimizer_g.zero_grad(set_to_none=True)
+            else:
+                # update gradscaler
+                self.gradscaler.update()
+                self.optimizer_g.zero_grad(set_to_none=True)
+
+            # zero discriminator grads
+            if self.net_d is not None:
+                self.optimizer_d.zero_grad(set_to_none=True)
 
     def test(self):
         self.tile = self.opt["val"].get("tile", -1)
@@ -820,9 +925,9 @@ class sisr(base):
                     )
                     load_net[k + ".ignore"] = load_net.pop(k)
 
+
 @MODEL_REGISTRY.register()
 class default(sisr):
     """For backward compatibility"""
     def __init__(self, opt):
         super(default, self).__init__(opt)
-

@@ -126,6 +126,7 @@ Where `options.yml` is a configuration file. Templates can be found in [options]
 | [ECO strategy](https://github.com/2minkyulee/ECO)			    | `eco`, `eco_iters`	 |
 | [AdamW Schedule-Free](https://github.com/facebookresearch/schedule_free)  | `adamw_sf`		 |
 | [Adan Schedule-Free](https://github.com/muslll/adan_schedule_free)	    | `adan_sf`			 |
+| [F-SAM](https://github.com/nblt/F-SAM)				    | `fsam`, `FSAM`		 |
 
 ### [Supported Losses](https://github.com/muslll/neosr/wiki/Losses):
 

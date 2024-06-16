@@ -24,11 +24,12 @@ class base:
         self.optimizers = []
         self.schedulers = []
 
+        # Schedule-Free Generator
         if self.is_train:
             self.sf_optim_g = opt["train"]["optim_g"].get("schedule_free", False)
         else:
             self.sf_optim_g = None
-        
+        # Schedule-Free Discriminator
         self.net_d = opt.get("network_d", None)
         if self.net_d is not None:
             self.sf_optim_d = opt["train"]["optim_d"].get("schedule_free", False)
@@ -143,9 +144,10 @@ class base:
 
     def setup_schedulers(self):
         """Set up schedulers."""
+        train_opt = self.opt["train"]
         has_scheduler = self.opt["train"].get("scheduler", None)
         if has_scheduler is not None:
-            scheduler_type = self.opt["train"]["scheduler"].get("type", None)
+            scheduler_type = train_opt["scheduler"].pop("type")
             if scheduler_type in {"MultiStepLR", "multisteplr"}:
                 for optimizer in self.optimizers:
                     self.schedulers.append(
