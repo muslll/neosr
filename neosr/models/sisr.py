@@ -538,7 +538,9 @@ class sisr(base):
         if (self.n_accumulated) % self.accum_iters == 0:
             # gradient clipping on generator
             if self.gradclip:
-                if not self.sam:
+                if self.sam is not None and current_iter >= self.sam_init:
+                    pass
+                else:
                     self.gradscaler.unscale_(self.optimizer_g)
                 torch.nn.utils.clip_grad_norm_(
                     self.net_g.parameters(), 1.0, error_if_nonfinite=False
@@ -585,10 +587,7 @@ class sisr(base):
             if (self.n_accumulated) % self.accum_iters == 0:
                 # gradient clipping on discriminator
                 if self.gradclip:
-                    if not self.sam or (
-                        self.sam is True and current_iter <= self.sam_init
-                    ):
-                        self.gradscaler.unscale_(self.optimizer_d)
+                    self.gradscaler.unscale_(self.optimizer_d)
                     torch.nn.utils.clip_grad_norm_(
                         self.net_d.parameters(), 1.0, error_if_nonfinite=False
                     )
