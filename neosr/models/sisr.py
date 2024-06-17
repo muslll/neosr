@@ -852,11 +852,11 @@ class sisr(base):
 
             # check for dataset option save_tb, to save images on tb_logger
             save_tb = self.opt["val"].get("save_tb", False)
-
             if save_tb:
+                sr_img_tb = tensor2img([visuals["result"]], rgb2bgr=False)
                 tb_logger.add_image(
                     f"{img_name}/{current_iter}",
-                    sr_img,
+                    sr_img_tb,
                     global_step=current_iter,
                     dataformats="HWC",
                 )
