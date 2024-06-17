@@ -920,6 +920,14 @@ def drct_l(**kwargs):
     )
 
 @ARCH_REGISTRY.register()
+def drct_xl(**kwargs):
+    return drct(
+        depths=(6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6),
+        num_heads=(6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6),
+        **kwargs,
+    )
+
+@ARCH_REGISTRY.register()
 def drct_s(**kwargs):
     return drct(
         embed_dim=48,

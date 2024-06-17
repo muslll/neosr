@@ -94,6 +94,7 @@ path:
 network_g:
   type: drct
   #type: drct_l
+  #type: drct_xl
   #type: drct_s  
 
 network_d:
