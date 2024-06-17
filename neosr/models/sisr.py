@@ -4,6 +4,7 @@ from os import path as osp
 
 import torch
 from torch.nn import functional as F
+from torch.optim.swa_utils import AveragedModel, get_ema_multi_avg_fn
 from tqdm import tqdm
 
 from neosr.archs import build_network
@@ -70,6 +71,15 @@ class sisr(base):
     def init_training_settings(self):
         # options var
         train_opt = self.opt["train"]
+
+        # set EMA
+        self.ema = self.opt["train"].get("ema", -1)
+        if self.ema > 0:
+            self.net_g_ema = AveragedModel(
+                self.net_g,
+                multi_avg_fn=get_ema_multi_avg_fn(self.ema),
+                device=self.device,
+            )
 
         # sharpness-aware minimization
         self.sam = self.opt["train"].get("sam", None)
@@ -292,7 +302,7 @@ class sisr(base):
         self.optimizers.append(self.optimizer_g)
 
         # SAM
-        if self.sam is not None: 
+        if self.sam is not None:
             if optim_type in {"AdamW", "adamw"}:
                 base_optimizer = torch.optim.AdamW
             elif optim_type in {"Adan", "adan"}:
@@ -302,7 +312,9 @@ class sisr(base):
             elif optim_type in {"Adan_SF", "adan_sf"}:
                 base_optimizer = adan_sf
             else:
-                raise NotImplementedError(f"SAM not supported by optimizer {optim_type} yet.")
+                raise NotImplementedError(
+                    f"SAM not supported by optimizer {optim_type} yet."
+                )
 
         if self.sam in {"FSAM", "fsam"}:
             self.sam_optimizer_g = fsam(
@@ -368,7 +380,10 @@ class sisr(base):
             else:
                 a = min(current_iter / self.eco_iters, 1.0)
             # network prediction
-            self.net_output = self.net_g(self.lq)
+            if self.ema > 0:
+                self.net_output = self.net_g_ema(self.lq)
+            else:
+                self.net_output = self.net_g(self.lq)
             # define gt centroid
             self.gt = ((1 - a) * self.net_output) + (a * self.gt)
             # downsampled prediction
@@ -386,7 +401,10 @@ class sisr(base):
             self.output = ((1 - a) * self.lq_scaled) + (a * self.lq)
 
         # predict from lq centroid
-        self.output = self.net_g(self.output)
+        if self.ema > 0:
+            self.output = self.net_g_ema(self.output)
+        else:
+            self.output = self.net_g(self.output)
 
         return self.output, self.gt
 
@@ -642,15 +660,24 @@ class sisr(base):
             if self.net_d is not None:
                 self.optimizer_d.zero_grad(set_to_none=True)
 
+            if self.ema > 0:
+                self.net_g_ema.update_parameters(self.net_g)
+
     def test(self):
         self.tile = self.opt["val"].get("tile", -1)
         scale = self.opt["scale"]
         if self.tile == -1:
-            self.net_g.eval()
             if self.sf_optim_g and self.is_train:
                 self.optimizer_g.eval()
+
             with torch.inference_mode():
-                self.output = self.net_g(self.lq)
+                if self.ema > 0:
+                    self.net_g_ema.eval()
+                    self.output = self.net_g_ema(self.lq)
+                else:
+                    self.net_g.eval()
+                    self.output = self.net_g(self.lq)
+
             self.net_g.train()
             if self.sf_optim_g and self.is_train:
                 self.optimizer_g.train()
@@ -710,14 +737,20 @@ class sisr(base):
                 top, left = temp
                 img_chops.append(img[..., top, left])
 
-            self.net_g.eval()
+            if self.ema > 0:
+                self.net_g_ema.eval()
+            else:
+                self.net_g.eval()
             if self.sf_optim_g and self.is_train:
                 self.optimizer_g.eval()
 
             with torch.inference_mode():
                 outputs = []
                 for chop in img_chops:
-                    out = self.net_g(chop)  # image processing of each partition
+                    if self.ema > 0:
+                        out = self.net_g_ema(chop)
+                    else:
+                        out = self.net_g(chop)  # image processing of each partition
                     outputs.append(out)
                 _img = torch.zeros(1, C, H * scale, W * scale)
                 # merge
@@ -880,7 +913,10 @@ class sisr(base):
 
     def save(self, epoch, current_iter):
         """Save networks and training state."""
-        self.save_network(self.net_g, "net_g", current_iter)
+        if self.ema > 0:
+            self.save_network(self.net_g_ema, "net_g", current_iter)
+        else:
+            self.save_network(self.net_g, "net_g", current_iter)
 
         if self.net_d is not None:
             self.save_network(self.net_d, "net_d", current_iter)
@@ -928,5 +964,6 @@ class sisr(base):
 @MODEL_REGISTRY.register()
 class default(sisr):
     """For backward compatibility"""
+
     def __init__(self, opt):
         super(default, self).__init__(opt)

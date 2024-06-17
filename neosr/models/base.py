@@ -6,10 +6,10 @@ from copy import deepcopy
 import torch
 from torch.nn.parallel import DataParallel, DistributedDataParallel
 
-from neosr.optimizers.adan_sf import adan_sf
 from neosr.optimizers.adamw_sf import adamw_sf
 from neosr.optimizers.adamw_win import adamw_win
 from neosr.optimizers.adan import adan
+from neosr.optimizers.adan_sf import adan_sf
 from neosr.utils import get_root_logger
 from neosr.utils.dist_util import master_only
 
@@ -122,7 +122,6 @@ class base:
         return net
 
     def get_optimizer(self, optim_type, params, lr, **kwargs):
-
         if optim_type in {"Adam", "adam"}:
             optimizer = torch.optim.Adam(params, lr, **kwargs)
         elif optim_type in {"AdamW", "adamw"}:
@@ -264,11 +263,14 @@ class base:
         for net_, param_key_ in zip(net, param_key, strict=True):
             net_ = self.get_bare_model(net_)
             state_dict = net_.state_dict()
+            new_state_dict = OrderedDict()
             for key, param in state_dict.items():
                 if key.startswith("module."):  # remove unnecessary 'module.'
                     key = key[7:]
-                state_dict[key] = param.cpu()
-            save_dict[param_key_] = state_dict
+                if key.startswith("n_averaged"):  # skip n_averaged from EMA
+                    continue
+                new_state_dict[key] = param.cpu()
+            save_dict[param_key_] = new_state_dict
 
         if self.sf_optim_g and self.is_train:
             self.optimizer_g.eval()
@@ -301,7 +303,6 @@ class base:
             if self.is_train:
                 self.optimizer_d.train()
 
-
     def load_network(self, net, load_path, param_key, strict=True):
         """Load network.
 
@@ -321,10 +322,10 @@ class base:
         try:
             if "params-ema" in load_net:
                 param_key = "params-ema"
-            elif "params" in load_net:
-                param_key = "params"
             elif "params_ema" in load_net:
                 param_key = "params_ema"
+            elif "params" in load_net:
+                param_key = "params"
             else:
                 param_key = self.param_key
             load_net = load_net[param_key]
