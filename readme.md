@@ -9,7 +9,7 @@ Join our <a href="https://discord.gg/NN2HGtJ3d6">Discord</a>
 
 <details>
   <summary><b>news</b></summary>
-  06.19.2024 - neosr now supports SOTA optimization through <a href="https://github.com/muslll/adan_schedule_free">Adan Schedule-Free</a> and <a href="https://github.com/nblt/F-SAM">F-SAM</a>
+  06.19.2024 - neosr now supports SOTA optimization through <a href="https://github.com/muslll/adan_schedule_free">Adan Schedule-Free</a> and <a href="https://github.com/nblt/F-SAM">F-SAM</a><br>
   05.09.2024 - Release Real-PLKSR network. <a href=https://github.com/muslll/neosr/wiki/Arch%E2%80%90specific-options#realplksr-realplksr_s>wiki</a><br>
   05.08.2024 - Release <b>Nomos-v2</b> dataset. For more details, see <a href=#datasets>datasets</a><br>
 </details>
