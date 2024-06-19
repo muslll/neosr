@@ -416,96 +416,27 @@ class SWTForward(nn.Module):
         return coeffs
 
 
-class SWTInverse(nn.Module):
-    """Performs a 2d DWT Inverse reconstruction of an image
-    Args:
-        wave (str or pywt.Wavelet): Which wavelet to use
-        C: deprecated, will be removed in future
-    """
-
-    def __init__(self, wave="db1", mode="symmetric"):
-        super().__init__()
-        if isinstance(wave, str):
-            wave = pywt.Wavelet(wave)
-        if isinstance(wave, pywt.Wavelet):
-            g0_col, g1_col = wave.rec_lo, wave.rec_hi
-            g0_row, g1_row = g0_col, g1_col
-        else:
-            if len(wave) == 2:
-                g0_col, g1_col = wave[0], wave[1]
-                g0_row, g1_row = g0_col, g1_col
-            elif len(wave) == 4:
-                g0_col, g1_col = wave[0], wave[1]
-                g0_row, g1_row = wave[2], wave[3]
-        # Prepare the filters
-
-        filts = prep_filt_sfb2d(g0_col, g1_col, g0_row, g1_row)
-        self.g0_col = nn.Parameter(filts[0], requires_grad=False)
-        self.g1_col = nn.Parameter(filts[1], requires_grad=False)
-        self.g0_row = nn.Parameter(filts[2], requires_grad=False)
-        self.g1_row = nn.Parameter(filts[3], requires_grad=False)
-
-        self.mode = mode
-
-    #@torch.amp.custom_fwd(cast_inputs=torch.float32, device_type='cuda')
-    @torch.cuda.amp.custom_fwd(cast_inputs=torch.float32)
-    def forward(self, coeffs):
-        """
-        Args:
-            coeffs (yl, yh): tuple of lowpass and bandpass coefficients, where:
-              yl is a lowpass tensor of shape :math:`(N, C_{in}, H_{in}',
-              W_{in}')` and yh is a list of bandpass tensors of shape
-              :math:`list(N, C_{in}, 3, H_{in}'', W_{in}'')`. I.e. should match
-              the format returned by DWTForward
-        Returns:
-            Reconstructed input of shape :math:`(N, C_{in}, H_{in}, W_{in})`
-        Note:
-            :math:`H_{in}', W_{in}', H_{in}'', W_{in}''` denote the correctly
-            downsampled shapes of the DWT pyramid.
-        Note:
-            Can have None for any of the highpass scales and will treat the
-            values as zeros (not in an efficient way though).
-        """
-
-        yl = coeffs[-1][:, 0:1, :, :]
-        yh = []
-        for lohi in coeffs:
-            yh.append(lohi[:, None, 1:4, :, :])
-
-        ll = yl
-
-        # Do the synthesis filter banks
-        for h_ in yh[::-1]:
-            lh, hl, hh = torch.unbind(h_, dim=2)
-            filts = (self.g0_col, self.g1_col, self.g0_row, self.g1_row)
-            ll = sfb2d_atrous(ll, lh, hl, hh, filts, mode=self.mode)
-
-        return ll
-
-
+@torch.no_grad()
 def wavelet_guided(output, gt):
 
-    with torch.no_grad():
-        wavelet = pywt.Wavelet("sym7")
-        device = torch.device("cuda")
+    wavelet = pywt.Wavelet("sym7")
+    dlo = wavelet.dec_lo
+    an_lo = np.divide(dlo, sum(dlo))
+    an_hi = wavelet.dec_hi
+    rlo = wavelet.rec_lo
+    syn_lo = 2 * np.divide(rlo, sum(rlo))
+    syn_hi = wavelet.rec_hi
 
-        dlo = wavelet.dec_lo
-        an_lo = np.divide(dlo, sum(dlo))
-        an_hi = wavelet.dec_hi
-        rlo = wavelet.rec_lo
-        syn_lo = 2 * np.divide(rlo, sum(rlo))
-        syn_hi = wavelet.rec_hi
+    filters = pywt.Wavelet("wavelet_normalized", [an_lo, an_hi, syn_lo, syn_hi])
+    sfm = SWTForward(1, filters, "periodic").to(gt.device, non_blocking=True)
 
-        filters = pywt.Wavelet("wavelet_normalized", [an_lo, an_hi, syn_lo, syn_hi])
-        sfm = SWTForward(1, filters, "periodic").to(device, memory_format=torch.channels_last, non_blocking=True)
-
-        # wavelet bands of sr image
-        sr_img_y = 16.0 + (
-            output[:, 0:1, :, :] * 65.481
-            + output[:, 1:2, :, :] * 128.553
-            + output[:, 2:, :, :] * 24.966
-        )
-        wavelet_sr = sfm(sr_img_y)[0]
+    # wavelet bands of sr image
+    sr_img_y = 16.0 + (
+        output[:, 0:1, :, :] * 65.481
+        + output[:, 1:2, :, :] * 128.553
+        + output[:, 2:, :, :] * 24.966
+    )
+    wavelet_sr = sfm(sr_img_y)[0]
 
     LL = wavelet_sr[:, 0:1, :, :]
     LH = wavelet_sr[:, 1:2, :, :]
@@ -514,19 +445,18 @@ def wavelet_guided(output, gt):
 
     combined_HF = torch.cat((LH, HL, HH), axis=1)
 
-    with torch.no_grad():
-        # wavelet bands of hr image
-        hr_img_y = 16.0 + (
-            gt[:, 0:1, :, :] * 65.481
-            + gt[:, 1:2, :, :] * 128.553
-            + gt[:, 2:, :, :] * 24.966
-        )
-        wavelet_hr = sfm(hr_img_y)[0]
+    # wavelet bands of hr image
+    hr_img_y = 16.0 + (
+        gt[:, 0:1, :, :] * 65.481
+        + gt[:, 1:2, :, :] * 128.553
+        + gt[:, 2:, :, :] * 24.966
+    )
+    wavelet_hr = sfm(hr_img_y)[0]
 
-        LL_gt = wavelet_hr[:, 0:1, :, :]
-        LH_gt = wavelet_hr[:, 1:2, :, :]
-        HL_gt = wavelet_hr[:, 2:3, :, :]
-        HH_gt = wavelet_hr[:, 3:, :, :]
-        combined_HF_gt = torch.cat((LH_gt, HL_gt, HH_gt), axis=1)
+    LL_gt = wavelet_hr[:, 0:1, :, :]
+    LH_gt = wavelet_hr[:, 1:2, :, :]
+    HL_gt = wavelet_hr[:, 2:3, :, :]
+    HH_gt = wavelet_hr[:, 3:, :, :]
+    combined_HF_gt = torch.cat((LH_gt, HL_gt, HH_gt), axis=1)
 
     return (LL, LH, HL, HH, combined_HF, LL_gt, LH_gt, HL_gt, HH_gt, combined_HF_gt)

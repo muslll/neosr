@@ -80,6 +80,8 @@ class sisr(base):
                 multi_avg_fn=get_ema_multi_avg_fn(self.ema),
                 device=self.device,
             )
+            logger = get_root_logger()
+            logger.info("Using exponential-moving average.")
 
         # sharpness-aware minimization
         self.sam = self.opt["train"].get("sam", None)
@@ -440,18 +442,19 @@ class sisr(base):
 
             # wavelet guided loss
             if self.wavelet_guided == "on" or self.wavelet_guided == "disc":
-                (
-                    LL,
-                    LH,
-                    HL,
-                    HH,
-                    combined_HF,
-                    LL_gt,
-                    LH_gt,
-                    HL_gt,
-                    HH_gt,
-                    combined_HF_gt,
-                ) = wavelet_guided(self.output, self.gt)
+                with torch.no_grad():
+                    (
+                        LL,
+                        LH,
+                        HL,
+                        HH,
+                        combined_HF,
+                        LL_gt,
+                        LH_gt,
+                        HL_gt,
+                        HH_gt,
+                        combined_HF_gt,
+                    ) = wavelet_guided(self.output, self.gt)
 
             l_g_total = 0
             loss_dict = OrderedDict()
@@ -578,14 +581,17 @@ class sisr(base):
                         real_d_pred = self.net_d(combined_HF_gt)
                     else:
                         real_d_pred = self.net_d(self.gt)
+
                     l_d_real = self.cri_gan(real_d_pred, True, is_disc=True)
                     loss_dict["l_d_real"] = l_d_real
                     loss_dict["out_d_real"] = torch.mean(real_d_pred.detach())
+
                     # fake
                     if self.wavelet_guided == "on" or self.wavelet_guided == "disc":
-                        fake_d_pred = self.net_d(combined_HF.detach().clone())
+                        fake_d_pred = self.net_d(combined_HF.detach())
                     else:
-                        fake_d_pred = self.net_d(self.output.detach().clone())
+                        fake_d_pred = self.net_d(self.output.detach())
+
                     l_d_fake = self.cri_gan(fake_d_pred, False, is_disc=True)
                     loss_dict["l_d_fake"] = l_d_fake
                     loss_dict["out_d_fake"] = torch.mean(fake_d_pred.detach())

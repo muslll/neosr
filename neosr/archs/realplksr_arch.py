@@ -104,6 +104,8 @@ class realplksr(nn.Module):
 
     def __init__(
         self,
+        in_ch: int = 3,
+        out_ch: int = 3,
         dim: int = 64,
         n_blocks: int = 28,
         upscaling_factor: int = upscale,
@@ -121,13 +123,13 @@ class realplksr(nn.Module):
             dropout = 0
 
         self.feats = nn.Sequential(
-            *[nn.Conv2d(3, dim, 3, 1, 1)]
+            *[nn.Conv2d(in_ch, dim, 3, 1, 1)]
             + [
                 PLKBlock(dim, kernel_size, split_ratio, norm_groups, use_ea)
                 for _ in range(n_blocks)
             ]
             + [nn.Dropout2d(dropout)]
-            + [nn.Conv2d(dim, 3 * upscaling_factor**2, 3, 1, 1)]
+            + [nn.Conv2d(dim, out_ch * upscaling_factor**2, 3, 1, 1)]
         )
         trunc_normal_(self.feats[0].weight, std=0.02)
         trunc_normal_(self.feats[-1].weight, std=0.02)
