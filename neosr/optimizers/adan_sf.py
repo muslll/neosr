@@ -18,7 +18,7 @@ class adan_sf(Optimizer):
     Arguments:
         params (iterable): iterable of parameters to optimize or
             dicts defining parameter groups.
-        lr (float, optional): learning rate. (default: 8e-4)
+        lr (float, optional): learning rate. (default: 1.6e-3)
         betas (Tuple[float, float, float], optional): coefficients used for
             first- and second-order moments. (default: (0.98, 0.92, 0.9955))
         eps (float, optional): term added to the denominator to improve
@@ -39,7 +39,7 @@ class adan_sf(Optimizer):
     def __init__(
         self,
         params,
-        lr: float = 8e-4,
+        lr: float = 1.6e-3,
         betas: list[float] = [0.98, 0.92, 0.987],
         eps: float = 1e-8,
         weight_decay: float = 0.02,

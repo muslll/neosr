@@ -45,3 +45,4 @@
 | [AdamW `Schedule-Free`](https://github.com/facebookresearch/schedule_free)					| [Apache 2.0](https://github.com/facebookresearch/schedule_free/blob/main/LICENSE)				|
 | [Adan `Schedule-Free`](https://github.com/muslll/adan_schedule_free)						| [Apache 2.0](https://github.com/muslll/adan_schedule_free/blob/main/license)					|
 | [`F-SAM`](https://github.com/nblt/F-SAM)									| Unknown													|
+| [`PatchLoss`](https://github.com/Suanmd/Patch-Loss-for-Super-Resolution)					| Unknown													|
