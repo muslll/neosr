@@ -56,6 +56,7 @@ path:
 network_g:
   type: realplksr
   #type: realplksr_s
+  #dysample: true
   #dropout: 0.5
 
 network_d:
@@ -63,20 +64,24 @@ network_d:
 
 train:
   #eco: true
+  #ema: 0.999
+  #sam: "fsam"
+  #sam_init: 1000
+  total_iter: 1000000
+
   optim_g:
-    type: adan
-    lr: !!float 3e-4
+    type: adan_sf
+    lr: !!float 8e-4
+    betas: [0.98, 0.92, 0.987]
+    weight_decay: 0.02
+    schedule_free: true
+    #warmup_steps: 1600
+
   optim_d:
     type: adan
-    lr: !!float 1e-4
-
-  scheduler:
-    type: multisteplr
-    milestones: [40000, 80000, 100000, 140000]
-    gamma: 0.5
-
-  total_iter: 1000000
-  warmup_iter: -1  # no warm up
+    lr: !!float 3e-4
+    betas: [0.98, 0.92, 0.987]
+    weight_decay: 0.02
 
   # losses
   #wavelet_guided: "disc" # "off", "on"
@@ -93,6 +98,9 @@ train:
       'conv5_4': 1
     perceptual_weight: 1.0
     criterion: huber
+    #patchloss: true
+    #ipk: true
+    #perceptual_patch_weight: 1.0
   gan_opt:
     type: GANLoss
     gan_type: vanilla
