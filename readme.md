@@ -104,6 +104,7 @@ Where `options.yml` is a configuration file. Templates can be found in [options]
 | arch                                          		     | option               	     	    |
 |--------------------------------------------------------------------|--------------------------------------|
 | [SeemoRe](https://github.com/eduardzamfir/seemoredetails)	     | `seemore`, `seemore_t`, `seemore_l`  |
+| [RVSR](https://github.com/huai-chang/RVSR)			     | `rvsr`				    |
 
 
 ### Supported Discriminators:
