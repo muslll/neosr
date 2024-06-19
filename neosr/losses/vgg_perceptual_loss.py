@@ -94,16 +94,17 @@ class PerceptualLoss(nn.Module):
         if self.patchloss == False and self.ipk == True:
             raise ValueError("Please enable PatchLoss to use IPK.")
 
-        if upscale == 4:
-            self.perceptual_kernels = [4, 8]
-            self.ipk_kernels = [7, 11, 15]
-        elif upscale == 2:
-            self.perceptual_kernels = [3, 6]
-            self.ipk_kernels = [3, 5, 7]
-        else:
-            raise NotImplementedError(
-                f"PatchLoss does not support upscale ratio {upscale}."
-            )
+        if patchloss:
+            if upscale == 4:
+                self.perceptual_kernels = [4, 8]
+                self.ipk_kernels = [7, 11, 15]
+            elif upscale == 2:
+                self.perceptual_kernels = [3, 6]
+                self.ipk_kernels = [3, 5, 7]
+            else:
+                raise NotImplementedError(
+                    f"PatchLoss does not support upscale ratio {upscale}."
+                )
 
         self.vgg = VGGFeatureExtractor(
             layer_name_list=list(layer_weights.keys()),
