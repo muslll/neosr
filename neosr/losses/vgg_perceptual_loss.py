@@ -125,8 +125,6 @@ class PerceptualLoss(nn.Module):
         else:
             raise NotImplementedError(f"{criterion} criterion not supported.")
 
-    #@torch.amp.custom_fwd(cast_inputs=torch.float32, device_type='cuda')
-    @torch.cuda.amp.custom_fwd(cast_inputs=torch.float32)
     @torch.no_grad()
     def patch(self, x, gt, is_ipk=False):
         """
@@ -205,13 +203,15 @@ class PerceptualLoss(nn.Module):
                         * self.layer_weights[k]
                     )
                 elif self.patchloss:
-                    percep_loss += (
-                        self.patch(x_features[k], gt_features[k])
-                        * self.layer_weights[k]
-                        * self.patch_weights
-                        + self.criterion(x_features[k], gt_features[k])
-                        * self.layer_weights[k]
-                    )
+                    #@torch.amp.custom_fwd(cast_inputs=torch.float32, device_type='cuda')
+                    with torch.cuda.amp.custom_fwd(cast_inputs=torch.float32):
+                        percep_loss += (
+                            self.patch(x_features[k], gt_features[k])
+                            * self.layer_weights[k]
+                            * self.patch_weights
+                            + self.criterion(x_features[k], gt_features[k])
+                            * self.layer_weights[k]
+                        )
                 else:
                     percep_loss += (
                         self.criterion(x_features[k], gt_features[k])
@@ -220,7 +220,8 @@ class PerceptualLoss(nn.Module):
 
             # add IPK
             if self.patchloss and self.ipk:
-                ipk = self.patch(x, gt, is_ipk=True)
-                percep_loss += ipk
+                with torch.cuda.amp.custom_fwd(cast_inputs=torch.float32):
+                    ipk = self.patch(x, gt, is_ipk=True)
+                    percep_loss += ipk
 
         return percep_loss * self.perceptual_weight
