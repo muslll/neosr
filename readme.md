@@ -229,6 +229,7 @@ Datasets made by the upscaling community. More info can be found in author's rep
 
 - [Training Guide](https://github.com/Sirosky/Upscale-Hub/wiki/%F0%9F%93%88-Training-a-Model-in-NeoSR) from [@Sirosky](https://github.com/Sirosky) 
 - Philip's [youtube channel](https://www.youtube.com/@philip_hofmann/videos)
+- Training info from [Upscale-Community](https://github.com/Upscale-Community/training-info).
 - [OpenModelDB](https://openmodeldb.info/)
 - [chaiNNer](https://chainner.app/)
 
