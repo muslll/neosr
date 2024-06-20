@@ -125,6 +125,8 @@ class PerceptualLoss(nn.Module):
         else:
             raise NotImplementedError(f"{criterion} criterion not supported.")
 
+    #@torch.amp.custom_fwd(cast_inputs=torch.float32, device_type='cuda')
+    @torch.cuda.amp.custom_fwd(cast_inputs=torch.float32)
     @torch.no_grad()
     def patch(self, x, gt, is_ipk=False):
         """
