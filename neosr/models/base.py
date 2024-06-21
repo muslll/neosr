@@ -6,8 +6,10 @@ from copy import deepcopy
 import torch
 from torch.nn.parallel import DataParallel, DistributedDataParallel
 
+from neosr.optimizers.adamw_sf import adamw_sf
 from neosr.optimizers.adamw_win import adamw_win
 from neosr.optimizers.adan import adan
+from neosr.optimizers.adan_sf import adan_sf
 from neosr.utils import get_root_logger
 from neosr.utils.dist_util import master_only
 
@@ -21,6 +23,18 @@ class base:
         self.is_train = opt["is_train"]
         self.optimizers = []
         self.schedulers = []
+
+        # Schedule-Free Generator
+        if self.is_train:
+            self.sf_optim_g = opt["train"]["optim_g"].get("schedule_free", False)
+        else:
+            self.sf_optim_g = None
+        # Schedule-Free Discriminator
+        self.net_d = opt.get("network_d", None)
+        if self.net_d is not None:
+            self.sf_optim_d = opt["train"]["optim_d"].get("schedule_free", False)
+        else:
+            self.sf_optim_d = None
 
     def feed_data(self, data):
         pass
@@ -118,33 +132,39 @@ class base:
             optimizer = adan(params, lr, **kwargs)
         elif optim_type in {"AdamW_Win", "adamw_win"}:
             optimizer = adamw_win(params, lr, **kwargs)
+        elif optim_type in {"AdamW_SF", "adamw_sf"}:
+            optimizer = adamw_sf(params, lr, **kwargs)
+        elif optim_type in {"Adan_SF", "adan_sf"}:
+            optimizer = adan_sf(params, lr, **kwargs)
         else:
             raise NotImplementedError(f"optimizer {optim_type} is not supported yet.")
+
         return optimizer
 
     def setup_schedulers(self):
         """Set up schedulers."""
         train_opt = self.opt["train"]
-        scheduler_type = train_opt["scheduler"].pop("type")
-
-        if scheduler_type in {"MultiStepLR", "multisteplr"}:
-            for optimizer in self.optimizers:
-                self.schedulers.append(
-                    torch.optim.lr_scheduler.MultiStepLR(
-                        optimizer, **train_opt["scheduler"]
+        has_scheduler = self.opt["train"].get("scheduler", None)
+        if has_scheduler is not None:
+            scheduler_type = train_opt["scheduler"].pop("type")
+            if scheduler_type in {"MultiStepLR", "multisteplr"}:
+                for optimizer in self.optimizers:
+                    self.schedulers.append(
+                        torch.optim.lr_scheduler.MultiStepLR(
+                            optimizer, **train_opt["scheduler"]
+                        )
                     )
-                )
-        elif scheduler_type in {"CosineAnnealing", "cosineannealing"}:
-            for optimizer in self.optimizers:
-                self.schedulers.append(
-                    torch.optim.lr_scheduler.CosineAnnealingLR(
-                        optimizer, **train_opt["scheduler"]
+            elif scheduler_type in {"CosineAnnealing", "cosineannealing"}:
+                for optimizer in self.optimizers:
+                    self.schedulers.append(
+                        torch.optim.lr_scheduler.CosineAnnealingLR(
+                            optimizer, **train_opt["scheduler"]
+                        )
                     )
+            else:
+                raise NotImplementedError(
+                    f"Scheduler {scheduler_type} is not implemented yet."
                 )
-        else:
-            raise NotImplementedError(
-                f"Scheduler {scheduler_type} is not implemented yet."
-            )
 
     def get_bare_model(self, net):
         """Get bare model, especially under wrapping with
@@ -243,11 +263,20 @@ class base:
         for net_, param_key_ in zip(net, param_key, strict=True):
             net_ = self.get_bare_model(net_)
             state_dict = net_.state_dict()
+            new_state_dict = OrderedDict()
             for key, param in state_dict.items():
                 if key.startswith("module."):  # remove unnecessary 'module.'
                     key = key[7:]
-                state_dict[key] = param.cpu()
-            save_dict[param_key_] = state_dict
+                if key.startswith("n_averaged"):  # skip n_averaged from EMA
+                    continue
+                new_state_dict[key] = param.cpu()
+            save_dict[param_key_] = new_state_dict
+
+        if self.sf_optim_g and self.is_train:
+            self.optimizer_g.eval()
+        if self.net_d is not None and self.sf_optim_d:
+            if self.is_train:
+                self.optimizer_d.eval()
 
         # avoid occasional writing errors
         retry = 3
@@ -268,6 +297,12 @@ class base:
             logger.warning(f"Still cannot save {save_path}.")
             raise OSError(f"Cannot save {save_path}.")
 
+        if self.sf_optim_g and self.is_train:
+            self.optimizer_g.train()
+        if self.net_d is not None and self.sf_optim_d:
+            if self.is_train:
+                self.optimizer_d.train()
+
     def load_network(self, net, load_path, param_key, strict=True):
         """Load network.
 
@@ -287,10 +322,10 @@ class base:
         try:
             if "params-ema" in load_net:
                 param_key = "params-ema"
-            elif "params" in load_net:
-                param_key = "params"
             elif "params_ema" in load_net:
                 param_key = "params_ema"
+            elif "params" in load_net:
+                param_key = "params"
             else:
                 param_key = self.param_key
             load_net = load_net[param_key]
@@ -337,6 +372,12 @@ class base:
             save_filename = f"{int(current_iter)}.state"
             save_path = os.path.join(self.opt["path"]["training_states"], save_filename)
 
+            if self.sf_optim_g and self.is_train:
+                self.optimizer_g.eval()
+            if self.net_d is not None and self.sf_optim_d:
+                if self.is_train:
+                    self.optimizer_d.eval()
+
             # avoid occasional writing errors
             retry = 3
             while retry > 0:
@@ -355,6 +396,12 @@ class base:
             if retry == 0:
                 logger.warning(f"Still cannot save {save_path}. Just ignore it.")
                 raise OSError("Cannot save, aborting.")
+
+            if self.sf_optim_g and self.is_train:
+                self.optimizer_g.train()
+            if self.net_d is not None and self.sf_optim_d:
+                if self.is_train:
+                    self.optimizer_d.train()
 
     def resume_training(self, resume_state):
         """Reload the optimizers and schedulers for resumed training.

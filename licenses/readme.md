@@ -36,9 +36,14 @@
 | [`PLKSR`](https://github.com/dslisleedh/PLKSR)						      		| [MIT](https://github.com/dslisleedh/PLKSR/blob/main/LICENSE)							|
 | [`RealPLKSR`](https://github.com/dslisleedh/PLKSR)						      		| [MIT](https://github.com/dslisleedh/PLKSR/blob/main/LICENSE)							|
 | [`DRCT`](https://github.com/ming053l/DRCT)							      		| [MIT](https://github.com/ming053l/DRCT/blob/main/LICENSE)							|
-| [`EFEN`](https://github.com/Supereeeee/EFEN)							      		| Unknown													|
+| [`MSDAN`](https://github.com/Supereeeee/MSDAN)						      		| Unknown													|
 | [`GW loss`](https://github.com/xiezw5/Component-Divide-and-Conquer-for-Real-World-Image-Super-Resolution/)	| Unknown													|
 | [`Adan`](https://github.com/sail-sg/Adan) optimizer								| [Apache 2.0](https://github.com/sail-sg/Adan/blob/main/LICENSE)						|
 | [`SeemoRe`](https://github.com/eduardzamfir/seemoredetails)							| Unknown													| 
 | [`AdamW-Win2`](https://github.com/sail-sg/win)								| [Apache 2.0](https://github.com/sail-sg/win/blob/main/LICENSE)						|
 | [`ECO`](https://github.com/2minkyulee/ECO)									| Unknown													|
+| [AdamW `Schedule-Free`](https://github.com/facebookresearch/schedule_free)					| [Apache 2.0](https://github.com/facebookresearch/schedule_free/blob/main/LICENSE)				|
+| [Adan `Schedule-Free`](https://github.com/muslll/adan_schedule_free)						| [Apache 2.0](https://github.com/muslll/adan_schedule_free/blob/main/license)					|
+| [`F-SAM`](https://github.com/nblt/F-SAM)									| Unknown													|
+| [`PatchLoss`](https://github.com/Suanmd/Patch-Loss-for-Super-Resolution)					| Unknown													|
+| [`RVSR`](https://github.com/huai-chang/RVSR)									| [Apache 2.0](https://github.com/huai-chang/RVSR/blob/main/LICENSE)						|

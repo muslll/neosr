@@ -1,5 +1,5 @@
 
-name: train_dat
+name: train_msdan
 model_type: default
 scale: 4
 use_amp: false
@@ -25,7 +25,7 @@ datasets:
     use_hflip: true
     use_rot: true
     augmentation: ['none', 'mixup', 'cutmix', 'resizemix'] #['cutblur']
-    aug_prob: [0.2, 0.3, 0.2, 0.8] #[0.7]
+    aug_prob: [0.5, 0.1, 0.1, 0.1] # [0.7]
 
 #  val:
 #    name: val_1
@@ -54,9 +54,7 @@ path:
   #strict_load_g: false # do not uncomment, read docs
 
 network_g:
-  type: dat_small
-  #type: dat_medium
-  #type: dat_2
+  type: msdan
 
 network_d:
   type: unet

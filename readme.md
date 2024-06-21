@@ -9,6 +9,7 @@ Join our <a href="https://discord.gg/NN2HGtJ3d6">Discord</a>
 
 <details>
   <summary><b>news</b></summary>
+  06.19.2024 - neosr now supports SOTA optimization through <a href="https://github.com/muslll/adan_schedule_free">Adan Schedule-Free</a> and <a href="https://github.com/nblt/F-SAM">F-SAM</a><br>
   05.09.2024 - Release Real-PLKSR network. <a href=https://github.com/muslll/neosr/wiki/Arch%E2%80%90specific-options#realplksr-realplksr_s>wiki</a><br>
   05.08.2024 - Release <b>Nomos-v2</b> dataset. For more details, see <a href=#datasets>datasets</a><br>
 </details>
@@ -92,9 +93,9 @@ Where `options.yml` is a configuration file. Templates can be found in [options]
 | [RGT](https://github.com/zhengchen1999/RGT)							    | `rgt`, `rgt_s` 					|
 | [ATD](https://github.com/LabShuHangGU/Adaptive-Token-Dictionary)   				    | `atd`, `atd_light`   				|
 | [PLKSR](https://github.com/dslisleedh/PLKSR)			     				    | `plksr`, `plksr_tiny`	    			|
-| RealPLKSR											    | `realplksr`, `realplksr_s`			|
+| [RealPLKSR](https://github.com/dslisleedh/PLKSR/issues/4)					    | `realplksr`, `realplksr_s`			|
 | [DRCT](https://github.com/ming053l/DRCT)			     				    | `drct`, `drct_l`, `drct_s`   			|
-| [EFEN](https://github.com/Supereeeee/EFEN)			     				    | `efen`			    			|
+| [MSDAN](https://github.com/Supereeeee/MSDAN)			     				    | `msdan`			    			|
 
 > [!NOTE]
 > For all arch-specific parameters, [read the wiki](https://github.com/muslll/neosr/wiki/Arch%E2%80%90specific-options).
@@ -104,6 +105,7 @@ Where `options.yml` is a configuration file. Templates can be found in [options]
 | arch                                          		     | option               	     	    |
 |--------------------------------------------------------------------|--------------------------------------|
 | [SeemoRe](https://github.com/eduardzamfir/seemoredetails)	     | `seemore`, `seemore_t`, `seemore_l`  |
+| [RVSR](https://github.com/huai-chang/RVSR)			     | `rvsr`				    |
 
 
 ### Supported Discriminators:
@@ -124,25 +126,29 @@ Where `options.yml` is a configuration file. Templates can be found in [options]
 | [Adan](https://github.com/sail-sg/Adan)                                   | `Adan` or `adan`   	 |
 | [AdamW Win2](https://github.com/sail-sg/win)				    | `AdamW_Win` or `adamw_win` |
 | [ECO strategy](https://github.com/2minkyulee/ECO)			    | `eco`, `eco_iters`	 |
+| [AdamW Schedule-Free](https://github.com/facebookresearch/schedule_free)  | `adamw_sf`		 |
+| [Adan Schedule-Free](https://github.com/muslll/adan_schedule_free)	    | `adan_sf`			 |
+| [F-SAM](https://github.com/nblt/F-SAM)				    | `fsam`, `FSAM`		 |
 
 ### [Supported Losses](https://github.com/muslll/neosr/wiki/Losses):
 
-| loss                                                                   						| option               		      	    |
-|-----------------------------------------------------------------------------------------------------------------------|-------------------------------------------|
-| L1 Loss                                                                						| `L1Loss`, `l1`       		     	    |
-| L2 Loss                                                                						| `MSELoss`, `l2`      		     	    |
-| Huber Loss                                                             						| `HuberLoss`, `huber` 		     	    |
-| CHC (Clipped Huber with Cosine Similarity Loss)			 						| `chc`, `chc_l2`			    |
-| Perceptual Loss                                                        						| `perceptual_opt`, `PerceptualLoss`        |
-| GAN                                                                    						| `gan_opt`, `GANLoss`, `MultiScaleGANLoss` |
-| Y**CbCr** Color Loss (bt601)                                           						| `color_opt`, `colorloss`                  |
-| Luma Loss (CIE L*)						 							| `luma_opt` `lumaloss`		     	    |
-| [MS-SSIM](https://github.com/lartpang/mssim.pytorch)			 						| `mssim_opt` `mssim`			    |
-| [LDL Loss](https://github.com/csjliang/LDL)                            						| `ldl_opt`  			            |
-| [Focal Frequency](https://github.com/EndlessSora/focal-frequency-loss) 						| `ff_opt`, `focalfrequencyloss`            |
-| [DISTS](https://github.com/dingkeyan93/DISTS)				 						| `dists_opt`, `dists`			    |
-| [Wavelet Guided](https://github.com/mandalinadagi/WGSR)		 						| `wavelet_guided`			    |
-| [Gradient-Weighted](https://github.com/xiezw5/Component-Divide-and-Conquer-for-Real-World-Image-Super-Resolution/)	| `gw_opt`, `gw_loss`			    | 
+| loss                                                                   						| option               		      	     |
+|-----------------------------------------------------------------------------------------------------------------------|--------------------------------------------|
+| L1 Loss                                                                						| `L1Loss`, `l1`       		     	     |
+| L2 Loss                                                                						| `MSELoss`, `l2`      		     	     |
+| Huber Loss                                                             						| `HuberLoss`, `huber` 		     	     |
+| CHC (Clipped Huber with Cosine Similarity Loss)			 						| `chc`, `chc_l2`			     |
+| Perceptual Loss                                                        						| `perceptual_opt`, `PerceptualLoss`         |
+| GAN                                                                    						| `gan_opt`, `GANLoss`, `MultiScaleGANLoss`  |
+| Y**CbCr** Color Loss (bt601)                                           						| `color_opt`, `colorloss`                   |
+| Luma Loss (CIE L*)						 							| `luma_opt` `lumaloss`		     	     |
+| [MS-SSIM](https://github.com/lartpang/mssim.pytorch)			 						| `mssim_opt` `mssim`			     |
+| [LDL Loss](https://github.com/csjliang/LDL)                            						| `ldl_opt`  			             |
+| [Focal Frequency](https://github.com/EndlessSora/focal-frequency-loss) 						| `ff_opt`, `focalfrequencyloss`             |
+| [DISTS](https://github.com/dingkeyan93/DISTS)				 						| `dists_opt`, `dists`			     |
+| [Wavelet Guided](https://github.com/mandalinadagi/WGSR)		 						| `wavelet_guided`			     |
+| [Gradient-Weighted](https://github.com/xiezw5/Component-Divide-and-Conquer-for-Real-World-Image-Super-Resolution/)	| `gw_opt`, `gw_loss`			     | 
+| [Perceptual Patch Loss](https://github.com/Suanmd/Patch-Loss-for-Super-Resolution)					| `perceptual_opt`, `patchloss`, `ipk`	     |
 
 ### Supported Augmentations:
 
@@ -223,6 +229,7 @@ Datasets made by the upscaling community. More info can be found in author's rep
 
 - [Training Guide](https://github.com/Sirosky/Upscale-Hub/wiki/%F0%9F%93%88-Training-a-Model-in-NeoSR) from [@Sirosky](https://github.com/Sirosky) 
 - Philip's [youtube channel](https://www.youtube.com/@philip_hofmann/videos)
+- Training info from [Upscale-Community](https://github.com/Upscale-Community/training-info).
 - [OpenModelDB](https://openmodeldb.info/)
 - [chaiNNer](https://chainner.app/)
 

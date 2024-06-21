@@ -68,7 +68,7 @@ class mssim(nn.Module):
         padding=None,
         clip=True,
         cosim=True,
-        cosim_lambda=5,
+        cosim_lambda=2,
         loss_weight=1.0,
     ):
         """Adapted from 'A better pytorch-based implementation for the mean structural
@@ -152,6 +152,7 @@ class mssim(nn.Module):
         return msssim
 
     def _ssim(self, x, y):
+
         mu_x = self.gaussian_filter(x)  # equ 14
         mu_y = self.gaussian_filter(y)  # equ 14
         sigma2_x = self.gaussian_filter(x * x) - mu_x * mu_x  # equ 15
@@ -163,14 +164,12 @@ class mssim(nn.Module):
         B1 = mu_x.pow(2) + mu_y.pow(2) + self.C1
         B2 = sigma2_x + sigma2_y + self.C2
 
+        if self.clip:
+            A1 = torch.clamp(A1, 0.003921, 0.996078)
+
         # equ 12, 13 in ref1
         l = A1 / B1
         cs = A2 / B2
         ssim = l * cs
-
-        # clip values
-        if self.clip:
-            ssim = torch.clamp(ssim, 0.003921, 0.996078)
-            cs = torch.clamp(cs, 0.003921, 0.996078)
 
         return ssim, cs

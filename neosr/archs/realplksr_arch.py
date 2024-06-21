@@ -4,8 +4,8 @@ import torch
 from torch import nn
 from torch.nn.init import trunc_normal_
 
+from neosr.archs.arch_util import DySample, net_opt
 from neosr.utils.registry import ARCH_REGISTRY
-from neosr.archs.arch_util import net_opt
 
 upscale, __ = net_opt()
 
@@ -104,6 +104,8 @@ class realplksr(nn.Module):
 
     def __init__(
         self,
+        in_ch: int = 3,
+        out_ch: int = 3,
         dim: int = 64,
         n_blocks: int = 28,
         upscaling_factor: int = upscale,
@@ -112,6 +114,7 @@ class realplksr(nn.Module):
         use_ea: bool = True,
         norm_groups: int = 4,
         dropout: float = 0,
+        dysample: bool = False,
         **kwargs,
     ):
         super().__init__()
@@ -120,13 +123,13 @@ class realplksr(nn.Module):
             dropout = 0
 
         self.feats = nn.Sequential(
-            *[nn.Conv2d(3, dim, 3, 1, 1)]
+            *[nn.Conv2d(in_ch, dim, 3, 1, 1)]
             + [
                 PLKBlock(dim, kernel_size, split_ratio, norm_groups, use_ea)
                 for _ in range(n_blocks)
             ]
             + [nn.Dropout2d(dropout)]
-            + [nn.Conv2d(dim, 3 * upscaling_factor**2, 3, 1, 1)]
+            + [nn.Conv2d(dim, out_ch * upscaling_factor**2, 3, 1, 1)]
         )
         trunc_normal_(self.feats[0].weight, std=0.02)
         trunc_normal_(self.feats[-1].weight, std=0.02)
@@ -135,7 +138,13 @@ class realplksr(nn.Module):
             torch.repeat_interleave, repeats=upscaling_factor**2, dim=1
         )
 
-        self.to_img = nn.PixelShuffle(upscaling_factor)
+        if dysample:
+            groups = 3 if 3 * upscaling_factor**2 < 4 else 4
+            self.to_img = DySample(
+                3 * upscaling_factor**2, upscaling_factor, groups=groups, dyscope=True
+            )
+        else:
+            self.to_img = nn.PixelShuffle(upscaling_factor)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.feats(x) + self.repeat_op(x)

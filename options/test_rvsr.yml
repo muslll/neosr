@@ -1,5 +1,5 @@
 # Results will be saved to neosr/experiments/results/
-name: test_efen
+name: test_rvsr
 model_type: default
 scale: 4
 use_amp: false
@@ -14,7 +14,7 @@ datasets:
       type: disk
 
 network_g:
-  type: efen
+  type: rvsr
 
 path:
   pretrain_network_g: 'model.pth'

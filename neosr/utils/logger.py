@@ -91,10 +91,7 @@ class MessageLogger():
 
         # time and estimated time
         if 'time' in log_vars.keys():
-            iter_time = log_vars.pop('time')
-            # iters per second
-            iter_time = iter_time * 100
-            iter_time = 100 / iter_time
+            iter_time = 1 / log_vars.pop('time')
             iter_time = iter_time / self.accumulate
 
             total_time = time.time() - self.start_time

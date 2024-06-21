@@ -16,6 +16,7 @@ datasets:
 network_g:
   type: realplksr
   #type: realplksr_s
+  #dysample: true
 
 path:
   pretrain_network_g: 'model.pth'

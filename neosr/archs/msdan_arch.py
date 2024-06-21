@@ -416,9 +416,9 @@ class DFEB(nn.Module):
 
 
 @ARCH_REGISTRY.register()
-class efen(nn.Module):
+class msdan(nn.Module):
     def __init__(self, channels=48, num_DFEB=8, upscale_factor=upscale):
-        super(efen, self).__init__()
+        super(msdan, self).__init__()
         self.layers = make_layer(
             basic_block=DFEB, num_basic_block=num_DFEB, channels=channels
         )
