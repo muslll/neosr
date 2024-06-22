@@ -134,3 +134,4 @@ logger:
   print_freq: 100
   save_checkpoint_freq: 1000
   use_tb_logger: true
+  #save_tb_img: true

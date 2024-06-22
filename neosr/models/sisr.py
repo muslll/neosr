@@ -691,6 +691,10 @@ class sisr(base):
         # test by partitioning
         else:
             _, C, h, w = self.lq.size()
+
+            if self.opt.get("color", None) == "y":
+                C = 1
+
             split_token_h = h // self.tile + 1  # number of horizontal cut sections
             split_token_w = w // self.tile + 1  # number of vertical cut sections
 
@@ -857,15 +861,16 @@ class sisr(base):
                 imwrite(sr_img, save_img_path)
 
             # check for dataset option save_tb, to save images on tb_logger
-            save_tb = self.opt["val"].get("save_tb", False)
-            if save_tb:
-                sr_img_tb = tensor2img([visuals["result"]], rgb2bgr=False)
-                tb_logger.add_image(
-                    f"{img_name}/{current_iter}",
-                    sr_img_tb,
-                    global_step=current_iter,
-                    dataformats="HWC",
-                )
+            if self.is_train:
+                save_tb_img = self.opt["logger"].get("save_tb_img", False)
+                if save_tb_img:
+                    sr_img_tb = tensor2img([visuals["result"]], rgb2bgr=False)
+                    tb_logger.add_image(
+                        f"{img_name}/{current_iter}",
+                        sr_img_tb,
+                        global_step=current_iter,
+                        dataformats="HWC",
+                    )
 
             if with_metrics:
                 # calculate metrics

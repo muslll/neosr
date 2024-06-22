@@ -37,7 +37,6 @@ datasets:
 #val:
 #  val_freq: 1000
 #  save_img: true
-#  save_tb: true
 #  tile: -1 # 200
 #  metrics:
 #    psnr:
@@ -135,3 +134,4 @@ logger:
   print_freq: 100
   save_checkpoint_freq: 1000
   use_tb_logger: true
+  #save_tb_img: true
