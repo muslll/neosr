@@ -680,7 +680,7 @@ class sisr(base):
                 self.optimizer_g.eval()
 
             with torch.inference_mode():
-                if self.is_train:
+                if hasattr(self, "ema"):
                     if self.ema > 0:
                         self.net_g_ema.eval()
                         self.output = self.net_g_ema(self.lq)
@@ -691,7 +691,6 @@ class sisr(base):
             self.net_g.train()
             if self.sf_optim_g and self.is_train:
                 self.optimizer_g.train()
-
         # test by partitioning
         else:
             _, C, h, w = self.lq.size()
