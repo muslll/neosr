@@ -255,6 +255,9 @@ class sisr(base):
                       instability with it. Disable AMP if you get undesirable results."""
             logger.warning(msg)
 
+        if self.sam is not None and self.accum_iters > 1:
+            raise NotImplementedError("SAM can't be used with gradient accumulation yet.")
+
         if pix_losses_bool is False and percep_losses_bool is False:
             raise ValueError(
                 "Both pixel/mssim and perceptual losses are None. Please enable at least one."
@@ -747,20 +750,29 @@ class sisr(base):
                 top, left = temp
                 img_chops.append(img[..., top, left])
 
-            if self.ema > 0:
-                self.net_g_ema.eval()
+            if self.is_train:
+                if self.ema > 0:
+                    self.net_g_ema.eval()
+                else:
+                    self.net_g.eval()
             else:
                 self.net_g.eval()
+
             if self.sf_optim_g and self.is_train:
                 self.optimizer_g.eval()
 
             with torch.inference_mode():
                 outputs = []
                 for chop in img_chops:
-                    if self.ema > 0:
-                        out = self.net_g_ema(chop)
+
+                    if self.is_train:
+                        if self.ema > 0:
+                            out = self.net_g_ema(chop)
+                        else:
+                            out = self.net_g(chop)  # image processing of each partition
                     else:
-                        out = self.net_g(chop)  # image processing of each partition
+                        out = self.net_g(chop)
+
                     outputs.append(out)
                 _img = torch.zeros(1, C, H * scale, W * scale)
                 # merge
