@@ -99,24 +99,27 @@ network_d:
 
 train:
   #eco: true
-  #ema: 0.999
+  #eco_init: 15000
+
+  ema: 0.999
   #sam: "fsam"
   #sam_init: 1000
   total_iter: 1000000
 
   optim_g:
     type: adan_sf
-    lr: !!float 8e-4
+    lr: !!float 1.6e-4
     betas: [0.98, 0.92, 0.987]
     weight_decay: 0.02
     schedule_free: true
     #warmup_steps: 1600
 
   optim_d:
-    type: adan
-    lr: !!float 3e-4
-    betas: [0.98, 0.92, 0.987]
-    weight_decay: 0.02
+    type: nadam
+    lr: !!float 1e-4
+    betas: [0.98, 0.99]
+    weight_decay: 0.01
+    decoupled_weight_decay: true
 
   # losses
   #wavelet_guided: "disc" # "off", "on"
