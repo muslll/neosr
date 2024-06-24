@@ -1,6 +1,7 @@
 import torch
 from torch import nn
 from torch.nn import functional as F
+from torch.nn.modules.batchnorm import _BatchNorm
 
 from neosr.archs.arch_util import net_opt
 from neosr.utils.registry import ARCH_REGISTRY
