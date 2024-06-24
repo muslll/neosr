@@ -415,7 +415,6 @@ class SWTForward(nn.Module):
 
         return coeffs
 
-
 @torch.no_grad()
 def wavelet_guided(output, gt):
 
@@ -438,7 +437,7 @@ def wavelet_guided(output, gt):
     )
     wavelet_sr = sfm(sr_img_y)[0]
 
-    LL = wavelet_sr[:, 0:1, :, :]
+    #LL = wavelet_sr[:, 0:1, :, :]
     LH = wavelet_sr[:, 1:2, :, :]
     HL = wavelet_sr[:, 2:3, :, :]
     HH = wavelet_sr[:, 3:, :, :]
@@ -453,10 +452,10 @@ def wavelet_guided(output, gt):
     )
     wavelet_hr = sfm(hr_img_y)[0]
 
-    LL_gt = wavelet_hr[:, 0:1, :, :]
+    #LL_gt = wavelet_hr[:, 0:1, :, :]
     LH_gt = wavelet_hr[:, 1:2, :, :]
     HL_gt = wavelet_hr[:, 2:3, :, :]
     HH_gt = wavelet_hr[:, 3:, :, :]
     combined_HF_gt = torch.cat((LH_gt, HL_gt, HH_gt), axis=1)
 
-    return (LL, LH, HL, HH, combined_HF, LL_gt, LH_gt, HL_gt, HH_gt, combined_HF_gt)
+    return combined_HF, combined_HF_gt

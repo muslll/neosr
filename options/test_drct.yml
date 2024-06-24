@@ -26,4 +26,4 @@ path:
 val:
   save_img: true
   #tile: 200
-  suffix: ~
+  #suffix: ~

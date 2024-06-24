@@ -47,3 +47,4 @@
 | [`F-SAM`](https://github.com/nblt/F-SAM)									| Unknown													|
 | [`PatchLoss`](https://github.com/Suanmd/Patch-Loss-for-Super-Resolution)					| Unknown													|
 | [`RVSR`](https://github.com/huai-chang/RVSR)									| [Apache 2.0](https://github.com/huai-chang/RVSR/blob/main/LICENSE)						|
+| [`DySample`](https://github.com/tiny-smart/dysample)								| [MIT](https://github.com/tiny-smart/dysample/blob/main/LICENSE)						|

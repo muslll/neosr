@@ -2,7 +2,6 @@ import collections.abc
 import functools
 import inspect
 import math
-import warnings
 from collections.abc import Mapping
 from itertools import repeat
 from pathlib import Path
@@ -10,8 +9,8 @@ from typing import Any, Protocol, TypeVar
 
 import torch
 from torch import nn
-from torch.nn import init
 from torch.nn import functional as F
+from torch.nn import init
 from torch.nn.modules.batchnorm import _BatchNorm
 
 from neosr.utils.options import parse_options
@@ -104,94 +103,98 @@ class Upsample(nn.Sequential):
         super(Upsample, self).__init__(*m)
 
 
-######################
-# DySample
-######################
-def normal_init(module, mean=0, std=1, bias=0):
-    if hasattr(module, 'weight') and module.weight is not None:
-        nn.init.normal_(module.weight, mean, std)
-    if hasattr(module, 'bias') and module.bias is not None:
-        nn.init.constant_(module.bias, bias)
-
-def constant_init(module, val, bias=0):
-    if hasattr(module, 'weight') and module.weight is not None:
-        nn.init.constant_(module.weight, val)
-    if hasattr(module, 'bias') and module.bias is not None:
-        nn.init.constant_(module.bias, bias)
-
-
 class DySample(nn.Module):
-    def __init__(self, in_channels: int, scale: int = 2, style: str = 'lp', groups: int = 4, dyscope: bool = True):
-        super().__init__()
-        self.scale = scale
-        self.style = style
-        self.groups = groups
-        self.end_conv = nn.Conv2d(in_channels, in_channels // scale ** 2, kernel_size=1)
-        assert style in ['lp', 'pl']
+    """Adapted from 'Learning to Upsample by Learning to Sample':
+    https://arxiv.org/abs/2308.15085
+    https://github.com/tiny-smart/dysample
+    """
 
-        if style == 'pl':
-            assert in_channels >= scale ** 2 and in_channels % scale ** 2 == 0
-            in_channels = in_channels // scale ** 2
-            out_channels = 2 * groups
-        else:
+    def __init__(
+        self,
+        in_channels: int,
+        out_ch: int,
+        scale: int = 2,
+        groups: int = 4,
+        end_convolution: bool = True,
+    ):
+        super().__init__()
+
+        try:
             assert in_channels >= groups and in_channels % groups == 0
-            out_channels = 2 * groups * scale ** 2
+        except:
+            msg = "Incorrect in_channels and groups values."
+            raise ValueError(msg)
+
+        out_channels = 2 * groups * scale**2
+        self.scale = scale
+        self.groups = groups
+        self.end_convolution = end_convolution
+        if end_convolution:
+            self.end_conv = nn.Conv2d(in_channels, out_ch, kernel_size=1)
+            if self.training:
+                nn.init.normal_(self.end_conv.weight, std=0.001)
+                nn.init.constant_(self.end_conv.bias, val=0)
 
         self.offset = nn.Conv2d(in_channels, out_channels, 1)
-        normal_init(self.offset, std=0.001)
-        if dyscope:
-            self.scope = nn.Conv2d(in_channels, out_channels, 1, bias=False)
-            constant_init(self.scope, val=0.)
-            self.offset_forward = self.offset_scope_pl if style == 'pl' else self.offset_scope_lp
-        else:
-            self.offset_forward = self.offset_no_scope_pl if style == 'pl' else self.offset_no_scope_lp
+        self.scope = nn.Conv2d(in_channels, out_channels, 1, bias=False)
+        if self.training:
+            nn.init.trunc_normal_(self.offset.weight, std=0.02)
+            nn.init.constant_(self.offset.bias, val=0)
+            nn.init.constant_(self.scope.weight, val=0)
 
-        self.register_buffer('init_pos', self._init_pos())
+        self.register_buffer("init_pos", self._init_pos())
 
     def _init_pos(self):
         h = torch.arange((-self.scale + 1) / 2, (self.scale - 1) / 2 + 1) / self.scale
-        return torch.stack(torch.meshgrid([h, h], indexing="ij")).transpose(1, 2).repeat(1, self.groups, 1).reshape(1, -1, 1, 1)
-
-    def sample(self, x, offset):
-        B, _, H, W = offset.shape
-        offset = offset.view(B, 2, -1, H, W)
-        coords_h = torch.arange(H) + 0.5
-        coords_w = torch.arange(W) + 0.5
-        coords = torch.stack(torch.meshgrid([coords_w, coords_h], indexing="ij")
-                             ).transpose(1, 2).unsqueeze(1).unsqueeze(0).type(x.dtype).to(x.device)
-        normalizer = torch.tensor([W, H], dtype=x.dtype, device=x.device).view(1, 2, 1, 1, 1)
-        coords = 2 * (coords + offset) / normalizer - 1
-        coords = F.pixel_shuffle(coords.view(B, -1, H, W), self.scale).view(
-            B, 2, -1, self.scale * H, self.scale * W).permute(0, 2, 3, 4, 1).contiguous().flatten(0, 1)
-        return F.grid_sample(x.reshape(B * self.groups, -1, H, W), coords, mode='bilinear',
-                             align_corners=False, padding_mode="border").view(B, -1, self.scale * H, self.scale * W)
-
-    def offset_scope_lp(self, x):
-        offset = self.offset(x) * self.scope(x).sigmoid() * 0.5 + self.init_pos
-        return self.sample(x, offset)
-
-    def offset_no_scope_lp(self, x):
-        offset = self.offset(x) * 0.25 + self.init_pos
-
-        return self.sample(x, offset)
-
-    def offset_scope_pl(self, x):
-        x_ = F.pixel_shuffle(x, self.scale)
-        offset = F.pixel_unshuffle(self.offset(x_) * self.scope(x_).sigmoid(), self.scale) * 0.5 + self.init_pos
-        return self.sample(x, offset)
-
-    def offset_no_scope_pl(self, x):
-        x_ = F.pixel_shuffle(x, self.scale)
-        offset = F.pixel_unshuffle(self.offset(x_), self.scale) * 0.25 + self.init_pos
-        return self.sample(x, offset)
+        return (
+            torch.stack(torch.meshgrid([h, h], indexing="ij"))
+            .transpose(1, 2)
+            .repeat(1, self.groups, 1)
+            .reshape(1, -1, 1, 1)
+        )
 
     def forward(self, x):
-        if self.scale != 1:
-            return self.end_conv(self.offset_forward(x))
-        else:
-            return self.offset_forward(x)
+        with torch.no_grad():
+            offset = self.offset(x) * self.scope(x).sigmoid() * 0.5 + self.init_pos
+            B, _, H, W = offset.shape
+            offset = offset.view(B, 2, -1, H, W)
+            coords_h = torch.arange(H) + 0.5
+            coords_w = torch.arange(W) + 0.5
 
-# TODO: may write a cpp file
+        coords = (
+            torch.stack(torch.meshgrid([coords_w, coords_h], indexing="ij"))
+            .transpose(1, 2)
+            .unsqueeze(1)
+            .unsqueeze(0)
+            .type(x.dtype)
+            .to(x.device, non_blocking=True)
+        )
+        normalizer = torch.tensor(
+            [W, H], dtype=x.dtype, device=x.device, pin_memory=True
+        ).view(1, 2, 1, 1, 1)
+        coords = 2 * (coords + offset) / normalizer - 1
+
+        coords = (
+            F.pixel_shuffle(coords.view(B, -1, H, W), self.scale)
+            .view(B, 2, -1, self.scale * H, self.scale * W)
+            .permute(0, 2, 3, 4, 1)
+            .contiguous()
+            .flatten(0, 1)
+        )
+        output = F.grid_sample(
+            x.reshape(B * self.groups, -1, H, W),
+            coords,
+            mode="bilinear",
+            align_corners=False,
+            padding_mode="border",
+        ).view(B, -1, self.scale * H, self.scale * W)
+
+        if self.end_convolution:
+            output = self.end_conv(output)
+
+        return output
+
+
 def pixel_unshuffle(x, scale):
     """Pixel unshuffle.
 
@@ -209,43 +212,6 @@ def pixel_unshuffle(x, scale):
     w = hw // scale
     x_view = x.view(b, c, h, scale, w, scale)
     return x_view.permute(0, 1, 3, 5, 2, 4).reshape(b, out_channel, h, w)
-
-
-def _no_grad_trunc_normal_(tensor, mean, std, a, b):
-    # From: https://github.com/rwightman/pytorch-image-models/blob/master/timm/models/layers/weight_init.py
-    def norm_cdf(x):
-        # Computes standard normal cumulative distribution function
-        return (1.0 + math.erf(x / math.sqrt(2.0))) / 2.0
-
-    if (mean < a - 2 * std) or (mean > b + 2 * std):
-        warnings.warn(
-            "mean is more than 2 std from [a, b] in nn.init.trunc_normal_. "
-            "The distribution of values may be incorrect.",
-            stacklevel=2,
-        )
-
-    with torch.no_grad():
-        # Values are generated by using a truncated uniform distribution and
-        # then using the inverse CDF for the normal distribution.
-        # Get upper and lower cdf values
-        low = norm_cdf((a - mean) / std)
-        up = norm_cdf((b - mean) / std)
-
-        # Uniformly fill tensor with values from [low, up], then translate to
-        # [2l-1, 2u-1].
-        tensor.uniform_(2 * low - 1, 2 * up - 1)
-
-        # Use inverse cdf transform for normal distribution to get truncated
-        # standard normal
-        tensor.erfinv_()
-
-        # Transform to proper mean, std
-        tensor.mul_(std * math.sqrt(2.0))
-        tensor.add_(mean)
-
-        # Clamp to ensure it's in the proper range
-        tensor.clamp_(min=a, max=b)
-        return tensor
 
 
 def drop_path(

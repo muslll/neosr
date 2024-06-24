@@ -66,7 +66,7 @@ class mssim(nn.Module):
         K2=0.03,
         L=1,
         padding=None,
-        clip=True,
+        clip=False,
         cosim=True,
         cosim_lambda=2,
         loss_weight=1.0,

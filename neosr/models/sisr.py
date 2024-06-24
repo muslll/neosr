@@ -225,14 +225,11 @@ class sisr(base):
             self.cri_luma = None
 
         # Wavelet Guided loss
-        self.wavelet_guided = self.opt["train"].get("wavelet_guided", "off")
-        if self.wavelet_guided == "on" or self.wavelet_guided == "disc":
+        self.wavelet_guided = self.opt["train"].get("wavelet_guided", False)
+        self.wavelet_init = self.opt["train"].get("wavelet_init", -1)
+        if self.wavelet_guided:
             logger = get_root_logger()
             logger.info("Loss [Wavelet-Guided] enabled.")
-            self.wg_pw = train_opt.get("wg_pw", 0.01)
-            self.wg_pw_lh = train_opt.get("wg_pw_lh", 0.01)
-            self.wg_pw_hl = train_opt.get("wg_pw_hl", 0.01)
-            self.wg_pw_hh = train_opt.get("wg_pw_hh", 0.05)
 
         # gradient clipping
         self.gradclip = self.opt["train"].get("grad_clip", True)
@@ -262,10 +259,6 @@ class sisr(base):
             raise ValueError(
                 "Both pixel/mssim and perceptual losses are None. Please enable at least one."
             )
-        if self.wavelet_guided == "on":
-            if self.cri_perceptual is None and self.cri_dists is None:
-                msg = "Please enable at least one perceptual loss with weight =>1.0 to use Wavelet Guided"
-                raise ValueError(msg)
         if self.net_d is None and optim_d is not None:
             msg = "Please set a discriminator in network_d or disable optim_d."
             raise ValueError(msg)
@@ -444,56 +437,23 @@ class sisr(base):
                     )
 
             # wavelet guided loss
-            if self.wavelet_guided == "on" or self.wavelet_guided == "disc":
+            if self.wavelet_guided and self.wavelet_init >= current_iter:
                 with torch.no_grad():
-                    (
-                        LL,
-                        LH,
-                        HL,
-                        HH,
-                        combined_HF,
-                        LL_gt,
-                        LH_gt,
-                        HL_gt,
-                        HH_gt,
-                        combined_HF_gt,
-                    ) = wavelet_guided(self.output, self.gt)
+                    (combined_HF, combined_HF_gt) = wavelet_guided(self.output, self.gt)
 
             l_g_total = 0
             loss_dict = OrderedDict()
 
             # pixel loss
             if self.cri_pix:
-                if self.wavelet_guided == "on":
-                    l_g_pix = self.wg_pw * self.cri_pix(LL, LL_gt)
-                    l_g_pix_lh = self.wg_pw_lh * self.cri_pix(LH, LH_gt)
-                    l_g_pix_hl = self.wg_pw_hl * self.cri_pix(HL, HL_gt)
-                    l_g_pix_hh = self.wg_pw_hh * self.cri_pix(HH, HH_gt)
-                    l_g_total = (
-                        l_g_total + l_g_pix + l_g_pix_lh + l_g_pix_hl + l_g_pix_hh
-                    )
-                else:
-                    l_g_pix = self.cri_pix(self.output, self.gt)
-                    l_g_total += l_g_pix
+                l_g_pix = self.cri_pix(self.output, self.gt)
+                l_g_total += l_g_pix
                 loss_dict["l_g_pix"] = l_g_pix
 
             # ssim loss
             if self.cri_mssim:
-                if self.wavelet_guided == "on":
-                    l_g_mssim = self.wg_pw * self.cri_mssim(LL, LL_gt)
-                    l_g_mssim_lh = self.wg_pw_lh * self.cri_mssim(LH, LH_gt)
-                    l_g_mssim_hl = self.wg_pw_hl * self.cri_mssim(HL, HL_gt)
-                    l_g_mssim_hh = self.wg_pw_hh * self.cri_mssim(HH, HH_gt)
-                    l_g_total = (
-                        l_g_total
-                        + l_g_mssim
-                        + l_g_mssim_lh
-                        + l_g_mssim_hl
-                        + l_g_mssim_hh
-                    )
-                else:
-                    l_g_mssim = self.cri_mssim(self.output, self.gt)
-                    l_g_total += l_g_mssim
+                l_g_mssim = self.cri_mssim(self.output, self.gt)
+                l_g_total += l_g_mssim
                 loss_dict["l_g_mssim"] = l_g_mssim
 
             # perceptual loss
@@ -580,7 +540,7 @@ class sisr(base):
             ):
                 if self.cri_gan:
                     # real
-                    if self.wavelet_guided == "on" or self.wavelet_guided == "disc":
+                    if self.wavelet_guided and self.wavelet_init >= current_iter:
                         real_d_pred = self.net_d(combined_HF_gt)
                     else:
                         real_d_pred = self.net_d(self.gt)
@@ -590,7 +550,7 @@ class sisr(base):
                     loss_dict["out_d_real"] = torch.mean(real_d_pred.detach())
 
                     # fake
-                    if self.wavelet_guided == "on" or self.wavelet_guided == "disc":
+                    if self.wavelet_guided and self.wavelet_init >= current_iter:
                         fake_d_pred = self.net_d(combined_HF.detach())
                     else:
                         fake_d_pred = self.net_d(self.output.detach())
@@ -851,6 +811,7 @@ class sisr(base):
 
             # check if dataset has save_img option, and if so overwrite global save_img option
             save_img = self.opt["val"].get("save_img", False)
+            val_suffix = self.opt["val"].get("suffix", None)
             if save_img:
                 if self.opt["is_train"]:
                     save_img_path = osp.join(
@@ -858,7 +819,7 @@ class sisr(base):
                         img_name,
                         f"{img_name}_{current_iter}.png",
                     )
-                elif self.opt["val"]["suffix"]:
+                elif val_suffix is not None: 
                     save_img_path = osp.join(
                         self.opt["path"]["visualization"],
                         dataset_name,

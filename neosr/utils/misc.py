@@ -95,7 +95,7 @@ def check_resume(opt, resume_iter):
         opt (dict): Options.
         resume_iter (int): Resume iteration.
     """
-    if opt['path']['resume_state']:
+    if opt['path'].get('resume_state', None):
         # get all the networks
         networks = [key for key in opt.keys() if key.startswith('network_')]
         flag_pretrain = False

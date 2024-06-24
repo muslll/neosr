@@ -139,9 +139,13 @@ class realplksr(nn.Module):
         )
 
         if dysample:
-            groups = 3 if 3 * upscaling_factor**2 < 4 else 4
+            groups = out_ch if 3 * upscaling_factor**2 < 4 else 4
             self.to_img = DySample(
-                3 * upscaling_factor**2, upscaling_factor, groups=groups, dyscope=True
+                in_ch * upscaling_factor**2,
+                out_ch,
+                upscaling_factor,
+                groups=groups,
+                end_convolution = True if upscaling_factor != 1 else False,
             )
         else:
             self.to_img = nn.PixelShuffle(upscaling_factor)
