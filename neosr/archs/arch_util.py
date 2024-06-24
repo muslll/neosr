@@ -40,7 +40,14 @@ class DySample(nn.Module):
     https://github.com/tiny-smart/dysample
     """
 
-    def __init__(self, in_channels: int, out_ch: int, scale: int = 2, groups: int = 4):
+    def __init__(
+        self,
+        in_channels: int,
+        out_ch: int,
+        scale: int = 2,
+        groups: int = 4,
+        end_convolution: bool = True,
+    ):
         super().__init__()
 
         try:
@@ -52,7 +59,9 @@ class DySample(nn.Module):
         out_channels = 2 * groups * scale**2
         self.scale = scale
         self.groups = groups
-        self.end_conv = nn.Conv2d(in_channels, out_ch, kernel_size=1)
+        self.end_convolution = end_convolution
+        if end_convolution:
+            self.end_conv = nn.Conv2d(in_channels, out_ch, kernel_size=1)
 
         self.offset = nn.Conv2d(in_channels, out_channels, 1)
         self.scope = nn.Conv2d(in_channels, out_channels, 1, bias=False)
@@ -106,7 +115,10 @@ class DySample(nn.Module):
             padding_mode="border",
         ).view(B, -1, self.scale * H, self.scale * W)
 
-        return self.end_conv(output)
+        if self.end_convolution:
+            output = self.end_conv(output)
+
+        return output
 
 
 def drop_path(
