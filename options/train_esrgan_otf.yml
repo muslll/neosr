@@ -123,7 +123,8 @@ train:
     decoupled_weight_decay: true
 
   # losses
-  #wavelet_guided: "disc" # "off", "on"
+  #wavelet_guided: true
+  #wavelet_init: 80000
   mssim_opt:
     type: mssim
     loss_weight: 1.0
