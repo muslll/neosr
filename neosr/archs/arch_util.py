@@ -1,7 +1,6 @@
 import collections.abc
 import functools
 import inspect
-import math
 from collections.abc import Mapping
 from itertools import repeat
 from pathlib import Path
@@ -10,7 +9,6 @@ from typing import Any, Protocol, TypeVar
 import torch
 from torch import nn
 from torch.nn import functional as F
-from torch.nn.modules.batchnorm import _BatchNorm
 
 from neosr.utils.options import parse_options
 
@@ -42,14 +40,7 @@ class DySample(nn.Module):
     https://github.com/tiny-smart/dysample
     """
 
-    def __init__(
-        self,
-        in_channels: int,
-        out_ch: int,
-        scale: int = 2,
-        groups: int = 4,
-        end_convolution: bool = True,
-    ):
+    def __init__(self, in_channels: int, out_ch: int, scale: int = 2, groups: int = 4):
         super().__init__()
 
         try:
@@ -61,9 +52,7 @@ class DySample(nn.Module):
         out_channels = 2 * groups * scale**2
         self.scale = scale
         self.groups = groups
-        self.end_convolution = end_convolution
-        if end_convolution:
-            self.end_conv = nn.Conv2d(in_channels, out_ch, kernel_size=1)
+        self.end_conv = nn.Conv2d(in_channels, out_ch, kernel_size=1)
 
         self.offset = nn.Conv2d(in_channels, out_channels, 1)
         self.scope = nn.Conv2d(in_channels, out_channels, 1, bias=False)
@@ -103,7 +92,7 @@ class DySample(nn.Module):
         coords = 2 * (coords + offset) / normalizer - 1
 
         coords = (
-            F.pixel_shuffle(coords.view(B, -1, H, W), self.scale)
+            F.pixel_shuffle(coords.reshape(B, -1, H, W), self.scale)
             .view(B, 2, -1, self.scale * H, self.scale * W)
             .permute(0, 2, 3, 4, 1)
             .contiguous()
@@ -117,10 +106,7 @@ class DySample(nn.Module):
             padding_mode="border",
         ).view(B, -1, self.scale * H, self.scale * W)
 
-        if self.end_convolution:
-            output = self.end_conv(output)
-
-        return output
+        return self.end_conv(output)
 
 
 def drop_path(
