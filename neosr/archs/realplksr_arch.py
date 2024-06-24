@@ -140,7 +140,7 @@ class realplksr(nn.Module):
             torch.repeat_interleave, repeats=upscaling_factor**2, dim=1
         )
 
-        if dysample:
+        if dysample and upscaling_factor != 1:
             groups = out_ch if 3 * upscaling_factor**2 < 4 else 4
             self.to_img = DySample(
                 in_ch * upscaling_factor**2,
@@ -154,11 +154,8 @@ class realplksr(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.feats(x) + self.repeat_op(x)
-        if not self.dysample:
+        if not self.dysample or (self.dysample and self.upscale != 1):
             x = self.to_img(x)
-        else:
-            if self.upscale != 1:
-                x = self.to_img(x)
         return x
 
 
