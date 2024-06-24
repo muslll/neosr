@@ -120,6 +120,7 @@ class realplksr(nn.Module):
         super().__init__()
 
         self.upscale = upscaling_factor
+        self.dysample = dysample
         if not self.training:
             dropout = 0
 
@@ -153,8 +154,11 @@ class realplksr(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.feats(x) + self.repeat_op(x)
-        if self.upscale != 1:
+        if not self.dysample:
             x = self.to_img(x)
+        else:
+            if self.upscale != 1:
+                x = self.to_img(x)
         return x
 
 
