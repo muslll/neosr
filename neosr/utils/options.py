@@ -243,9 +243,10 @@ def parse_options(root_path, is_train=True):
                 dataset['dataroot_lq'] = osp.expanduser(dataset['dataroot_lq'])
 
         # paths
-        for key, val in opt['path'].items():
-            if (val is not None) and ('resume_state' in key or 'pretrain_network' in key):
-                opt['path'][key] = osp.expanduser(val)
+        if opt["path"] is not None:
+            for key, val in opt['path'].items():
+                if (val is not None) and ('resume_state' in key or 'pretrain_network' in key):
+                    opt['path'][key] = osp.expanduser(val)
 
         if is_train:
             experiments_root = opt['path'].get('experiments_root')
