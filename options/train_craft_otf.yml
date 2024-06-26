@@ -87,7 +87,7 @@ jpeg_range2: [35, 95]
 
 path:
   #pretrain_network_g: 'experiments/pretrain.pth'
-  #resume_state: ~
+  resume_state: ~
   #strict_load_g: false # do not uncomment, read docs
 
 network_g:
