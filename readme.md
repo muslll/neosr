@@ -104,17 +104,15 @@ Where `options.yml` is a configuration file. Templates can be found in [options]
 
 | arch                                          		     | option               	     	    |
 |--------------------------------------------------------------------|--------------------------------------|
-| [SeemoRe](https://github.com/eduardzamfir/seemoredetails)	     | `seemore`, `seemore_t`, `seemore_l`  |
-| [RVSR](https://github.com/huai-chang/RVSR)			     | `rvsr`				    |
 
 
 ### Supported Discriminators:
 
-| net                               				  | option 		        |
-|-----------------------------------------------------------------|-----------------------------|
-| U-Net w/ SN 							  | `unet` 		        |
-| [PatchGAN](https://github.com/NVIDIA/pix2pixHD) w/ SN		  | `patchgan`			|
-| [A2-FPN](https://github.com/lironui/A2-FPN) w/ SN		  | `a2fpn`			|
+| net                               				  		| option 		        |
+|-------------------------------------------------------------------------------|-------------------------------|
+| U-Net w/ SN 							  		| `unet` 		        |
+| [PatchGAN](https://github.com/NVIDIA/pix2pixHD) w/ SN		  		| `patchgan`			|
+| A2FPN++ (bespoke, based on [A2-FPN](https://github.com/lironui/A2-FPN)	| `a2fpnpp`			|
 
 ### [Supported Optimizers](https://github.com/muslll/neosr/wiki/Optimizer-Options):
 

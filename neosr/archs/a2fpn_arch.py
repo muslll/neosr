@@ -1,16 +1,16 @@
 import torch
-import torch.nn.functional as F
 from torch import nn
 from torch.nn import Conv2d, Module, Parameter
 from torch.nn.utils import spectral_norm
 from torchvision import models
 from torchvision.models import ResNet18_Weights
 
+from neosr.archs.arch_util import DySample
 from neosr.utils.registry import ARCH_REGISTRY
 
 
-def conv3otherRelu(in_planes, out_planes, kernel_size=None, stride=None, padding=None):
-    # 3x3 convolution with padding and relu
+def conv3otherMish(in_planes, out_planes, kernel_size=None, stride=None, padding=None):
+    # 3x3 convolution with padding and mish
     if kernel_size is None:
         kernel_size = 3
     assert isinstance(kernel_size, (int, tuple)), "kernel_size is not in (int, tuple)!"
@@ -34,7 +34,7 @@ def conv3otherRelu(in_planes, out_planes, kernel_size=None, stride=None, padding
                 bias=True,
             )
         ),
-        nn.ReLU(inplace=True),  # inplace=True
+        nn.Mish(inplace=True),  # inplace=True
     )
 
 
@@ -42,7 +42,7 @@ def l2_norm(x):
     return torch.einsum("bcn, bn->bcn", x, 1 / torch.norm(x, p=2, dim=-2))
 
 
-class ConvBnRelu(nn.Module):
+class ConvBnMish(nn.Module):
     def __init__(
         self,
         in_planes,
@@ -55,11 +55,11 @@ class ConvBnRelu(nn.Module):
         has_bn=True,
         norm_layer=nn.BatchNorm2d,
         bn_eps=1e-5,
-        has_relu=True,
+        has_mish=True,
         inplace=True,
         has_bias=False,
     ):
-        super(ConvBnRelu, self).__init__()
+        super(ConvBnMish, self).__init__()
         self.conv = spectral_norm(
             nn.Conv2d(
                 in_planes,
@@ -75,17 +75,16 @@ class ConvBnRelu(nn.Module):
         self.has_bn = has_bn
         if self.has_bn:
             self.bn = norm_layer(out_planes, eps=bn_eps)
-        self.has_relu = has_relu
-        if self.has_relu:
-            self.relu = nn.ReLU(inplace=inplace)
+        self.has_mish = has_mish
+        if self.has_mish:
+            self.mish = nn.Mish(inplace=inplace)
 
     def forward(self, x):
         x = self.conv(x)
         if self.has_bn:
             x = self.bn(x)
-        if self.has_relu:
-            x = self.relu(x)
-
+        if self.has_mish:
+            x = self.mish(x)
         return x
 
 
@@ -136,7 +135,7 @@ class Attention(Module):
 class AttentionAggregationModule(nn.Module):
     def __init__(self, in_chan, out_chan):
         super(AttentionAggregationModule, self).__init__()
-        self.convblk = ConvBnRelu(in_chan, out_chan, ksize=1, stride=1, pad=0)
+        self.convblk = ConvBnMish(in_chan, out_chan, ksize=1, stride=1, pad=0)
         self.conv_atten = Attention(out_chan)
 
     def forward(self, s5, s4, s3, s2):
@@ -147,10 +146,13 @@ class AttentionAggregationModule(nn.Module):
         return feat_out
 
 
-class Conv3x3GNReLU(nn.Module):
+class Conv3x3GNMish(nn.Module):
     def __init__(self, in_channels, out_channels, upsample=False):
         super().__init__()
         self.upsample = upsample
+        self.dysample = DySample(
+            in_channels=64, out_ch=64, scale=2, groups=4, end_convolution=True
+        )
         self.block = nn.Sequential(
             spectral_norm(
                 nn.Conv2d(
@@ -158,13 +160,13 @@ class Conv3x3GNReLU(nn.Module):
                 )
             ),
             nn.GroupNorm(32, out_channels),
-            nn.ReLU(inplace=True),
+            nn.Mish(inplace=True),
         )
 
     def forward(self, x):
         x = self.block(x)
         if self.upsample:
-            x = F.interpolate(x, scale_factor=2, mode="bilinear", align_corners=True)
+            x = self.dysample(x)
         return x
 
 
@@ -172,12 +174,14 @@ class FPNBlock(nn.Module):
     def __init__(self, pyramid_channels, skip_channels):
         super().__init__()
         self.skip_conv = nn.Conv2d(skip_channels, pyramid_channels, kernel_size=1)
+        self.dysample = DySample(
+            in_channels=64, out_ch=64, scale=2, groups=4, end_convolution=False
+        )
 
     def forward(self, x):
         x, skip = x
-        x = F.interpolate(x, scale_factor=2, mode="nearest")
+        x = self.dysample(x)
         skip = self.skip_conv(skip)
-
         x = x + skip
         return x
 
@@ -186,12 +190,10 @@ class SegmentationBlock(nn.Module):
     def __init__(self, in_channels, out_channels, n_upsamples=0):
         super().__init__()
 
-        blocks = [Conv3x3GNReLU(in_channels, out_channels, upsample=bool(n_upsamples))]
-
+        blocks = [Conv3x3GNMish(in_channels, out_channels, upsample=bool(n_upsamples))]
         if n_upsamples > 1:
             for _ in range(1, n_upsamples):
-                blocks.append(Conv3x3GNReLU(out_channels, out_channels, upsample=True))
-
+                blocks.append(Conv3x3GNMish(out_channels, out_channels, upsample=True))
         self.block = nn.Sequential(*blocks)
 
     def forward(self, x):
@@ -199,7 +201,7 @@ class SegmentationBlock(nn.Module):
 
 
 @ARCH_REGISTRY.register()
-class a2fpn(nn.Module):
+class a2fpnpp(nn.Module):
     def __init__(
         self,
         band=3,
@@ -252,6 +254,21 @@ class a2fpn(nn.Module):
             nn.Conv2d(segmentation_channels * 4, class_num, kernel_size=1, padding=0)
         )
         self.dropout = nn.Dropout2d(p=dropout, inplace=True)
+        self.dysample = DySample(
+            in_channels=6, out_ch=3, scale=4, groups=3, end_convolution=False
+        )
+        self.apply(self._init_weights)
+
+    def _init_weights(self, m):
+        if isinstance(m, nn.Linear):
+            nn.init.trunc_normal_(m.weight, std=0.02)
+            if isinstance(m, nn.Linear) and m.bias is not None:
+                nn.init.constant_(m.bias, 0)
+        elif isinstance(
+            m, (nn.LayerNorm, nn.BatchNorm2d, nn.GroupNorm, nn.InstanceNorm2d)
+        ):
+            nn.init.constant_(m.bias, 0)
+            nn.init.constant_(m.weight, 1.0)
 
     def forward(self, x):
         # ==> get encoder features
@@ -274,6 +291,6 @@ class a2fpn(nn.Module):
 
         out = self.dropout(self.attention(s5, s4, s3, s2))
         out = self.final_conv(out)
-        out = F.interpolate(out, scale_factor=4, mode="bilinear", align_corners=True)
+        out = self.dysample(out)
 
         return out

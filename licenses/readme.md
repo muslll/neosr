@@ -18,7 +18,6 @@
 | [`DiffJPEG`](https://github.com/mlomnitz/DiffJPEG)                                                  		| [MIT](https://github.com/mlomnitz/DiffJPEG/blob/master/LICENSE)                       			|
 | `DropPath` from [`timm`](https://github.com/huggingface/pytorch-image-models)                       		| [Apache 2.0](https://github.com/huggingface/pytorch-image-models/blob/main/LICENSE)   			|
 | [`DCTLSA`](https://github.com/zengkun301/DCTLSA)						      		| [Apache 2.0](https://github.com/zengkun301/DCTLSA?tab=readme-ov-file#license)		      			|
-| [`A2-FPN`](https://github.com/lironui/A2-FPN)							      		| [GPLv3](https://github.com/lironui/A2-FPN/blob/main/LICENSE)			      				|
 | [`SPAN`](https://github.com/hongyuanyu/SPAN)							      		| [Apache 2.0](https://github.com/hongyuanyu/SPAN/blob/main/LICENSE.txt)		      			|
 | [`CRAFT`](https://github.com/AVC2-UESTC/CRAFT-SR)						      		| [Apache 2.0](https://github.com/AVC2-UESTC/CRAFT-SR/blob/main/LICENSE.txt)	      				|
 | [`Real-CUGAN`](https://github.com/bilibili/ailab)						      		| [MIT](https://github.com/bilibili/ailab/blob/main/Real-CUGAN/LICENSE)						|
@@ -46,5 +45,5 @@
 | [Adan `Schedule-Free`](https://github.com/muslll/adan_schedule_free)						| [Apache 2.0](https://github.com/muslll/adan_schedule_free/blob/main/license)					|
 | [`F-SAM`](https://github.com/nblt/F-SAM)									| Unknown													|
 | [`PatchLoss`](https://github.com/Suanmd/Patch-Loss-for-Super-Resolution)					| Unknown													|
-| [`RVSR`](https://github.com/huai-chang/RVSR)									| [Apache 2.0](https://github.com/huai-chang/RVSR/blob/main/LICENSE)						|
 | [`DySample`](https://github.com/tiny-smart/dysample)								| [MIT](https://github.com/tiny-smart/dysample/blob/main/LICENSE)						|
+| A2FPN++ (bespoke, based on [`A2-FPN`](https://github.com/lironui/A2-FPN) 			      		| [Apache 2.0](https://github.com/muslll/neosr/blob/master/license.txt)		      				|

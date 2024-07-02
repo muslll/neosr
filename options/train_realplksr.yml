@@ -59,7 +59,7 @@ network_g:
   #dropout: 0.5
 
 network_d:
-  type: unet
+  type: a2fpnpp
 
 train:
   #eco: true
@@ -79,11 +79,12 @@ train:
     #warmup_steps: 1600
 
   optim_d:
-    type: nadam
-    lr: !!float 1e-4
-    betas: [0.98, 0.99]
-    weight_decay: 0.01
-    decoupled_weight_decay: true
+    type: adan_sf
+    lr: !!float 8e-4
+    betas: [0.98, 0.92, 0.995]
+    weight_decay: 0.02
+    schedule_free: true
+    #warmup_steps: 500
 
   # losses
   #wavelet_guided: true
@@ -107,7 +108,7 @@ train:
   gan_opt:
     type: GANLoss
     gan_type: vanilla
-    loss_weight: 0.1
+    loss_weight: 0.3
   #dists_opt:
   #  type: dists
   #  loss_weight: 0.5

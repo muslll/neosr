@@ -7,7 +7,7 @@ import onnx
 import onnxruntime
 import torch
 from onnxconverter_common.float16 import convert_float_to_float16
-from onnxsim import simplify
+#from onnxsim import simplify
 
 from neosr.archs import build_network
 from neosr.utils.options import parse_options
@@ -186,6 +186,7 @@ def to_onnx() -> None:
         print("-------- Running full optimization (this can take a while)...")
         output_fp32_fulloptimized = filename + "_fp32_fullyoptimized" + extension
         output_fp16_fulloptimized = filename + "_fp16_fullyoptimized" + extension
+        '''
         # run onnxsim
         if args.optimize:
             simplified, check = simplify(onnx.load(output_optimized))
@@ -194,6 +195,7 @@ def to_onnx() -> None:
         else:
             simplified, check = simplify(load_onnx)
         assert check, "Couldn't validate ONNX model."
+        '''
 
         # save and verify
         if args.fp16:

@@ -539,6 +539,9 @@ class sisr(base):
                 device_type="cuda", dtype=self.amp_dtype, enabled=self.use_amp
             ):
                 if self.cri_gan:
+                    if self.sf_optim_d:
+                        self.optimizer_d.eval()
+
                     # real
                     if self.wavelet_guided and self.wavelet_init >= current_iter:
                         real_d_pred = self.net_d(combined_HF_gt)
@@ -558,6 +561,9 @@ class sisr(base):
                     l_d_fake = self.cri_gan(fake_d_pred, False, is_disc=True)
                     loss_dict["l_d_fake"] = l_d_fake
                     loss_dict["out_d_fake"] = torch.mean(fake_d_pred.detach())
+
+                    if self.sf_optim_d:
+                        self.optimizer_d.train()
 
             if self.cri_gan:
                 l_d_real = l_d_real / self.accum_iters
