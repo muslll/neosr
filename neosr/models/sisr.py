@@ -650,9 +650,9 @@ class sisr(base):
                     if self.ema > 0:
                         self.net_g_ema.eval()
                         self.output = self.net_g_ema(self.lq)
-                    else:
-                        self.net_g.eval()
-                        self.output = self.net_g(self.lq)
+                else:
+                    self.net_g.eval()
+                    self.output = self.net_g(self.lq)
 
             self.net_g.train()
             if self.sf_optim_g and self.is_train:

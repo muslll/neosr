@@ -4,7 +4,7 @@ from .file_client import FileClient
 from .img_util import crop_border, imfrombytes, img2tensor, imwrite, tensor2img
 from .logger import AvgTimer, MessageLogger, get_root_logger, init_tb_logger, init_wandb_logger
 from .misc import check_resume, get_time_str, make_exp_dirs, mkdir_and_rename, scandir, set_random_seed, sizeof_fmt
-from .options import yaml_load
+from .options import toml_load
 
 __all__ = [
     #  color_util.py
@@ -38,5 +38,5 @@ __all__ = [
     # diffjpeg
     'DiffJPEG',
     # options
-    'yaml_load'
+    'toml_load'
 ]

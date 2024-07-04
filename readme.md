@@ -64,9 +64,9 @@ Please read the [**wiki tutorial**](https://github.com/muslll/neosr/wiki/Model-C
 Start training by running:
 
 ```
-python train.py -opt options.yml
+python train.py -opt options.toml
 ```
-Where `options.yml` is a configuration file. Templates can be found in [options](options/).
+Where `options.toml` is a configuration file. Templates can be found in [options](options/).
 
 > [!TIP]
 > Please read the wiki [Configuration Walkthrough](https://github.com/muslll/neosr/wiki/Configuration-Walkthrough) for an explanation of each option.

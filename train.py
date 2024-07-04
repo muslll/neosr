@@ -204,7 +204,7 @@ def train_pipeline(root_path):
     # dataloader prefetcher
     prefetcher = CUDAPrefetcher(train_loader, opt)
 
-    if opt["use_amp"]:
+    if opt.get("use_amp", False):
         logger.info("AMP enabled.")
 
     if opt["deterministic"]:

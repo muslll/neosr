@@ -106,7 +106,7 @@ class base:
         else:
             net = net.to(self.device, non_blocking=True)
 
-        if self.opt["compile"] is True:
+        if self.opt.get("compile", False) is True:
             net = torch.compile(net)
             # see option fullgraph=True
 

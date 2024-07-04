@@ -204,7 +204,6 @@ class SegmentationBlock(nn.Module):
 class a2fpnpp(nn.Module):
     def __init__(
         self,
-        band=3,
         class_num=6,
         encoder_channels=[512, 256, 128, 64],
         pyramid_channels=64,

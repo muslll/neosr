@@ -1,101 +1,32 @@
 import argparse
 import os
 import random
+import sys
 
 from os import path as osp
 from collections import OrderedDict
 
-import yaml
+import tomllib
 import torch
 
 from neosr.utils import set_random_seed
 from neosr.utils.dist_util import get_dist_info, init_dist, master_only
 
 
-def ordered_yaml():
-    """Support OrderedDict for yaml.
-
-    Returns:
-        tuple: yaml Loader and Dumper.
-    """
-    try:
-        from yaml import CDumper as Dumper
-        from yaml import CLoader as Loader
-    except ImportError:
-        from yaml import Dumper, Loader
-
-    _mapping_tag = yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG
-
-    def dict_representer(dumper, data):
-        return dumper.represent_dict(data.items())
-
-    def dict_constructor(loader, node):
-        return OrderedDict(loader.construct_pairs(node))
-
-    Dumper.add_representer(OrderedDict, dict_representer)
-    Loader.add_constructor(_mapping_tag, dict_constructor)
-    return Loader, Dumper
-
-
-def yaml_load(f):
-    """Load yaml file or string.
-
+def toml_load(f):
+    """Load TOML file
     Args:
         f (str): File path or a python string.
-
     Returns:
         dict: Loaded dict.
     """
-    if os.path.isfile(f):
-        with open(f, 'r') as f:
-            return yaml.load(f, Loader=ordered_yaml()[0])
-    else:
-        return yaml.load(f, Loader=ordered_yaml()[0])
-
-
-def dict2str(opt, indent_level=1):
-    """dict to string for printing options.
-
-    Args:
-        opt (dict): Option dict.
-        indent_level (int): Indent level. Default: 1.
-
-    Return:
-        (str): Option string for printing.
-    """
-    msg = '\n'
-    for k, v in opt.items():
-        if isinstance(v, dict):
-            msg += ' ' * (indent_level * 2) + k + ':['
-            msg += dict2str(v, indent_level + 1)
-            msg += ' ' * (indent_level * 2) + ']\n'
-        else:
-            msg += ' ' * (indent_level * 2) + k + ': ' + str(v) + '\n'
-    return msg
-
-
-def _postprocess_yml_value(value):
-    # None
-    if value == '~' or value.lower() == 'none':
-        return None
-    # bool
-    if value.lower() == 'true':
-        return True
-    elif value.lower() == 'false':
-        return False
-    # !!float number
-    if value.startswith('!!float'):
-        return float(value.replace('!!float', ''))
-    # number
-    if value.isdigit():
-        return int(value)
-    elif value.replace('.', '', 1).isdigit() and value.count('.') < 2:
-        return float(value)
-    # list
-    if value.startswith('['):
-        return eval(value)
-    # str
-    return value
+    try:
+        if os.path.isfile(f):
+            with open(f, 'rb') as f:
+                return tomllib.load(f)
+    except tomllib.TomlDecodeError as e:
+        print("Error decoding TOML file.")
+        sys.exit(1)
 
 
 def parse_options(root_path, is_train=True):
@@ -106,7 +37,7 @@ def parse_options(root_path, is_train=True):
     parser._optionals.title = 'training and inference'
     
     parser.add_argument('-opt', type=str, required=False,
-                        help='Path to option YAML file.')
+                        help='Path to option TOML file.')
 
     parser.add_argument( '--launcher', choices=['none', 'pytorch', 'slurm'], default='none',
                         help='job launcher')
@@ -116,9 +47,6 @@ def parse_options(root_path, is_train=True):
     parser.add_argument('--debug', action='store_true')
 
     parser.add_argument('--local_rank', type=int, default=0)
-
-    parser.add_argument('--force_yml', nargs='+', default=None,
-                        help='Force to update yml files. Examples: train:total_iter=200000')
 
     # Options for convert.py script
    
@@ -163,17 +91,24 @@ def parse_options(root_path, is_train=True):
     group.add_argument('--output', type=str, required=False,
                         help='Output ONNX model path.', default=root_path)
 
-
     args = parser.parse_args()
 
     # error if no config file exists
     if args.input is None and not osp.exists(args.opt):
-        msg = "Didn't get a config! Please link the config file using -opt /path/to/config.yml"
+        msg = "Didn't get a config! Please link the config file using -opt /path/to/config.toml"
         raise ValueError(msg) 
 
     if args.input is None:
-        # parse yml to dict
-        opt = yaml_load(args.opt)
+        # error if not toml
+        if not args.opt.endswith(".toml"): 
+            msg = """
+            neosr only support TOML configuration files now,
+            please see template files on the options/ folder.
+            """
+            raise ValueError(msg)
+
+        # parse toml to dict
+        opt = toml_load(args.opt)
 
         # distributed settings
         if args.launcher == 'none':
@@ -205,20 +140,6 @@ def parse_options(root_path, is_train=True):
             torch.backends.cudnn.benchmark = False
             torch.use_deterministic_algorithms(True, warn_only=True)
         set_random_seed(seed + opt['rank'])
-
-        # force to update yml options
-        if args.force_yml is not None:
-            for entry in args.force_yml:
-                # now do not support creating new keys
-                keys, value = entry.split('=')
-                keys, value = keys.strip(), value.strip()
-                value = _postprocess_yml_value(value)
-                eval_str = 'opt'
-                for key in keys.split(':'):
-                    eval_str += f'["{key}"]'
-                eval_str += '=value'
-                # using exec function
-                exec(eval_str)
 
         opt['auto_resume'] = args.auto_resume
         opt['is_train'] = is_train
@@ -285,7 +206,7 @@ def parse_options(root_path, is_train=True):
 
 @master_only
 def copy_opt_file(opt_file, experiments_root):
-    # copy the yml file to the experiment root
+    # copy the toml file to the experiment root
     import sys
     import time
     from shutil import copyfile
