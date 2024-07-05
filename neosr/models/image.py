@@ -23,11 +23,11 @@ from neosr.utils.registry import MODEL_REGISTRY
 
 
 @MODEL_REGISTRY.register()
-class sisr(base):
+class image(base):
     """Single-Image Super-Resolution model."""
 
     def __init__(self, opt):
-        super(sisr, self).__init__(opt)
+        super(image, self).__init__(opt)
 
         # define network net_g
         self.net_g = build_network(opt["network_g"])
@@ -104,11 +104,8 @@ class sisr(base):
         # scale ratio var
         self.scale = self.opt["scale"]
 
-        # gt size var
-        if self.opt["model_type"] == "otf":
-            self.gt_size = self.opt["gt_size"]
-        else:
-            self.gt_size = self.opt["datasets"]["train"].get("gt_size")
+        # patch size var
+        self.patch_size = self.opt["datasets"]["train"].get("patch_size")
 
         # augmentations
         self.aug = self.opt["datasets"]["train"].get("augmentation", None)
@@ -119,13 +116,18 @@ class sisr(base):
         self.amp_dtype = (
             torch.bfloat16 if self.opt.get("bfloat16", False) is True else torch.float16
         )
-        # self.gradscaler = torch.amp.GradScaler('cuda', enabled=self.use_amp, init_scale=2.**5)
-        self.gradscaler = torch.cuda.amp.GradScaler(
+
+        # self.gradscaler_g = torch.amp.GradScaler('cuda', enabled=self.use_amp, init_scale=2.**5)
+        # self.gradscaler_d = torch.amp.GradScaler('cuda', enabled=self.use_amp, init_scale=2.**5)
+        self.gradscaler_g = torch.cuda.amp.GradScaler(
+            enabled=self.use_amp, init_scale=2.0**5
+        )
+        self.gradscaler_d = torch.cuda.amp.GradScaler(
             enabled=self.use_amp, init_scale=2.0**5
         )
 
         # LQ matching for Color/Luma losses
-        self.match_lq = self.opt["train"].get("match_lq", False)
+        self.match_lq_colors = self.opt["train"].get("match_lq_colors", False)
 
         # Total expected iters
         self.total_iter = self.opt["train"].get("total_iter", 200000)
@@ -271,8 +273,8 @@ class sisr(base):
         if self.net_d is None and self.cri_gan is not None:
             msg = "GAN requires a discriminator to be set."
             raise ValueError(msg)
-        if self.aug is not None and self.gt_size % 4 != 0:
-            msg = "The gt_size value must be a multiple of 4. Please change it."
+        if self.aug is not None and self.patch_size % 4 != 0:
+            msg = "The patch_size value must be a multiple of 4. Please change it."
             raise ValueError(msg)
 
     def setup_optimizers(self):
@@ -430,7 +432,7 @@ class sisr(base):
                 self.output = self.net_g(self.lq)
 
             # lq match
-            if self.match_lq:
+            if self.match_lq_colors:
                 with torch.no_grad():
                     self.lq_interp = F.interpolate(
                         self.lq, scale_factor=self.scale, mode="bicubic", antialias=True
@@ -487,7 +489,7 @@ class sisr(base):
                 loss_dict["l_g_gw"] = l_g_gw
             # color loss
             if self.cri_color:
-                if self.match_lq:
+                if self.match_lq_colors:
                     l_g_color = self.cri_color(self.output, self.lq_interp)
                 else:
                     l_g_color = self.cri_color(self.output, self.gt)
@@ -495,7 +497,7 @@ class sisr(base):
                 loss_dict["l_g_color"] = l_g_color
             # luma loss
             if self.cri_luma:
-                if self.match_lq:
+                if self.match_lq_colors:
                     l_g_luma = self.cri_luma(self.output, self.lq_interp)
                 else:
                     l_g_luma = self.cri_luma(self.output, self.gt)
@@ -517,7 +519,7 @@ class sisr(base):
         if self.sam and current_iter >= self.sam_init:
             l_g_total.backward()
         else:
-            self.gradscaler.scale(l_g_total).backward()
+            self.gradscaler_g.scale(l_g_total).backward()
 
         if (self.n_accumulated) % self.accum_iters == 0:
             # gradient clipping on generator
@@ -525,7 +527,7 @@ class sisr(base):
                 if self.sam is not None and current_iter >= self.sam_init:
                     pass
                 else:
-                    self.gradscaler.unscale_(self.optimizer_g)
+                    self.gradscaler_g.unscale_(self.optimizer_g)
                 torch.nn.utils.clip_grad_norm_(
                     self.net_g.parameters(), 1.0, error_if_nonfinite=False
                 )
@@ -573,14 +575,14 @@ class sisr(base):
                     l_d_real.backward()
                     l_d_fake.backward()
                 else:
-                    self.gradscaler.scale(l_d_real).backward()
-                    self.gradscaler.scale(l_d_fake).backward()
+                    self.gradscaler_d.scale(l_d_real).backward()
+                    self.gradscaler_d.scale(l_d_fake).backward()
 
             # clip and step() discriminator
             if (self.n_accumulated) % self.accum_iters == 0:
                 # gradient clipping on discriminator
                 if self.gradclip:
-                    self.gradscaler.unscale_(self.optimizer_d)
+                    self.gradscaler_d.unscale_(self.optimizer_d)
                     torch.nn.utils.clip_grad_norm_(
                         self.net_d.parameters(), 1.0, error_if_nonfinite=False
                     )
@@ -618,17 +620,19 @@ class sisr(base):
             if self.sam and current_iter >= self.sam_init:
                 self.sam_optimizer_g.step(self.closure, current_iter)
             else:
-                self.gradscaler.step(self.optimizer_g)
+                self.gradscaler_g.step(self.optimizer_g)
             # step() for discriminator
             if self.net_d is not None:
-                self.gradscaler.step(self.optimizer_d)
+                self.gradscaler_d.step(self.optimizer_d)
 
             # zero generator grads
             if self.sam and current_iter >= self.sam_init:
                 self.sam_optimizer_g.zero_grad(set_to_none=True)
             else:
                 # update gradscaler
-                self.gradscaler.update()
+                self.gradscaler_g.update()
+                if self.net_d is not None:
+                    self.gradscaler_d.update()
                 self.optimizer_g.zero_grad(set_to_none=True)
 
             # zero discriminator grads
@@ -780,7 +784,7 @@ class sisr(base):
         else:
             with_metrics = self.opt["val"].get("metrics") is not None
 
-        use_pbar = self.opt["val"].get("pbar", False)
+        use_pbar = self.opt["val"].get("pbar", True)
 
         if with_metrics:
             if not hasattr(self, "metric_results"):  # only execute in the first run
@@ -795,7 +799,7 @@ class sisr(base):
 
         metric_data = dict()
         if use_pbar:
-            pbar = tqdm(total=len(dataloader), unit="image")
+            pbar = tqdm(total=len(dataloader), unit="image", colour="green", ascii=' >=')
 
         for idx, val_data in enumerate(dataloader):
             img_name = osp.splitext(osp.basename(val_data["lq_path"][0]))[0]
@@ -816,7 +820,7 @@ class sisr(base):
             torch.cuda.empty_cache()
 
             # check if dataset has save_img option, and if so overwrite global save_img option
-            save_img = self.opt["val"].get("save_img", False)
+            save_img = self.opt["val"].get("save_img", True)
             val_suffix = self.opt["val"].get("suffix", None)
             if save_img:
                 if self.opt["is_train"]:
@@ -857,7 +861,7 @@ class sisr(base):
                     self.metric_results[name] += calculate_metric(metric_data, opt_)
             if use_pbar:
                 pbar.update(1)
-                pbar.set_description(f"Test {img_name}")
+                pbar.set_description(f"Inferring on {img_name}")
 
         if use_pbar:
             pbar.close()
@@ -949,11 +953,3 @@ class sisr(base):
                         f"{crt_net[k].shape}; load_net: {load_net[k].shape}"
                     )
                     load_net[k + ".ignore"] = load_net.pop(k)
-
-
-@MODEL_REGISTRY.register()
-class default(sisr):
-    """For backward compatibility"""
-
-    def __init__(self, opt):
-        super(default, self).__init__(opt)

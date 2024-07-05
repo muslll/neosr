@@ -24,7 +24,7 @@ def mod_crop(img, scale):
     return img
 
 
-def paired_random_crop(img_gts, img_lqs, gt_patch_size, scale, gt_path=None):
+def paired_random_crop(img_gts, img_lqs, lq_patch_size, scale, gt_path=None):
     """Paired random crop. Support Numpy array and Tensor inputs.
 
     It crops lists of lq and gt images with corresponding locations.
@@ -36,7 +36,7 @@ def paired_random_crop(img_gts, img_lqs, gt_patch_size, scale, gt_path=None):
         img_lqs (list[ndarray] | ndarray): LQ images. Note that all images
             should have the same shape. If the input is an ndarray, it will
             be transformed to a list containing itself.
-        gt_patch_size (int): GT patch size.
+        lq_patch_size (int): LQ patch size.
         scale (int): Scale factor.
         gt_path (str): Path to ground-truth. Default: None.
 
@@ -59,7 +59,7 @@ def paired_random_crop(img_gts, img_lqs, gt_patch_size, scale, gt_path=None):
     else:
         h_lq, w_lq = img_lqs[0].shape[0:2]
         h_gt, w_gt = img_gts[0].shape[0:2]
-    lq_patch_size = gt_patch_size // scale
+    gt_patch_size = lq_patch_size * scale
 
     if h_gt != h_lq * scale or w_gt != w_lq * scale:
         raise ValueError(

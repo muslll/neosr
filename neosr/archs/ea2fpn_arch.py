@@ -201,7 +201,11 @@ class SegmentationBlock(nn.Module):
 
 
 @ARCH_REGISTRY.register()
-class a2fpnpp(nn.Module):
+class ea2fpn(nn.Module):
+    """ Modified for the neosr project, based on 'A2-FPN for Semantic
+        Segmentation of Fine-Resolution Remotely Sensed Images':
+        https://doi.org/10.1080/01431161.2022.2030071 
+    """
     def __init__(
         self,
         class_num=6,

@@ -57,7 +57,7 @@ class MessageLogger():
 
     def __init__(self, opt, start_iter=1, tb_logger=None):
         self.exp_name = opt['name']
-        self.interval = opt['logger']['print_freq']
+        self.interval = opt['logger'].get('print_freq', 100)
         self.accumulate = opt['datasets']['train'].get('accumulate', 1)
         self.start_iter = start_iter
         self.max_iters = opt['train']['total_iter']
@@ -106,7 +106,7 @@ class MessageLogger():
 
         # other items, especially losses
         for k, v in log_vars.items():
-            message += f'{k}: {v:.4e} '
+            message += f'[ {k}: {v:.4e} ]'
             # tensorboard logger
             if self.use_tb_logger and 'debug' not in self.exp_name:
                 if k.startswith('l_'):

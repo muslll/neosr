@@ -50,7 +50,7 @@ class PatchesKernel3D(nn.Module):
 
 
 @LOSS_REGISTRY.register()
-class PerceptualLoss(nn.Module):
+class vgg_perceptual_loss(nn.Module):
     """Perceptual loss with VGG19
 
     Args:
@@ -64,13 +64,13 @@ class PerceptualLoss(nn.Module):
             Default: True.
         range_norm (bool): If True, norm images with range [-1, 1] to [0, 1].
             Default: False.
-        perceptual_weight (float): If `perceptual_weight > 0`, the perceptual
+        loss_weight (float): If `loss_weight > 0`, the perceptual
             loss will be calculated and the loss will multiplied by the
             weight. Default: 1.0.
         criterion (str): Criterion used for perceptual loss. Default: 'huber'.
         patchloss (bool): Enables PatchLoss. Default: False.
         ipk (bool): Enables Image Patch Kernel and adds to the final loss. Default: False.
-        perceptual_patch_weight (float): Weight of PatchLoss. Default: 1.0
+        patch_weight (float): Weight of PatchLoss. Default: 1.0
     """
 
     def __init__(
@@ -79,17 +79,17 @@ class PerceptualLoss(nn.Module):
         vgg_type: str = "vgg19",
         use_input_norm: bool = True,
         range_norm: bool = False,
-        perceptual_weight: float = 1.0,
+        loss_weight: float = 1.0,
         criterion: str = "huber",
         patchloss: bool = False,
         ipk: bool = False,
-        perceptual_patch_weight: float = 1.0,
+        patch_weight: float = 1.0,
         **kwargs,
     ) -> None:
-        super(PerceptualLoss, self).__init__()
-        self.perceptual_weight = perceptual_weight
+        super(vgg_perceptual_loss, self).__init__()
+        self.loss_weight = loss_weight
         self.layer_weights = layer_weights
-        self.patch_weights = perceptual_patch_weight
+        self.patch_weights = patch_weight
         self.patchloss = patchloss
         self.ipk = ipk
 
@@ -197,7 +197,7 @@ class PerceptualLoss(nn.Module):
         gt_features = self.vgg(gt.detach())
 
         # calculate perceptual loss
-        if self.perceptual_weight > 0:
+        if self.loss_weight > 0:
             percep_loss = 0
             for k in x_features.keys():
                 if self.criterion_type == "fro":
@@ -225,4 +225,4 @@ class PerceptualLoss(nn.Module):
                 ipk = self.patch(x, gt, is_ipk=True)
                 percep_loss += ipk
 
-        return percep_loss * self.perceptual_weight
+        return percep_loss * self.loss_weight

@@ -33,7 +33,7 @@ class paired(data.Dataset):
         io_backend (dict): IO backend type and other kwarg.
         filename_tmpl (str): Template for each filename. Note that the template excludes the file extension.
             Default: '{}'.
-        gt_size (int): Cropped patched size for gt patches.
+        patch_size (int): Cropped patched size for lq patches.
         use_hflip (bool): Use horizontal flips.
         use_rot (bool): Use rotation (use vertical flip and transposing h and w for implementation).
         scale (bool): Scale, which will be added automatically.
@@ -44,7 +44,10 @@ class paired(data.Dataset):
         super(paired, self).__init__()
         self.opt = opt
         self.file_client = None
-        self.io_backend_opt = opt["io_backend"]
+        self.io_backend_opt = opt.get("io_backend")
+        # default to 'disk' if not specified
+        if self.io_backend_opt is None:
+            self.io_backend_opt = {"type": "disk"}
         # mean and std for normalizing the input images
         self.mean = opt["mean"] if "mean" in opt else None
         self.std = opt["std"] if "std" in opt else None
@@ -60,7 +63,7 @@ class paired(data.Dataset):
             self.paths = paired_paths_from_lmdb(
                 [self.lq_folder, self.gt_folder], ["lq", "gt"]
             )
-        elif "meta_info" in self.opt and self.opt["meta_info"] is not None:
+        elif "meta_info" in self.opt and self.opt.get("meta_info", None) is not None:
             # disk backend with meta_info
             # Each line in the meta_info describes the relative path to an image
             with open(self.opt["meta_info"]) as fin:
@@ -129,12 +132,12 @@ class paired(data.Dataset):
         scale = self.opt["scale"]
         # augmentation for training
         if self.opt["phase"] == "train":
-            gt_size = self.opt["gt_size"]
+            patch_size = self.opt["patch_size"]
             flip = self.opt.get("use_hflip", True)
             rot = self.opt.get("use_rot", True)
 
             # random crop
-            img_gt, img_lq = paired_random_crop(img_gt, img_lq, gt_size, scale, gt_path)
+            img_gt, img_lq = paired_random_crop(img_gt, img_lq, patch_size, scale, gt_path)
             # flip, rotation
             img_gt, img_lq = basic_augment(
                 [img_gt, img_lq],

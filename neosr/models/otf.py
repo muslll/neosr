@@ -3,7 +3,7 @@ import random
 import torch
 from torch.nn import functional as F
 
-from neosr.models.sisr import sisr
+from neosr.models.image import image
 from neosr.data.degradations import random_add_gaussian_noise_pt, random_add_poisson_noise_pt
 from neosr.data.transforms import paired_random_crop
 from neosr.utils import DiffJPEG
@@ -16,7 +16,7 @@ rng = rng()
 
 
 @MODEL_REGISTRY.register()
-class otf(sisr):
+class otf(image):
     """On The Fly degradations, based on RealESRGAN pipeline."""
 
     def __init__(self, opt):
@@ -24,7 +24,7 @@ class otf(sisr):
         # simulate JPEG compression artifacts
         self.jpeger = DiffJPEG(differentiable=False).cuda()
         self.queue_size = opt.get('queue_size', 180)
-        self.gt_size = opt['gt_size']
+        self.patch_size = opt["datasets"]["train"].get("patch_size")
         self.device = torch.device('cuda')
 
     @torch.no_grad()
@@ -176,8 +176,8 @@ class otf(sisr):
             self.lq = torch.clamp((out * 255.0).round(), 0, 255) / 255.
 
             # random crop
-            gt_size = self.opt['gt_size']
-            (self.gt), self.lq = paired_random_crop([self.gt], self.lq, gt_size,
+            patch_size = self.opt["datasets"]["train"].get("patch_size")
+            (self.gt), self.lq = paired_random_crop([self.gt], self.lq, patch_size,
                                                     self.opt['scale'])
 
             # training pair pool
@@ -186,8 +186,8 @@ class otf(sisr):
             self.lq = self.lq.contiguous()
 
             # augmentation error handling
-            if self.aug is not None and self.gt_size % 4 != 0:
-                msg = "The gt_size value must be a multiple of 4. Please change it."
+            if self.aug is not None and self.patch_size % 4 != 0:
+                msg = "The patch_size value must be a multiple of 4. Please change it."
                 raise ValueError(msg)
             # apply augmentation
             if self.aug is not None:

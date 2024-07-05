@@ -96,7 +96,7 @@ def create_train_val_dataloader(opt, logger):
                 seed=opt["manual_seed"],
             )
             logger.info(
-                f'Number of val images/folders in {dataset_opt["name"]}: {len(val_set)}'
+                f'Number of val images/folders: {len(val_set)}'
             )
             val_loaders.append(val_loader)
         else:
@@ -212,7 +212,7 @@ def train_pipeline(root_path):
 
     # training log vars
     accumulate = opt["datasets"]["train"].get("accumulate", 1)
-    print_freq = opt["logger"]["print_freq"]
+    print_freq = opt["logger"].get("print_freq", 100)
     save_checkpoint_freq = opt["logger"]["save_checkpoint_freq"]
     if opt.get("val") is not None:
         val_freq = opt["val"]["val_freq"]
@@ -276,7 +276,7 @@ def train_pipeline(root_path):
                             val_loader,
                             int(current_iter_log),
                             tb_logger,
-                            opt["val"]["save_img"],
+                            opt["val"].get("save_img", True),
                         )
 
                 #data_timer.start()
@@ -300,7 +300,7 @@ def train_pipeline(root_path):
         accumulate = opt["datasets"]["train"].get("accumulate", 1)
         for val_loader in val_loaders:
             model.validation(
-                val_loader, int(current_iter / accumulate), tb_logger, opt["val"]["save_img"]
+                val_loader, int(current_iter / accumulate), tb_logger, opt["val"].get("save_img", True)
             )
     if tb_logger:
         tb_logger.close()

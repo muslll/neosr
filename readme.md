@@ -113,7 +113,7 @@ Where `options.toml` is a configuration file. Templates can be found in [options
 |-------------------------------------------------------------------------------|-------------------------------|
 | U-Net w/ SN 							  		| `unet` 		        |
 | [PatchGAN](https://github.com/NVIDIA/pix2pixHD) w/ SN		  		| `patchgan`			|
-| A2FPN++ (bespoke, based on [A2-FPN](https://github.com/lironui/A2-FPN)	| `a2fpnpp`			|
+| EA2FPN (bespoke, based on [A2-FPN](https://github.com/lironui/A2-FPN)		| `ea2fpn`			|
 
 ### [Supported Optimizers](https://github.com/muslll/neosr/wiki/Optimizer-Options):
 

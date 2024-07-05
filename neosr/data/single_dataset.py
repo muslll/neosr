@@ -31,7 +31,10 @@ class single(data.Dataset):
         self.opt = opt
         # file client (io backend)
         self.file_client = None
-        self.io_backend_opt = opt['io_backend']
+        self.io_backend_opt = opt.get("io_backend")
+        # default to 'disk' if not specified
+        if self.io_backend_opt is None:
+            self.io_backend_opt = {"type": "disk"}
         self.mean = opt['mean'] if 'mean' in opt else None
         self.std = opt['std'] if 'std' in opt else None
         self.lq_folder = opt['dataroot_lq']

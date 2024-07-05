@@ -21,10 +21,9 @@ def toml_load(f):
         dict: Loaded dict.
     """
     try:
-        if os.path.isfile(f):
-            with open(f, 'rb') as f:
-                return tomllib.load(f)
-    except tomllib.TomlDecodeError as e:
+        with open(f, 'rb') as f:
+            return tomllib.load(f)
+    except tomllib.TOMLDecodeError as e:
         print("Error decoding TOML file.")
         sys.exit(1)
 
@@ -164,16 +163,21 @@ def parse_options(root_path, is_train=True):
                 dataset['dataroot_lq'] = osp.expanduser(dataset['dataroot_lq'])
 
         # paths
-        if opt["path"] is not None:
+        if opt.get("path") is not None:
             for key, val in opt['path'].items():
                 if (val is not None) and ('resume_state' in key or 'pretrain_network' in key):
                     opt['path'][key] = osp.expanduser(val)
 
         if is_train:
-            experiments_root = opt['path'].get('experiments_root')
+            experiments_root = opt.get("path")
+            if experiments_root is not None:
+                experiments_root = experiments_root.get('experiments_root')
             if experiments_root is None:
                 experiments_root = osp.join(root_path, 'experiments')
             experiments_root = osp.join(experiments_root, opt['name'])
+
+            if opt.get("path") is None:
+                opt["path"] = {}
 
             opt['path']['experiments_root'] = experiments_root
             opt['path']['models'] = osp.join(experiments_root, 'models')
@@ -187,7 +191,7 @@ def parse_options(root_path, is_train=True):
             if 'debug' in opt['name']:
                 if 'val' in opt:
                     opt['val']['val_freq'] = 8
-                opt['logger']['print_freq'] = 1
+                opt.get['logger']['print_freq'] = 1
                 opt['logger']['save_checkpoint_freq'] = 8
         else:  # test
             results_root = opt['path'].get('results_root')

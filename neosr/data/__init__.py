@@ -1,6 +1,6 @@
 import importlib
 import random
-import psutil
+import os
 from copy import deepcopy
 from functools import partial
 from os import path as osp
@@ -61,7 +61,7 @@ def build_dataloader(dataset, dataset_opt, num_gpu=1, dist=False, sampler=None, 
     # train
     if phase == 'train':
         if dataset_opt.get('num_worker_per_gpu', 'auto') == 'auto' or None:
-            num_workers = psutil.cpu_count(logical=False)
+            num_workers = len(os.sched_getaffinity(0)) 
         else:
             num_workers = dataset_opt['num_worker_per_gpu']
         if dist:  # distributed training

@@ -38,7 +38,10 @@ class otf(data.Dataset):
         super(otf, self).__init__()
         self.opt = opt
         self.file_client = None
-        self.io_backend_opt = opt['io_backend']
+        self.io_backend_opt = opt.get("io_backend")
+        # default to 'disk' if not specified
+        if self.io_backend_opt is None:
+            self.io_backend_opt = {"type": "disk"}
         self.color = False if 'color' in self.opt and self.opt['color'] == 'y' else True
         self.gt_folder = opt['dataroot_gt']
 
