@@ -5,6 +5,7 @@ from torch.optim.optimizer import Optimizer
 
 
 class adamw_sf(Optimizer):
+
     r"""Schedule-Free AdamW
     As the name suggests, no scheduler is needed with this optimizer.
     To add warmup, rather than using a learning rate schedule you can just
@@ -52,24 +53,24 @@ class adamw_sf(Optimizer):
         weight_lr_power=2.0,
         schedule_free=True,
         foreach=hasattr(torch, "_foreach_mul_"),
-    ):
-        defaults = dict(
-            lr=lr,
-            betas=betas,
-            eps=eps,
-            r=r,
-            k=0,
-            warmup_steps=warmup_steps,
-            train_mode=True,
-            weight_sum=0.0,
-            lr_max=-1.0,
-            weight_lr_power=weight_lr_power,
-            weight_decay=weight_decay,
-            foreach=foreach,
-        )
+    ) -> None:
+        defaults = {
+            "lr": lr,
+            "betas": betas,
+            "eps": eps,
+            "r": r,
+            "k": 0,
+            "warmup_steps": warmup_steps,
+            "train_mode": True,
+            "weight_sum": 0.0,
+            "lr_max": -1.0,
+            "weight_lr_power": weight_lr_power,
+            "weight_decay": weight_decay,
+            "foreach": foreach,
+        }
         super().__init__(params, defaults)
 
-    def eval(self):
+    def eval(self) -> None:
         for group in self.param_groups:
             train_mode = group["train_mode"]
             beta1, _ = group["betas"]
@@ -81,7 +82,7 @@ class adamw_sf(Optimizer):
                         p.data.lerp_(end=state["z"], weight=1 - 1 / beta1)
                 group["train_mode"] = False
 
-    def train(self):
+    def train(self) -> None:
         for group in self.param_groups:
             train_mode = group["train_mode"]
             beta1, _ = group["betas"]
@@ -115,10 +116,7 @@ class adamw_sf(Optimizer):
             warmup_steps = group["warmup_steps"]
             weight_lr_power = group["weight_lr_power"]
 
-            if k < warmup_steps:
-                sched = (k + 1) / warmup_steps
-            else:
-                sched = 1.0
+            sched = (k + 1) / warmup_steps if k < warmup_steps else 1.0
 
             bias_correction2 = 1 - beta2 ** (k + 1)
             lr = group["lr"] * sched * math.sqrt(bias_correction2)
@@ -134,7 +132,8 @@ class adamw_sf(Optimizer):
                 ckp1 = 0
 
             if not group["train_mode"]:
-                raise Exception("Not in train mode!")
+                msg = "Not in train mode!"
+                raise Exception(msg)
 
             active_p = [p for p in group["params"] if p.grad is not None]
 

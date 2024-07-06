@@ -15,9 +15,10 @@ from neosr.utils.dist_util import master_only
 
 
 class base:
+
     """Default model."""
 
-    def __init__(self, opt):
+    def __init__(self, opt) -> None:
         self.opt = opt
         self.device = torch.device("cuda")
         self.is_train = opt["is_train"]
@@ -36,19 +37,19 @@ class base:
         else:
             self.sf_optim_d = None
 
-    def feed_data(self, data):
+    def feed_data(self, data) -> None:
         pass
 
-    def optimize_parameters(self):
+    def optimize_parameters(self) -> None:
         pass
 
-    def get_current_visuals(self):
+    def get_current_visuals(self) -> None:
         pass
 
-    def save(self, epoch, current_iter):
+    def save(self, epoch, current_iter) -> None:
         pass
 
-    def validation(self, dataloader, current_iter, tb_logger, save_img=True):
+    def validation(self, dataloader, current_iter, tb_logger, save_img=True) -> None:
         """Validation function.
 
         Args:
@@ -64,7 +65,7 @@ class base:
         else:
             self.nondist_validation(dataloader, current_iter, tb_logger, save_img)
 
-    def _initialize_best_metric_results(self, dataset_name):
+    def _initialize_best_metric_results(self, dataset_name) -> None:
         """Initialize the best metric results dict for recording the best metric value and iteration."""
         if (
             hasattr(self, "best_metric_results")
@@ -72,17 +73,17 @@ class base:
         ):
             return
         if not hasattr(self, "best_metric_results"):
-            self.best_metric_results = dict()
+            self.best_metric_results = {}
 
         # add a dataset record
-        record = dict()
+        record = {}
         for metric, content in self.opt["val"]["metrics"].items():
             better = content.get("better", "higher")
             init_val = float("-inf") if better == "higher" else float("inf")
-            record[metric] = dict(better=better, val=init_val, iter=-1)
+            record[metric] = {"better": better, "val": init_val, "iter": -1}
         self.best_metric_results[dataset_name] = record
 
-    def _update_best_metric_result(self, dataset_name, metric, val, current_iter):
+    def _update_best_metric_result(self, dataset_name, metric, val, current_iter) -> None:
         if self.best_metric_results[dataset_name][metric]["better"] == "higher":
             if val >= self.best_metric_results[dataset_name][metric]["val"]:
                 self.best_metric_results[dataset_name][metric]["val"] = val
@@ -141,11 +142,12 @@ class base:
         elif optim_type in {"Adan_SF", "adan_sf"}:
             optimizer = adan_sf(params, lr, **kwargs)
         else:
-            raise NotImplementedError(f"optimizer {optim_type} is not supported yet.")
+            msg = f"optimizer {optim_type} is not supported yet."
+            raise NotImplementedError(msg)
 
         return optimizer
 
-    def setup_schedulers(self):
+    def setup_schedulers(self) -> None:
         """Set up schedulers."""
         train_opt = self.opt["train"]
         has_scheduler = self.opt["train"].get("scheduler", None)
@@ -166,19 +168,20 @@ class base:
                         )
                     )
             else:
+                msg = f"Scheduler {scheduler_type} is not implemented yet."
                 raise NotImplementedError(
-                    f"Scheduler {scheduler_type} is not implemented yet."
+                    msg
                 )
 
     def get_bare_model(self, net):
         """Get bare model, especially under wrapping with
         DistributedDataParallel or DataParallel.
         """
-        if isinstance(net, (DataParallel, DistributedDataParallel)):
+        if isinstance(net, DataParallel | DistributedDataParallel):
             net = net.module
         return net
 
-    def _set_lr(self, lr_groups_l):
+    def _set_lr(self, lr_groups_l) -> None:
         """Set learning rate for warm-up.
 
         Args:
@@ -197,7 +200,7 @@ class base:
             init_lr_groups_l.append([v["initial_lr"] for v in optimizer.param_groups])
         return init_lr_groups_l
 
-    def update_learning_rate(self, current_iter, warmup_iter=-1):
+    def update_learning_rate(self, current_iter, warmup_iter=-1) -> None:
         """Update learning rate.
 
         Args:
@@ -226,7 +229,7 @@ class base:
         return [param_group["lr"] for param_group in self.optimizers[0].param_groups]
 
     @master_only
-    def print_network(self, net):
+    def print_network(self, net) -> None:
         """Print the str and parameter number of a network.
 
         Args:
@@ -234,21 +237,21 @@ class base:
             net (nn.Module)
 
         """
-        if isinstance(net, (DataParallel, DistributedDataParallel)):
+        if isinstance(net, DataParallel | DistributedDataParallel):
             net_cls_str = f"{net.__class__.__name__} - {net.module.__class__.__name__}"
         else:
             net_cls_str = f"{net.__class__.__name__}"
 
         net = self.get_bare_model(net)
         net_str = str(net)
-        net_params = sum(map(lambda x: x.numel(), net.parameters()))
+        net_params = sum(x.numel() for x in net.parameters())
 
         logger = get_root_logger()
         logger.info(f"Network: {net_cls_str}, with parameters: {net_params:,d}")
         logger.info(net_str)
 
     @master_only
-    def save_network(self, net, net_label, current_iter, param_key="params"):
+    def save_network(self, net, net_label, current_iter, param_key="params") -> None:
         """Save networks.
 
         Args:
@@ -286,9 +289,8 @@ class base:
 
         if self.sf_optim_g and self.is_train:
             self.optimizer_g.eval()
-        if self.net_d is not None and self.sf_optim_d:
-            if self.is_train:
-                self.optimizer_d.eval()
+        if self.net_d is not None and self.sf_optim_d and self.is_train:
+            self.optimizer_d.eval()
 
         # avoid occasional writing errors
         retry = 3
@@ -307,15 +309,15 @@ class base:
                 retry -= 1
         if retry == 0:
             logger.warning(f"Still cannot save {save_path}.")
-            raise OSError(f"Cannot save {save_path}.")
+            msg = f"Cannot save {save_path}."
+            raise OSError(msg)
 
         if self.sf_optim_g and self.is_train:
             self.optimizer_g.train()
-        if self.net_d is not None and self.sf_optim_d:
-            if self.is_train:
-                self.optimizer_d.train()
+        if self.net_d is not None and self.sf_optim_d and self.is_train:
+            self.optimizer_d.train()
 
-    def load_network(self, net, load_path, param_key, strict=True):
+    def load_network(self, net, load_path, param_key, strict=True) -> None:
         """Load network.
 
         Args:
@@ -363,7 +365,7 @@ class base:
         torch.cuda.empty_cache()
 
     @master_only
-    def save_training_state(self, epoch, current_iter):
+    def save_training_state(self, epoch, current_iter) -> None:
         """Save training states during training, which will be used for
         resuming.
 
@@ -389,9 +391,8 @@ class base:
 
             if self.sf_optim_g and self.is_train:
                 self.optimizer_g.eval()
-            if self.net_d is not None and self.sf_optim_d:
-                if self.is_train:
-                    self.optimizer_d.eval()
+            if self.net_d is not None and self.sf_optim_d and self.is_train:
+                self.optimizer_d.eval()
 
             # avoid occasional writing errors
             retry = 3
@@ -410,15 +411,15 @@ class base:
                     retry -= 1
             if retry == 0:
                 logger.warning(f"Still cannot save {save_path}. Just ignore it.")
-                raise OSError("Cannot save, aborting.")
+                msg = "Cannot save, aborting."
+                raise OSError(msg)
 
             if self.sf_optim_g and self.is_train:
                 self.optimizer_g.train()
-            if self.net_d is not None and self.sf_optim_d:
-                if self.is_train:
-                    self.optimizer_d.train()
+            if self.net_d is not None and self.sf_optim_d and self.is_train:
+                self.optimizer_d.train()
 
-    def resume_training(self, resume_state):
+    def resume_training(self, resume_state) -> None:
         """Reload the optimizers and schedulers for resumed training.
 
         Args:
@@ -460,7 +461,7 @@ class base:
                 torch.distributed.reduce(losses, dst=0)
                 if self.opt["rank"] == 0:
                     losses /= self.opt["world_size"]
-                loss_dict = {key: loss for key, loss in zip(keys, losses, strict=True)}
+                loss_dict = dict(zip(keys, losses, strict=True))
 
             log_dict = OrderedDict()
             for name, value in loss_dict.items():

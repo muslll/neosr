@@ -6,8 +6,9 @@ from torch.optim.optimizer import Optimizer
 
 
 class adan(Optimizer):
+
     """'Adan: Adaptive Nesterov Momentum Algorithm for Faster Optimizing Deep Models':
-        https://arxiv.org/abs/2208.06677
+        https://arxiv.org/abs/2208.06677.
 
     Arguments:
     ---------
@@ -40,38 +41,44 @@ class adan(Optimizer):
         no_prox=True,
         foreach: bool = True,
         **kwargs,
-    ):
+    ) -> None:
         if not max_grad_norm >= 0.0:
-            raise ValueError(f"Invalid Max grad norm: {max_grad_norm}")
+            msg = f"Invalid Max grad norm: {max_grad_norm}"
+            raise ValueError(msg)
         if not lr >= 0.0:
-            raise ValueError(f"Invalid learning rate: {lr}")
+            msg = f"Invalid learning rate: {lr}"
+            raise ValueError(msg)
         if not eps >= 0.0:
-            raise ValueError(f"Invalid epsilon value: {eps}")
+            msg = f"Invalid epsilon value: {eps}"
+            raise ValueError(msg)
         if not 0.0 <= betas[0] < 1.0:
-            raise ValueError(f"Invalid beta parameter at index 0: {betas[0]}")
+            msg = f"Invalid beta parameter at index 0: {betas[0]}"
+            raise ValueError(msg)
         if not 0.0 <= betas[1] < 1.0:
-            raise ValueError(f"Invalid beta parameter at index 1: {betas[1]}")
+            msg = f"Invalid beta parameter at index 1: {betas[1]}"
+            raise ValueError(msg)
         if not 0.0 <= betas[2] < 1.0:
-            raise ValueError(f"Invalid beta parameter at index 2: {betas[2]}")
+            msg = f"Invalid beta parameter at index 2: {betas[2]}"
+            raise ValueError(msg)
 
-        defaults = dict(
-            lr=lr,
-            betas=betas,
-            eps=eps,
-            weight_decay=weight_decay,
-            max_grad_norm=max_grad_norm,
-            no_prox=no_prox,
-            foreach=foreach,
-        )
+        defaults = {
+            "lr": lr,
+            "betas": betas,
+            "eps": eps,
+            "weight_decay": weight_decay,
+            "max_grad_norm": max_grad_norm,
+            "no_prox": no_prox,
+            "foreach": foreach,
+        }
         super().__init__(params, defaults)
 
     def __setstate__(self, state):
-        super(adan, self).__setstate__(state)
+        super().__setstate__(state)
         for group in self.param_groups:
             group.setdefault("no_prox", False)
 
     @torch.no_grad()
-    def restart_opt(self):
+    def restart_opt(self) -> None:
         for group in self.param_groups:
             group["step"] = 0
             for p in group["params"]:
@@ -157,25 +164,25 @@ class adan(Optimizer):
             if not params_with_grad:
                 continue
 
-            kwargs = dict(
-                params=params_with_grad,
-                grads=grads,
-                exp_avgs=exp_avgs,
-                exp_avg_sqs=exp_avg_sqs,
-                exp_avg_diffs=exp_avg_diffs,
-                neg_pre_grads=neg_pre_grads,
-                beta1=beta1,
-                beta2=beta2,
-                beta3=beta3,
-                bias_correction1=bias_correction1,
-                bias_correction2=bias_correction2,
-                bias_correction3_sqrt=math.sqrt(bias_correction3),
-                lr=group["lr"],
-                weight_decay=group["weight_decay"],
-                eps=group["eps"],
-                no_prox=group["no_prox"],
-                clip_global_grad_norm=clip_global_grad_norm,
-            )
+            kwargs = {
+                "params": params_with_grad,
+                "grads": grads,
+                "exp_avgs": exp_avgs,
+                "exp_avg_sqs": exp_avg_sqs,
+                "exp_avg_diffs": exp_avg_diffs,
+                "neg_pre_grads": neg_pre_grads,
+                "beta1": beta1,
+                "beta2": beta2,
+                "beta3": beta3,
+                "bias_correction1": bias_correction1,
+                "bias_correction2": bias_correction2,
+                "bias_correction3_sqrt": math.sqrt(bias_correction3),
+                "lr": group["lr"],
+                "weight_decay": group["weight_decay"],
+                "eps": group["eps"],
+                "no_prox": group["no_prox"],
+                "clip_global_grad_norm": clip_global_grad_norm,
+            }
 
             if group["foreach"]:
                 _multi_tensor_adan(**kwargs)
@@ -204,7 +211,7 @@ def _single_tensor_adan(
     eps: float,
     no_prox: bool,
     clip_global_grad_norm: Tensor,
-):
+) -> None:
     for i, param in enumerate(params):
         grad = grads[i]
         exp_avg = exp_avgs[i]
@@ -261,7 +268,7 @@ def _multi_tensor_adan(
     eps: float,
     no_prox: bool,
     clip_global_grad_norm: Tensor,
-):
+) -> None:
     if len(params) == 0:
         return
 

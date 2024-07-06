@@ -2,9 +2,10 @@ import torch
 
 
 class fsam(torch.optim.Optimizer):
+
     """Adapted from 'Friendly Sharpness-Aware Minimization':
     https://arxiv.org/html/2403.12350v1
-    https://github.com/nblt/F-SAM
+    https://github.com/nblt/F-SAM.
     """
 
     def __init__(
@@ -16,11 +17,11 @@ class fsam(torch.optim.Optimizer):
         lmbda=0.9,
         adaptive=True,
         **kwargs,
-    ):
+    ) -> None:
         assert rho >= 0.0, f"Invalid rho, should be non-negative: {rho}"
 
         defaults = dict(rho=rho, adaptive=adaptive, **kwargs)
-        super(fsam, self).__init__(params, defaults)
+        super().__init__(params, defaults)
 
         self.base_optimizer = base_optimizer(self.param_groups, **kwargs)
         self.param_groups = self.base_optimizer.param_groups
@@ -29,7 +30,7 @@ class fsam(torch.optim.Optimizer):
         self.lmbda = lmbda
 
     @torch.no_grad()
-    def first_step(self, zero_grad=False):
+    def first_step(self, zero_grad=False) -> None:
         for group in self.param_groups:
             for p in group["params"]:
                 if p.grad is None:
@@ -62,7 +63,7 @@ class fsam(torch.optim.Optimizer):
             self.zero_grad(set_to_none=True)
 
     @torch.no_grad()
-    def second_step(self, zero_grad=False):
+    def second_step(self, zero_grad=False) -> None:
         for group in self.param_groups:
             for p in group["params"]:
                 if p.grad is None:
@@ -75,7 +76,7 @@ class fsam(torch.optim.Optimizer):
             self.zero_grad(set_to_none=True)
 
     @torch.no_grad()
-    def step(self, closure=None, current_iter=None):
+    def step(self, closure=None, current_iter=None) -> None:
         assert (
             closure is not None
         ), "Sharpness Aware Minimization requires closure, but it was not provided"
@@ -91,7 +92,7 @@ class fsam(torch.optim.Optimizer):
         shared_device = self.param_groups[0]["params"][
             0
         ].device  # put everything on the same device, in case of model parallelism
-        norm = torch.norm(
+        return torch.norm(
             torch.stack([
                 ((torch.abs(p) if group["adaptive"] else 1.0) * p.grad)
                 .norm(p=2)
@@ -102,8 +103,7 @@ class fsam(torch.optim.Optimizer):
             ]),
             p=2,
         )
-        return norm
 
-    def load_state_dict(self, state_dict):
+    def load_state_dict(self, state_dict) -> None:
         super().load_state_dict(state_dict)
         self.base_optimizer.param_groups = self.param_groups

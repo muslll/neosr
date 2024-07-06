@@ -6,9 +6,10 @@ from torch.optim.optimizer import Optimizer
 
 
 class adan_sf(Optimizer):
+
     """Unofficial adaptation of Schedule-Free to the Adan optimizer:
         https://arxiv.org/abs/2405.15682
-        https://arxiv.org/abs/2208.06677
+        https://arxiv.org/abs/2208.06677.
 
     This optimizer requires that .train() and .eval() be called before the
     beginning of training and evaluation respectively. The optimizer should
@@ -50,7 +51,7 @@ class adan_sf(Optimizer):
         weight_lr_power: float = 2.0,
         schedule_free: bool = True,
         **kwargs,
-    ):
+    ) -> None:
         if not max_grad_norm >= 0.0:
             msg = f"Invalid Max grad norm: {max_grad_norm}"
             raise ValueError(msg)
@@ -92,7 +93,7 @@ class adan_sf(Optimizer):
             group.setdefault("schedule_free", True)
 
     @torch.no_grad()
-    def restart_opt(self):
+    def restart_opt(self) -> None:
         for group in self.param_groups:
             group["step"] = 0
             for p in group["params"]:
@@ -108,7 +109,7 @@ class adan_sf(Optimizer):
                     state["exp_avg_diff"] = torch.zeros_like(p)
 
     @torch.no_grad()
-    def eval(self):
+    def eval(self) -> None:
         for group in self.param_groups:
             train_mode = group["train_mode"]
             beta1, _, _ = group["betas"]
@@ -121,7 +122,7 @@ class adan_sf(Optimizer):
                 group["train_mode"] = False
 
     @torch.no_grad()
-    def train(self):
+    def train(self) -> None:
         for group in self.param_groups:
             train_mode = group["train_mode"]
             beta1, _, _ = group["betas"]
@@ -283,7 +284,7 @@ def _multi_tensor_adan(
     eps: float,
     schedule_free: bool,
     clip_global_grad_norm: Tensor,
-):
+) -> None:
     if len(params) == 0:
         return
 

@@ -23,10 +23,11 @@ from neosr.utils.registry import MODEL_REGISTRY
 
 @MODEL_REGISTRY.register()
 class image(base):
+
     """Single-Image Super-Resolution model."""
 
-    def __init__(self, opt):
-        super(image, self).__init__(opt)
+    def __init__(self, opt) -> None:
+        super().__init__(opt)
 
         # define network net_g
         self.net_g = build_network(opt["network_g"])
@@ -67,7 +68,7 @@ class image(base):
         if self.is_train:
             self.init_training_settings()
 
-    def init_training_settings(self):
+    def init_training_settings(self) -> None:
         # options var
         train_opt = self.opt["train"]
 
@@ -143,7 +144,7 @@ class image(base):
         # initialise counter of how many batches has to be accumulated
         self.n_accumulated = 0
         self.accum_iters = self.opt["datasets"]["train"].get("accumulate", 1)
-        if self.accum_iters == 0 or self.accum_iters == None:
+        if self.accum_iters in {0, None}:
             self.accum_iters = 1
 
         # define losses
@@ -252,13 +253,13 @@ class image(base):
             logger.warning(msg)
 
         if self.sam is not None and self.accum_iters > 1:
-            raise NotImplementedError(
-                "SAM can't be used with gradient accumulation yet."
-            )
+            msg = "SAM can't be used with gradient accumulation yet."
+            raise NotImplementedError(msg)
 
         if pix_losses_bool is False and percep_losses_bool is False:
+            msg = "Both pixel/mssim and perceptual losses are None. Please enable at least one."
             raise ValueError(
-                "Both pixel/mssim and perceptual losses are None. Please enable at least one."
+                msg
             )
         if self.net_d is None and optim_d is not None:
             msg = "Please set a discriminator in network_d or disable optim_d."
@@ -276,7 +277,7 @@ class image(base):
             msg = "The patch_size value must be a multiple of 4. Please change it."
             raise ValueError(msg)
 
-    def setup_optimizers(self):
+    def setup_optimizers(self) -> None:
         train_opt = self.opt["train"]
         optim_params = []
         for k, v in self.net_g.named_parameters():
@@ -311,8 +312,9 @@ class image(base):
             elif optim_type in {"Adan_SF", "adan_sf"}:
                 base_optimizer = adan_sf
             else:
+                msg = f"SAM not supported by optimizer {optim_type} yet."
                 raise NotImplementedError(
-                    f"SAM not supported by optimizer {optim_type} yet."
+                    msg
                 )
 
         if self.sam in {"FSAM", "fsam"}:
@@ -326,7 +328,8 @@ class image(base):
                 **train_opt["optim_g"],
             )
         elif self.sam is not None:
-            raise NotImplementedError(f"SAM type {self.sam} not supported yet.")
+            msg = f"SAM type {self.sam} not supported yet."
+            raise NotImplementedError(msg)
         else:
             pass
 
@@ -347,7 +350,7 @@ class image(base):
             self.optimizers.append(self.optimizer_d)
 
     @torch.no_grad()
-    def feed_data(self, data):
+    def feed_data(self, data) -> None:
         self.lq = data["lq"].to(self.device, non_blocking=True)
         if "gt" in data:
             self.gt = data["gt"].to(self.device, non_blocking=True)
@@ -367,7 +370,7 @@ class image(base):
 
     def eco_strategy(self, current_iter):
         """Adapted version of "Empirical Centroid-oriented Optimization":
-        https://arxiv.org/abs/2312.17526
+        https://arxiv.org/abs/2312.17526.
         """
         with torch.no_grad():
             # define alpha with sigmoid-like curve, slope/skew at 0.25
@@ -508,7 +511,7 @@ class image(base):
         loss_dict["l_g_total"] = l_g_total
 
         # divide losses by accumulation factor
-        l_g_total = l_g_total / self.accum_iters
+        l_g_total /= self.accum_iters
         # backward generator
         if self.sam and current_iter >= self.sam_init:
             l_g_total.backward()
@@ -562,8 +565,8 @@ class image(base):
                         self.optimizer_d.train()
 
             if self.cri_gan:
-                l_d_real = l_d_real / self.accum_iters
-                l_d_fake = l_d_fake / self.accum_iters
+                l_d_real /= self.accum_iters
+                l_d_fake /= self.accum_iters
                 # backward discriminator
                 if self.sam and current_iter >= self.sam_init:
                     l_d_real.backward()
@@ -599,7 +602,7 @@ class image(base):
         # return generator loss
         return l_g_total
 
-    def optimize_parameters(self, current_iter):
+    def optimize_parameters(self, current_iter) -> None:
         # increment accumulation counter
         self.n_accumulated += 1
         # reset accumulation counter
@@ -636,7 +639,7 @@ class image(base):
             if self.ema > 0:
                 self.net_g_ema.update_parameters(self.net_g)
 
-    def test(self):
+    def test(self) -> None:
         self.tile = self.opt["val"].get("tile", -1)
         scale = self.opt["scale"]
         if self.tile == -1:
@@ -761,11 +764,11 @@ class image(base):
                 :, :, 0 : h - mod_pad_h * scale, 0 : w - mod_pad_w * scale
             ]
 
-    def dist_validation(self, dataloader, current_iter, tb_logger, save_img):
+    def dist_validation(self, dataloader, current_iter, tb_logger, save_img) -> None:
         if self.opt["rank"] == 0:
             self.nondist_validation(dataloader, current_iter, tb_logger, save_img)
 
-    def nondist_validation(self, dataloader, current_iter, tb_logger, save_img):
+    def nondist_validation(self, dataloader, current_iter, tb_logger, save_img) -> None:
         # flag to not apply augmentation during val
         self.is_train = False
 
@@ -790,7 +793,7 @@ class image(base):
         if with_metrics:
             self.metric_results = dict.fromkeys(self.metric_results, 0)
 
-        metric_data = dict()
+        metric_data = {}
         if use_pbar:
             pbar = tqdm(
                 total=len(dataloader), unit="image", colour="green", ascii=" >="
@@ -862,7 +865,7 @@ class image(base):
             pbar.close()
 
         if with_metrics:
-            for metric in self.metric_results.keys():
+            for metric in self.metric_results:
                 self.metric_results[metric] /= idx + 1
                 # update the best metric result
                 self._update_best_metric_result(
@@ -873,7 +876,7 @@ class image(base):
 
         self.is_train = True
 
-    def _log_validation_metric_values(self, current_iter, dataset_name, tb_logger):
+    def _log_validation_metric_values(self, current_iter, dataset_name, tb_logger) -> None:
         log_str = f"Validation {dataset_name}\n\n"
         for metric, value in self.metric_results.items():
             log_str += f"\t # {metric}: {value:.4f}"
@@ -900,7 +903,7 @@ class image(base):
             out_dict["gt"] = self.gt.detach().cpu()
         return out_dict
 
-    def save(self, epoch, current_iter):
+    def save(self, epoch, current_iter) -> None:
         """Save networks and training state."""
         if self.ema > 0:
             self.save_network(self.net_g_ema, "net_g", current_iter)
@@ -912,7 +915,7 @@ class image(base):
 
         self.save_training_state(epoch, current_iter)
 
-    def _print_different_keys_loading(self, crt_net, load_net, strict=True):
+    def _print_different_keys_loading(self, crt_net, load_net, strict=True) -> None:
         """Print keys with different name or different size when loading models.
 
         1. Print keys with different names.
@@ -934,10 +937,10 @@ class image(base):
         logger = get_root_logger()
         if crt_net_keys != load_net_keys:
             logger.warning("Current net - loaded net:")
-            for v in sorted(list(crt_net_keys - load_net_keys)):
+            for v in sorted(crt_net_keys - load_net_keys):
                 logger.warning(f"  {v}")
             logger.warning("Loaded net - current net:")
-            for v in sorted(list(load_net_keys - crt_net_keys)):
+            for v in sorted(load_net_keys - crt_net_keys):
                 logger.warning(f"  {v}")
 
         # check the size for the same keys

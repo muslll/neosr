@@ -19,10 +19,11 @@ rng = rng()
 
 @MODEL_REGISTRY.register()
 class otf(image):
+
     """On The Fly degradations, based on RealESRGAN pipeline."""
 
-    def __init__(self, opt):
-        super(otf, self).__init__(opt)
+    def __init__(self, opt) -> None:
+        super().__init__(opt)
         # simulate JPEG compression artifacts
         self.jpeger = DiffJPEG(differentiable=False).cuda()
         queue = opt["datasets"]["train"].get("queue_size", 180)
@@ -32,7 +33,7 @@ class otf(image):
         self.device = torch.device("cuda")
 
     @torch.no_grad()
-    def _dequeue_and_enqueue(self):
+    def _dequeue_and_enqueue(self) -> None:
         """It is the training pair pool for increasing the diversity in a batch.
 
         Batch processing limits the diversity of synthetic degradations in a batch. For example, samples in a
@@ -76,10 +77,10 @@ class otf(image):
             self.queue_gt[self.queue_ptr : self.queue_ptr + b, :, :, :] = (
                 self.gt.clone()
             )
-            self.queue_ptr = self.queue_ptr + b
+            self.queue_ptr += b
 
     @torch.no_grad()
-    def feed_data(self, data):
+    def feed_data(self, data) -> None:
         """Accept data from dataloader, and then add two-order degradations to obtain LQ images."""
         if self.is_train:
             # training data synthesis
@@ -269,10 +270,10 @@ class otf(image):
             if "gt" in data:
                 self.gt = data["gt"].to(device=self.device, non_blocking=True)
 
-    def nondist_validation(self, dataloader, current_iter, tb_logger, save_img):
+    def nondist_validation(self, dataloader, current_iter, tb_logger, save_img) -> None:
         # do not use the synthetic process during validation
         self.is_train = False
-        super(otf, self).nondist_validation(
+        super().nondist_validation(
             dataloader, current_iter, tb_logger, save_img
         )
         self.is_train = True
