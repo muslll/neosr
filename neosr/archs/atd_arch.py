@@ -6,8 +6,8 @@ from torch import nn
 from torch.nn import functional as F
 from torch.nn.init import trunc_normal_
 
-from neosr.utils.registry import ARCH_REGISTRY
 from neosr.archs.arch_util import net_opt, to_2tuple
+from neosr.utils.registry import ARCH_REGISTRY
 
 upscale, __ = net_opt()
 
@@ -89,13 +89,15 @@ class ConvFFN(nn.Module):
 
 
 def window_partition(x, window_size):
-    """
-    Args:
+    """Args:
+    ----
         x: (b, h, w, c)
         window_size (int): window size
 
-    Returns:
+    Returns
+    -------
         windows: (num_windows*b, window_size, window_size, c)
+
     """
     b, h, w, c = x.shape
     x = x.view(b, h // window_size, window_size, w // window_size, window_size, c)
@@ -106,15 +108,17 @@ def window_partition(x, window_size):
 
 
 def window_reverse(windows, window_size, h, w):
-    """
-    Args:
+    """Args:
+    ----
         windows: (num_windows*b, window_size, window_size, c)
         window_size (int): Window size
         h (int): Height of image
         w (int): Width of image
 
-    Returns:
+    Returns
+    -------
         x: (b, h, w, c)
+
     """
     b = int(windows.shape[0] / (h * w / window_size / window_size))
     x = windows.view(
@@ -125,14 +129,15 @@ def window_reverse(windows, window_size, h, w):
 
 
 class WindowAttention(nn.Module):
-    r"""
-    Shifted Window-based Multi-head Self-Attention
+    r"""Shifted Window-based Multi-head Self-Attention
 
     Args:
+    ----
         dim (int): Number of input channels.
         window_size (tuple[int]): The height and width of the window.
         num_heads (int): Number of attention heads.
         qkv_bias (bool, optional):  If True, add a learnable bias to query, key, value. Default: True
+
     """
 
     def __init__(self, dim, window_size, num_heads, qkv_bias=True):
@@ -155,11 +160,12 @@ class WindowAttention(nn.Module):
         self.softmax = nn.Softmax(dim=-1)
 
     def forward(self, qkv, rpi, mask=None):
-        r"""
-        Args:
+        r"""Args:
+        ----
             qkv: Input query, key, and value tokens with shape of (num_windows*b, n, c*3)
             rpi: Relative position index
             mask (0/-inf):  Mask with shape of (num_windows, Wh*Ww, Wh*Ww) or None
+
         """
         b_, n, c3 = qkv.shape
         c = c3 // 3
@@ -201,15 +207,16 @@ class WindowAttention(nn.Module):
 
 
 class ATD_CA(nn.Module):
-    r"""
-    Adaptive Token Dictionary Cross-Attention.
+    r"""Adaptive Token Dictionary Cross-Attention.
 
     Args:
+    ----
         dim (int): Number of input channels.
         input_resolution (tuple[int]): Input resolution.
         num_tokens (int): Number of tokens in external token dictionary. Default: 64
         reducted_dim (int, optional): Reducted dimension number for query and key matrix. Default: 4
         qkv_bias (bool, optional):  If True, add a learnable bias to query, key, value. Default: True
+
     """
 
     def __init__(
@@ -232,11 +239,12 @@ class ATD_CA(nn.Module):
         self.softmax = nn.Softmax(dim=-1)
 
     def forward(self, x, td, x_size):
-        r"""
-        Args:
+        r"""Args:
+        ----
             x: input features with shape of (b, n, c)
             td: token dicitionary with shape of (b, m, c)
             x_size: size of the input x (h, w)
+
         """
         h, w = x_size
         b, n, c = x.shape
@@ -265,16 +273,17 @@ class ATD_CA(nn.Module):
 
 
 class AC_MSA(nn.Module):
-    r"""
-    Adaptive Category-based Multihead Self-Attention.
+    r"""Adaptive Category-based Multihead Self-Attention.
 
     Args:
+    ----
         dim (int): Number of input channels.
         input_resolution (tuple[int]): Input resolution.
         num_tokens (int): Number of tokens in external dictionary. Default: 64
         num_heads (int): Number of attention heads. Default: 4
         category_size (int): Number of tokens in each group for global sparse attention. Default: 128
         qkv_bias (bool, optional):  If True, add a learnable bias to query, key, value. Default: True
+
     """
 
     def __init__(
@@ -302,13 +311,13 @@ class AC_MSA(nn.Module):
         self.softmax = nn.Softmax(dim=-1)
 
     def forward(self, qkv, sim, x_size):
-        """
-        Args:
+        """Args:
+        ----
             x: input features with shape of (b, HW, c)
             mask: similarity map with shape of (b, HW, m)
             x_size: size of the input x
-        """
 
+        """
         H, W = x_size
         b, n, c3 = qkv.shape
         c = c3 // 3
@@ -355,10 +364,10 @@ class AC_MSA(nn.Module):
 
 
 class ATDTransformerLayer(nn.Module):
-    r"""
-    ATD Transformer Layer
+    r"""ATD Transformer Layer
 
     Args:
+    ----
         dim (int): Number of input channels.
         idx (int): Layer index.
         input_resolution (tuple[int]): Input resolution.
@@ -374,6 +383,7 @@ class ATDTransformerLayer(nn.Module):
         act_layer (nn.Module, optional): Activation layer. Default: nn.GELU
         norm_layer (nn.Module, optional): Normalization layer.  Default: nn.LayerNorm
         is_last (bool): True if this layer is the last of a ATD Block. Default: False
+
     """
 
     def __init__(
@@ -523,9 +533,11 @@ class PatchMerging(nn.Module):
     r"""Patch Merging Layer.
 
     Args:
+    ----
         input_resolution (tuple[int]): Resolution of input feature.
         dim (int): Number of input channels.
         norm_layer (nn.Module, optional): Normalization layer.  Default: nn.LayerNorm
+
     """
 
     def __init__(self, input_resolution, dim, norm_layer=nn.LayerNorm):
@@ -536,9 +548,7 @@ class PatchMerging(nn.Module):
         self.norm = norm_layer(4 * dim)
 
     def forward(self, x):
-        """
-        x: b, h*w, c
-        """
+        """x: b, h*w, c"""
         h, w = self.input_resolution
         b, seq_len, c = x.shape
         assert seq_len == h * w, "input feature has wrong size"
@@ -563,6 +573,7 @@ class BasicBlock(nn.Module):
     """A basic ATD Block for one stage.
 
     Args:
+    ----
         dim (int): Number of input channels.
         input_resolution (tuple[int]): Input resolution.
         idx (int): Block index.
@@ -577,6 +588,7 @@ class BasicBlock(nn.Module):
         qkv_bias (bool, optional): If True, add a learnable bias to query, key, value. Default: True
         norm_layer (nn.Module, optional): Normalization layer. Default: nn.LayerNorm
         downsample (nn.Module | None, optional): Downsample layer at the end of the layer. Default: None
+
     """
 
     def __init__(
@@ -648,6 +660,7 @@ class ATDB(nn.Module):
     """Adaptive Token Dictionary Block (ATDB).
 
     Args:
+    ----
         dim (int): Number of input channels.
         input_resolution (tuple[int]): Input resolution.
         depth (int): Number of blocks.
@@ -660,6 +673,7 @@ class ATDB(nn.Module):
         img_size: Input image size.
         patch_size: Patch size.
         resi_connection: The convolutional block before residual connection.
+
     """
 
     def __init__(
@@ -747,11 +761,13 @@ class PatchEmbed(nn.Module):
     r"""Image to Patch Embedding
 
     Args:
+    ----
         img_size (int): Image size.  Default: 224.
         patch_size (int): Patch token size. Default: 4.
         in_chans (int): Number of input image channels. Default: 3.
         embed_dim (int): Number of linear projection output channels. Default: 96.
         norm_layer (nn.Module, optional): Normalization layer. Default: None
+
     """
 
     def __init__(
@@ -788,11 +804,13 @@ class PatchUnEmbed(nn.Module):
     r"""Image to Patch Unembedding
 
     Args:
+    ----
         img_size (int): Image size.  Default: 224.
         patch_size (int): Patch token size. Default: 4.
         in_chans (int): Number of input image channels. Default: 3.
         embed_dim (int): Number of linear projection output channels. Default: 96.
         norm_layer (nn.Module, optional): Normalization layer. Default: None
+
     """
 
     def __init__(
@@ -824,8 +842,10 @@ class Upsample(nn.Sequential):
     """Upsample module.
 
     Args:
+    ----
         scale (int): Scale factor. Supported scales: 2^n and 3.
         num_feat (int): Channel number of intermediate features.
+
     """
 
     def __init__(self, scale, num_feat):
@@ -851,6 +871,7 @@ class UpsampleOneStep(nn.Sequential):
        Used in lightweight SR to save parameters.
 
     Args:
+    ----
         scale (int): Scale factor. Supported scales: 2^n and 3.
         num_feat (int): Channel number of intermediate features.
 
@@ -871,6 +892,7 @@ class atd(nn.Module):
         with Adaptive Token Dictionary. - https://arxiv.org/abs/2401.08209
 
     Args:
+    ----
         img_size (int | tuple(int)): Input image size. Default 64
         patch_size (int | tuple(int)): Patch size. Default: 1
         in_chans (int): Number of input image channels. Default: 3
@@ -887,6 +909,7 @@ class atd(nn.Module):
         img_range: Image range. 1. or 255.
         upsampler: The reconstruction reconstruction module. 'pixelshuffle'/'pixelshuffledirect'/'nearest+conv'/None
         resi_connection: The convolutional block before residual connection. '1conv'/'3conv'
+
     """
 
     def __init__(
@@ -1126,7 +1149,7 @@ class atd(nn.Module):
         )  # nw, window_size, window_size, 1
         mask_windows = mask_windows.view(-1, self.window_size * self.window_size)
         attn_mask = mask_windows.unsqueeze(1) - mask_windows.unsqueeze(2)
-        attn_mask = attn_mask.masked_fill(attn_mask != 0, float(-100.0)).masked_fill(
+        attn_mask = attn_mask.masked_fill(attn_mask != 0, -100.0).masked_fill(
             attn_mask == 0, 0.0
         )
 

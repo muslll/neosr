@@ -8,8 +8,8 @@ from neosr.utils.registry import LOSS_REGISTRY
 
 @LOSS_REGISTRY.register()
 class gw_loss(nn.Module):
-    """ Gradient-Weighted loss, adapted from 'Component Divide-and-Conquer for Real-World
-        Image Super-Resolution': https://arxiv.org/abs/2008.01928
+    """Gradient-Weighted loss, adapted from 'Component Divide-and-Conquer for Real-World
+    Image Super-Resolution': https://arxiv.org/abs/2008.01928
     """
 
     def __init__(

@@ -1,11 +1,11 @@
 import math
+
 import torch
 from torch.optim.optimizer import Optimizer
 
 
 class adamw_sf(Optimizer):
-    r"""
-    Schedule-Free AdamW
+    r"""Schedule-Free AdamW
     As the name suggests, no scheduler is needed with this optimizer.
     To add warmup, rather than using a learning rate schedule you can just
     set the warmup_steps parameter.
@@ -15,6 +15,7 @@ class adamw_sf(Optimizer):
     also be placed in eval mode when saving checkpoints.
 
     Arguments:
+    ---------
         params (iterable):
             Iterable of parameters to optimize or dicts defining
             parameter groups.
@@ -36,6 +37,7 @@ class adamw_sf(Optimizer):
         foreach (bool): Use a foreach-backed implementation of the optimizer.
             Should be significantly faster, but will have higher peak memory
             usage (default True if supported in your PyTorch version).
+
     """
 
     def __init__(
@@ -95,10 +97,11 @@ class adamw_sf(Optimizer):
         """Performs a single optimization step.
 
         Arguments:
+        ---------
             closure (callable, optional): A closure that reevaluates the model
                 and returns the loss.
-        """
 
+        """
         loss = None
         if closure is not None:
             loss = closure()

@@ -11,6 +11,7 @@ class adamw_win(Optimizer):
     The AdamW variant was proposed in `Decoupled Weight Decay Regularization`_.
 
     Arguments:
+    ---------
         params (iterable): iterable of parameters to optimize or dicts defining
             parameter groups
         lr (float, optional): learning rate (default: 1e-3)
@@ -26,6 +27,7 @@ class adamw_win(Optimizer):
             (default: False)
         max_grad_norm (float, optional): value used to clip global grad norm (default: 0.0, no gradient clip)
         acceleration_mode (string, optional): win or win2 or none (vanilla AdamW)
+
     """
 
     def __init__(
@@ -80,8 +82,10 @@ class adamw_win(Optimizer):
         """Performs a single optimization step.
 
         Arguments:
+        ---------
             closure (callable, optional): A closure that reevaluates the model
                 and returns the loss.
+
         """
         loss = None
         if closure is not None:

@@ -3,12 +3,12 @@ from functools import partial
 from typing import Literal
 
 import torch
-from torch.nn import functional as F
 from torch import nn
+from torch.nn import functional as F
 from torch.nn.init import trunc_normal_
 
-from neosr.utils.registry import ARCH_REGISTRY
 from neosr.archs.arch_util import net_opt
+from neosr.utils.registry import ARCH_REGISTRY
 
 upscale, __ = net_opt()
 
@@ -21,7 +21,7 @@ def repeat_interleave(x, n):
 
 
 class CCM(nn.Sequential):
-    "Convolutional Channel Mixer"
+    """Convolutional Channel Mixer"""
 
     def __init__(self, dim: int):
         super().__init__(
@@ -33,7 +33,7 @@ class CCM(nn.Sequential):
 
 
 class ICCM(nn.Sequential):
-    "Inverted Convolutional Channel Mixer"
+    """Inverted Convolutional Channel Mixer"""
 
     def __init__(self, dim: int):
         super().__init__(
@@ -45,7 +45,7 @@ class ICCM(nn.Sequential):
 
 
 class DCCM(nn.Sequential):
-    "Doubled Convolutional Channel Mixer"
+    """Doubled Convolutional Channel Mixer"""
 
     def __init__(self, dim: int):
         super().__init__(
@@ -57,7 +57,7 @@ class DCCM(nn.Sequential):
 
 
 class PLKConv2d(nn.Module):
-    "Partial Large Kernel Convolutional Layer"
+    """Partial Large Kernel Convolutional Layer"""
 
     def __init__(self, dim, kernel_size, with_idt):
         super().__init__()
@@ -99,7 +99,7 @@ class PLKConv2d(nn.Module):
 
 
 class RectSparsePLKConv2d(nn.Module):
-    "Rectangular Sparse Partial Large Kernel Convolutional Layer (SLaK style)"
+    """Rectangular Sparse Partial Large Kernel Convolutional Layer (SLaK style)"""
 
     def __init__(self, dim, kernel_size):
         super().__init__()
@@ -131,7 +131,7 @@ class RectSparsePLKConv2d(nn.Module):
 
 
 class SparsePLKConv2d(nn.Module):
-    "Sparse Partial Large Kernel Convolutional Layer (RepLKNet and UniRepLKNet style)"
+    """Sparse Partial Large Kernel Convolutional Layer (RepLKNet and UniRepLKNet style)"""
 
     def __init__(
         self,
@@ -147,8 +147,7 @@ class SparsePLKConv2d(nn.Module):
         self.max_kernel_size = max_kernel_size
         for k, d in zip(sub_kernel_sizes, dilations, strict=False):
             m_k = self._calc_rep_kernel_size(k, d)
-            if m_k > self.max_kernel_size:
-                self.max_kernel_size = m_k
+            self.max_kernel_size = max(m_k, self.max_kernel_size)
         self.with_idt = with_idt
 
         convs = [
@@ -267,7 +266,7 @@ class SparsePLKConv2d(nn.Module):
 
 
 class EA(nn.Module):
-    "Element-wise Attention"
+    """Element-wise Attention"""
 
     def __init__(self, dim: int):
         super().__init__()

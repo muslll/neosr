@@ -12,11 +12,13 @@ class GaussianFilter2D(nn.Module):
         """2D Gaussian Filer
 
         Args:
+        ----
             window_size (int, optional): The window size of the gaussian filter. Defaults to 11.
             in_channels (int, optional): The number of channels of the 4d tensor. Defaults to False.
             sigma (float, optional): The sigma of the gaussian filter. Defaults to 1.5.
             padding (int, optional): The padding of the gaussian filter. Defaults to None.
                 If it is set to None, the filter will use window_size//2 as the padding. Another common setting is 0.
+
         """
         super().__init__()
         self.window_size = window_size
@@ -78,6 +80,7 @@ class mssim(nn.Module):
             Calculate the mean SSIM (MSSIM) between two 4D tensors.
 
         Args:
+        ----
             window_size (int): The window size of the gaussian filter. Defaults to 11.
             in_channels (int, optional): The number of channels of the 4d tensor. Defaults to False.
             sigma (float): The sigma of the gaussian filter. Defaults to 1.5.
@@ -90,6 +93,7 @@ class mssim(nn.Module):
             cosim (bool): Enables CosineSimilary on final loss, to keep better color consistency.
             cosim_lambda (float): Lambda value to increase CosineSimilarity weight.
             loss_weight (float): Weight of final loss value.
+
         """
         super().__init__()
 
@@ -108,7 +112,7 @@ class mssim(nn.Module):
             padding=padding,
         )
 
-    #@torch.amp.custom_fwd(cast_inputs=torch.float32, device_type='cuda')
+    # @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type='cuda')
     @torch.cuda.amp.custom_fwd(cast_inputs=torch.float32)
     def forward(self, x, y):
         """x, y (Tensor): tensors of shape (N,C,H,W)
@@ -152,7 +156,6 @@ class mssim(nn.Module):
         return msssim
 
     def _ssim(self, x, y):
-
         mu_x = self.gaussian_filter(x)  # equ 14
         mu_y = self.gaussian_filter(y)  # equ 14
         sigma2_x = self.gaussian_filter(x * x) - mu_x * mu_x  # equ 15

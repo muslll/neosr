@@ -8,11 +8,14 @@ def mod_crop(img, scale):
     """Mod crop images, used during testing.
 
     Args:
+    ----
         img (ndarray): Input image.
         scale (int): Scale factor.
 
     Returns:
+    -------
         ndarray: Result image.
+
     """
     img = img.copy()
     if img.ndim in (2, 3):
@@ -30,6 +33,7 @@ def paired_random_crop(img_gts, img_lqs, lq_patch_size, scale, gt_path=None):
     It crops lists of lq and gt images with corresponding locations.
 
     Args:
+    ----
         img_gts (list[ndarray] | ndarray | list[Tensor] | Tensor): GT images. Note that all images
             should have the same shape. If the input is an ndarray, it will
             be transformed to a list containing itself.
@@ -41,10 +45,11 @@ def paired_random_crop(img_gts, img_lqs, lq_patch_size, scale, gt_path=None):
         gt_path (str): Path to ground-truth. Default: None.
 
     Returns:
+    -------
         list[ndarray] | ndarray: GT images and LQ images. If returned results
             only have one element, just return ndarray.
-    """
 
+    """
     if not isinstance(img_gts, list):
         img_gts = [img_gts]
     if not isinstance(img_lqs, list):
@@ -64,7 +69,7 @@ def paired_random_crop(img_gts, img_lqs, lq_patch_size, scale, gt_path=None):
     if h_gt != h_lq * scale or w_gt != w_lq * scale:
         raise ValueError(
             f"Scale mismatches. GT ({h_gt}, {w_gt}) is not {scale}x ",
-            f"multiplication of LQ ({h_lq}, {w_lq}). " f"Please fix {gt_path}.",
+            f"multiplication of LQ ({h_lq}, {w_lq}). Please fix {gt_path}.",
         )
 
     if h_lq < lq_patch_size or w_lq < lq_patch_size:
@@ -123,6 +128,7 @@ def basic_augment(
     All the images in the list use the same augmentation.
 
     Args:
+    ----
         imgs (list[ndarray] | ndarray): Images to be augmented. If the input
             is an ndarray, it will be transformed to a list.
         hflip (bool): Horizontal flip. Default: True.
@@ -131,6 +137,7 @@ def basic_augment(
             Default: False.
 
     Returns:
+    -------
         list[ndarray] | ndarray: Augmented images. If returned
             results only have one element, just return ndarray.
 
@@ -156,6 +163,4 @@ def basic_augment(
 
     if return_status:
         return imgs, (hflip, vflip, rot90)
-    else:
-        return imgs
-
+    return imgs

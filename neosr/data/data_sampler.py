@@ -1,4 +1,5 @@
 import math
+
 import torch
 from torch.utils.data.sampler import Sampler
 
@@ -11,11 +12,13 @@ class EnlargedSampler(Sampler):
     time when restart the dataloader after each epoch
 
     Args:
+    ----
         dataset (torch.utils.data.Dataset): Dataset used for sampling.
         num_replicas (int | None): Number of processes participating in
             the training. It is usually the world_size.
         rank (int | None): Rank of the current process within num_replicas.
         ratio (int): Enlarging ratio. Default: 1.
+
     """
 
     def __init__(self, dataset, num_replicas, rank, ratio=1):
@@ -28,15 +31,15 @@ class EnlargedSampler(Sampler):
 
     def __iter__(self):
         # deterministically shuffle based on epoch
-        g = torch.Generator(device='cuda')
+        g = torch.Generator(device="cuda")
         g.manual_seed(self.epoch)
-        indices = torch.randperm(self.total_size, generator=g, device='cuda').tolist()
+        indices = torch.randperm(self.total_size, generator=g, device="cuda").tolist()
 
         dataset_size = len(self.dataset)
         indices = [v % dataset_size for v in indices]
 
         # subsample
-        indices = indices[self.rank:self.total_size:self.num_replicas]
+        indices = indices[self.rank : self.total_size : self.num_replicas]
         assert len(indices) == self.num_samples
 
         return iter(indices)

@@ -6,11 +6,11 @@ from torch.optim.optimizer import Optimizer
 
 
 class adan(Optimizer):
-    """
-    'Adan: Adaptive Nesterov Momentum Algorithm for Faster Optimizing Deep Models':
+    """'Adan: Adaptive Nesterov Momentum Algorithm for Faster Optimizing Deep Models':
         https://arxiv.org/abs/2208.06677
 
     Arguments:
+    ---------
         params (iterable): iterable of parameters to optimize or
             dicts defining parameter groups.
         lr (float, optional): learning rate. (default: 1e-3)
@@ -26,6 +26,7 @@ class adan(Optimizer):
             (default: False)
         foreach (bool): if True would use torch._foreach implementation.
             It's faster but uses slightly more memory. (default: True)
+
     """
 
     def __init__(
@@ -88,7 +89,6 @@ class adan(Optimizer):
     @torch.no_grad()
     def step(self, closure=None):
         """Performs a single optimization step."""
-
         loss = None
         if closure is not None:
             with torch.enable_grad():

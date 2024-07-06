@@ -170,8 +170,7 @@ class SPABS(nn.Module):
 
 @ARCH_REGISTRY.register()
 class spanplus(nn.Module):
-    """
-    Modified from 'Swift Parameter-free Attention Network for Efficient Super-Resolution':
+    """Modified from 'Swift Parameter-free Attention Network for Efficient Super-Resolution':
     https://arxiv.org/abs/2311.12770
     """
 

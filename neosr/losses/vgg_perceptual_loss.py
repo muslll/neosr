@@ -32,7 +32,7 @@ class PatchesKernel3D(nn.Module):
         self.stride = kernelstride
         self.padding = kernelpadding
 
-    #@torch.amp.custom_fwd(cast_inputs=torch.float32, device_type='cuda')
+    # @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type='cuda')
     @torch.cuda.amp.custom_fwd(cast_inputs=torch.float32)
     def forward(self, x):
         batchsize = x.shape[0]
@@ -54,6 +54,7 @@ class vgg_perceptual_loss(nn.Module):
     """Perceptual loss with VGG19
 
     Args:
+    ----
         layer_weights (dict): The weight for each layer of vgg feature.
             Here is an example: {'conv5_4': 1.}, which means the conv5_4
             feature layer (before relu5_4) will be extracted with weight
@@ -71,6 +72,7 @@ class vgg_perceptual_loss(nn.Module):
         patchloss (bool): Enables PatchLoss. Default: False.
         ipk (bool): Enables Image Patch Kernel and adds to the final loss. Default: False.
         patch_weight (float): Weight of PatchLoss. Default: 1.0
+
     """
 
     def __init__(
@@ -128,13 +130,14 @@ class vgg_perceptual_loss(nn.Module):
             raise NotImplementedError(f"{criterion} criterion not supported.")
 
     @torch.no_grad()
-    #@torch.amp.custom_fwd(cast_inputs=torch.float32, device_type='cuda')
+    # @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type='cuda')
     @torch.cuda.amp.custom_fwd(cast_inputs=torch.float32)
     def patch(self, x, gt, is_ipk=False):
-        """
-        Args:
+        """Args:
+        ----
             is_ipk (bool): defines if it's IPK (Image Patch Kernel)
             or FPK (Feature Patch Kernel). Default: False.
+
         """
         loss = 0.0
 
@@ -186,11 +189,14 @@ class vgg_perceptual_loss(nn.Module):
         """Forward function.
 
         Args:
+        ----
             x (Tensor): Input tensor with shape (n, c, h, w).
             gt (Tensor): Ground-truth tensor with shape (n, c, h, w).
 
         Returns:
+        -------
             Tensor: Forward results.
+
         """
         # extract vgg features
         x_features = self.vgg(x)

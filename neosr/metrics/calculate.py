@@ -17,6 +17,7 @@ def calculate_psnr(
     Reference: https://en.wikipedia.org/wiki/Peak_signal-to-noise_ratio
 
     Args:
+    ----
         img (ndarray): Images with range [0, 255].
         img2 (ndarray): Images with range [0, 255].
         crop_border (int): Cropped pixels in each edge of an image. These pixels are not involved in the calculation.
@@ -24,9 +25,10 @@ def calculate_psnr(
         test_y_channel (bool): Test on Y channel of YCbCr. Default: False.
 
     Returns:
+    -------
         float: PSNR result.
-    """
 
+    """
     assert (
         img.shape == img2.shape
     ), f"Image shapes are different: {img.shape}, {img2.shape}."
@@ -69,6 +71,7 @@ def calculate_ssim(
     averaged.
 
     Args:
+    ----
         img (ndarray): Images with range [0, 255].
         img2 (ndarray): Images with range [0, 255].
         crop_border (int): Cropped pixels in each edge of an image. These pixels are not involved in the calculation.
@@ -77,9 +80,10 @@ def calculate_ssim(
         test_y_channel (bool): Test on Y channel of YCbCr. Default: False.
 
     Returns:
+    -------
         float: SSIM result.
-    """
 
+    """
     assert (
         img.shape == img2.shape
     ), f"Image shapes are different: {img.shape}, {img2.shape}."
@@ -113,13 +117,15 @@ def _ssim(img, img2):
     It is called by func:`calculate_ssim`.
 
     Args:
+    ----
         img (ndarray): Images with range [0, 255] with order 'HWC'.
         img2 (ndarray): Images with range [0, 255] with order 'HWC'.
 
     Returns:
+    -------
         float: SSIM result.
-    """
 
+    """
     c1 = (0.01 * 255) ** 2
     c2 = (0.03 * 255) ** 2
     kernel = cv2.getGaussianKernel(11, 1.5)

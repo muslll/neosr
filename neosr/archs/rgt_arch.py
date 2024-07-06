@@ -9,8 +9,8 @@ from torch.nn import functional as F
 from torch.nn.init import trunc_normal_
 from torch.utils import checkpoint
 
-from neosr.utils.registry import ARCH_REGISTRY
 from neosr.archs.arch_util import DropPath, net_opt
+from neosr.utils.registry import ARCH_REGISTRY
 
 upscale, __ = net_opt()
 
@@ -97,6 +97,7 @@ class MLP(nn.Module):
 
 class DynamicPosBias(nn.Module):
     # The implementation builds on Crossformer code https://github.com/cheerss/CrossFormer/blob/main/models/crossformer.py
+
     """Dynamic Relative Position Bias.
 
     Args:
@@ -104,6 +105,7 @@ class DynamicPosBias(nn.Module):
         dim (int): Number of input channels.
         num_heads (int): Number of attention heads.
         residual (bool):  If True, use residual strage to connect conv.
+
     """
 
     def __init__(self, dim, num_heads, residual):
@@ -388,9 +390,9 @@ class L_SA(nn.Module):
         )  # nW, sw[0], sw[1], 1
         mask_windows_0 = img_mask_0.view(-1, self.split_size[0] * self.split_size[1])
         attn_mask_0 = mask_windows_0.unsqueeze(1) - mask_windows_0.unsqueeze(2)
-        attn_mask_0 = attn_mask_0.masked_fill(
-            attn_mask_0 != 0, float(-100.0)
-        ).masked_fill(attn_mask_0 == 0, 0.0)
+        attn_mask_0 = attn_mask_0.masked_fill(attn_mask_0 != 0, -100.0).masked_fill(
+            attn_mask_0 == 0, 0.0
+        )
 
         # calculate mask for V-Shift
         img_mask_1 = img_mask_1.view(
@@ -408,9 +410,9 @@ class L_SA(nn.Module):
         )  # nW, sw[1], sw[0], 1
         mask_windows_1 = img_mask_1.view(-1, self.split_size[1] * self.split_size[0])
         attn_mask_1 = mask_windows_1.unsqueeze(1) - mask_windows_1.unsqueeze(2)
-        attn_mask_1 = attn_mask_1.masked_fill(
-            attn_mask_1 != 0, float(-100.0)
-        ).masked_fill(attn_mask_1 == 0, 0.0)
+        attn_mask_1 = attn_mask_1.masked_fill(attn_mask_1 != 0, -100.0).masked_fill(
+            attn_mask_1 == 0, 0.0
+        )
 
         return attn_mask_0, attn_mask_1
 
@@ -518,6 +520,7 @@ class RG_SA(nn.Module):
         attn_drop (float, optional): Dropout ratio of attention weight. Default: 0.0
         proj_drop (float, optional): Dropout ratio of output. Default: 0.0
         c_ratio (float): channel adjustment factor.
+
     """
 
     def __init__(
@@ -573,8 +576,9 @@ class RG_SA(nn.Module):
             _time = max(int(math.log(H // 4, 4)), int(math.log(W // 4, 4)))
         else:
             _time = max(int(math.log(H // 16, 4)), int(math.log(W // 16, 4)))
-            if _time < 2:
-                _time = 2  # testing _time must equal or larger than training _time (2)
+            _time = max(
+                _time, 2
+            )  # testing _time must equal or larger than training _time (2)
 
         _scale = 4**_time
 
@@ -791,6 +795,7 @@ class Upsample(nn.Sequential):
     ----
         scale (int): Scale factor. Supported scales: 2^n and 3.
         num_feat (int): Channel number of intermediate features.
+
     """
 
     def __init__(self, scale, num_feat):
@@ -936,8 +941,7 @@ class rgt(nn.Module):
         return x
 
     def forward(self, x):
-        """Input: x: (B, C, H, W)
-        """
+        """Input: x: (B, C, H, W)"""
         self.mean = self.mean.type_as(x)
         x = (x - self.mean) * self.img_range
 

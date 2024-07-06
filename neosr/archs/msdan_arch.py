@@ -3,8 +3,8 @@ import torch.nn
 from torch import nn as nn
 from torch.nn import functional as F
 
-from neosr.utils.registry import ARCH_REGISTRY
 from neosr.archs.arch_util import net_opt
+from neosr.utils.registry import ARCH_REGISTRY
 
 upscale, __ = net_opt()
 
@@ -13,16 +13,20 @@ def make_layer(basic_block, num_basic_block, **kwarg):
     """Make layers by stacking the same blocks.
 
     Args:
+    ----
         basic_block (nn.module): nn.module class for basic block.
         num_basic_block (int): number of blocks.
 
     Returns:
+    -------
         nn.Sequential: Stacked blocks in nn.Sequential.
+
     """
     layers = []
     for _ in range(num_basic_block):
         layers.append(basic_block(**kwarg))
     return nn.Sequential(*layers)
+
 
 class BSConvU(torch.nn.Sequential):
     def __init__(

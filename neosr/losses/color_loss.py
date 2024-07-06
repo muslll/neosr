@@ -12,10 +12,12 @@ class colorloss(nn.Module):
     Converts images to chroma-only and compares both.
 
     Args:
+    ----
         criterion (str): loss type. Default: 'huber'
         avgpool (bool): apply downscaling after conversion. Default: False
         scale (int): value used by avgpool. Default: 4
         loss_weight (float): weight for colorloss. Default: 1.0
+
     """
 
     def __init__(

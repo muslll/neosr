@@ -4,17 +4,20 @@ import torch
 from torch import nn
 from torch.nn.init import trunc_normal_
 
+from neosr.archs.arch_util import DropPath, net_opt, to_2tuple
 from neosr.utils.registry import ARCH_REGISTRY
-from neosr.archs.arch_util import DropPath, to_2tuple, net_opt
 
 upscale, __ = net_opt()
 
 
 class ChannelAttention(nn.Module):
     """Channel attention used in RCAN.
+
     Args:
+    ----
         num_feat (int): Channel number of intermediate features.
         squeeze_factor (int): Channel squeeze factor. Default: 16.
+
     """
 
     def __init__(self, num_feat, squeeze_factor=16):
@@ -74,12 +77,13 @@ class Mlp(nn.Module):
 
 
 def window_partition(x, window_size):
-    """
-    Args:
+    """Args:
+    ----
         x: (B, H, W, C)
         window_size (int): window size
     Returns:
         windows: (num_windows*B, window_size, window_size, C)
+
     """
     B, H, W, C = x.shape
     x = x.view(B, H // window_size, window_size, W // window_size, window_size, C)
@@ -90,14 +94,15 @@ def window_partition(x, window_size):
 
 
 def window_reverse(windows, window_size, H, W):
-    """
-    Args:
+    """Args:
+    ----
         windows: (num_windows*B, window_size, window_size, C)
         window_size (int): Window size
         H (int): Height of image
         W (int): Width of image
     Returns:
         x: (B, H, W, C)
+
     """
     B = int(windows.shape[0] / (H * W / window_size / window_size))
     x = windows.view(
@@ -110,7 +115,9 @@ def window_reverse(windows, window_size, H, W):
 class WindowAttention(nn.Module):
     r"""Window based multi-head self attention (W-MSA) module with relative position bias.
     It supports both of shifted and non-shifted window.
+
     Args:
+    ----
         dim (int): Number of input channels.
         window_size (tuple[int]): The height and width of the window.
         num_heads (int): Number of attention heads.
@@ -118,6 +125,7 @@ class WindowAttention(nn.Module):
         qk_scale (float | None, optional): Override default qk scale of head_dim ** -0.5 if set
         attn_drop (float, optional): Dropout ratio of attention weight. Default: 0.0
         proj_drop (float, optional): Dropout ratio of output. Default: 0.0
+
     """
 
     def __init__(
@@ -145,7 +153,9 @@ class WindowAttention(nn.Module):
         # get pair-wise relative position index for each token inside the window
         coords_h = torch.arange(self.window_size[0])
         coords_w = torch.arange(self.window_size[1])
-        coords = torch.stack(torch.meshgrid([coords_h, coords_w], indexing="ij"))  # 2, Wh, Ww
+        coords = torch.stack(
+            torch.meshgrid([coords_h, coords_w], indexing="ij")
+        )  # 2, Wh, Ww
         coords_flatten = torch.flatten(coords, 1)  # 2, Wh*Ww
         relative_coords = (
             coords_flatten[:, :, None] - coords_flatten[:, None, :]
@@ -169,10 +179,11 @@ class WindowAttention(nn.Module):
         self.softmax = nn.Softmax(dim=-1)
 
     def forward(self, x, mask=None):
-        """
-        Args:
+        """Args:
+        ----
             x: input features with shape of (num_windows*B, N, C)
             mask: (0/-inf) mask with shape of (num_windows, Wh*Ww, Wh*Ww) or None
+
         """
         B_, N, C = x.shape
         qkv = (
@@ -374,7 +385,9 @@ class RDG(nn.Module):
 
 class SwinTransformerBlock(nn.Module):
     r"""Swin Transformer Block.
+
     Args:
+    ----
         dim (int): Number of input channels.
         input_resolution (tuple[int]): Input resulotion.
         num_heads (int): Number of attention heads.
@@ -388,6 +401,7 @@ class SwinTransformerBlock(nn.Module):
         drop_path (float, optional): Stochastic depth rate. Default: 0.0
         act_layer (nn.Module, optional): Activation layer. Default: nn.GELU
         norm_layer (nn.Module, optional): Normalization layer.  Default: nn.LayerNorm
+
     """
 
     def __init__(
@@ -543,10 +557,13 @@ class SwinTransformerBlock(nn.Module):
 
 class PatchMerging(nn.Module):
     r"""Patch Merging Layer.
+
     Args:
+    ----
         input_resolution (tuple[int]): Resolution of input feature.
         dim (int): Number of input channels.
         norm_layer (nn.Module, optional): Normalization layer.  Default: nn.LayerNorm
+
     """
 
     def __init__(self, input_resolution, dim, norm_layer=nn.LayerNorm):
@@ -557,9 +574,7 @@ class PatchMerging(nn.Module):
         self.norm = norm_layer(4 * dim)
 
     def forward(self, x):
-        """
-        x: B, H*W, C
-        """
+        """x: B, H*W, C"""
         H, W = self.input_resolution
         B, L, C = x.shape
         assert L == H * W, "input feature has wrong size"
@@ -587,9 +602,11 @@ class PatchMerging(nn.Module):
     r"""Patch Merging Layer.
 
     Args:
+    ----
         input_resolution (tuple[int]): Resolution of input feature.
         dim (int): Number of input channels.
         norm_layer (nn.Module, optional): Normalization layer.  Default: nn.LayerNorm
+
     """
 
     def __init__(self, input_resolution, dim, norm_layer=nn.LayerNorm):
@@ -600,9 +617,7 @@ class PatchMerging(nn.Module):
         self.norm = norm_layer(4 * dim)
 
     def forward(self, x):
-        """
-        x: b, h*w, c
-        """
+        """x: b, h*w, c"""
         h, w = self.input_resolution
         b, seq_len, c = x.shape
         assert seq_len == h * w, "input feature has wrong size"
@@ -627,11 +642,13 @@ class PatchEmbed(nn.Module):
     r"""Image to Patch Embedding
 
     Args:
+    ----
         img_size (int): Image size.  Default: 224.
         patch_size (int): Patch token size. Default: 4.
         in_chans (int): Number of input image channels. Default: 3.
         embed_dim (int): Number of linear projection output channels. Default: 96.
         norm_layer (nn.Module, optional): Normalization layer. Default: None
+
     """
 
     def __init__(
@@ -667,12 +684,14 @@ class PatchEmbed(nn.Module):
 class PatchUnEmbed(nn.Module):
     r"""Image to Patch Unembedding
 
-    args:
+    Args:
+    ----
         img_size (int): image size, default 224*224.
         patch_size (int): Patch token sizd, default 4*4.
         in_chans (int): num image channels, default 3.
         embed_dim (int): num channels for linear projection output, default 96
         norm_layer (nn.Module, optional): normalization layer, default None.
+
     """
 
     def __init__(
@@ -705,8 +724,10 @@ class Upsample(nn.Sequential):
     """Upsample module.
 
     Args:
+    ----
         scale (int): Scale factor. Supported scales: 2^n and 3.
         num_feat (int): Channel number of intermediate features.
+
     """
 
     def __init__(self, scale, num_feat):
@@ -919,6 +940,7 @@ def drct_l(**kwargs):
         **kwargs,
     )
 
+
 @ARCH_REGISTRY.register()
 def drct_xl(**kwargs):
     return drct(
@@ -927,11 +949,7 @@ def drct_xl(**kwargs):
         **kwargs,
     )
 
+
 @ARCH_REGISTRY.register()
 def drct_s(**kwargs):
-    return drct(
-        embed_dim=48,
-        depths=(2, 2, 2, 2),
-        num_heads=(6, 6, 6, 6),
-        **kwargs,
-    )
+    return drct(embed_dim=48, depths=(2, 2, 2, 2), num_heads=(6, 6, 6, 6), **kwargs)

@@ -1,7 +1,6 @@
 import functools
 
 from torch import nn
-from torch.nn import functional as F
 from torch.nn.utils import spectral_norm
 
 from neosr.utils.registry import ARCH_REGISTRY
@@ -38,7 +37,9 @@ class patchgan(nn.Module):
        https://arxiv.org/abs/1802.05957
 
     Args:
+    ----
         use_sn (bool): Use spectral_norm or not. If use_sn is True, then norm_type should be none.
+
     """
 
     def __init__(
@@ -142,4 +143,3 @@ class patchgan(nn.Module):
 
     def forward(self, x):
         return self.model(x)
-

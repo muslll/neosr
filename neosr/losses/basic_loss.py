@@ -30,9 +30,11 @@ class L1Loss(nn.Module):
     """L1 (mean absolute error, MAE) loss.
 
     Args:
+    ----
         loss_weight (float): Loss weight for L1 loss. Default: 1.0.
         reduction (str): Specifies the reduction to apply to the output.
             Supported choices are 'none' | 'mean' | 'sum'. Default: 'mean'.
+
     """
 
     def __init__(self, loss_weight=1.0, reduction="mean"):
@@ -46,11 +48,12 @@ class L1Loss(nn.Module):
         self.reduction = reduction
 
     def forward(self, pred, target, weight=None, **kwargs):
-        """
-        Args:
+        """Args:
+        ----
             pred (Tensor): of shape (N, C, H, W). Predicted tensor.
             target (Tensor): of shape (N, C, H, W). Ground truth tensor.
             weight (Tensor, optional): of shape (N, C, H, W). Element-wise weights. Default: None.
+
         """
         return self.loss_weight * l1_loss(
             pred, target, weight, reduction=self.reduction
@@ -62,9 +65,11 @@ class MSELoss(nn.Module):
     """MSE (L2) loss.
 
     Args:
+    ----
         loss_weight (float): Loss weight for MSE loss. Default: 1.0.
         reduction (str): Specifies the reduction to apply to the output.
             Supported choices are 'none' | 'mean' | 'sum'. Default: 'mean'.
+
     """
 
     def __init__(self, loss_weight=1.0, reduction="mean"):
@@ -78,11 +83,12 @@ class MSELoss(nn.Module):
         self.reduction = reduction
 
     def forward(self, pred, target, weight=None, **kwargs):
-        """
-        Args:
+        """Args:
+        ----
             pred (Tensor): of shape (N, C, H, W). Predicted tensor.
             target (Tensor): of shape (N, C, H, W). Ground truth tensor.
             weight (Tensor, optional): of shape (N, C, H, W). Element-wise weights. Default: None.
+
         """
         return self.loss_weight * mse_loss(
             pred, target, weight, reduction=self.reduction
@@ -94,11 +100,13 @@ class HuberLoss(nn.Module):
     """HuberLoss
 
     Args:
+    ----
         loss_weight (float): Loss weight. Default: 1.0.
         reduction (str): Specifies the reduction to apply to the output.
             Supported choices are 'none' | 'mean' | 'sum'. Default: 'mean'.
         delta (float): Specifies the threshold at which to change between
             delta-scaled L1 and L2 loss. The value must be positive. Default: 1.0
+
     """
 
     def __init__(
@@ -117,13 +125,13 @@ class HuberLoss(nn.Module):
     def forward(
         self, pred: torch.Tensor, target: torch.Tensor, weight: float = None, **kwargs
     ) -> torch.Tensor:
-        """
-        Args:
+        """Args:
+        ----
             pred (Tensor): of shape (N, C, H, W). Predicted tensor.
             target (Tensor): of shape (N, C, H, W). Ground truth tensor.
             weight (Tensor, optional): of shape (N, C, H, W). Element-wise weights. Default: None.
-        """
 
+        """
         return self.loss_weight * huber_loss(
             pred, target, weight, delta=self.delta, reduction=self.reduction
         )
@@ -138,6 +146,7 @@ class chc(nn.Module):
        https://github.com/dmarnerides/hdr-expandnet
 
     Args:
+    ----
         loss_weight (float): Loss weight. Default: 1.0.
         reduction (str): Specifies the reduction to apply to the output.
             Supported choices are 'none' | 'mean' | 'sum'. Default: 'mean'.
@@ -146,6 +155,7 @@ class chc(nn.Module):
         loss_lambda (float):  constant factor that adjusts the contribution of the cosine similarity term
         clip_min (float): threshold that sets the gradients of well-trained pixels to zeros
         clip_max (float): max clip limit, can act as a noise filter
+
     """
 
     def __init__(
@@ -179,10 +189,11 @@ class chc(nn.Module):
     def forward(
         self, pred: torch.Tensor, target: torch.Tensor, **kwargs
     ) -> torch.Tensor:
-        """
-        Args:
+        """Args:
+        ----
             pred (Tensor): of shape (N, C, H, W). Predicted tensor.
             target (Tensor): of shape (N, C, H, W). Ground truth tensor.
+
         """
         cosine_term = (1 - self.similarity(pred, target)).mean()
 

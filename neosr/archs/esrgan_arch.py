@@ -14,11 +14,13 @@ def default_init_weights(module_list, scale=1, bias_fill=0, **kwargs):
     """Initialize network weights.
 
     Args:
+    ----
         module_list (list[nn.Module] | nn.Module): Modules to be initialized.
         scale (float): Scale initialized weights, especially for residual
             blocks. Default: 1.
         bias_fill (float): The value to fill bias. Default: 0
         kwargs (dict): Other arguments for initialization function.
+
     """
     if not isinstance(module_list, list):
         module_list = [module_list]
@@ -39,11 +41,14 @@ def make_layer(basic_block, num_basic_block, **kwarg):
     """Make layers by stacking the same blocks.
 
     Args:
+    ----
         basic_block (nn.module): nn.module class for basic block.
         num_basic_block (int): number of blocks.
 
     Returns:
+    -------
         nn.Sequential: Stacked blocks in nn.Sequential.
+
     """
     layers = []
     for _ in range(num_basic_block):
@@ -55,11 +60,14 @@ def pixel_unshuffle(x, scale):
     """Pixel unshuffle.
 
     Args:
+    ----
         x (Tensor): Input feature with shape (b, c, hh, hw).
         scale (int): Downsample ratio.
 
     Returns:
+    -------
         Tensor: the pixel unshuffled feature.
+
     """
     b, c, hh, hw = x.size()
     out_channel = c * (scale**2)
@@ -76,8 +84,10 @@ class ResidualDenseBlock(nn.Module):
     Used in RRDB block in ESRGAN.
 
     Args:
+    ----
         num_feat (int): Channel number of intermediate features.
         num_grow_ch (int): Channels for each growth.
+
     """
 
     def __init__(self, num_feat=64, num_grow_ch=32):
@@ -111,8 +121,10 @@ class RRDB(nn.Module):
     Used in RRDB-Net in ESRGAN.
 
     Args:
+    ----
         num_feat (int): Channel number of intermediate features.
         num_grow_ch (int): Channels for each growth.
+
     """
 
     def __init__(self, num_feat, num_grow_ch=32):
@@ -142,12 +154,14 @@ class esrgan(nn.Module):
     and enlarge the channel size before feeding inputs into the main ESRGAN architecture.
 
     Args:
+    ----
         num_in_ch (int): Channel number of inputs.
         num_out_ch (int): Channel number of outputs.
         num_feat (int): Channel number of intermediate features.
             Default: 64
         num_block (int): Block number in the trunk network. Defaults: 23
         num_grow_ch (int): Channels for each growth. Default: 32.
+
     """
 
     def __init__(

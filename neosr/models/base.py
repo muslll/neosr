@@ -52,10 +52,12 @@ class base:
         """Validation function.
 
         Args:
+        ----
             dataloader (torch.utils.data.DataLoader): Validation dataloader.
             current_iter (int): Current iteration.
             tb_logger (tensorboard logger): Tensorboard logger.
             save_img (bool): Whether to save images. Default: False.
+
         """
         if self.opt["dist"]:
             self.dist_validation(dataloader, current_iter, tb_logger, save_img)
@@ -97,7 +99,9 @@ class base:
         or DataParallel.
 
         Args:
+        ----
             net (nn.Module)
+
         """
         if self.opt.get("use_amp", False) is True:
             net = net.to(
@@ -178,7 +182,9 @@ class base:
         """Set learning rate for warm-up.
 
         Args:
+        ----
             lr_groups_l (list): List for lr_groups, each for an optimizer.
+
         """
         for optimizer, lr_groups in zip(self.optimizers, lr_groups_l, strict=True):
             for param_group, lr in zip(optimizer.param_groups, lr_groups, strict=True):
@@ -195,9 +201,11 @@ class base:
         """Update learning rate.
 
         Args:
+        ----
             current_iter (int): Current iteration.
             warmup_iter (int)： Warm-up iter numbers. -1 for no warm-up.
                 Default： -1.
+
         """
         if current_iter > 0 and self.n_accumulated == 0:
             for scheduler in self.schedulers:
@@ -222,7 +230,9 @@ class base:
         """Print the str and parameter number of a network.
 
         Args:
+        ----
             net (nn.Module)
+
         """
         if isinstance(net, (DataParallel, DistributedDataParallel)):
             net_cls_str = f"{net.__class__.__name__} - {net.module.__class__.__name__}"
@@ -242,11 +252,13 @@ class base:
         """Save networks.
 
         Args:
+        ----
             net (nn.Module | list[nn.Module]): Network(s) to be saved.
             net_label (str): Network label.
             current_iter (int): Current iter number.
             param_key (str | list[str]): The parameter key(s) to save network.
                 Default: 'params'.
+
         """
         if current_iter == -1:
             current_iter = "latest"
@@ -307,12 +319,14 @@ class base:
         """Load network.
 
         Args:
+        ----
             load_path (str): The path of networks to be loaded.
             net (nn.Module): Network.
             strict (bool): Whether strictly loaded.
             param_key (str): The parameter key of loaded network. If set to
                 None, use the root 'path'.
                 Default: None.
+
         """
         self.param_key = param_key
         logger = get_root_logger()
@@ -354,10 +368,11 @@ class base:
         resuming.
 
         Args:
+        ----
             epoch (int): Current epoch.
             current_iter (int): Current iteration.
-        """
 
+        """
         if current_iter != -1:
             state = {
                 "epoch": epoch,
@@ -407,7 +422,9 @@ class base:
         """Reload the optimizers and schedulers for resumed training.
 
         Args:
+        ----
             resume_state (dict): Resume state.
+
         """
         resume_optimizers = resume_state["optimizers"]
         resume_schedulers = resume_state["schedulers"]
@@ -423,12 +440,14 @@ class base:
             self.schedulers[i].load_state_dict(s)
 
     def reduce_loss_dict(self, loss_dict):
-        """reduce loss dict.
+        """Reduce loss dict.
 
         In distributed training, it averages the losses among different GPUs .
 
         Args:
+        ----
             loss_dict (OrderedDict): Loss dict.
+
         """
         with torch.inference_mode():
             if self.opt["dist"]:

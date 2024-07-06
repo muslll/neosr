@@ -1,4 +1,5 @@
 import torch
+import torch.nn.modules.module
 from torch import nn
 from torch.nn import Conv2d, Module, Parameter
 from torch.nn.utils import spectral_norm
@@ -7,8 +8,6 @@ from torchvision.models import ResNet18_Weights
 
 from neosr.archs.arch_util import DySample
 from neosr.utils.registry import ARCH_REGISTRY
-import torch.nn.modules.module
-from typing import List, Type
 
 
 def conv3otherMish(in_planes, out_planes, kernel_size=None, stride=None, padding=None):
@@ -52,14 +51,14 @@ class ConvBnMish(nn.Module):
         ksize: int,
         stride: int,
         pad: int,
-        dilation: int=1,
-        groups: int=1,
-        has_bn: bool=True,
-        norm_layer: Type[BatchNorm2d]=nn.BatchNorm2d,
-        bn_eps: float=1e-5,
-        has_mish: bool=True,
-        inplace: bool=True,
-        has_bias: bool=False,
+        dilation: int = 1,
+        groups: int = 1,
+        has_bn: bool = True,
+        norm_layer: type[nn.BatchNorm2d] = nn.BatchNorm2d,
+        bn_eps: float = 1e-5,
+        has_mish: bool = True,
+        inplace: bool = True,
+        has_bias: bool = False,
     ):
         super(ConvBnMish, self).__init__()
         self.conv = spectral_norm(
@@ -81,7 +80,7 @@ class ConvBnMish(nn.Module):
         if self.has_mish:
             self.mish = nn.Mish(inplace=inplace)
 
-    def forward(self, x:     torch.Tensor) ->     torch.Tensor:
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.conv(x)
         if self.has_bn:
             x = self.bn(x)
@@ -91,7 +90,7 @@ class ConvBnMish(nn.Module):
 
 
 class Attention(Module):
-    def __init__(self, in_places: int, scale: int=8, eps: float=1e-6):
+    def __init__(self, in_places: int, scale: int = 8, eps: float = 1e-6):
         super(Attention, self).__init__()
         self.gamma = Parameter(torch.zeros(1))
         self.in_places = in_places
@@ -108,7 +107,7 @@ class Attention(Module):
             in_channels=in_places, out_channels=in_places, kernel_size=1
         )
 
-    def forward(self, x:     torch.Tensor) ->     torch.Tensor:
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         # Apply the feature map to the queries and keys
         batch_size, chnnels, height, width = x.shape
         Q = self.query_conv(x).view(batch_size, -1, width * height)
@@ -140,7 +139,9 @@ class AttentionAggregationModule(nn.Module):
         self.convblk = ConvBnMish(in_chan, out_chan, ksize=1, stride=1, pad=0)
         self.conv_atten = Attention(out_chan)
 
-    def forward(self, s5:     torch.Tensor, s4:     torch.Tensor, s3:     torch.Tensor, s2:     torch.Tensor) ->     torch.Tensor:
+    def forward(
+        self, s5: torch.Tensor, s4: torch.Tensor, s3: torch.Tensor, s2: torch.Tensor
+    ) -> torch.Tensor:
         fcat = torch.cat([s5, s4, s3, s2], dim=1)
         feat = self.convblk(fcat)
         atten = self.conv_atten(feat)
@@ -149,7 +150,7 @@ class AttentionAggregationModule(nn.Module):
 
 
 class Conv3x3GNMish(nn.Module):
-    def __init__(self, in_channels: int, out_channels: int, upsample: bool=False):
+    def __init__(self, in_channels: int, out_channels: int, upsample: bool = False):
         super().__init__()
         self.upsample = upsample
         self.dysample = DySample(
@@ -165,7 +166,7 @@ class Conv3x3GNMish(nn.Module):
             nn.Mish(inplace=True),
         )
 
-    def forward(self, x:     torch.Tensor) ->     torch.Tensor:
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.block(x)
         if self.upsample:
             x = self.dysample(x)
@@ -180,7 +181,7 @@ class FPNBlock(nn.Module):
             in_channels=64, out_ch=64, scale=2, groups=4, end_convolution=False
         )
 
-    def forward(self, x: List[    torch.Tensor]) ->     torch.Tensor:
+    def forward(self, x: list[torch.Tensor]) -> torch.Tensor:
         x, skip = x
         x = self.dysample(x)
         skip = self.skip_conv(skip)
@@ -189,7 +190,7 @@ class FPNBlock(nn.Module):
 
 
 class SegmentationBlock(nn.Module):
-    def __init__(self, in_channels: int, out_channels: int, n_upsamples: int=0):
+    def __init__(self, in_channels: int, out_channels: int, n_upsamples: int = 0):
         super().__init__()
 
         blocks = [Conv3x3GNMish(in_channels, out_channels, upsample=bool(n_upsamples))]
@@ -198,23 +199,24 @@ class SegmentationBlock(nn.Module):
                 blocks.append(Conv3x3GNMish(out_channels, out_channels, upsample=True))
         self.block = nn.Sequential(*blocks)
 
-    def forward(self, x:     torch.Tensor) ->     torch.Tensor:
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         return self.block(x)
 
 
 @ARCH_REGISTRY.register()
 class ea2fpn(nn.Module):
-    """ Modified for the neosr project, based on 'A2-FPN for Semantic
-        Segmentation of Fine-Resolution Remotely Sensed Images':
-        https://doi.org/10.1080/01431161.2022.2030071 
+    """Modified for the neosr project, based on 'A2-FPN for Semantic
+    Segmentation of Fine-Resolution Remotely Sensed Images':
+    https://doi.org/10.1080/01431161.2022.2030071
     """
+
     def __init__(
         self,
-        class_num: int=6,
-        encoder_channels: List[int]=[512, 256, 128, 64],
-        pyramid_channels: int=64,
-        segmentation_channels: int=64,
-        dropout: float=0.2,
+        class_num: int = 6,
+        encoder_channels: list[int] = [512, 256, 128, 64],
+        pyramid_channels: int = 64,
+        segmentation_channels: int = 64,
+        dropout: float = 0.2,
         **kwargs,
     ):
         super().__init__()
@@ -264,7 +266,7 @@ class ea2fpn(nn.Module):
         )
         self.apply(self._init_weights)
 
-    def _init_weights(self, m:     torch.nn.modules.module.Module):
+    def _init_weights(self, m: torch.nn.modules.module.Module):
         if isinstance(m, nn.Linear):
             nn.init.trunc_normal_(m.weight, std=0.02)
             if isinstance(m, nn.Linear) and m.bias is not None:
@@ -275,7 +277,7 @@ class ea2fpn(nn.Module):
             nn.init.constant_(m.bias, 0)
             nn.init.constant_(m.weight, 1.0)
 
-    def forward(self, x:     torch.Tensor) ->     torch.Tensor:
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         # ==> get encoder features
         c1 = self.layer_down0(x)
         c2 = self.layer_down1(c1)

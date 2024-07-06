@@ -1,4 +1,5 @@
 import functools
+
 import torch
 from torch.nn import functional as F
 
@@ -7,33 +8,38 @@ def reduce_loss(loss, reduction):
     """Reduce loss as specified.
 
     Args:
+    ----
         loss (Tensor): Elementwise loss tensor.
         reduction (str): Options are 'none', 'mean' and 'sum'.
 
     Returns:
+    -------
         Tensor: Reduced loss tensor.
+
     """
     reduction_enum = F._Reduction.get_enum(reduction)
     # none: 0, elementwise_mean:1, sum: 2
     if reduction_enum == 0:
         return loss
-    elif reduction_enum == 1:
+    if reduction_enum == 1:
         return loss.mean()
-    else:
-        return loss.sum()
+    return loss.sum()
 
 
 def weight_reduce_loss(loss, weight=None, reduction="mean"):
     """Apply element-wise weight and reduce loss.
 
     Args:
+    ----
         loss (Tensor): Element-wise loss.
         weight (Tensor): Element-wise weights. Default: None.
         reduction (str): Same as built-in losses of PyTorch. Options are
             'none', 'mean' and 'sum'. Default: 'mean'.
 
     Returns:
+    -------
         Tensor: Loss values.
+
     """
     # if weight is specified, apply element-wise weight
     if weight is not None:
@@ -102,13 +108,15 @@ def get_local_weights(residual, ksize):
     It is only called by the `get_refined_artifact_map` function.
 
     Args:
+    ----
         residual (Tensor): Residual between predicted and ground truth images.
         ksize (Int): size of the local window.
 
     Returns:
+    -------
         Tensor: weight for each pixel to be discriminated as an artifact pixel
-    """
 
+    """
     pad = (ksize - 1) // 2
     residual_pad = F.pad(residual, pad=[pad, pad, pad, pad], mode="reflect")
 
@@ -127,15 +135,17 @@ def get_refined_artifact_map(img_gt, img_output, ksize):
     (Details or Artifacts: A Locally Discriminative Learning Approach to Realistic Image Super-Resolution. In CVPR 2022)
 
     Args:
+    ----
         img_gt (Tensor): ground truth images.
         img_output (Tensor): output images given by the optimizing model.
         ksize (Int): size of the local window.
 
     Returns:
+    -------
         overall_weight: weight for each pixel to be discriminated as an artifact pixel
         (calculated based on both local and global observations).
-    """
 
+    """
     residual_sr = torch.sum(torch.abs(img_gt - img_output), 1, keepdim=True)
 
     patch_level_weight = torch.var(

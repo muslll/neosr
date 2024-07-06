@@ -18,11 +18,12 @@ def mixup(img_gt, img_lq, alpha_min=0.4, alpha_max=0.6):
         https://github.com/facebookresearch/mixup-cifar10
 
     Args:
+    ----
         img_gt, img_lq (Tensor): Input images of shape (N, C, H, W).
             Assumes same size.
         alpha_min/max (float): The given min/max mixing ratio.
-    """
 
+    """
     if img_gt.size() != img_lq.size():
         msg = "img_gt and img_lq have to be the same resolution."
         raise ValueError(msg)
@@ -48,17 +49,18 @@ def cutmix(img_gt, img_lq, alpha=0.9):
         https://github.com/clovaai/CutMix-PyTorch
 
     Args:
+    ----
         img_gt, img_lq (Tensor): Input images of shape (N, C, H, W).
             Assumes same size.
         alpha (float): The given maximum mixing ratio.
-    """
 
+    """
     if img_gt.size() != img_lq.size():
         msg = "img_gt and img_lq have to be the same resolution."
         raise ValueError(msg)
 
     def rand_bbox(size, lam):
-        """generate random box by lam"""
+        """Generate random box by lam"""
         W = size[2]
         H = size[3]
         cut_rat = np.sqrt(1.0 - lam)
@@ -97,17 +99,18 @@ def resizemix(img_gt, img_lq, scope=(0.2, 0.9)):
     (https://arxiv.org/abs/2012.11101)".
 
     Args:
+    ----
         img_gt, img_lq (Tensor): Input images of shape (N, C, H, W).
             Assumes same size.
         scope (float): The given maximum mixing ratio.
-    """
 
+    """
     if img_gt.size() != img_lq.size():
         msg = "img_gt and img_lq have to be the same resolution."
         raise ValueError(msg)
 
     def rand_bbox_tao(size, tao):
-        """generate random box by tao (scale)"""
+        """Generate random box by tao (scale)"""
         W = size[2]
         H = size[3]
         cut_w = int(W * tao)
@@ -169,17 +172,18 @@ def cutblur(img_gt, img_lq, alpha=0.7):
         (https://arxiv.org/abs/2004.00448)
 
     Args:
+    ----
         img_gt, img_lq (Tensor): Input images of shape (N, C, H, W).
             Assumes same size.
         alpha (float): The given max mixing ratio.
-    """
 
+    """
     if img_gt.size() != img_lq.size():
         msg = "img_gt and img_lq have to be the same resolution."
         raise ValueError(msg)
 
     def rand_bbox(size, lam):
-        """generate random box by lam (scale)"""
+        """Generate random box by lam (scale)"""
         W = size[2]
         H = size[3]
         cut_w = int(W * lam)
@@ -217,6 +221,7 @@ def apply_augment(
     r"""Applies Augmentations.
 
     Args:
+    ----
         img_gt, img_lq (Tensor): Input images of shape (N, C, H, W).
         scale (int): Scale ratio between GT and LQ.
         augs (list): List of possible augmentations to apply. Supported
@@ -228,7 +233,6 @@ def apply_augment(
         img_gt, img_lq (Tensor)
 
     """
-
     if len(augs) != len(prob):
         msg = "Length of 'augmentation' and aug_prob don't match!"
         raise ValueError(msg)

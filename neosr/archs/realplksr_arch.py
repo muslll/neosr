@@ -11,7 +11,7 @@ upscale, __ = net_opt()
 
 
 class DCCM(nn.Sequential):
-    "Doubled Convolutional Channel Mixer"
+    """Doubled Convolutional Channel Mixer"""
 
     def __init__(self, dim: int):
         super().__init__(
@@ -23,7 +23,7 @@ class DCCM(nn.Sequential):
 
 
 class PLKConv2d(nn.Module):
-    "Partial Large Kernel Convolutional Layer"
+    """Partial Large Kernel Convolutional Layer"""
 
     def __init__(self, dim: int, kernel_size: int):
         super().__init__()
@@ -41,7 +41,7 @@ class PLKConv2d(nn.Module):
 
 
 class EA(nn.Module):
-    "Element-wise Attention"
+    """Element-wise Attention"""
 
     def __init__(self, dim: int):
         super().__init__()

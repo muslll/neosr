@@ -1,5 +1,6 @@
 import queue as Queue
 import threading
+
 import torch
 from torch.utils.data import DataLoader
 
@@ -10,8 +11,10 @@ class PrefetchGenerator(threading.Thread):
     Reference: https://stackoverflow.com/questions/7323664/python-generator-pre-fetch
 
     Args:
+    ----
         generator: Python generator.
         num_prefetch_queue (int): Number of prefetch queue.
+
     """
 
     def __init__(self, generator, num_prefetch_queue):
@@ -41,13 +44,16 @@ class PrefetchDataLoader(DataLoader):
 
     Reference: https://github.com/IgorSusmelj/pytorch-styleguide/issues/5#
 
-    TODO:
+    Todo:
+    ----
     Need to test on single gpu and ddp (multi-gpu). There is a known issue in
     ddp.
 
     Args:
+    ----
         num_prefetch_queue (int): Number of prefetch queue.
         kwargs (dict): Other arguments for dataloader.
+
     """
 
     def __init__(self, num_prefetch_queue, **kwargs):
@@ -58,7 +64,7 @@ class PrefetchDataLoader(DataLoader):
         return PrefetchGenerator(super().__iter__(), self.num_prefetch_queue)
 
 
-class CUDAPrefetcher():
+class CUDAPrefetcher:
     """CUDA prefetcher.
 
     Reference: https://github.com/NVIDIA/apex/issues/304#
@@ -66,8 +72,10 @@ class CUDAPrefetcher():
     It may consume more GPU memory.
 
     Args:
+    ----
         loader: Dataloader.
         opt (dict): Options.
+
     """
 
     def __init__(self, loader, opt):
@@ -75,7 +83,7 @@ class CUDAPrefetcher():
         self.loader = iter(loader)
         self.opt = opt
         self.stream = torch.cuda.Stream()
-        self.device = torch.device('cuda')
+        self.device = torch.device("cuda")
         self.preload()
 
     def preload(self):
@@ -83,12 +91,14 @@ class CUDAPrefetcher():
             self.batch = next(self.loader)  # self.batch is a dict
         except StopIteration:
             self.batch = None
-            return None
+            return
         # put tensors to gpu
         with torch.cuda.stream(self.stream):
             for k, v in self.batch.items():
                 if torch.is_tensor(v):
-                    self.batch[k] = self.batch[k].to(device=self.device, non_blocking=True)
+                    self.batch[k] = self.batch[k].to(
+                        device=self.device, non_blocking=True
+                    )
 
     def next(self):
         torch.cuda.current_stream().wait_stream(self.stream)

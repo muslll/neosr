@@ -15,14 +15,17 @@ def rgb2ycbcr(img, y_only=False):
     https://en.wikipedia.org/wiki/YCbCr#JPEG_conversion.
 
     Args:
+    ----
         img (ndarray): The input image. It accepts:
             1. np.uint8 type with range [0, 255];
             2. np.float32 type with range [0, 1].
         y_only (bool): Whether to only return Y channel. Default: False.
 
     Returns:
+    -------
         ndarray: The converted YCbCr image. The output image has the same type
             and range as input image.
+
     """
     img_type = img.dtype
     img = _convert_input_type_range(img)
@@ -54,14 +57,17 @@ def bgr2ycbcr(img, y_only=False):
     https://en.wikipedia.org/wiki/YCbCr#JPEG_conversion.
 
     Args:
+    ----
         img (ndarray): The input image. It accepts:
             1. np.uint8 type with range [0, 255];
             2. np.float32 type with range [0, 1].
         y_only (bool): Whether to only return Y channel. Default: False.
 
     Returns:
+    -------
         ndarray: The converted YCbCr image. The output image has the same type
             and range as input image.
+
     """
     img_type = img.dtype
     img = _convert_input_type_range(img)
@@ -93,13 +99,16 @@ def ycbcr2rgb(img):
     https://en.wikipedia.org/wiki/YCbCr#JPEG_conversion.
 
     Args:
+    ----
         img (ndarray): The input image. It accepts:
             1. np.uint8 type with range [0, 255];
             2. np.float32 type with range [0, 1].
 
     Returns:
+    -------
         ndarray: The converted RGB image. The output image has the same type
             and range as input image.
+
     """
     img_type = img.dtype
     img = _convert_input_type_range(img) * 255
@@ -128,13 +137,16 @@ def ycbcr2bgr(img):
     https://en.wikipedia.org/wiki/YCbCr#JPEG_conversion.
 
     Args:
+    ----
         img (ndarray): The input image. It accepts:
             1. np.uint8 type with range [0, 255];
             2. np.float32 type with range [0, 1].
 
     Returns:
+    -------
         ndarray: The converted BGR image. The output image has the same type
             and range as input image.
+
     """
     img_type = img.dtype
     img = _convert_input_type_range(img) * 255
@@ -156,18 +168,18 @@ def _convert_input_type_range(img):
     It converts the input image to np.float32 type and range of [0, 1].
 
     Args:
+    ----
         img (ndarray): The input image.
 
     Returns:
+    -------
         (ndarray): The converted image with type of float32 and range of
             [0, 1].
-    """
 
+    """
     img_type = img.dtype
     img = img.astype(np.float32)
-    if img_type == np.float32:
-        pass
-    elif img_type == np.float16:
+    if img_type == np.float32 or img_type == np.float16:
         pass
     elif img_type == np.uint8:
         img /= 255.0
@@ -187,6 +199,7 @@ def _convert_output_type_range(img, dst_type):
     those types with range [0, 1].
 
     Args:
+    ----
         img (ndarray): The image to be converted with np.float32 type and
             range [0, 255].
         dst_type (type): If dst_type is uint8, it converts the image to np.uint8
@@ -194,9 +207,10 @@ def _convert_output_type_range(img, dst_type):
             image to np.float32 type with range [0, 1].
 
     Returns:
+    -------
         (ndarray): The converted image with desired type and range.
-    """
 
+    """
     if dst_type not in (np.uint8, np.float32, np.float16):
         raise TypeError(
             f"The dst_type should be np.float32, np.float16 or np.uint8, but got {dst_type}"
@@ -215,11 +229,14 @@ def rgb2ycbcr_pt(img, y_only=False):
     https://en.wikipedia.org/wiki/YCbCr#ITU-R_BT.601_conversion.
 
     Args:
+    ----
         img (Tensor): Images with shape (n, 3, h, w), the range [0, 1], float, RGB format.
          y_only (bool): Whether to only return Y channel. Default: False.
 
     Returns:
+    -------
         (Tensor): converted images with the shape (n, 3/1, h, w), the range [0, 1], float.
+
     """
     if y_only:
         weight = torch.tensor([[65.481], [128.553], [24.966]]).to(
@@ -244,16 +261,18 @@ def rgb2ycbcr_pt(img, y_only=False):
 
 
 def rgb_to_cbcr(img: torch.Tensor) -> torch.Tensor:
-    """
-    RGB to *CbCr. Outputs tensor with only CbCr channels.
+    """RGB to *CbCr. Outputs tensor with only CbCr channels.
     ITU-R BT.601 primaries are used in this converison.
 
     Args:
+    ----
         img (Tensor): Images with shape (n, 3, h, w), the range [0, 1], float, RGB format.
-    Returns:
-        (Tensor): converted images with the shape (n, 3/1, h, w), the range [0, 1], float.
-    """
 
+    Returns:
+    -------
+        (Tensor): converted images with the shape (n, 3/1, h, w), the range [0, 1], float.
+
+    """
     if not isinstance(img, torch.Tensor):
         raise TypeError(f"Input type is not a Tensor. Got {type(img)}")
 
@@ -281,7 +300,6 @@ def rgb_to_cbcr(img: torch.Tensor) -> torch.Tensor:
 
 def rgb_to_luma(img: torch.Tensor) -> torch.Tensor:
     """RGB to CIELAB L*"""
-
     if not isinstance(img, torch.Tensor):
         raise TypeError(f"Input type is not a Tensor. Got {type(img)}")
 

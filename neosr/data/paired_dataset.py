@@ -1,8 +1,6 @@
 import os
 import random
 
-import torch
-from torch.nn import functional as F
 from torch.utils import data
 from torchvision.transforms.functional import normalize
 
@@ -26,6 +24,7 @@ class paired(data.Dataset):
     3. **folder**: Scan folders to generate paths. The rest.
 
     Args:
+    ----
         opt (dict): Config for train datasets. It contains the following keys:
         dataroot_gt (str): Data root path for gt.
         dataroot_lq (str): Data root path for lq.
@@ -38,6 +37,7 @@ class paired(data.Dataset):
         use_rot (bool): Use rotation (use vertical flip and transposing h and w for implementation).
         scale (bool): Scale, which will be added automatically.
         phase (str): 'train' or 'val'.
+
     """
 
     def __init__(self, opt):
@@ -51,7 +51,7 @@ class paired(data.Dataset):
         # mean and std for normalizing the input images
         self.mean = opt["mean"] if "mean" in opt else None
         self.std = opt["std"] if "std" in opt else None
-        self.color = not self.opt.get("color", None) == "y"
+        self.color = self.opt.get("color", None) != "y"
 
         self.gt_folder, self.lq_folder = opt["dataroot_gt"], opt["dataroot_lq"]
         self.filename_tmpl = opt["filename_tmpl"] if "filename_tmpl" in opt else "{}"
@@ -128,7 +128,6 @@ class paired(data.Dataset):
             finally:
                 retry -= 1
 
-
         scale = self.opt["scale"]
         # augmentation for training
         if self.opt["phase"] == "train":
@@ -137,13 +136,11 @@ class paired(data.Dataset):
             rot = self.opt.get("use_rot", True)
 
             # random crop
-            img_gt, img_lq = paired_random_crop(img_gt, img_lq, patch_size, scale, gt_path)
-            # flip, rotation
-            img_gt, img_lq = basic_augment(
-                [img_gt, img_lq],
-                hflip=flip,
-                rotation=rot,
+            img_gt, img_lq = paired_random_crop(
+                img_gt, img_lq, patch_size, scale, gt_path
             )
+            # flip, rotation
+            img_gt, img_lq = basic_augment([img_gt, img_lq], hflip=flip, rotation=rot)
 
         # crop the unmatched GT images during validation or testing
         if self.opt["phase"] != "train":

@@ -253,7 +253,9 @@ class image(base):
             logger.warning(msg)
 
         if self.sam is not None and self.accum_iters > 1:
-            raise NotImplementedError("SAM can't be used with gradient accumulation yet.")
+            raise NotImplementedError(
+                "SAM can't be used with gradient accumulation yet."
+            )
 
         if pix_losses_bool is False and percep_losses_bool is False:
             raise ValueError(
@@ -368,7 +370,6 @@ class image(base):
         """Adapted version of "Empirical Centroid-oriented Optimization":
         https://arxiv.org/abs/2312.17526
         """
-
         with torch.no_grad():
             # define alpha with sigmoid-like curve, slope/skew at 0.25
             if self.eco_schedule == "sigmoid":
@@ -732,7 +733,6 @@ class image(base):
             with torch.inference_mode():
                 outputs = []
                 for chop in img_chops:
-
                     if self.is_train:
                         if self.ema > 0:
                             out = self.net_g_ema(chop)
@@ -797,7 +797,9 @@ class image(base):
 
         metric_data = dict()
         if use_pbar:
-            pbar = tqdm(total=len(dataloader), unit="image", colour="green", ascii=' >=')
+            pbar = tqdm(
+                total=len(dataloader), unit="image", colour="green", ascii=" >="
+            )
 
         for idx, val_data in enumerate(dataloader):
             img_name = osp.splitext(osp.basename(val_data["lq_path"][0]))[0]
@@ -827,7 +829,7 @@ class image(base):
                         img_name,
                         f"{img_name}_{current_iter}.png",
                     )
-                elif val_suffix is not None: 
+                elif val_suffix is not None:
                     save_img_path = osp.join(
                         self.opt["path"]["visualization"],
                         dataset_name,
@@ -923,9 +925,11 @@ class image(base):
             It also ignore these keys with different sizes (not load).
 
         Args:
+        ----
             crt_net (torch model): Current network.
             load_net (dict): Loaded network.
             strict (bool): Whether strictly loaded. Default: True.
+
         """
         crt_net = self.get_bare_model(crt_net)
         crt_net = crt_net.state_dict()

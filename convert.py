@@ -7,8 +7,8 @@ import onnx
 import onnxruntime
 import torch
 from onnxconverter_common.float16 import convert_float_to_float16
-#from onnxsim import simplify
 
+# from onnxsim import simplify
 from neosr.archs import build_network
 from neosr.utils.options import parse_options
 
@@ -79,7 +79,7 @@ def assert_verify(onnx_model, torch_model) -> None:
     np.testing.assert_allclose(
         torch_outputs.detach().cpu().numpy(), ort_outs[0], rtol=0.01, atol=0.001
     )
-    print(f"-------- Model successfully verified.")
+    print("-------- Model successfully verified.")
 
 
 def to_onnx() -> None:
@@ -103,13 +103,13 @@ def to_onnx() -> None:
     # dict for dynamic axes
     if args.static is None:
         dyn_axes = {
-        'dynamic_axes': {
-            'input': {0: 'batch_size', 2: 'width', 3: 'height'},
-            'output': {0: 'batch_size', 2: 'width', 3: 'height'},
-        },
-        'input_names': ["input"],
-        'output_names': ["output"],
-    }
+            "dynamic_axes": {
+                "input": {0: "batch_size", 2: "width", 3: "height"},
+                "output": {0: "batch_size", 2: "width", 3: "height"},
+            },
+            "input_names": ["input"],
+            "output_names": ["output"],
+        }
     else:
         dyn_axes = None
 
@@ -138,16 +138,17 @@ def to_onnx() -> None:
     load_onnx = onnx.load(output_fp32)
     torch.cuda.empty_cache()
     onnx.checker.check_model(load_onnx)
-    print(f"-------- Model successfully converted to ONNX format. Saved at: {output_fp32}.")
+    print(
+        f"-------- Model successfully converted to ONNX format. Saved at: {output_fp32}."
+    )
     # verify outputs
     if args.nocheck is False:
         assert_verify(output_fp32, model)
 
-
     if args.optimize:
         print("-------- Running ONNX optimization...")
-        #filename, extension = osp.splitext(args.output)
-        #output_optimized = filename + "_fp32_optimized" + extension
+        # filename, extension = osp.splitext(args.output)
+        # output_optimized = filename + "_fp32_optimized" + extension
         session_opt = onnxruntime.SessionOptions()
         # ENABLE_ALL can cause compatibility issues, leaving EXTENDED as default
         session_opt.graph_optimization_level = (
@@ -186,7 +187,7 @@ def to_onnx() -> None:
         print("-------- Running full optimization (this can take a while)...")
         output_fp32_fulloptimized = filename + "_fp32_fullyoptimized" + extension
         output_fp16_fulloptimized = filename + "_fp16_fullyoptimized" + extension
-        '''
+        """
         # run onnxsim
         if args.optimize:
             simplified, check = simplify(onnx.load(output_optimized))
@@ -195,7 +196,7 @@ def to_onnx() -> None:
         else:
             simplified, check = simplify(load_onnx)
         assert check, "Couldn't validate ONNX model."
-        '''
+        """
 
         # save and verify
         if args.fp16:

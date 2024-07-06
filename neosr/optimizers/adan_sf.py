@@ -6,8 +6,7 @@ from torch.optim.optimizer import Optimizer
 
 
 class adan_sf(Optimizer):
-    """
-    Unofficial adaptation of Schedule-Free to the Adan optimizer:
+    """Unofficial adaptation of Schedule-Free to the Adan optimizer:
         https://arxiv.org/abs/2405.15682
         https://arxiv.org/abs/2208.06677
 
@@ -16,6 +15,7 @@ class adan_sf(Optimizer):
     also be placed in eval mode when saving checkpoints.
 
     Arguments:
+    ---------
         params (iterable): iterable of parameters to optimize or
             dicts defining parameter groups.
         lr (float, optional): learning rate. (default: 1.6e-3)
@@ -34,6 +34,7 @@ class adan_sf(Optimizer):
             be equal to lr raised to this power. Set to 0 for no weighting
             (default: 2.0).
         schedule_free (bool): Whether to enable Schedule-Free (default: True)
+
     """
 
     def __init__(
@@ -135,7 +136,6 @@ class adan_sf(Optimizer):
     @torch.no_grad()
     def step(self, closure=None):
         """Performs a single optimization step."""
-
         loss = None
         if closure is not None:
             with torch.enable_grad():

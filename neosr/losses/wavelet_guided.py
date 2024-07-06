@@ -40,54 +40,50 @@ def mypad(x, pad, mode="constant", value=0):
             xe = reflect(np.arange(-m1, l + m2, dtype="int32"), -0.5, l - 0.5)
             return x[:, :, xe]
         # horizontal only
-        elif pad[2] == 0 and pad[3] == 0:
+        if pad[2] == 0 and pad[3] == 0:
             m1, m2 = pad[0], pad[1]
             l = x.shape[-1]
             xe = reflect(np.arange(-m1, l + m2, dtype="int32"), -0.5, l - 0.5)
             return x[:, :, :, xe]
         # Both
-        else:
-            m1, m2 = pad[0], pad[1]
-            l1 = x.shape[-1]
-            xe_row = reflect(np.arange(-m1, l1 + m2, dtype="int32"), -0.5, l1 - 0.5)
-            m1, m2 = pad[2], pad[3]
-            l2 = x.shape[-2]
-            xe_col = reflect(np.arange(-m1, l2 + m2, dtype="int32"), -0.5, l2 - 0.5)
-            i = np.outer(xe_col, np.ones(xe_row.shape[0]))
-            j = np.outer(np.ones(xe_col.shape[0]), xe_row)
-            return x[:, :, i, j]
-    elif mode == "periodic":
+        m1, m2 = pad[0], pad[1]
+        l1 = x.shape[-1]
+        xe_row = reflect(np.arange(-m1, l1 + m2, dtype="int32"), -0.5, l1 - 0.5)
+        m1, m2 = pad[2], pad[3]
+        l2 = x.shape[-2]
+        xe_col = reflect(np.arange(-m1, l2 + m2, dtype="int32"), -0.5, l2 - 0.5)
+        i = np.outer(xe_col, np.ones(xe_row.shape[0]))
+        j = np.outer(np.ones(xe_col.shape[0]), xe_row)
+        return x[:, :, i, j]
+    if mode == "periodic":
         # Vertical only
         if pad[0] == 0 and pad[1] == 0:
             xe = np.arange(x.shape[-2])
             xe = np.pad(xe, (pad[2], pad[3]), mode="wrap")
             return x[:, :, xe]
         # Horizontal only
-        elif pad[2] == 0 and pad[3] == 0:
+        if pad[2] == 0 and pad[3] == 0:
             xe = np.arange(x.shape[-1])
             xe = np.pad(xe, (pad[0], pad[1]), mode="wrap")
             return x[:, :, :, xe]
         # Both
-        else:
-            xe_col = np.arange(x.shape[-2])
-            xe_col = np.pad(xe_col, (pad[2], pad[3]), mode="wrap")
-            xe_row = np.arange(x.shape[-1])
-            xe_row = np.pad(xe_row, (pad[0], pad[1]), mode="wrap")
-            i = np.outer(xe_col, np.ones(xe_row.shape[0]))
-            j = np.outer(np.ones(xe_col.shape[0]), xe_row)
-            return x[:, :, i, j]
+        xe_col = np.arange(x.shape[-2])
+        xe_col = np.pad(xe_col, (pad[2], pad[3]), mode="wrap")
+        xe_row = np.arange(x.shape[-1])
+        xe_row = np.pad(xe_row, (pad[0], pad[1]), mode="wrap")
+        i = np.outer(xe_col, np.ones(xe_row.shape[0]))
+        j = np.outer(np.ones(xe_col.shape[0]), xe_row)
+        return x[:, :, i, j]
 
-    elif mode == "constant" or mode == "reflect" or mode == "replicate":
+    if mode == "constant" or mode == "reflect" or mode == "replicate":
         return F.pad(x, pad, mode, value)
-    elif mode == "zero":
+    if mode == "zero":
         return F.pad(x, pad)
-    else:
-        raise ValueError(f"Unkown pad type: {mode}")
+    raise ValueError(f"Unkown pad type: {mode}")
 
 
 def prep_filt_afb2d(h0_col, h1_col, h0_row=None, h1_row=None, device=None):
-    """
-    Prepares the filters to be of the right form for the afb2d function.  In
+    """Prepares the filters to be of the right form for the afb2d function.  In
     particular, makes the tensors the right shape. It takes mirror images of
     them as as afb2d uses conv2d which acts like normal correlation.
     Inputs:
@@ -121,8 +117,7 @@ def prep_filt_afb2d(h0_col, h1_col, h0_row=None, h1_row=None, device=None):
 
 
 def prep_filt_sfb2d(g0_col, g1_col, g0_row=None, g1_row=None, device=None):
-    """
-    Prepares the filters to be of the right form for the sfb2d function.  In
+    """Prepares the filters to be of the right form for the sfb2d function.  In
     particular, makes the tensors the right shape. It does not mirror image them
     as as sfb2d uses conv2d_transpose which acts like normal convolution.
     Inputs:
@@ -166,9 +161,12 @@ def afb1d_atrous(x, h0, h1, mode="symmetric", dim=-1, dilation=1):
             horizontal filter, (called row filtering but filters across the
             columns).
         dilation (int): dilation factor. Should be a power of 2.
-    Returns:
+
+    Returns
+    -------
         lohi: lowpass and highpass subbands concatenated along the channel
             dimension
+
     """
     C = x.shape[1]
     # Convert the dim to positive
@@ -373,13 +371,12 @@ class SWTForward(nn.Module):
         if isinstance(wave, pywt.Wavelet):
             h0_col, h1_col = wave.dec_lo, wave.dec_hi
             h0_row, h1_row = h0_col, h1_col
-        else:
-            if len(wave) == 2:
-                h0_col, h1_col = wave[0], wave[1]
-                h0_row, h1_row = h0_col, h1_col
-            elif len(wave) == 4:
-                h0_col, h1_col = wave[0], wave[1]
-                h0_row, h1_row = wave[2], wave[3]
+        elif len(wave) == 2:
+            h0_col, h1_col = wave[0], wave[1]
+            h0_row, h1_row = h0_col, h1_col
+        elif len(wave) == 4:
+            h0_col, h1_col = wave[0], wave[1]
+            h0_row, h1_row = wave[2], wave[3]
 
         # Prepare the filters
         filts = prep_filt_afb2d(h0_col, h1_col, h0_row, h1_row)
@@ -391,17 +388,20 @@ class SWTForward(nn.Module):
         self.J = J
         self.mode = mode
 
-    #@torch.amp.custom_fwd(cast_inputs=torch.float32, device_type='cuda')
+    # @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type='cuda')
     @torch.cuda.amp.custom_fwd(cast_inputs=torch.float32)
     def forward(self, x):
         """Forward pass of the SWT.
+
         Args:
+        ----
             x (tensor): Input of shape :math:`(N, C_{in}, H_{in}, W_{in})`
         Returns:
             List of coefficients for each scale. Each coefficient has
             shape :math:`(N, C_{in}, 4, H_{in}, W_{in})` where the extra
             dimension stores the 4 subbands for each scale. The ordering in
             these 4 coefficients is: (A, H, V, D) or (ll, lh, hl, hh).
+
         """
         ll = x
         coeffs = []
@@ -415,9 +415,9 @@ class SWTForward(nn.Module):
 
         return coeffs
 
+
 @torch.no_grad()
 def wavelet_guided(output, gt):
-
     wavelet = pywt.Wavelet("sym7")
     dlo = wavelet.dec_lo
     an_lo = np.divide(dlo, sum(dlo))
@@ -437,7 +437,7 @@ def wavelet_guided(output, gt):
     )
     wavelet_sr = sfm(sr_img_y)[0]
 
-    #LL = wavelet_sr[:, 0:1, :, :]
+    # LL = wavelet_sr[:, 0:1, :, :]
     LH = wavelet_sr[:, 1:2, :, :]
     HL = wavelet_sr[:, 2:3, :, :]
     HH = wavelet_sr[:, 3:, :, :]
@@ -452,7 +452,7 @@ def wavelet_guided(output, gt):
     )
     wavelet_hr = sfm(hr_img_y)[0]
 
-    #LL_gt = wavelet_hr[:, 0:1, :, :]
+    # LL_gt = wavelet_hr[:, 0:1, :, :]
     LH_gt = wavelet_hr[:, 1:2, :, :]
     HL_gt = wavelet_hr[:, 2:3, :, :]
     HH_gt = wavelet_hr[:, 3:, :, :]

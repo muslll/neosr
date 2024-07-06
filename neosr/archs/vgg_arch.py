@@ -3,19 +3,50 @@ from collections import OrderedDict
 
 import torch
 from torch import nn
-from torchvision.models import vgg
-from torchvision.models import VGG19_Weights
+from torchvision.models import VGG19_Weights, vgg
 
 from neosr.utils.registry import ARCH_REGISTRY
-from typing import Dict, List
 
-VGG_PRETRAIN_PATH = 'experiments/pretrained_models/vgg19-dcbb9e9d.pth'
+VGG_PRETRAIN_PATH = "experiments/pretrained_models/vgg19-dcbb9e9d.pth"
 NAMES = {
-    'vgg19': [
-        'conv1_1', 'relu1_1', 'conv1_2', 'relu1_2', 'pool1', 'conv2_1', 'relu2_1', 'conv2_2', 'relu2_2', 'pool2',
-        'conv3_1', 'relu3_1', 'conv3_2', 'relu3_2', 'conv3_3', 'relu3_3', 'conv3_4', 'relu3_4', 'pool3', 'conv4_1',
-        'relu4_1', 'conv4_2', 'relu4_2', 'conv4_3', 'relu4_3', 'conv4_4', 'relu4_4', 'pool4', 'conv5_1', 'relu5_1',
-        'conv5_2', 'relu5_2', 'conv5_3', 'relu5_3', 'conv5_4', 'relu5_4', 'pool5'
+    "vgg19": [
+        "conv1_1",
+        "relu1_1",
+        "conv1_2",
+        "relu1_2",
+        "pool1",
+        "conv2_1",
+        "relu2_1",
+        "conv2_2",
+        "relu2_2",
+        "pool2",
+        "conv3_1",
+        "relu3_1",
+        "conv3_2",
+        "relu3_2",
+        "conv3_3",
+        "relu3_3",
+        "conv3_4",
+        "relu3_4",
+        "pool3",
+        "conv4_1",
+        "relu4_1",
+        "conv4_2",
+        "relu4_2",
+        "conv4_3",
+        "relu4_3",
+        "conv4_4",
+        "relu4_4",
+        "pool4",
+        "conv5_1",
+        "relu5_1",
+        "conv5_2",
+        "relu5_2",
+        "conv5_3",
+        "relu5_3",
+        "conv5_4",
+        "relu5_4",
+        "pool5",
     ]
 }
 
@@ -24,17 +55,20 @@ def insert_bn(names):
     """Insert bn layer after each conv.
 
     Args:
+    ----
         names (list): The list of layer names.
 
     Returns:
+    -------
         list: The list of layer names with bn layers.
+
     """
     names_bn = []
     for name in names:
         names_bn.append(name)
-        if 'conv' in name:
-            position = name.replace('conv', '')
-            names_bn.append('bn' + position)
+        if "conv" in name:
+            position = name.replace("conv", "")
+            names_bn.append("bn" + position)
     return names_bn
 
 
@@ -47,6 +81,7 @@ class VGGFeatureExtractor(nn.Module):
     path must fit the vgg type.
 
     Args:
+    ----
         layer_name_list (list[str]): Forward function returns the corresponding
             features according to the layer_name_list.
             Example: {'relu1_1', 'relu2_1', 'relu3_1'}.
@@ -60,52 +95,54 @@ class VGGFeatureExtractor(nn.Module):
         remove_pooling (bool): If true, the max pooling operations in VGG net
             will be removed. Default: False.
         pooling_stride (int): The stride of max pooling operation. Default: 2.
+
     """
 
-    def __init__(self,
-                 layer_name_list: List[str],
-                 vgg_type: str='vgg19',
-                 use_input_norm: bool=True,
-                 range_norm: bool=False,
-                 requires_grad: bool=False,
-                 remove_pooling: bool=False,
-                 pooling_stride: int=2):
+    def __init__(
+        self,
+        layer_name_list: list[str],
+        vgg_type: str = "vgg19",
+        use_input_norm: bool = True,
+        range_norm: bool = False,
+        requires_grad: bool = False,
+        remove_pooling: bool = False,
+        pooling_stride: int = 2,
+    ):
         super(VGGFeatureExtractor, self).__init__()
 
         self.layer_name_list = layer_name_list
         self.use_input_norm = use_input_norm
         self.range_norm = range_norm
 
-        self.names = NAMES[vgg_type.replace('_bn', '')]
-        if 'bn' in vgg_type:
+        self.names = NAMES[vgg_type.replace("_bn", "")]
+        if "bn" in vgg_type:
             self.names = insert_bn(self.names)
 
         # only borrow layers that will be used to avoid unused params
         max_idx = 0
         for v in layer_name_list:
             idx = self.names.index(v)
-            if idx > max_idx:
-                max_idx = idx
+            max_idx = max(idx, max_idx)
 
         if os.path.exists(VGG_PRETRAIN_PATH):
             vgg_net = getattr(vgg, vgg_type)
-            state_dict = torch.load(VGG_PRETRAIN_PATH, map_location=torch.device('cuda'))
+            state_dict = torch.load(
+                VGG_PRETRAIN_PATH, map_location=torch.device("cuda")
+            )
             vgg_net.load_state_dict(state_dict)
         else:
             vgg_net = getattr(vgg, vgg_type)(weights=VGG19_Weights.DEFAULT)
 
-        features = vgg_net.features[:max_idx + 1]
+        features = vgg_net.features[: max_idx + 1]
 
         modified_net = OrderedDict()
-        for k, v in zip(self.names, features):
-            if 'pool' in k:
+        for k, v in zip(self.names, features, strict=False):
+            if "pool" in k:
                 # if remove_pooling is true, pooling operation will be removed
                 if remove_pooling:
                     continue
-                else:
-                    # in some cases, we may want to change the default stride
-                    modified_net[k] = nn.MaxPool2d(
-                        kernel_size=2, stride=pooling_stride)
+                # in some cases, we may want to change the default stride
+                modified_net[k] = nn.MaxPool2d(kernel_size=2, stride=pooling_stride)
             else:
                 modified_net[k] = v
 
@@ -121,28 +158,32 @@ class VGGFeatureExtractor(nn.Module):
                 param.requires_grad = True
 
         if self.use_input_norm:
-            '''
+            """
             ImageNet values:
                 mean = [0.485, 0.456, 0.406]
                 std = [0.229, 0.224, 0.225]
-            '''
+            """
 
             # the mean is for image with range [0, 1]
-            self.register_buffer('mean', torch.tensor(
-                [0.5, 0.5, 0.5], device='cuda').view(1, 3, 1, 1))
+            self.register_buffer(
+                "mean", torch.tensor([0.5, 0.5, 0.5], device="cuda").view(1, 3, 1, 1)
+            )
             # the std is for image with range [0, 1]
-            self.register_buffer('std', torch.tensor(
-                [0.25, 0.25, 0.25], device='cuda').view(1, 3, 1, 1))
+            self.register_buffer(
+                "std", torch.tensor([0.25, 0.25, 0.25], device="cuda").view(1, 3, 1, 1)
+            )
 
-
-    def forward(self, x:     torch.Tensor) -> Dict[str,     torch.Tensor]:
+    def forward(self, x: torch.Tensor) -> dict[str, torch.Tensor]:
         """Forward function.
 
         Args:
+        ----
             x (Tensor): Input tensor with shape (n, c, h, w).
 
         Returns:
+        -------
             Tensor: Forward results.
+
         """
         if self.range_norm:
             x = (x + 1) / 2

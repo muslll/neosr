@@ -11,12 +11,14 @@ class focalfrequencyloss(nn.Module):
        From: https://github.com/EndlessSora/focal-frequency-loss
 
     Args:
+    ----
         loss_weight (float): weight for focal frequency loss. Default: 1.0
         alpha (float): the scaling factor alpha of the spectrum weight matrix for flexibility. Default: 1.0
         patch_factor (int): the factor to crop image patches for patch-based focal frequency loss. Default: 1
         ave_spectrum (bool): whether to use minibatch average spectrum. Default: False
         log_matrix (bool): whether to adjust the spectrum weight matrix by logarithm. Default: False
         batch_matrix (bool): whether to calculate the spectrum weight matrix using batch-based statistics. Default: False
+
     """
 
     def __init__(
@@ -118,7 +120,7 @@ class focalfrequencyloss(nn.Module):
         loss = weight_matrix * freq_distance
         return torch.mean(loss)
 
-    #@torch.amp.custom_fwd(cast_inputs=torch.float32, device_type='cuda')
+    # @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type='cuda')
     @torch.cuda.amp.custom_fwd(cast_inputs=torch.float32)
     def forward(
         self,
@@ -130,10 +132,12 @@ class focalfrequencyloss(nn.Module):
         """Forward function to calculate focal frequency loss.
 
         Args:
+        ----
             pred (torch.Tensor): of shape (N, C, H, W). Predicted tensor.
             target (torch.Tensor): of shape (N, C, H, W). Target tensor.
             matrix (torch.Tensor, optional): Element-wise spectrum weight matrix.
                 Default: None (If set to None: calculated online, dynamic).
+
         """
         pred_freq = self.tensor2freq(pred)
         target_freq = self.tensor2freq(target)

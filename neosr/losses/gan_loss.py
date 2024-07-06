@@ -9,20 +9,18 @@ class gan_loss(nn.Module):
     """Define GAN loss.
 
     Args:
+    ----
         gan_type (str): Support 'bce', 'mse' (l2), 'huber' and 'chc'.
         real_label_val (float): The value for real label. Default: 1.0.
         fake_label_val (float): The value for fake label. Default: 0.0.
         loss_weight (float): Loss weight. Default: 0.1.
             Note that loss_weight is only for generators; and it is always 1.0
             for discriminators.
+
     """
 
     def __init__(
-        self,
-        gan_type="bce",
-        real_label_val=1.0,
-        fake_label_val=0.0,
-        loss_weight=0.1,
+        self, gan_type="bce", real_label_val=1.0, fake_label_val=0.0, loss_weight=0.1
     ):
         super(gan_loss, self).__init__()
         self.gan_type = gan_type
@@ -45,28 +43,32 @@ class gan_loss(nn.Module):
         """Get target label.
 
         Args:
+        ----
             input (Tensor): Input tensor.
             target_is_real (bool): Whether the target is real or fake.
 
         Returns:
+        -------
             (bool | Tensor): Target tensor. Return bool for wgan, otherwise,
                 return Tensor.
-        """
 
+        """
         target_val = self.real_label_val if target_is_real else self.fake_label_val
         return input.new_ones(input.size()) * target_val
 
     def forward(self, input, target_is_real, is_disc=False):
-        """
-        Args:
+        """Args:
+        ----
             input (Tensor): The input for the loss module, i.e., the network
                 prediction.
             target_is_real (bool): Whether the targe is real or fake.
             is_disc (bool): Whether the loss for discriminators or not.
                 Default: False.
 
-        Returns:
+        Returns
+        -------
             Tensor: GAN loss value.
+
         """
         target_label = self.get_target_label(input, target_is_real)
         loss = self.loss(input, target_label)

@@ -17,10 +17,9 @@ opencv-python-headless = "^4.8.1.78"
 pywavelets = "^1.5.0"
 
 [tool.ruff]
-select = ["ALL"]
-ignore = [ "E501", "T201", "D", "CPY001",
-	   "TD002", "TD003", "COM812", "ISC001",
-	   "N8", "ANN", "S101" ]
+lint.select = ["ALL"]
+lint.ignore = ["D211", "D213", "COM812", "ISC001"]
+#ignore = [ "E501", "T201", "D", "CPY001", "TD002", "TD003", "COM812", "ISC001", "N8", "ANN", "S101" ]
 target-version = "py312"
 preview = true
 
