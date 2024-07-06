@@ -6,7 +6,6 @@ from torch.optim.optimizer import Optimizer
 
 
 class adan(Optimizer):
-
     """'Adan: Adaptive Nesterov Momentum Algorithm for Faster Optimizing Deep Models':
         https://arxiv.org/abs/2208.06677.
 

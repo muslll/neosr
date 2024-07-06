@@ -176,7 +176,6 @@ def read_img_worker(path, key, compress_level):
 
 
 class LmdbMaker:
-
     """LMDB Maker.
 
     Args:
@@ -189,7 +188,9 @@ class LmdbMaker:
 
     """
 
-    def __init__(self, lmdb_path, map_size=1024**4, batch=5000, compress_level=1) -> None:
+    def __init__(
+        self, lmdb_path, map_size=1024**4, batch=5000, compress_level=1
+    ) -> None:
         if not lmdb_path.endswith(".lmdb"):
             msg = "lmdb_path must end with '.lmdb'."
             raise ValueError(msg)
@@ -202,7 +203,9 @@ class LmdbMaker:
         self.compress_level = compress_level
         self.env = lmdb.open(lmdb_path, map_size=map_size)
         self.txn = self.env.begin(write=True)
-        self.txt_file = open(osp.join(lmdb_path, "meta_info.txt"), "w", encoding="locale")
+        self.txt_file = open(
+            osp.join(lmdb_path, "meta_info.txt"), "w", encoding="locale"
+        )
         self.counter = 0
 
     def put(self, img_byte, key, img_shape) -> None:

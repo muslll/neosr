@@ -34,9 +34,7 @@ def calculate_psnr(
     ), f"Image shapes are different: {img.shape}, {img2.shape}."
     if input_order not in {"HWC", "CHW"}:
         msg = f'Wrong input_order {input_order}. Supported input_orders are "HWC" and "CHW"'
-        raise ValueError(
-            msg
-        )
+        raise ValueError(msg)
     img = reorder_image(img, input_order=input_order)
     img2 = reorder_image(img2, input_order=input_order)
 
@@ -90,9 +88,7 @@ def calculate_ssim(
     ), f"Image shapes are different: {img.shape}, {img2.shape}."
     if input_order not in {"HWC", "CHW"}:
         msg = f'Wrong input_order {input_order}. Supported input_orders are "HWC" and "CHW"'
-        raise ValueError(
-            msg
-        )
+        raise ValueError(msg)
     img = reorder_image(img, input_order=input_order)
     img2 = reorder_image(img2, input_order=input_order)
 

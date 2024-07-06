@@ -18,8 +18,7 @@ pywavelets = "^1.5.0"
 
 [tool.ruff]
 lint.select = ["ALL"]
-lint.ignore = ["D211", "D213", "COM812", "ISC001", "T201"]
-#ignore = [ "E501", "T201", "D", "CPY001", "TD002", "TD003", "COM812", "ISC001", "N8", "ANN", "S101" ]
+lint.ignore = ["D", "COM812", "ISC001", "T201", "E501", "T201", "D", "CPY", "TD002", "TD003", "COM812", "ISC001", "N8", "S101", "G004", "ERA001", "PLR", "C90", "E722", "B904", "FBT001", "FBT002", "FBT003", "SLF001", "S311", "FIX", "ANN" ]
 target-version = "py312"
 preview = true
 

@@ -24,9 +24,7 @@ def reorder_image(img, input_order="HWC"):
     """
     if input_order not in {"HWC", "CHW"}:
         msg = f"Wrong input_order {input_order}. Supported input_orders are 'HWC' and 'CHW'"
-        raise ValueError(
-            msg
-        )
+        raise ValueError(msg)
     if len(img.shape) == 2:
         img = img[..., None]
     if input_order == "CHW":

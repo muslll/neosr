@@ -24,9 +24,7 @@ def rgb_to_cbcr(img: torch.Tensor) -> torch.Tensor:
 
     if len(img.shape) < 3 or img.shape[-3] != 3:
         msg = f"Input size must have a shape of (*, 3, H, W). Got {img.shape}"
-        raise ValueError(
-            msg
-        )
+        raise ValueError(msg)
 
     # bt.601 matrices in 16-240 range
     weight = torch.tensor([
@@ -45,7 +43,6 @@ def rgb_to_cbcr(img: torch.Tensor) -> torch.Tensor:
 
 @LOSS_REGISTRY.register()
 class color_loss(nn.Module):
-
     """Color Consistency Loss.
     Converts images to chroma-only and compares both.
 

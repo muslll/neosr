@@ -20,7 +20,6 @@ rng = rng()
 
 @DATASET_REGISTRY.register()
 class otf(data.Dataset):
-
     """OTF degradation dataset. Originally from Real-ESRGAN.
 
     It loads gt (Ground-Truth) images, and augments them.
@@ -52,9 +51,7 @@ class otf(data.Dataset):
 
         if opt.get("dataroot_lq", None) is not None:
             msg = "'dataroot_lq' not supported by otf, please switch to paired"
-            raise ValueError(
-                msg
-            )
+            raise ValueError(msg)
 
         # file client (lmdb io backend)
         if self.io_backend_opt["type"] == "lmdb":
@@ -62,10 +59,10 @@ class otf(data.Dataset):
             self.io_backend_opt["client_keys"] = ["gt"]
             if not self.gt_folder.endswith(".lmdb"):
                 msg = f"'dataroot_gt' should end with '.lmdb', but received {self.gt_folder}"
-                raise ValueError(
-                    msg
-                )
-            with open(osp.join(self.gt_folder, "meta_info.txt"), encoding="locale") as fin:
+                raise ValueError(msg)
+            with open(
+                osp.join(self.gt_folder, "meta_info.txt"), encoding="locale"
+            ) as fin:
                 self.paths = [line.split(".")[0] for line in fin]
         elif "meta_info" in self.opt and self.opt["meta_info"] is not None:
             # disk backend with meta_info

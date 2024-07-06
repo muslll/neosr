@@ -5,7 +5,6 @@ from torch.utils.data.sampler import Sampler
 
 
 class EnlargedSampler(Sampler):
-
     """Sampler that restricts data loading to a subset of the dataset.
 
     Modified from torch.utils.data.distributed.DistributedSampler

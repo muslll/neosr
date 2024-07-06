@@ -4,6 +4,7 @@ import math
 import sys
 import time
 from os import path as osp
+from pathlib import Path
 
 import torch
 
@@ -40,7 +41,7 @@ def init_tb_loggers(opt):
     tb_logger = None
     if opt["logger"].get("use_tb_logger") and "debug" not in opt["name"]:
         tb_logger = init_tb_logger(
-            log_dir=osp.join(opt["root_path"], "experiments", "tb_logger", opt["name"])
+            log_dir=Path(opt["root_path"]) / "experiments" / "tb_logger" / opt["name"]
         )
     return tb_logger
 
@@ -106,14 +107,14 @@ def create_train_val_dataloader(opt, logger):
 def load_resume_state(opt):
     resume_state_path = None
     if opt["auto_resume"]:
-        state_path = osp.join("experiments", opt["name"], "training_states")
-        if osp.isdir(state_path):
+        state_path = Path("experiments") / opt["name"] / "training_states"
+        if Path.is_dir(state_path):
             states = list(
                 scandir(state_path, suffix="state", recursive=False, full_path=False)
             )
             if len(states) != 0:
                 states = [float(v.split(".state")[0]) for v in states]
-                resume_state_path = osp.join(state_path, f"{max(states):.0f}.state")
+                resume_state_path = Path(state_path) / f"{max(states):.0f}.state"
                 opt["path"]["resume_state"] = resume_state_path
 
     elif opt["path"].get("resume_state"):
@@ -153,19 +154,19 @@ def train_pipeline(root_path) -> None:
             and opt["rank"] == 0
         ):
             mkdir_and_rename(
-                osp.join(opt["root_path"], "experiments", "tb_logger", opt["name"])
+                Path(opt["root_path"]) / "experiments" / "tb_logger" / opt["name"]
             )
 
     # copy the yml file to the experiment root
     try:
         copy_opt_file(args.opt, opt["path"]["experiments_root"])
-    except Exception:
+    except:
         msg = "Failed. Make sure the option 'name' in your config file is the same as the previous state!"
         raise ValueError(msg)
 
     # WARNING: should not use get_root_logger in the above codes, including the called functions
     # Otherwise the logger will not be properly initialized
-    log_file = osp.join(opt["path"]["log"], f"train_{opt["name"]}_{get_time_str()}.log")
+    log_file = Path(opt["path"]["log"]) / f"train_{opt["name"]}_{get_time_str()}.log"
     logger = get_root_logger(
         logger_name="neosr", log_level=logging.INFO, log_file=log_file
     )
@@ -311,5 +312,5 @@ def train_pipeline(root_path) -> None:
 
 
 if __name__ == "__main__":
-    root_path = osp.abspath(osp.join(__file__, osp.pardir))
+    root_path = Path.resolve(Path(__file__) / osp.pardir)
     train_pipeline(root_path)

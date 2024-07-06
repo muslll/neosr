@@ -3,6 +3,7 @@ import random
 import time
 from collections.abc import Iterator
 from os import path as osp
+from pathlib import Path
 from typing import Any
 
 import torch
@@ -28,11 +29,11 @@ def mkdir_and_rename(path: str) -> None:
         path (str): Folder path.
 
     """
-    if osp.exists(path):
+    if Path(path).exists():
         new_name = path + "_archived_" + get_time_str()
         print(f"Path already exists. Renaming it to {new_name}", flush=True)
-        os.rename(path, new_name)
-    os.makedirs(path, exist_ok=True)
+        Path(path).rename(new_name)
+    Path(path).mkdir(parents=True, exist_ok=True)
 
 
 @master_only
@@ -51,7 +52,7 @@ def make_exp_dirs(opt: dict[str, Any]) -> None:
             or ("param_key" in key)
         ):
             continue
-        os.makedirs(path, exist_ok=True)
+        Path(path).mkdir(parents=True, exist_ok=True)
 
 
 def scandir(
@@ -106,7 +107,7 @@ def check_resume(opt, resume_iter) -> None:
     """
     if opt["path"].get("resume_state", None):
         # get all the networks
-        networks = [key for key in opt.keys() if key.startswith("network_")]
+        networks = [key for key in opt if key.startswith("network_")]
         flag_pretrain = False
         for network in networks:
             if opt["path"].get(f"pretrain_{network}") is not None:
@@ -120,10 +121,9 @@ def check_resume(opt, resume_iter) -> None:
             if opt["path"].get("ignore_resume_networks") is None or (
                 network not in opt["path"]["ignore_resume_networks"]
             ):
-                opt["path"][name] = osp.join(
-                    opt["path"]["models"], f"net_{basename}_{resume_iter}.pth"
+                opt["path"][name] = (
+                    Path(opt["path"]["models"]) / f"net_{basename}_{resume_iter}.pth"
                 )
-                # print(f"Set {name} to {opt['path'][name]}")
 
         # change param_key to params in resume
         param_keys = [key for key in opt["path"] if key.startswith("param_key")]

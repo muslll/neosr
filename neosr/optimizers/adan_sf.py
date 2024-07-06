@@ -6,7 +6,6 @@ from torch.optim.optimizer import Optimizer
 
 
 class adan_sf(Optimizer):
-
     """Unofficial adaptation of Schedule-Free to the Adan optimizer:
         https://arxiv.org/abs/2405.15682
         https://arxiv.org/abs/2208.06677.

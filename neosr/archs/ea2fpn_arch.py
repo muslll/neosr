@@ -149,7 +149,9 @@ class AttentionAggregationModule(nn.Module):
 
 
 class Conv3x3GNMish(nn.Module):
-    def __init__(self, in_channels: int, out_channels: int, upsample: bool = False) -> None:
+    def __init__(
+        self, in_channels: int, out_channels: int, upsample: bool = False
+    ) -> None:
         super().__init__()
         self.upsample = upsample
         self.dysample = DySample(
@@ -188,7 +190,9 @@ class FPNBlock(nn.Module):
 
 
 class SegmentationBlock(nn.Module):
-    def __init__(self, in_channels: int, out_channels: int, n_upsamples: int = 0) -> None:
+    def __init__(
+        self, in_channels: int, out_channels: int, n_upsamples: int = 0
+    ) -> None:
         super().__init__()
 
         blocks = [Conv3x3GNMish(in_channels, out_channels, upsample=bool(n_upsamples))]
@@ -203,7 +207,6 @@ class SegmentationBlock(nn.Module):
 
 @ARCH_REGISTRY.register()
 class ea2fpn(nn.Module):
-
     """Modified for the neosr project, based on 'A2-FPN for Semantic
     Segmentation of Fine-Resolution Remotely Sensed Images':
     https://doi.org/10.1080/01431161.2022.2030071.

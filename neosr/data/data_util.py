@@ -158,9 +158,7 @@ def paired_paths_from_lmdb(folders, keys):
             f"formats. But received {input_key}: {input_folder}; "
             f"{gt_key}: {gt_folder}"
         )
-        raise ValueError(
-            msg
-        )
+        raise ValueError(msg)
     # ensure that the two meta_info files are the same
     with open(osp.join(input_folder, "meta_info.txt"), encoding="locale") as fin:
         input_lmdb_keys = [line.split(".")[0] for line in fin]
@@ -168,14 +166,10 @@ def paired_paths_from_lmdb(folders, keys):
         gt_lmdb_keys = [line.split(".")[0] for line in fin]
     if set(input_lmdb_keys) != set(gt_lmdb_keys):
         msg = f"Keys in {input_key}_folder and {gt_key}_folder are different."
-        raise ValueError(
-            msg
-        )
+        raise ValueError(msg)
     paths = []
     for lmdb_key in sorted(input_lmdb_keys):
-        paths.append(
-            {f"{input_key}_path": lmdb_key, f"{gt_key}_path": lmdb_key}
-        )
+        paths.append({f"{input_key}_path": lmdb_key, f"{gt_key}_path": lmdb_key})
     return paths
 
 
@@ -227,9 +221,7 @@ def paired_paths_from_meta_info_file(folders, keys, meta_info_file, filename_tmp
         input_path = osp.join(input_folder, input_name)
         assert input_name in input_path, f"{input_name} is not in {input_key}_paths."
         gt_path = osp.join(gt_folder, gt_name)
-        paths.append(
-            {f"{input_key}_path": input_path, f"{gt_key}_path": gt_path}
-        )
+        paths.append({f"{input_key}_path": input_path, f"{gt_key}_path": gt_path})
     return paths
 
 
@@ -271,9 +263,7 @@ def paired_paths_from_folder(folders, keys, filename_tmpl):
     for gt_path in gt_paths:
         input_path = gt_path.replace(gt_folder, input_folder)
         assert input_path in input_paths, f"{input_path} is not in {input_key}_paths."
-        paths.append(
-            {f"{input_key}_path": input_path, f"{gt_key}_path": gt_path}
-        )
+        paths.append({f"{input_key}_path": input_path, f"{gt_key}_path": gt_path})
     return paths
 
 

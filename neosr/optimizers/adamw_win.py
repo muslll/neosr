@@ -5,7 +5,6 @@ from torch.optim.optimizer import Optimizer
 
 
 class adamw_win(Optimizer):
-
     r"""Implements Win- and Win2-accelerated AdamW algorithm.
 
     The original Adam algorithm was proposed in `Adam: A Method for Stochastic Optimization`_.
@@ -57,14 +56,10 @@ class adamw_win(Optimizer):
             raise ValueError(msg)
         if reckless_steps[0] < 0.0:
             msg = f"Invalid reckless_steps parameter at index 0: {reckless_steps[0]}"
-            raise ValueError(
-                msg
-            )
+            raise ValueError(msg)
         if reckless_steps[1] < 0.0:
             msg = f"Invalid reckless_steps parameter at index 1: {reckless_steps[1]}"
-            raise ValueError(
-                msg
-            )
+            raise ValueError(msg)
 
         defaults = {
             "lr": lr,
@@ -130,9 +125,7 @@ class adamw_win(Optimizer):
 
                 if grad.is_sparse:
                     msg = "Adam does not support sparse gradients, please consider SparseAdam instead"
-                    raise RuntimeError(
-                        msg
-                    )
+                    raise RuntimeError(msg)
                 amsgrad = group["amsgrad"]
 
                 state = self.state[p]

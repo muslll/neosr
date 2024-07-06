@@ -5,7 +5,6 @@ from torch.optim.optimizer import Optimizer
 
 
 class adamw_sf(Optimizer):
-
     r"""Schedule-Free AdamW
     As the name suggests, no scheduler is needed with this optimizer.
     To add warmup, rather than using a learning rate schedule you can just

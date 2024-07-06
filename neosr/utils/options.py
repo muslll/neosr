@@ -4,7 +4,7 @@ import random
 import sys
 import tomllib
 from os import path as osp
-from pathlib import PosixPath
+from pathlib import Path, PosixPath
 from typing import Any
 
 import torch
@@ -24,7 +24,7 @@ def toml_load(f) -> dict[str, Any]:
 
     """
     try:
-        with open(f, "rb") as f:
+        with Path.open(f, "rb") as f:
             return tomllib.load(f)
     except:
         msg = "Error decoding TOML file."
@@ -150,7 +150,7 @@ def parse_options(
     args = parser.parse_args()
 
     # error if no config file exists
-    if args.input is None and not osp.exists(args.opt):
+    if args.input is None and args.opt is None:
         msg = "Didn't get a config! Please link the config file using -opt /path/to/config.toml"
         raise ValueError(msg)
 
@@ -210,8 +210,8 @@ def parse_options(
         # datasets
         for phase, dataset in opt["datasets"].items():
             # for multiple datasets, e.g., val_1, val_2; test_1, test_2
-            phase = phase.split("_")[0]
-            dataset["phase"] = phase
+            _phase = phase.split("_")[0]
+            dataset["phase"] = _phase
             if "scale" in opt:
                 dataset["scale"] = opt["scale"]
             if dataset.get("dataroot_gt") is not None:
@@ -232,19 +232,17 @@ def parse_options(
             if experiments_root is not None:
                 experiments_root = experiments_root.get("experiments_root")
             if experiments_root is None:
-                experiments_root = osp.join(root_path, "experiments")
+                experiments_root = Path(root_path) / "experiments"
             experiments_root = osp.join(experiments_root, opt["name"])
 
             if opt.get("path") is None:
                 opt["path"] = {}
 
             opt["path"]["experiments_root"] = experiments_root
-            opt["path"]["models"] = osp.join(experiments_root, "models")
-            opt["path"]["training_states"] = osp.join(
-                experiments_root, "training_states"
-            )
+            opt["path"]["models"] = Path(experiments_root) / "models"
+            opt["path"]["training_states"] = Path(experiments_root) / "training_states"
             opt["path"]["log"] = experiments_root
-            opt["path"]["visualization"] = osp.join(experiments_root, "visualization")
+            opt["path"]["visualization"] = Path(experiments_root) / "visualization"
 
             # change some options for debug mode
             if "debug" in opt["name"]:
@@ -255,8 +253,8 @@ def parse_options(
         else:  # test
             results_root = opt["path"].get("results_root")
             if results_root is None:
-                results_root = osp.join(root_path, "experiments", "results")
-            results_root = osp.join(results_root, opt["name"])
+                results_root = Path(root_path) / "experiments" / "results"
+            results_root = Path(results_root) / opt["name"]
 
             opt["path"]["results_root"] = results_root
             opt["path"]["log"] = results_root
@@ -275,10 +273,10 @@ def copy_opt_file(opt_file: str, experiments_root: str) -> None:
     from shutil import copyfile
 
     cmd = " ".join(sys.argv)
-    filename = osp.join(experiments_root, osp.basename(opt_file))
+    filename = Path(experiments_root) / Path(opt_file).name
     copyfile(opt_file, filename)
 
-    with open(filename, "r+", encoding="locale") as f:
+    with Path.open(filename, "r+", encoding="locale") as f:
         lines = f.readlines()
         lines.insert(0, f"# GENERATE TIME: {time.asctime()}\n# CMD:\n# {cmd}\n\n")
         f.seek(0)

@@ -7,7 +7,6 @@ from neosr.utils.registry import LOSS_REGISTRY
 
 @LOSS_REGISTRY.register()
 class ldl_loss(nn.Module):
-
     """LDL loss. Adapted from 'Details or Artifacts: A Locally Discriminative
     Learning Approach to Realistic Image Super-Resolution':
     https://arxiv.org/abs/2203.09195.

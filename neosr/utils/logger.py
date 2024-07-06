@@ -43,7 +43,6 @@ class AvgTimer:
 
 
 class MessageLogger:
-
     """Message logger for printing.
 
     Args:
@@ -54,7 +53,7 @@ class MessageLogger:
             train (dict): Contains 'total_iter' (int) for total iters.
             use_tb_logger (bool): Use tensorboard logger.
         start_iter (int): Start iter. Default: 1.
-        tb_logger (obj:`tb_logger`): Tensorboard logger. Default： None.
+        tb_logger (obj:`tb_logger`): Tensorboard logger. Default: None.
 
     """
 
@@ -96,7 +95,7 @@ class MessageLogger:
         message = f"[ epoch:{epoch:4d} ] [ iter:{current_iter:7,d} ]"
 
         # time and estimated time
-        if "time" in log_vars.keys():
+        if "time" in log_vars:
             iter_time = 1 / log_vars.pop("time")
             iter_time /= self.accumulate
 

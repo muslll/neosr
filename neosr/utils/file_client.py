@@ -1,10 +1,10 @@
-# Modified from https://github.com/open-mmlab/mmcv/blob/master/mmcv/fileio/file_client.py  # noqa: E501
+# Modified from https://github.com/open-mmlab/mmcv/blob/master/mmcv/fileio/file_client.py
 from abc import ABC, abstractmethod
+from pathlib import Path
 from typing import Never
 
 
 class BaseStorageBackend(ABC):
-
     """Abstract class of storage backends.
 
     All backends need to implement two apis: ``get()`` and ``get_text()``.
@@ -22,22 +22,18 @@ class BaseStorageBackend(ABC):
 
 
 class HardDiskBackend(BaseStorageBackend):
-
     """Raw hard disks storage backend."""
 
     def get(self, filepath):
         filepath = str(filepath)
-        with open(filepath, "rb") as f:
-            return f.read()
+        return Path(filepath).read_bytes()
 
     def get_text(self, filepath):
         filepath = str(filepath)
-        with open(filepath, encoding="locale") as f:
-            return f.read()
+        return Path(filepath).read_text(encoding="locale")
 
 
 class LmdbBackend(BaseStorageBackend):
-
     """Lmdb storage backend.
 
     Args:
@@ -115,7 +111,6 @@ class LmdbBackend(BaseStorageBackend):
 
 
 class FileClient:
-
     """A general file client to access files in different backend.
 
     The client loads a file or text in a specified backend from its path
@@ -138,9 +133,7 @@ class FileClient:
                 f"Backend {backend} is not supported. Currently supported ones"
                 f" are {list(self._backends.keys())}"
             )
-            raise ValueError(
-                msg
-            )
+            raise ValueError(msg)
         self.backend = backend
         self.client = self._backends[backend](**kwargs)
 

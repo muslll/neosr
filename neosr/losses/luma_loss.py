@@ -12,9 +12,7 @@ def rgb_to_luma(img: torch.Tensor) -> torch.Tensor:
 
     if len(img.shape) < 3 or img.shape[-3] != 3:
         msg = f"Input size must have a shape of (*, 3, H, W). Got {img.shape}"
-        raise ValueError(
-            msg
-        )
+        raise ValueError(msg)
 
     # permute
     out_img = img.permute(0, 2, 3, 1)
@@ -22,7 +20,7 @@ def rgb_to_luma(img: torch.Tensor) -> torch.Tensor:
     # linearize rgb
     linear = out_img <= 0.04045
     if torch.any(linear):
-        out_img /= 12.92
+        out_img = out_img / 12.92
     else:
         out_img = torch.pow(((out_img + 0.055) / 1.055), 2.4)
 
@@ -43,7 +41,6 @@ def rgb_to_luma(img: torch.Tensor) -> torch.Tensor:
 
 @LOSS_REGISTRY.register()
 class luma_loss(nn.Module):
-
     """Luminance Loss.
     Converts images to Y from CIE XYZ and then to CIE L* (from L*a*b*).
 

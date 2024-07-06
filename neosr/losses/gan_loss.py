@@ -6,7 +6,6 @@ from neosr.utils.registry import LOSS_REGISTRY
 
 @LOSS_REGISTRY.register()
 class gan_loss(nn.Module):
-
     """Define GAN loss.
 
     Args:

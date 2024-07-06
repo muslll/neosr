@@ -7,7 +7,6 @@ from neosr.utils.registry import ARCH_REGISTRY
 
 @ARCH_REGISTRY.register()
 class unet(nn.Module):
-
     """Defines a U-Net discriminator with spectral normalization (SN).
 
     It is used in Real-ESRGAN: Training Real-World Blind Super-Resolution with Pure Synthetic Data.

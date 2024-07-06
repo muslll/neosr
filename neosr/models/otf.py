@@ -19,7 +19,6 @@ rng = rng()
 
 @MODEL_REGISTRY.register()
 class otf(image):
-
     """On The Fly degradations, based on RealESRGAN pipeline."""
 
     def __init__(self, opt) -> None:
@@ -273,7 +272,5 @@ class otf(image):
     def nondist_validation(self, dataloader, current_iter, tb_logger, save_img) -> None:
         # do not use the synthetic process during validation
         self.is_train = False
-        super().nondist_validation(
-            dataloader, current_iter, tb_logger, save_img
-        )
+        super().nondist_validation(dataloader, current_iter, tb_logger, save_img)
         self.is_train = True

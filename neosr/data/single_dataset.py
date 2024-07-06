@@ -10,7 +10,6 @@ from neosr.utils.registry import DATASET_REGISTRY
 
 @DATASET_REGISTRY.register()
 class single(data.Dataset):
-
     """Read only lq images in the test phase.
 
     Read LQ (Low Quality, e.g. LR (Low Resolution), blurry, noisy, etc).

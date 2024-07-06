@@ -101,13 +101,14 @@ def build_dataloader(
     # val
     elif phase in {"val", "test"}:
         dataloader_args = {
-            "dataset": dataset, "batch_size": 1, "shuffle": False, "num_workers": 0
+            "dataset": dataset,
+            "batch_size": 1,
+            "shuffle": False,
+            "num_workers": 0,
         }
     else:
         msg = f"Wrong dataset phase: {phase}. Supported ones are 'train', 'val' and 'test'."
-        raise ValueError(
-            msg
-        )
+        raise ValueError(msg)
 
     dataloader_args["pin_memory"] = dataset_opt.get("pin_memory", True)
     dataloader_args["persistent_workers"] = dataset_opt.get("persistent_workers", False)

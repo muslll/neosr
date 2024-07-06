@@ -12,7 +12,6 @@ from neosr.utils.registry import DATASET_REGISTRY
 
 @DATASET_REGISTRY.register()
 class paired(data.Dataset):
-
     """Paired image dataset for image restoration.
 
     Read LQ (Low Quality, e.g. LR (Low Resolution), blurry, noisy, etc) and GT image pairs.
@@ -113,9 +112,7 @@ class paired(data.Dataset):
             try:
                 if img_bytes is None:
                     msg = f"No data returned from path: {gt_path}, {lq_path}"
-                    raise ValueError(
-                        msg
-                    )
+                    raise ValueError(msg)
             except OSError as e:
                 logger = get_root_logger()
                 logger.warning(

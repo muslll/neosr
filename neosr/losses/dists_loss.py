@@ -10,14 +10,16 @@ from neosr.utils.registry import LOSS_REGISTRY
 
 
 class L2pooling(nn.Module):
-    def __init__(self, filter_size=5, stride=2, channels=None, as_loss=True, pad_off=0) -> None:
+    def __init__(
+        self, filter_size=5, stride=2, channels=None, as_loss=True, pad_off=0
+    ) -> None:
         super().__init__()
         self.padding = (filter_size - 2) // 2
         self.stride = stride
         self.channels = channels
         a = np.hanning(filter_size)[1:-1]
         g = torch.Tensor(a[:, None] * a[None, :])
-        g /= torch.sum(g)
+        g = g / torch.sum(g)
         self.register_buffer(
             "filter", g[None, None, :, :].repeat((self.channels, 1, 1, 1))
         )
@@ -27,7 +29,7 @@ class L2pooling(nn.Module):
             self.filter = self.filter.cuda()
 
     def forward(self, input):
-        input **= 2
+        input = input**2
         out = F.conv2d(
             input,
             self.filter,
@@ -40,7 +42,6 @@ class L2pooling(nn.Module):
 
 @LOSS_REGISTRY.register()
 class dists_loss(nn.Module):
-
     r"""DISTS. "Image Quality Assessment: Unifying Structure and Texture Similarity":
     https://arxiv.org/abs/2004.07728.
 
@@ -55,7 +56,9 @@ class dists_loss(nn.Module):
 
     """
 
-    def __init__(self, as_loss=True, loss_weight=1.0, load_weights=True, **kwargs) -> None:
+    def __init__(
+        self, as_loss=True, loss_weight=1.0, load_weights=True, **kwargs
+    ) -> None:
         super().__init__()
         self.as_loss = as_loss
         self.loss_weight = loss_weight
@@ -138,7 +141,7 @@ class dists_loss(nn.Module):
             x_mean = feats0[k].mean([2, 3], keepdim=True)
             y_mean = feats1[k].mean([2, 3], keepdim=True)
             S1 = (2 * x_mean * y_mean + c1) / (x_mean**2 + y_mean**2 + c1)
-            dist1 += (alpha[k] * S1).sum(1, keepdim=True)
+            dist1 = dist1 + (alpha[k] * S1).sum(1, keepdim=True)
 
             x_var = ((feats0[k] - x_mean) ** 2).mean([2, 3], keepdim=True)
             y_var = ((feats1[k] - y_mean) ** 2).mean([2, 3], keepdim=True)
@@ -146,7 +149,7 @@ class dists_loss(nn.Module):
                 [2, 3], keepdim=True
             ) - x_mean * y_mean
             S2 = (2 * xy_cov + c2) / (x_var + y_var + c2)
-            dist2 += (beta[k] * S2).sum(1, keepdim=True)
+            dist2 = dist2 + (beta[k] * S2).sum(1, keepdim=True)
 
         if self.as_loss:
             out = 1 - (dist1 + dist2).mean()

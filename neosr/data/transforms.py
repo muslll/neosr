@@ -70,8 +70,7 @@ def paired_random_crop(img_gts, img_lqs, lq_patch_size, scale, gt_path=None):
     if h_gt != h_lq * scale or w_gt != w_lq * scale:
         msg = f"Scale mismatches. GT ({h_gt}, {w_gt}) is not {scale}x "
         raise ValueError(
-            msg,
-            f"multiplication of LQ ({h_lq}, {w_lq}). Please fix {gt_path}.",
+            msg, f"multiplication of LQ ({h_lq}, {w_lq}). Please fix {gt_path}."
         )
 
     if h_lq < lq_patch_size or w_lq < lq_patch_size:
@@ -80,9 +79,7 @@ def paired_random_crop(img_gts, img_lqs, lq_patch_size, scale, gt_path=None):
             f"({lq_patch_size}, {lq_patch_size}). "
             f"Please remove {gt_path}."
         )
-        raise ValueError(
-            msg
-        )
+        raise ValueError(msg)
 
     # randomly choose top and left coordinates for lq patch
     top = random.randint(0, h_lq - lq_patch_size)

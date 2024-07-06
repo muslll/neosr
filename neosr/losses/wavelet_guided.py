@@ -342,7 +342,6 @@ def sfb2d_atrous(ll, lh, hl, hh, filts, mode="symmetric"):
 
 
 class SWTForward(nn.Module):
-
     """Performs a 2d Stationary wavelet transform (or undecimated wavelet
     transform) of an image
     Args:

@@ -62,7 +62,6 @@ def quality_to_factor(quality):
 
 # ------------------------ compression ------------------------#
 class RGB2YCbCrJpeg(nn.Module):
-
     """Converts RGB image to YCbCr."""
 
     def __init__(self) -> None:
@@ -94,7 +93,6 @@ class RGB2YCbCrJpeg(nn.Module):
 
 
 class ChromaSubsampling(nn.Module):
-
     """Chroma subsampling on CbCr channels."""
 
     def __init__(self) -> None:
@@ -131,7 +129,6 @@ class ChromaSubsampling(nn.Module):
 
 
 class BlockSplitting(nn.Module):
-
     """Splitting image into patches."""
 
     def __init__(self) -> None:
@@ -156,7 +153,6 @@ class BlockSplitting(nn.Module):
 
 
 class DCT8x8(nn.Module):
-
     """Discrete Cosine Transformation."""
 
     def __init__(self) -> None:
@@ -189,7 +185,6 @@ class DCT8x8(nn.Module):
 
 
 class YQuantize(nn.Module):
-
     """JPEG Quantization for Y channel.
 
     Args:
@@ -223,7 +218,6 @@ class YQuantize(nn.Module):
 
 
 class CQuantize(nn.Module):
-
     """JPEG Quantization for CbCr channels.
 
     Args:
@@ -257,7 +251,6 @@ class CQuantize(nn.Module):
 
 
 class CompressJpeg(nn.Module):
-
     """Full JPEG compression algorithm.
 
     Args:
@@ -285,7 +278,7 @@ class CompressJpeg(nn.Module):
         """
         y, cb, cr = self.l1(image * 255)
         components = {"y": y, "cb": cb, "cr": cr}
-        for k in components:
+        for k in components.items():
             comp = self.l2(components[k])
             if k in {"cb", "cr"}:
                 comp = self.c_quantize(comp, factor=factor)
@@ -301,7 +294,6 @@ class CompressJpeg(nn.Module):
 
 
 class YDequantize(nn.Module):
-
     """Dequantize Y channel."""
 
     def __init__(self) -> None:
@@ -328,7 +320,6 @@ class YDequantize(nn.Module):
 
 
 class CDequantize(nn.Module):
-
     """Dequantize CbCr channel."""
 
     def __init__(self) -> None:
@@ -355,7 +346,6 @@ class CDequantize(nn.Module):
 
 
 class iDCT8x8(nn.Module):
-
     """Inverse discrete Cosine Transformation."""
 
     def __init__(self) -> None:
@@ -386,7 +376,6 @@ class iDCT8x8(nn.Module):
 
 
 class BlockMerging(nn.Module):
-
     """Merge patches into image."""
 
     def __init__(self) -> None:
@@ -412,7 +401,6 @@ class BlockMerging(nn.Module):
 
 
 class ChromaUpsampling(nn.Module):
-
     """Upsample chroma layers."""
 
     def __init__(self) -> None:
@@ -443,7 +431,6 @@ class ChromaUpsampling(nn.Module):
 
 
 class YCbCr2RGBJpeg(nn.Module):
-
     """Converts YCbCr image to RGB JPEG."""
 
     def __init__(self) -> None:
@@ -471,7 +458,6 @@ class YCbCr2RGBJpeg(nn.Module):
 
 
 class DeCompressJpeg(nn.Module):
-
     """Full JPEG decompression algorithm.
 
     Args:
@@ -503,7 +489,7 @@ class DeCompressJpeg(nn.Module):
 
         """
         components = {"y": y, "cb": cb, "cr": cr}
-        for k in components:
+        for k in components.items():
             if k in {"cb", "cr"}:
                 comp = self.c_dequantize(components[k], factor=factor)
                 height, width = int(imgh / 2), int(imgw / 2)
@@ -525,7 +511,6 @@ class DeCompressJpeg(nn.Module):
 
 
 class DiffJPEG(nn.Module):
-
     """This JPEG algorithm result is slightly different from cv2.
     DiffJPEG supports batch processing.
 

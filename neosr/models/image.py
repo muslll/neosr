@@ -23,7 +23,6 @@ from neosr.utils.registry import MODEL_REGISTRY
 
 @MODEL_REGISTRY.register()
 class image(base):
-
     """Single-Image Super-Resolution model."""
 
     def __init__(self, opt) -> None:
@@ -258,9 +257,7 @@ class image(base):
 
         if pix_losses_bool is False and percep_losses_bool is False:
             msg = "Both pixel/mssim and perceptual losses are None. Please enable at least one."
-            raise ValueError(
-                msg
-            )
+            raise ValueError(msg)
         if self.net_d is None and optim_d is not None:
             msg = "Please set a discriminator in network_d or disable optim_d."
             raise ValueError(msg)
@@ -313,9 +310,7 @@ class image(base):
                 base_optimizer = adan_sf
             else:
                 msg = f"SAM not supported by optimizer {optim_type} yet."
-                raise NotImplementedError(
-                    msg
-                )
+                raise NotImplementedError(msg)
 
         if self.sam in {"FSAM", "fsam"}:
             self.sam_optimizer_g = fsam(
@@ -876,7 +871,9 @@ class image(base):
 
         self.is_train = True
 
-    def _log_validation_metric_values(self, current_iter, dataset_name, tb_logger) -> None:
+    def _log_validation_metric_values(
+        self, current_iter, dataset_name, tb_logger
+    ) -> None:
         log_str = f"Validation {dataset_name}\n\n"
         for metric, value in self.metric_results.items():
             log_str += f"\t # {metric}: {value:.4f}"

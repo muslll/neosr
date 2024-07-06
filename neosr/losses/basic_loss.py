@@ -27,7 +27,6 @@ def huber_loss(
 
 @LOSS_REGISTRY.register()
 class L1Loss(nn.Module):
-
     """L1 (mean absolute error, MAE) loss.
 
     Args:
@@ -42,9 +41,7 @@ class L1Loss(nn.Module):
         super().__init__()
         if reduction not in {"none", "mean", "sum"}:
             msg = f"Unsupported reduction mode: {reduction}. Supported ones are: {_reduction_modes}"
-            raise ValueError(
-                msg
-            )
+            raise ValueError(msg)
 
         self.loss_weight = loss_weight
         self.reduction = reduction
@@ -64,7 +61,6 @@ class L1Loss(nn.Module):
 
 @LOSS_REGISTRY.register()
 class MSELoss(nn.Module):
-
     """MSE (L2) loss.
 
     Args:
@@ -79,9 +75,7 @@ class MSELoss(nn.Module):
         super().__init__()
         if reduction not in {"none", "mean", "sum"}:
             msg = f"Unsupported reduction mode: {reduction}. Supported ones are: {_reduction_modes}"
-            raise ValueError(
-                msg
-            )
+            raise ValueError(msg)
 
         self.loss_weight = loss_weight
         self.reduction = reduction
@@ -101,8 +95,7 @@ class MSELoss(nn.Module):
 
 @LOSS_REGISTRY.register()
 class HuberLoss(nn.Module):
-
-    """HuberLoss.
+    """HuberLoss
 
     Args:
     ----
@@ -117,11 +110,10 @@ class HuberLoss(nn.Module):
     def __init__(
         self, loss_weight: float = 1.0, reduction: str = "mean", delta: float = 1.0
     ) -> None:
-        super().__init__()
+        super(HuberLoss, self).__init__()
         if reduction not in {"none", "mean", "sum"}:
-            msg = f"Unsupported reduction mode: {reduction}. Supported ones are: {_reduction_modes}"
             raise ValueError(
-                msg
+                f"Unsupported reduction mode: {reduction}. Supported ones are: {_reduction_modes}"
             )
 
         self.loss_weight = loss_weight
@@ -129,7 +121,7 @@ class HuberLoss(nn.Module):
         self.delta = delta
 
     def forward(
-        self, pred: torch.Tensor, target: torch.Tensor, weight: float | None = None, **kwargs
+        self, pred: torch.Tensor, target: torch.Tensor, weight: float = None, **kwargs
     ) -> torch.Tensor:
         """Args:
         ----
@@ -145,7 +137,6 @@ class HuberLoss(nn.Module):
 
 @LOSS_REGISTRY.register()
 class chc(nn.Module):
-
     """Clipped pseudo-Huber with Cosine Similarity Loss.
 
        For reference on research, see:
@@ -178,9 +169,7 @@ class chc(nn.Module):
 
         if reduction not in {"none", "mean", "sum"}:
             msg = f"Unsupported reduction mode: {reduction}. Supported ones are: {_reduction_modes}"
-            raise ValueError(
-                msg
-            )
+            raise ValueError(msg)
 
         # Loss params
         self.loss_weight = loss_weight

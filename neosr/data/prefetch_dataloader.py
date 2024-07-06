@@ -6,7 +6,6 @@ from torch.utils.data import DataLoader
 
 
 class PrefetchGenerator(threading.Thread):
-
     """A general prefetch generator.
 
     Reference: https://stackoverflow.com/questions/7323664/python-generator-pre-fetch
@@ -41,7 +40,6 @@ class PrefetchGenerator(threading.Thread):
 
 
 class PrefetchDataLoader(DataLoader):
-
     """Prefetch version of dataloader.
 
     Reference: https://github.com/IgorSusmelj/pytorch-styleguide/issues/5#
@@ -67,7 +65,6 @@ class PrefetchDataLoader(DataLoader):
 
 
 class CUDAPrefetcher:
-
     """CUDA prefetcher.
 
     Reference: https://github.com/NVIDIA/apex/issues/304#

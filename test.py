@@ -1,6 +1,7 @@
 import logging
 import sys
 from os import path as osp
+from pathlib import Path
 from time import time
 
 import torch
@@ -20,7 +21,7 @@ def test_pipeline(root_path) -> None:
 
     # mkdir and initialize loggers
     make_exp_dirs(opt)
-    log_file = osp.join(opt["path"]["log"], f"test_{opt["name"]}_{get_time_str()}.log")
+    log_file = Path(opt["path"]["log"]) / f"test_{opt["name"]}_{get_time_str()}.log"
     logger = get_root_logger(
         logger_name="neosr", log_level=logging.INFO, log_file=log_file
     )
@@ -66,5 +67,5 @@ def test_pipeline(root_path) -> None:
 
 
 if __name__ == "__main__":
-    root_path = osp.abspath(osp.join(__file__, osp.pardir))
+    root_path = Path.resolve(Path(__file__) / osp.pardir)
     test_pipeline(root_path)

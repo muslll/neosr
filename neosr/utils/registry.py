@@ -1,8 +1,7 @@
-# Modified from: https://github.com/facebookresearch/fvcore/blob/master/fvcore/common/registry.py  # noqa: E501
+# Modified from: https://github.com/facebookresearch/fvcore/blob/master/fvcore/common/registry.py
 
 
 class Registry:
-
     """The registry that provides name -> object mapping, to support third-party
     users' custom modules.
 
@@ -71,9 +70,7 @@ class Registry:
             ret = self._obj_map.get(name + "_" + suffix)
         if ret is None:
             msg = f"No object named '{name}' found in '{self._name}' registry!"
-            raise KeyError(
-                msg
-            )
+            raise KeyError(msg)
         return ret
 
     def __contains__(self, name) -> bool:

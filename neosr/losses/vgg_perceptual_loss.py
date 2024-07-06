@@ -12,7 +12,6 @@ upscale, __ = net_opt()
 
 
 class PatchesKernel3D(nn.Module):
-
     """Adapted from 'Patch Loss: A Generic Multi-Scale Perceptual Loss for
     Single Image Super-resolution':
     https://www.sciencedirect.com/science/article/pii/S0031320323002108
@@ -51,7 +50,6 @@ class PatchesKernel3D(nn.Module):
 
 @LOSS_REGISTRY.register()
 class vgg_perceptual_loss(nn.Module):
-
     """Perceptual loss with VGG19.
 
     Args:
@@ -109,9 +107,7 @@ class vgg_perceptual_loss(nn.Module):
                 self.ipk_kernels = [3, 5, 7]
             else:
                 msg = f"PatchLoss does not support upscale ratio {upscale}."
-                raise NotImplementedError(
-                    msg
-                )
+                raise NotImplementedError(msg)
 
         self.vgg = VGGFeatureExtractor(
             layer_name_list=list(layer_weights.keys()),

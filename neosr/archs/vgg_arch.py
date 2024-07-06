@@ -74,7 +74,6 @@ def insert_bn(names):
 
 @ARCH_REGISTRY.register()
 class VGGFeatureExtractor(nn.Module):
-
     """VGG network for feature extraction.
 
     In this implementation, we allow users to choose whether use normalization

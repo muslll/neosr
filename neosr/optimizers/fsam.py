@@ -2,7 +2,6 @@ import torch
 
 
 class fsam(torch.optim.Optimizer):
-
     """Adapted from 'Friendly Sharpness-Aware Minimization':
     https://arxiv.org/html/2403.12350v1
     https://github.com/nblt/F-SAM.

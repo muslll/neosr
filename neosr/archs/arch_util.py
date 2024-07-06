@@ -29,10 +29,9 @@ def net_opt() -> tuple[int, bool]:
 
 
 class DySample(nn.Module):
-
     """Adapted from 'Learning to Upsample by Learning to Sample':
     https://arxiv.org/abs/2308.15085
-    https://github.com/tiny-smart/dysample.
+    https://github.com/tiny-smart/dysample
     """
 
     def __init__(
@@ -121,7 +120,7 @@ def drop_path(
     x, drop_prob: float = 0.0, training: bool = False, scale_by_keep: bool = True
 ):
     """Drop paths (Stochastic Depth) per sample.
-    From: https://github.com/rwightman/pytorch-image-models/blob/master/timm/models/layers/drop.py.
+    From: https://github.com/rwightman/pytorch-image-models/blob/master/timm/models/layers/drop.py
     """
     if drop_prob == 0.0 or not training:
         return x
@@ -136,9 +135,8 @@ def drop_path(
 
 
 class DropPath(nn.Module):
-
     """Drop paths (Stochastic Depth) per sample.
-    From: https://github.com/rwightman/pytorch-image-models/blob/master/timm/models/layers/drop.py.
+    From: https://github.com/rwightman/pytorch-image-models/blob/master/timm/models/layers/drop.py
     """
 
     def __init__(self, drop_prob: float = 0.0, scale_by_keep: bool = True) -> None:

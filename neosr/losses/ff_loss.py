@@ -7,7 +7,6 @@ from neosr.utils.registry import LOSS_REGISTRY
 
 @LOSS_REGISTRY.register()
 class ff_loss(nn.Module):
-
     """Focal Frequency Loss.
        From: https://github.com/EndlessSora/focal-frequency-loss.
 
@@ -96,7 +95,9 @@ class ff_loss(nn.Module):
             if self.batch_matrix:
                 matrix_tmp /= matrix_tmp.max()
             else:
-                matrix_tmp /= matrix_tmp.max(-1).values.max(-1).values[:, :, :, None, None]
+                matrix_tmp /= (
+                    matrix_tmp.max(-1).values.max(-1).values[:, :, :, None, None]
+                )
 
             matrix_tmp[torch.isnan(matrix_tmp)] = 0.0
             matrix_tmp = torch.clamp(matrix_tmp, min=0.0, max=1.0)
