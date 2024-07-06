@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 import torch
 
-from neosr.losses.dists_loss import dists
+from neosr.losses.dists_loss import dists_loss
 from neosr.metrics.metric_util import reorder_image, to_y_channel
 from neosr.utils.img_util import img2tensor
 from neosr.utils.registry import METRIC_REGISTRY
@@ -163,7 +163,7 @@ def calculate_dists(img, img2, **kwargs):
     device = torch.device("cuda")
     img, img2 = img.to(device), img2.to(device)
 
-    loss = dists(as_loss=False)
+    loss = dists_loss(as_loss=False)
     loss = loss.forward(img, img2)
 
     return loss

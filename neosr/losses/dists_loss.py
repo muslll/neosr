@@ -39,7 +39,7 @@ class L2pooling(nn.Module):
 
 
 @LOSS_REGISTRY.register()
-class dists(nn.Module):
+class dists_loss(nn.Module):
     r"""DISTS. "Image Quality Assessment: Unifying Structure and Texture Similarity":
     https://arxiv.org/abs/2004.07728
 
@@ -55,7 +55,7 @@ class dists(nn.Module):
     """
 
     def __init__(self, as_loss=True, loss_weight=1.0, load_weights=True, **kwargs):
-        super(dists, self).__init__()
+        super(dists_loss, self).__init__()
         self.as_loss = as_loss
         self.loss_weight = loss_weight
 

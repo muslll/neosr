@@ -58,7 +58,7 @@ class GaussianFilter2D(nn.Module):
 
 
 @LOSS_REGISTRY.register()
-class mssim(nn.Module):
+class mssim_loss(nn.Module):
     def __init__(
         self,
         window_size=11,

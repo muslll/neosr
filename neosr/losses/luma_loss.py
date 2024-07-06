@@ -1,12 +1,48 @@
 import torch
 from torch import nn
 
-from neosr.utils.color_util import rgb_to_luma
 from neosr.utils.registry import LOSS_REGISTRY
 
 
+def rgb_to_luma(img: torch.Tensor) -> torch.Tensor:
+    """RGB to CIELAB L*"""
+    if not isinstance(img, torch.Tensor):
+        raise TypeError(f"Input type is not a Tensor. Got {type(img)}")
+
+    if len(img.shape) < 3 or img.shape[-3] != 3:
+        raise ValueError(
+            f"Input size must have a shape of (*, 3, H, W). Got {img.shape}"
+        )
+
+    # permute
+    out_img = img.permute(0, 2, 3, 1)
+
+    # linearize rgb
+    linear = out_img <= 0.04045
+    if torch.any(linear):
+        out_img = out_img / 12.92
+    else:
+        out_img = torch.pow(((out_img + 0.055) / 1.055), 2.4)
+
+    # convert to luma - Y axis of sRGB > XYZ standard
+    out_img = out_img @ torch.tensor([0.2126, 0.7152, 0.0722])
+
+    # convert Y to L* (from CIELAB L*a*b*)
+    # NOTE: will convert from range [0, 1] to range [0,100]
+    condition = out_img <= (216 / 24389)
+    if torch.any(condition):
+        out_img = out_img * (24389 / 27)
+    else:
+        out_img = torch.pow(out_img, (1 / 3)) * 116 - 16
+
+    # normalize to [0, 1] range again
+    out_img = torch.clamp((out_img / 100), 0, 1)
+
+    return out_img
+
+
 @LOSS_REGISTRY.register()
-class lumaloss(nn.Module):
+class luma_loss(nn.Module):
     """Luminance Loss.
     Converts images to Y from CIE XYZ and then to CIE L* (from L*a*b*)
 
@@ -26,7 +62,7 @@ class lumaloss(nn.Module):
         scale: int = 2,
         loss_weight: float = 1.0,
     ) -> None:
-        super(lumaloss, self).__init__()
+        super(luma_loss, self).__init__()
         self.loss_weight = loss_weight
         self.criterion_type = criterion
         self.avgpool = avgpool

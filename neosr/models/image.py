@@ -10,7 +10,6 @@ from tqdm import tqdm
 from neosr.archs import build_network
 from neosr.data.augmentations import apply_augment
 from neosr.losses import build_loss
-from neosr.losses.loss_util import get_refined_artifact_map
 from neosr.losses.wavelet_guided import wavelet_guided
 from neosr.metrics import calculate_metric
 from neosr.models.base import base
@@ -469,11 +468,7 @@ class image(base):
                 loss_dict["l_g_dists"] = l_g_dists
             # ldl loss
             if self.cri_ldl:
-                pixel_weight = get_refined_artifact_map(self.gt, self.output, 7)
-                l_g_ldl = self.cri_ldl(
-                    torch.mul(pixel_weight, self.output),
-                    torch.mul(pixel_weight, self.gt),
-                )
+                l_g_ldl = self.cri_ldl(self.output, self.gt)
                 l_g_total += l_g_ldl
                 loss_dict["l_g_ldl"] = l_g_ldl
             # focal frequency loss

@@ -6,7 +6,7 @@ from neosr.utils.registry import LOSS_REGISTRY
 
 
 @LOSS_REGISTRY.register()
-class focalfrequencyloss(nn.Module):
+class ff_loss(nn.Module):
     """Focal Frequency Loss.
        From: https://github.com/EndlessSora/focal-frequency-loss
 
@@ -30,7 +30,7 @@ class focalfrequencyloss(nn.Module):
         log_matrix: bool = False,
         batch_matrix: bool = False,
     ) -> None:
-        super(focalfrequencyloss, self).__init__()
+        super(ff_loss, self).__init__()
         self.loss_weight = loss_weight
         self.alpha = alpha
         self.patch_factor = patch_factor
