@@ -22,9 +22,10 @@ def reorder_image(img, input_order="HWC"):
         ndarray: reordered image.
 
     """
-    if input_order not in ["HWC", "CHW"]:
+    if input_order not in {"HWC", "CHW"}:
+        msg = f"Wrong input_order {input_order}. Supported input_orders are 'HWC' and 'CHW'"
         raise ValueError(
-            f"Wrong input_order {input_order}. Supported input_orders are 'HWC' and 'CHW'"
+            msg
         )
     if len(img.shape) == 2:
         img = img[..., None]

@@ -7,9 +7,10 @@ from neosr.utils.registry import LOSS_REGISTRY
 
 @LOSS_REGISTRY.register()
 class ldl_loss(nn.Module):
+
     """LDL loss. Adapted from 'Details or Artifacts: A Locally Discriminative
     Learning Approach to Realistic Image Super-Resolution':
-    https://arxiv.org/abs/2203.09195
+    https://arxiv.org/abs/2203.09195.
 
     Args:
     ----
@@ -22,7 +23,7 @@ class ldl_loss(nn.Module):
     def __init__(
         self, criterion: str = "huber", loss_weight: float = 1.0, ksize: int = 7
     ) -> None:
-        super(ldl_loss, self).__init__()
+        super().__init__()
         self.loss_weight = loss_weight
         self.ksize = ksize
         self.criterion_type = criterion
@@ -34,7 +35,8 @@ class ldl_loss(nn.Module):
         elif self.criterion_type == "huber":
             self.criterion = nn.HuberLoss()
         else:
-            raise NotImplementedError(f"{criterion} criterion has not been supported.")
+            msg = f"{criterion} criterion has not been supported."
+            raise NotImplementedError(msg)
 
     def get_local_weights(self, residual: torch.Tensor) -> torch.Tensor:
         """Get local weights for generating the artifact map of LDL.
@@ -56,19 +58,17 @@ class ldl_loss(nn.Module):
         unfolded_residual = residual_pad.unfold(2, self.ksize, 1).unfold(
             3, self.ksize, 1
         )
-        pixel_level_weight = (
+        return (
             torch.var(unfolded_residual, dim=(-1, -2), unbiased=True, keepdim=True)
             .squeeze(-1)
             .squeeze(-1)
         )
 
-        return pixel_level_weight
-
     def get_refined_artifact_map(
         self, img_gt: torch.Tensor, img_output: torch.Tensor
     ) -> torch.Tensor:
         """Calculate the artifact map of LDL
-        (Details or Artifacts: A Locally Discriminative Learning Approach to Realistic Image Super-Resolution. In CVPR 2022)
+        (Details or Artifacts: A Locally Discriminative Learning Approach to Realistic Image Super-Resolution. In CVPR 2022).
 
         Args:
         ----
@@ -87,9 +87,7 @@ class ldl_loss(nn.Module):
             residual_sr.clone(), dim=(-1, -2, -3), keepdim=True
         ) ** (1 / 5)
         pixel_level_weight = self.get_local_weights(residual_sr.clone())
-        overall_weight = patch_level_weight * pixel_level_weight
-
-        return overall_weight
+        return patch_level_weight * pixel_level_weight
 
     def forward(self, input: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
         overall_weight = self.get_refined_artifact_map(target, input)

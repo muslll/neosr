@@ -60,7 +60,7 @@ def cutmix(img_gt, img_lq, alpha=0.9):
         raise ValueError(msg)
 
     def rand_bbox(size, lam):
-        """Generate random box by lam"""
+        """Generate random box by lam."""
         W = size[2]
         H = size[3]
         cut_rat = np.sqrt(1.0 - lam)
@@ -110,7 +110,7 @@ def resizemix(img_gt, img_lq, scope=(0.2, 0.9)):
         raise ValueError(msg)
 
     def rand_bbox_tao(size, tao):
-        """Generate random box by tao (scale)"""
+        """Generate random box by tao (scale)."""
         W = size[2]
         H = size[3]
         cut_w = int(W * tao)
@@ -183,7 +183,7 @@ def cutblur(img_gt, img_lq, alpha=0.7):
         raise ValueError(msg)
 
     def rand_bbox(size, lam):
-        """Generate random box by lam (scale)"""
+        """Generate random box by lam (scale)."""
         W = size[2]
         H = size[3]
         cut_w = int(W * lam)

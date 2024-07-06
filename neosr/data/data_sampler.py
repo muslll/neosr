@@ -5,6 +5,7 @@ from torch.utils.data.sampler import Sampler
 
 
 class EnlargedSampler(Sampler):
+
     """Sampler that restricts data loading to a subset of the dataset.
 
     Modified from torch.utils.data.distributed.DistributedSampler
@@ -21,7 +22,7 @@ class EnlargedSampler(Sampler):
 
     """
 
-    def __init__(self, dataset, num_replicas, rank, ratio=1):
+    def __init__(self, dataset, num_replicas, rank, ratio=1) -> None:
         self.dataset = dataset
         self.num_replicas = num_replicas
         self.rank = rank
@@ -44,8 +45,8 @@ class EnlargedSampler(Sampler):
 
         return iter(indices)
 
-    def __len__(self):
+    def __len__(self) -> int:
         return self.num_samples
 
-    def set_epoch(self, epoch):
+    def set_epoch(self, epoch) -> None:
         self.epoch = epoch

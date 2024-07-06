@@ -80,8 +80,7 @@ def pdf2(sigma_matrix, grid):
 
     """
     inverse_sigma = np.linalg.inv(sigma_matrix)
-    kernel = np.exp(-0.5 * np.sum(np.dot(grid, inverse_sigma) * grid, 2))
-    return kernel
+    return np.exp(-0.5 * np.sum(np.dot(grid, inverse_sigma) * grid, 2))
 
 
 def cdf2(d_matrix, grid):
@@ -101,8 +100,7 @@ def cdf2(d_matrix, grid):
     """
     rv = multivariate_normal([0, 0], [[1, 0], [0, 1]])
     grid = np.dot(grid, d_matrix)
-    cdf = rv.cdf(grid)
-    return cdf
+    return rv.cdf(grid)
 
 
 def bivariate_Gaussian(kernel_size, sig_x, sig_y, theta, grid=None, isotropic=True):
@@ -132,8 +130,7 @@ def bivariate_Gaussian(kernel_size, sig_x, sig_y, theta, grid=None, isotropic=Tr
     else:
         sigma_matrix = sigma_matrix2(sig_x, sig_y, theta)
     kernel = pdf2(sigma_matrix, grid)
-    kernel = kernel / np.sum(kernel)
-    return kernel
+    return kernel / np.sum(kernel)
 
 
 def bivariate_generalized_Gaussian(
@@ -170,8 +167,7 @@ def bivariate_generalized_Gaussian(
     kernel = np.exp(
         -0.5 * np.power(np.sum(np.dot(grid, inverse_sigma) * grid, 2), beta)
     )
-    kernel = kernel / np.sum(kernel)
-    return kernel
+    return kernel / np.sum(kernel)
 
 
 def bivariate_plateau(
@@ -210,8 +206,7 @@ def bivariate_plateau(
     kernel = np.reciprocal(
         np.power(np.sum(np.dot(grid, inverse_sigma) * grid, 2), beta) + 1
     )
-    kernel = kernel / np.sum(kernel)
-    return kernel
+    return kernel / np.sum(kernel)
 
 
 def random_bivariate_Gaussian(
@@ -261,9 +256,8 @@ def random_bivariate_Gaussian(
     if noise_range is not None:
         assert noise_range[0] < noise_range[1], "Wrong noise range."
         noise = rng.uniform(noise_range[0], noise_range[1], size=kernel.shape)
-        kernel = kernel * noise
-    kernel = kernel / np.sum(kernel)
-    return kernel
+        kernel *= noise
+    return kernel / np.sum(kernel)
 
 
 def random_bivariate_generalized_Gaussian(
@@ -320,9 +314,8 @@ def random_bivariate_generalized_Gaussian(
     if noise_range is not None:
         assert noise_range[0] < noise_range[1], "Wrong noise range."
         noise = rng.uniform(noise_range[0], noise_range[1], size=kernel.shape)
-        kernel = kernel * noise
-    kernel = kernel / np.sum(kernel)
-    return kernel
+        kernel *= noise
+    return kernel / np.sum(kernel)
 
 
 def random_bivariate_plateau(
@@ -378,10 +371,8 @@ def random_bivariate_plateau(
     if noise_range is not None:
         assert noise_range[0] < noise_range[1], "Wrong noise range."
         noise = rng.uniform(noise_range[0], noise_range[1], size=kernel.shape)
-        kernel = kernel * noise
-    kernel = kernel / np.sum(kernel)
-
-    return kernel
+        kernel *= noise
+    return kernel / np.sum(kernel)
 
 
 def random_mixed_kernels(
@@ -483,7 +474,7 @@ np.seterr(divide="ignore", invalid="ignore")
 
 
 def circular_lowpass_kernel(cutoff, kernel_size, pad_to=0):
-    """2D sinc filter
+    """2D sinc filter.
 
     Reference: https://dsp.stackexchange.com/questions/58301/2-d-circularly-symmetric-low-pass-filter
 
@@ -513,7 +504,7 @@ def circular_lowpass_kernel(cutoff, kernel_size, pad_to=0):
         [kernel_size, kernel_size],
     )
     kernel[(kernel_size - 1) // 2, (kernel_size - 1) // 2] = cutoff**2 / (4 * np.pi)
-    kernel = kernel / np.sum(kernel)
+    kernel /= np.sum(kernel)
     if pad_to > kernel_size:
         pad_size = (pad_to - kernel_size) // 2
         kernel = np.pad(kernel, ((pad_size, pad_size), (pad_size, pad_size)))
@@ -589,9 +580,9 @@ def generate_gaussian_noise_pt(img, sigma=10, gray_noise=0):
 
     """
     b, _, h, w = img.size()
-    if not isinstance(sigma, (float, int)):
+    if not isinstance(sigma, float | int):
         sigma = sigma.view(img.size(0), 1, 1, 1)
-    if isinstance(gray_noise, (float, int)):
+    if isinstance(gray_noise, float | int):
         cal_gray_noise = gray_noise > 0
     else:
         gray_noise = gray_noise.view(b, 1, 1, 1)
@@ -641,10 +632,7 @@ def add_gaussian_noise_pt(img, sigma=10, gray_noise=0, clip=True, rounds=False):
 # ----------------------- Random Gaussian Noise ----------------------- #
 def random_generate_gaussian_noise(img, sigma_range=(0, 10), gray_prob=0):
     sigma = rng.uniform(sigma_range[0], sigma_range[1])
-    if rng.uniform() < gray_prob:
-        gray_noise = True
-    else:
-        gray_noise = False
+    gray_noise = rng.uniform() < gray_prob
     return generate_gaussian_noise(img, sigma, gray_noise)
 
 
@@ -747,7 +735,7 @@ def add_poisson_noise(img, scale=1.0, clip=True, rounds=False, gray_noise=False)
 
 
 def generate_poisson_noise_pt(img, scale=1.0, gray_noise=0):
-    """Generate a batch of poisson noise (PyTorch version)
+    """Generate a batch of poisson noise (PyTorch version).
 
     Args:
     ----
@@ -764,7 +752,7 @@ def generate_poisson_noise_pt(img, scale=1.0, gray_noise=0):
 
     """
     b, _, h, w = img.size()
-    if isinstance(gray_noise, (float, int)):
+    if isinstance(gray_noise, float | int):
         cal_gray_noise = gray_noise > 0
     else:
         gray_noise = gray_noise.view(b, 1, 1, 1)
@@ -792,7 +780,7 @@ def generate_poisson_noise_pt(img, scale=1.0, gray_noise=0):
     noise = out - img
     if cal_gray_noise:
         noise = noise * (1 - gray_noise) + noise_gray * gray_noise
-    if not isinstance(scale, (float, int)):
+    if not isinstance(scale, float | int):
         scale = scale.view(b, 1, 1, 1)
     return noise * scale
 
@@ -830,10 +818,7 @@ def add_poisson_noise_pt(img, scale=1.0, clip=True, rounds=False, gray_noise=0):
 
 def random_generate_poisson_noise(img, scale_range=(0, 1.0), gray_prob=0):
     scale = rng.uniform(scale_range[0], scale_range[1])
-    if rng.uniform() < gray_prob:
-        gray_noise = True
-    else:
-        gray_noise = False
+    gray_noise = rng.uniform() < gray_prob
     return generate_poisson_noise(img, scale, gray_noise)
 
 
@@ -899,8 +884,7 @@ def add_jpg_compression(img, quality=90):
     img = np.clip(img, 0, 1)
     encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), quality]
     _, encimg = cv2.imencode(".jpg", img * 255.0, encode_param)
-    img = np.float32(cv2.imdecode(encimg, 1)) / 255.0
-    return img
+    return np.float32(cv2.imdecode(encimg, 1)) / 255.0
 
 
 def random_add_jpg_compression(img, quality_range=(90, 100)):

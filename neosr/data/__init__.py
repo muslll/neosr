@@ -80,16 +80,16 @@ def build_dataloader(
         else:  # non-distributed training
             multiplier = 1 if num_gpu == 0 else num_gpu
             batch_size = dataset_opt["batch_size"] * multiplier
-            num_workers = num_workers * multiplier
-        dataloader_args = dict(
-            dataset=dataset,
-            batch_size=batch_size,
-            shuffle=False,
-            num_workers=num_workers,
-            sampler=sampler,
-            prefetch_factor=8,
-            drop_last=True,
-        )
+            num_workers *= multiplier
+        dataloader_args = {
+            "dataset": dataset,
+            "batch_size": batch_size,
+            "shuffle": False,
+            "num_workers": num_workers,
+            "sampler": sampler,
+            "prefetch_factor": 8,
+            "drop_last": True,
+        }
         if sampler is None:
             dataloader_args["shuffle"] = True
         dataloader_args["worker_init_fn"] = (
@@ -99,13 +99,14 @@ def build_dataloader(
         )
 
     # val
-    elif phase in ["val", "test"]:
-        dataloader_args = dict(
-            dataset=dataset, batch_size=1, shuffle=False, num_workers=0
-        )
+    elif phase in {"val", "test"}:
+        dataloader_args = {
+            "dataset": dataset, "batch_size": 1, "shuffle": False, "num_workers": 0
+        }
     else:
+        msg = f"Wrong dataset phase: {phase}. Supported ones are 'train', 'val' and 'test'."
         raise ValueError(
-            f"Wrong dataset phase: {phase}. Supported ones are 'train', 'val' and 'test'."
+            msg
         )
 
     dataloader_args["pin_memory"] = dataset_opt.get("pin_memory", True)
@@ -114,7 +115,7 @@ def build_dataloader(
     return torch.utils.data.DataLoader(**dataloader_args)
 
 
-def worker_init_fn(worker_id, num_workers, rank, seed):
+def worker_init_fn(worker_id, num_workers, rank, seed) -> None:
     # Set the worker seed to num_workers * rank + worker_id + seed
     worker_seed = num_workers * rank + worker_id + seed
     np.random.seed(worker_seed)

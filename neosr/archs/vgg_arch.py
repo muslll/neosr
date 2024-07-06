@@ -74,6 +74,7 @@ def insert_bn(names):
 
 @ARCH_REGISTRY.register()
 class VGGFeatureExtractor(nn.Module):
+
     """VGG network for feature extraction.
 
     In this implementation, we allow users to choose whether use normalization
@@ -107,8 +108,8 @@ class VGGFeatureExtractor(nn.Module):
         requires_grad: bool = False,
         remove_pooling: bool = False,
         pooling_stride: int = 2,
-    ):
-        super(VGGFeatureExtractor, self).__init__()
+    ) -> None:
+        super().__init__()
 
         self.layer_name_list = layer_name_list
         self.use_input_norm = use_input_norm

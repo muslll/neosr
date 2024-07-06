@@ -14,15 +14,15 @@ def conv3otherMish(in_planes, out_planes, kernel_size=None, stride=None, padding
     # 3x3 convolution with padding and mish
     if kernel_size is None:
         kernel_size = 3
-    assert isinstance(kernel_size, (int, tuple)), "kernel_size is not in (int, tuple)!"
+    assert isinstance(kernel_size, int | tuple), "kernel_size is not in (int, tuple)!"
 
     if stride is None:
         stride = 1
-    assert isinstance(stride, (int, tuple)), "stride is not in (int, tuple)!"
+    assert isinstance(stride, int | tuple), "stride is not in (int, tuple)!"
 
     if padding is None:
         padding = 1
-    assert isinstance(padding, (int, tuple)), "padding is not in (int, tuple)!"
+    assert isinstance(padding, int | tuple), "padding is not in (int, tuple)!"
 
     return nn.Sequential(
         spectral_norm(
@@ -59,8 +59,8 @@ class ConvBnMish(nn.Module):
         has_mish: bool = True,
         inplace: bool = True,
         has_bias: bool = False,
-    ):
-        super(ConvBnMish, self).__init__()
+    ) -> None:
+        super().__init__()
         self.conv = spectral_norm(
             nn.Conv2d(
                 in_planes,
@@ -90,8 +90,8 @@ class ConvBnMish(nn.Module):
 
 
 class Attention(Module):
-    def __init__(self, in_places: int, scale: int = 8, eps: float = 1e-6):
-        super(Attention, self).__init__()
+    def __init__(self, in_places: int, scale: int = 8, eps: float = 1e-6) -> None:
+        super().__init__()
         self.gamma = Parameter(torch.zeros(1))
         self.in_places = in_places
         self.l2_norm = l2_norm
@@ -134,8 +134,8 @@ class Attention(Module):
 
 
 class AttentionAggregationModule(nn.Module):
-    def __init__(self, in_chan: int, out_chan: int):
-        super(AttentionAggregationModule, self).__init__()
+    def __init__(self, in_chan: int, out_chan: int) -> None:
+        super().__init__()
         self.convblk = ConvBnMish(in_chan, out_chan, ksize=1, stride=1, pad=0)
         self.conv_atten = Attention(out_chan)
 
@@ -145,12 +145,11 @@ class AttentionAggregationModule(nn.Module):
         fcat = torch.cat([s5, s4, s3, s2], dim=1)
         feat = self.convblk(fcat)
         atten = self.conv_atten(feat)
-        feat_out = atten + feat
-        return feat_out
+        return atten + feat
 
 
 class Conv3x3GNMish(nn.Module):
-    def __init__(self, in_channels: int, out_channels: int, upsample: bool = False):
+    def __init__(self, in_channels: int, out_channels: int, upsample: bool = False) -> None:
         super().__init__()
         self.upsample = upsample
         self.dysample = DySample(
@@ -174,7 +173,7 @@ class Conv3x3GNMish(nn.Module):
 
 
 class FPNBlock(nn.Module):
-    def __init__(self, pyramid_channels: int, skip_channels: int):
+    def __init__(self, pyramid_channels: int, skip_channels: int) -> None:
         super().__init__()
         self.skip_conv = nn.Conv2d(skip_channels, pyramid_channels, kernel_size=1)
         self.dysample = DySample(
@@ -185,12 +184,11 @@ class FPNBlock(nn.Module):
         x, skip = x
         x = self.dysample(x)
         skip = self.skip_conv(skip)
-        x = x + skip
-        return x
+        return x + skip
 
 
 class SegmentationBlock(nn.Module):
-    def __init__(self, in_channels: int, out_channels: int, n_upsamples: int = 0):
+    def __init__(self, in_channels: int, out_channels: int, n_upsamples: int = 0) -> None:
         super().__init__()
 
         blocks = [Conv3x3GNMish(in_channels, out_channels, upsample=bool(n_upsamples))]
@@ -205,9 +203,10 @@ class SegmentationBlock(nn.Module):
 
 @ARCH_REGISTRY.register()
 class ea2fpn(nn.Module):
+
     """Modified for the neosr project, based on 'A2-FPN for Semantic
     Segmentation of Fine-Resolution Remotely Sensed Images':
-    https://doi.org/10.1080/01431161.2022.2030071
+    https://doi.org/10.1080/01431161.2022.2030071.
     """
 
     def __init__(
@@ -218,7 +217,7 @@ class ea2fpn(nn.Module):
         segmentation_channels: int = 64,
         dropout: float = 0.2,
         **kwargs,
-    ):
+    ) -> None:
         super().__init__()
         self.base_model = models.resnet18(weights=ResNet18_Weights.DEFAULT)
         self.base_layers = list(self.base_model.children())
@@ -266,13 +265,13 @@ class ea2fpn(nn.Module):
         )
         self.apply(self._init_weights)
 
-    def _init_weights(self, m: torch.nn.modules.module.Module):
+    def _init_weights(self, m: torch.nn.modules.module.Module) -> None:
         if isinstance(m, nn.Linear):
             nn.init.trunc_normal_(m.weight, std=0.02)
             if isinstance(m, nn.Linear) and m.bias is not None:
                 nn.init.constant_(m.bias, 0)
         elif isinstance(
-            m, (nn.LayerNorm, nn.BatchNorm2d, nn.GroupNorm, nn.InstanceNorm2d)
+            m, nn.LayerNorm | nn.BatchNorm2d | nn.GroupNorm | nn.InstanceNorm2d
         ):
             nn.init.constant_(m.bias, 0)
             nn.init.constant_(m.weight, 1.0)
@@ -298,6 +297,4 @@ class ea2fpn(nn.Module):
 
         out = self.dropout(self.attention(s5, s4, s3, s2))
         out = self.final_conv(out)
-        out = self.dysample(out)
-
-        return out
+        return self.dysample(out)

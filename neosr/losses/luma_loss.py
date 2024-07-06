@@ -5,13 +5,15 @@ from neosr.utils.registry import LOSS_REGISTRY
 
 
 def rgb_to_luma(img: torch.Tensor) -> torch.Tensor:
-    """RGB to CIELAB L*"""
+    """RGB to CIELAB L*."""
     if not isinstance(img, torch.Tensor):
-        raise TypeError(f"Input type is not a Tensor. Got {type(img)}")
+        msg = f"Input type is not a Tensor. Got {type(img)}"
+        raise TypeError(msg)
 
     if len(img.shape) < 3 or img.shape[-3] != 3:
+        msg = f"Input size must have a shape of (*, 3, H, W). Got {img.shape}"
         raise ValueError(
-            f"Input size must have a shape of (*, 3, H, W). Got {img.shape}"
+            msg
         )
 
     # permute
@@ -20,31 +22,30 @@ def rgb_to_luma(img: torch.Tensor) -> torch.Tensor:
     # linearize rgb
     linear = out_img <= 0.04045
     if torch.any(linear):
-        out_img = out_img / 12.92
+        out_img /= 12.92
     else:
         out_img = torch.pow(((out_img + 0.055) / 1.055), 2.4)
 
     # convert to luma - Y axis of sRGB > XYZ standard
-    out_img = out_img @ torch.tensor([0.2126, 0.7152, 0.0722])
+    out_img @= torch.tensor([0.2126, 0.7152, 0.0722])
 
     # convert Y to L* (from CIELAB L*a*b*)
     # NOTE: will convert from range [0, 1] to range [0,100]
     condition = out_img <= (216 / 24389)
     if torch.any(condition):
-        out_img = out_img * (24389 / 27)
+        out_img *= 24389 / 27
     else:
         out_img = torch.pow(out_img, (1 / 3)) * 116 - 16
 
     # normalize to [0, 1] range again
-    out_img = torch.clamp((out_img / 100), 0, 1)
-
-    return out_img
+    return torch.clamp((out_img / 100), 0, 1)
 
 
 @LOSS_REGISTRY.register()
 class luma_loss(nn.Module):
+
     """Luminance Loss.
-    Converts images to Y from CIE XYZ and then to CIE L* (from L*a*b*)
+    Converts images to Y from CIE XYZ and then to CIE L* (from L*a*b*).
 
     Args:
     ----
@@ -62,7 +63,7 @@ class luma_loss(nn.Module):
         scale: int = 2,
         loss_weight: float = 1.0,
     ) -> None:
-        super(luma_loss, self).__init__()
+        super().__init__()
         self.loss_weight = loss_weight
         self.criterion_type = criterion
         self.avgpool = avgpool
@@ -75,7 +76,8 @@ class luma_loss(nn.Module):
         elif self.criterion_type == "huber":
             self.criterion = nn.HuberLoss()
         else:
-            raise NotImplementedError(f"{criterion} criterion has not been supported.")
+            msg = f"{criterion} criterion has not been supported."
+            raise NotImplementedError(msg)
 
     def forward(self, input: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
         input_luma = rgb_to_luma(input)

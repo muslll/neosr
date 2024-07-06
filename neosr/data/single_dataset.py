@@ -10,6 +10,7 @@ from neosr.utils.registry import DATASET_REGISTRY
 
 @DATASET_REGISTRY.register()
 class single(data.Dataset):
+
     """Read only lq images in the test phase.
 
     Read LQ (Low Quality, e.g. LR (Low Resolution), blurry, noisy, etc).
@@ -27,8 +28,8 @@ class single(data.Dataset):
 
     """
 
-    def __init__(self, opt):
-        super(single, self).__init__()
+    def __init__(self, opt) -> None:
+        super().__init__()
         self.opt = opt
         # file client (io backend)
         self.file_client = None
@@ -36,23 +37,23 @@ class single(data.Dataset):
         # default to 'disk' if not specified
         if self.io_backend_opt is None:
             self.io_backend_opt = {"type": "disk"}
-        self.mean = opt["mean"] if "mean" in opt else None
-        self.std = opt["std"] if "std" in opt else None
+        self.mean = opt.get("mean", None)
+        self.std = opt.get("std", None)
         self.lq_folder = opt["dataroot_lq"]
-        self.color = False if "color" in self.opt and self.opt["color"] == "y" else True
+        self.color = self.opt.get("color", None) != "y"
 
         if self.io_backend_opt["type"] == "lmdb":
             self.io_backend_opt["db_paths"] = [self.lq_folder]
             self.io_backend_opt["client_keys"] = ["lq"]
             self.paths = paths_from_lmdb(self.lq_folder)
         elif "meta_info_file" in self.opt:
-            with open(self.opt["meta_info_file"]) as fin:
+            with open(self.opt["meta_info_file"], encoding="locale") as fin:
                 self.paths = [
                     osp.join(self.lq_folder, line.rstrip().split(" ")[0])
                     for line in fin
                 ]
         else:
-            self.paths = sorted(list(scandir(self.lq_folder, full_path=True)))
+            self.paths = sorted(scandir(self.lq_folder, full_path=True))
 
     def __getitem__(self, index):
         if self.file_client is None:
@@ -76,5 +77,5 @@ class single(data.Dataset):
             normalize(img_lq, self.mean, self.std, inplace=True)
         return {"lq": img_lq, "lq_path": lq_path}
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.paths)

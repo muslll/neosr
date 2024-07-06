@@ -6,6 +6,7 @@ from torch.utils.data import DataLoader
 
 
 class PrefetchGenerator(threading.Thread):
+
     """A general prefetch generator.
 
     Reference: https://stackoverflow.com/questions/7323664/python-generator-pre-fetch
@@ -17,14 +18,14 @@ class PrefetchGenerator(threading.Thread):
 
     """
 
-    def __init__(self, generator, num_prefetch_queue):
+    def __init__(self, generator, num_prefetch_queue) -> None:
         threading.Thread.__init__(self)
         self.queue = Queue.Queue(num_prefetch_queue)
         self.generator = generator
         self.daemon = True
         self.start()
 
-    def run(self):
+    def run(self) -> None:
         for item in self.generator:
             self.queue.put(item)
         self.queue.put(None)
@@ -40,6 +41,7 @@ class PrefetchGenerator(threading.Thread):
 
 
 class PrefetchDataLoader(DataLoader):
+
     """Prefetch version of dataloader.
 
     Reference: https://github.com/IgorSusmelj/pytorch-styleguide/issues/5#
@@ -56,15 +58,16 @@ class PrefetchDataLoader(DataLoader):
 
     """
 
-    def __init__(self, num_prefetch_queue, **kwargs):
+    def __init__(self, num_prefetch_queue, **kwargs) -> None:
         self.num_prefetch_queue = num_prefetch_queue
-        super(PrefetchDataLoader, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     def __iter__(self):
         return PrefetchGenerator(super().__iter__(), self.num_prefetch_queue)
 
 
 class CUDAPrefetcher:
+
     """CUDA prefetcher.
 
     Reference: https://github.com/NVIDIA/apex/issues/304#
@@ -78,7 +81,7 @@ class CUDAPrefetcher:
 
     """
 
-    def __init__(self, loader, opt):
+    def __init__(self, loader, opt) -> None:
         self.ori_loader = loader
         self.loader = iter(loader)
         self.opt = opt
@@ -86,7 +89,7 @@ class CUDAPrefetcher:
         self.device = torch.device("cuda")
         self.preload()
 
-    def preload(self):
+    def preload(self) -> None:
         try:
             self.batch = next(self.loader)  # self.batch is a dict
         except StopIteration:
@@ -106,6 +109,6 @@ class CUDAPrefetcher:
         self.preload()
         return batch
 
-    def reset(self):
+    def reset(self) -> None:
         self.loader = iter(self.ori_loader)
         self.preload()

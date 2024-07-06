@@ -75,11 +75,12 @@ def mypad(x, pad, mode="constant", value=0):
         j = np.outer(np.ones(xe_col.shape[0]), xe_row)
         return x[:, :, i, j]
 
-    if mode == "constant" or mode == "reflect" or mode == "replicate":
+    if mode in {"constant", "reflect", "replicate"}:
         return F.pad(x, pad, mode, value)
     if mode == "zero":
         return F.pad(x, pad)
-    raise ValueError(f"Unkown pad type: {mode}")
+    msg = f"Unkown pad type: {mode}"
+    raise ValueError(msg)
 
 
 def prep_filt_afb2d(h0_col, h1_col, h0_row=None, h1_row=None, device=None):
@@ -95,19 +96,13 @@ def prep_filt_afb2d(h0_col, h1_col, h0_row=None, h1_row=None, device=None):
             same as column filter
         device: which device to put the tensors on to
     Returns:
-        (h0_col, h1_col, h0_row, h1_row)
+        (h0_col, h1_col, h0_row, h1_row).
     """
     h0_col = np.array(h0_col[::-1]).ravel()
     h1_col = np.array(h1_col[::-1]).ravel()
     t = torch.get_default_dtype()
-    if h0_row is None:
-        h0_row = h0_col
-    else:
-        h0_row = np.array(h0_row[::-1]).ravel()
-    if h1_row is None:
-        h1_row = h1_col
-    else:
-        h1_row = np.array(h1_row[::-1]).ravel()
+    h0_row = h0_col if h0_row is None else np.array(h0_row[::-1]).ravel()
+    h1_row = h1_col if h1_row is None else np.array(h1_row[::-1]).ravel()
     h0_col = torch.tensor(h0_col, device=device, dtype=t).reshape((1, 1, -1, 1))
     h1_col = torch.tensor(h1_col, device=device, dtype=t).reshape((1, 1, -1, 1))
     h0_row = torch.tensor(h0_row, device=device, dtype=t).reshape((1, 1, 1, -1))
@@ -129,7 +124,7 @@ def prep_filt_sfb2d(g0_col, g1_col, g0_row=None, g1_row=None, device=None):
             same as column filter
         device: which device to put the tensors on to
     Returns:
-        (g0_col, g1_col, g0_row, g1_row)
+        (g0_col, g1_col, g0_row, g1_row).
     """
     g0_col = np.array(g0_col).ravel()
     g1_col = np.array(g1_col).ravel()
@@ -196,9 +191,7 @@ def afb1d_atrous(x, h0, h1, mode="symmetric", dim=-1, dilation=1):
     pad = (0, 0, L2 - dilation, L2) if d == 2 else (L2 - dilation, L2, 0, 0)
     # ipdb.set_trace()
     x = mypad(x, pad=pad, mode=mode)
-    lohi = F.conv2d(x, h, groups=C, dilation=dilation)
-
-    return lohi
+    return F.conv2d(x, h, groups=C, dilation=dilation)
 
 
 def afb2d_atrous(x, filts, mode="symmetric", dilation=1):
@@ -217,7 +210,7 @@ def afb2d_atrous(x, filts, mode="symmetric", dilation=1):
             half.
         dilation (int): dilation factor for the filters. Should be 2**level
     Returns:
-        y: Tensor of shape (N, C, 4, H, W)
+        y: Tensor of shape (N, C, 4, H, W).
     """
     tensorize = [not isinstance(f, torch.Tensor) for f in filts]
     if len(filts) == 2:
@@ -235,12 +228,11 @@ def afb2d_atrous(x, filts, mode="symmetric", dilation=1):
         else:
             h0_col, h1_col, h0_row, h1_row = filts
     else:
-        raise ValueError("Unknown form for input filts")
+        msg = "Unknown form for input filts"
+        raise ValueError(msg)
 
     lohi = afb1d_atrous(x, h0_row, h1_row, mode=mode, dim=3, dilation=dilation)
-    y = afb1d_atrous(lohi, h0_col, h1_col, mode=mode, dim=2, dilation=dilation)
-
-    return y
+    return afb1d_atrous(lohi, h0_col, h1_col, mode=mode, dim=2, dilation=dilation)
 
 
 def sfb1d_atrous(
@@ -278,7 +270,7 @@ def sfb1d_atrous(
     centre = L / 2
     fsz = (L - 1) * dilation + 1
     newcentre = fsz / 2
-    before = newcentre - dilation * centre
+    newcentre - dilation * centre
 
     # When conv_transpose2d is done, a filter with k taps expands an input with
     # N samples to be N + k - 1 samples. The 'padding' is really the opposite of
@@ -287,8 +279,8 @@ def sfb1d_atrous(
     # This means the final output size without the padding option will be
     #   N + k - 1 + k - 1
     # The final thing to worry about is making sure that the output is centred.
-    short_offset = dilation - 1
-    centre_offset = fsz % 2
+    dilation - 1
+    fsz % 2
     a = fsz // 2
     b = fsz // 2 + (fsz + 1) % 2
 
@@ -341,16 +333,16 @@ def sfb2d_atrous(ll, lh, hl, hh, filts, mode="symmetric"):
         else:
             g0_col, g1_col, g0_row, g1_row = filts
     else:
-        raise ValueError("Unknown form for input filts")
+        msg = "Unknown form for input filts"
+        raise ValueError(msg)
 
     lo = sfb1d_atrous(ll, lh, g0_col, g1_col, mode=mode, dim=2)
     hi = sfb1d_atrous(hl, hh, g0_col, g1_col, mode=mode, dim=2)
-    y = sfb1d_atrous(lo, hi, g0_row, g1_row, mode=mode, dim=3)
-
-    return y
+    return sfb1d_atrous(lo, hi, g0_row, g1_row, mode=mode, dim=3)
 
 
 class SWTForward(nn.Module):
+
     """Performs a 2d Stationary wavelet transform (or undecimated wavelet
     transform) of an image
     Args:
@@ -364,7 +356,7 @@ class SWTForward(nn.Module):
             as our default scheme.
     """
 
-    def __init__(self, J=1, wave="db1", mode="symmetric"):
+    def __init__(self, J=1, wave="db1", mode="symmetric") -> None:
         super().__init__()
         if isinstance(wave, str):
             wave = pywt.Wavelet(wave)
@@ -407,7 +399,7 @@ class SWTForward(nn.Module):
         coeffs = []
         # Do a multilevel transform
         filts = (self.h0_col, self.h1_col, self.h0_row, self.h1_row)
-        for j in range(self.J):
+        for _j in range(self.J):
             # Do 1 level of the transform
             y = afb2d_atrous(ll, filts, self.mode)
             coeffs.append(y)

@@ -19,11 +19,13 @@ def rgb_to_cbcr(img: torch.Tensor) -> torch.Tensor:
 
     """
     if not isinstance(img, torch.Tensor):
-        raise TypeError(f"Input type is not a Tensor. Got {type(img)}")
+        msg = f"Input type is not a Tensor. Got {type(img)}"
+        raise TypeError(msg)
 
     if len(img.shape) < 3 or img.shape[-3] != 3:
+        msg = f"Input size must have a shape of (*, 3, H, W). Got {img.shape}"
         raise ValueError(
-            f"Input size must have a shape of (*, 3, H, W). Got {img.shape}"
+            msg
         )
 
     # bt.601 matrices in 16-240 range
@@ -36,15 +38,14 @@ def rgb_to_cbcr(img: torch.Tensor) -> torch.Tensor:
     bias = torch.tensor([16, 128, 128]).view(1, 3, 1, 1).to(img)
     out_img = torch.matmul(img.permute(0, 2, 3, 1), weight).permute(0, 3, 1, 2) + bias
     # 0-1 normalization
-    out_img = out_img / 255.0
+    out_img /= 255.0
     # CbCr-only
-    out_img = out_img[:, 1:, :, :]
-
-    return out_img
+    return out_img[:, 1:, :, :]
 
 
 @LOSS_REGISTRY.register()
 class color_loss(nn.Module):
+
     """Color Consistency Loss.
     Converts images to chroma-only and compares both.
 
@@ -64,7 +65,7 @@ class color_loss(nn.Module):
         scale: int = 2,
         loss_weight: float = 1.0,
     ) -> None:
-        super(color_loss, self).__init__()
+        super().__init__()
         self.loss_weight = loss_weight
         self.criterion_type = criterion
         self.avgpool = avgpool
@@ -79,7 +80,8 @@ class color_loss(nn.Module):
         elif self.criterion_type == "chc":
             self.criterion = chc()
         else:
-            raise NotImplementedError(f"{criterion} criterion has not been supported.")
+            msg = f"{criterion} criterion has not been supported."
+            raise NotImplementedError(msg)
 
     def forward(self, input: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
         input_uv = rgb_to_cbcr(input)

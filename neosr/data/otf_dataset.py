@@ -20,7 +20,8 @@ rng = rng()
 
 @DATASET_REGISTRY.register()
 class otf(data.Dataset):
-    """OTF degradation dataset. Originally from Real-ESRGAN
+
+    """OTF degradation dataset. Originally from Real-ESRGAN.
 
     It loads gt (Ground-Truth) images, and augments them.
     It also generates blur kernels and sinc kernels for generating low-quality images.
@@ -38,20 +39,21 @@ class otf(data.Dataset):
 
     """
 
-    def __init__(self, opt):
-        super(otf, self).__init__()
+    def __init__(self, opt) -> None:
+        super().__init__()
         self.opt = opt
         self.file_client = None
         self.io_backend_opt = opt.get("io_backend")
         # default to 'disk' if not specified
         if self.io_backend_opt is None:
             self.io_backend_opt = {"type": "disk"}
-        self.color = False if "color" in self.opt and self.opt["color"] == "y" else True
+        self.color = self.opt.get("color", None) != "y"
         self.gt_folder = opt["dataroot_gt"]
 
         if opt.get("dataroot_lq", None) is not None:
+            msg = "'dataroot_lq' not supported by otf, please switch to paired"
             raise ValueError(
-                "'dataroot_lq' not supported by otf, please switch to paired"
+                msg
             )
 
         # file client (lmdb io backend)
@@ -59,22 +61,23 @@ class otf(data.Dataset):
             self.io_backend_opt["db_paths"] = [self.gt_folder]
             self.io_backend_opt["client_keys"] = ["gt"]
             if not self.gt_folder.endswith(".lmdb"):
+                msg = f"'dataroot_gt' should end with '.lmdb', but received {self.gt_folder}"
                 raise ValueError(
-                    f"'dataroot_gt' should end with '.lmdb', but received {self.gt_folder}"
+                    msg
                 )
-            with open(osp.join(self.gt_folder, "meta_info.txt")) as fin:
+            with open(osp.join(self.gt_folder, "meta_info.txt"), encoding="locale") as fin:
                 self.paths = [line.split(".")[0] for line in fin]
         elif "meta_info" in self.opt and self.opt["meta_info"] is not None:
             # disk backend with meta_info
             # Each line in the meta_info describes the relative path to an image
-            with open(self.opt["meta_info"]) as fin:
+            with open(self.opt["meta_info"], encoding="locale") as fin:
                 paths = [line.strip().split(" ")[0] for line in fin]
                 self.paths = [os.path.join(self.gt_folder, v) for v in paths]
         else:
             # disk backend
             # it will scan the whole folder to get meta info
             # it will be time-consuming for folders with too many files. It is recommended using an extra meta txt file
-            self.paths = sorted(list(scandir(self.gt_folder, full_path=True)))
+            self.paths = sorted(scandir(self.gt_folder, full_path=True))
 
         # blur settings for the first degradation
         self.blur_kernel_size = opt.get("blur_kernel_size", None)
@@ -125,7 +128,8 @@ class otf(data.Dataset):
             try:
                 img_bytes = self.file_client.get(gt_path, "gt")
                 if img_bytes is None:
-                    raise ValueError(f"No data returned from path: {gt_path}")
+                    msg = f"No data returned from path: {gt_path}"
+                    raise ValueError(msg)
             except OSError as e:
                 logger = get_root_logger()
                 logger.warning(
@@ -235,14 +239,13 @@ class otf(data.Dataset):
         kernel = torch.FloatTensor(kernel)
         kernel2 = torch.FloatTensor(kernel2)
 
-        return_d = {
+        return {
             "gt": img_gt,
             "kernel1": kernel,
             "kernel2": kernel2,
             "sinc_kernel": sinc_kernel,
             "gt_path": gt_path,
         }
-        return return_d
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.paths)

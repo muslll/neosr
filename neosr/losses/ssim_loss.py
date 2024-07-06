@@ -8,8 +8,8 @@ from neosr.utils.registry import LOSS_REGISTRY
 
 
 class GaussianFilter2D(nn.Module):
-    def __init__(self, window_size=11, in_channels=3, sigma=1.5, padding=None):
-        """2D Gaussian Filer
+    def __init__(self, window_size=11, in_channels=3, sigma=1.5, padding=None) -> None:
+        """2D Gaussian Filer.
 
         Args:
         ----
@@ -22,8 +22,9 @@ class GaussianFilter2D(nn.Module):
         """
         super().__init__()
         self.window_size = window_size
-        if not (window_size % 2 == 1):
-            raise ValueError("Window size must be odd.")
+        if window_size % 2 != 1:
+            msg = "Window size must be odd."
+            raise ValueError(msg)
         self.padding = padding if padding is not None else window_size // 2
         self.sigma = sigma
 
@@ -37,24 +38,22 @@ class GaussianFilter2D(nn.Module):
         sigma2 = self.sigma * self.sigma
         x = torch.arange(-(self.window_size // 2), self.window_size // 2 + 1)
         w = torch.exp(-0.5 * x**2 / sigma2)
-        w = w / w.sum()
+        w /= w.sum()
         return w.reshape(1, 1, 1, self.window_size)
 
     def _get_gaussian_window2d(self, gaussian_window_1d):
-        w = torch.matmul(
+        return torch.matmul(
             gaussian_window_1d.transpose(dim0=-1, dim1=-2), gaussian_window_1d
         )
-        return w
 
     def forward(self, x):
-        x = F.conv2d(
+        return F.conv2d(
             input=x,
             weight=self.gaussian_window,
             stride=1,
             padding=self.padding,
             groups=x.shape[1],
         )
-        return x
 
 
 @LOSS_REGISTRY.register()
@@ -72,10 +71,10 @@ class mssim_loss(nn.Module):
         cosim=True,
         cosim_lambda=2,
         loss_weight=1.0,
-    ):
+    ) -> None:
         """Adapted from 'A better pytorch-based implementation for the mean structural
             similarity. Differentiable simpler SSIM and MS-SSIM.':
-                https://github.com/lartpang/mssim.pytorch
+                https://github.com/lartpang/mssim.pytorch.
 
             Calculate the mean SSIM (MSSIM) between two 4D tensors.
 
@@ -116,7 +115,7 @@ class mssim_loss(nn.Module):
     @torch.cuda.amp.custom_fwd(cast_inputs=torch.float32)
     def forward(self, x, y):
         """x, y (Tensor): tensors of shape (N,C,H,W)
-        Returns: Tensor
+        Returns: Tensor.
         """
         assert x.shape == y.shape, f"x: {x.shape} and y: {y.shape} must be the same"
         assert x.ndim == y.ndim == 4, f"x: {x.ndim} and y: {y.ndim} must be 4"
@@ -151,7 +150,7 @@ class mssim_loss(nn.Module):
         if self.cosim:
             similarity = nn.CosineSimilarity(dim=1, eps=1e-20)
             cosine_term = (1 - similarity(x, y)).mean()
-            msssim = msssim - self.cosim_lambda * cosine_term
+            msssim -= self.cosim_lambda * cosine_term
 
         return msssim
 

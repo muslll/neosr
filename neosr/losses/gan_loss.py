@@ -6,6 +6,7 @@ from neosr.utils.registry import LOSS_REGISTRY
 
 @LOSS_REGISTRY.register()
 class gan_loss(nn.Module):
+
     """Define GAN loss.
 
     Args:
@@ -21,8 +22,8 @@ class gan_loss(nn.Module):
 
     def __init__(
         self, gan_type="bce", real_label_val=1.0, fake_label_val=0.0, loss_weight=0.1
-    ):
-        super(gan_loss, self).__init__()
+    ) -> None:
+        super().__init__()
         self.gan_type = gan_type
         self.loss_weight = loss_weight
         self.real_label_val = real_label_val
@@ -37,7 +38,8 @@ class gan_loss(nn.Module):
         elif self.gan_type == "chc":
             self.loss = chc()
         else:
-            raise NotImplementedError(f"GAN type {self.gan_type} is not implemented.")
+            msg = f"GAN type {self.gan_type} is not implemented."
+            raise NotImplementedError(msg)
 
     def get_target_label(self, input, target_is_real):
         """Get target label.

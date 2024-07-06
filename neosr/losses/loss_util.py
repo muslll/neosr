@@ -44,17 +44,14 @@ def weight_reduce_loss(loss, weight=None, reduction="mean"):
     if weight is not None:
         assert weight.dim() == loss.dim()
         assert weight.size(1) == 1 or weight.size(1) == loss.size(1)
-        loss = loss * weight
+        loss *= weight
 
     # if weight is not specified or reduction is sum, just reduce the loss
     if weight is None or reduction == "sum":
         loss = reduce_loss(loss, reduction)
     # if reduction is mean, then compute mean over weight region
     elif reduction == "mean":
-        if weight.size(1) > 1:
-            weight = weight.sum()
-        else:
-            weight = weight.sum() * loss.size(1)
+        weight = weight.sum() if weight.size(1) > 1 else weight.sum() * loss.size(1)
         loss = loss.sum() / weight
 
     return loss
@@ -95,7 +92,6 @@ def weighted_loss(loss_func):
     def wrapper(pred, target, weight=None, reduction="mean", **kwargs):
         # get element-wise loss
         loss = loss_func(pred, target, **kwargs)
-        loss = weight_reduce_loss(loss, weight, reduction)
-        return loss
+        return weight_reduce_loss(loss, weight, reduction)
 
     return wrapper

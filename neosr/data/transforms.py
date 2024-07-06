@@ -18,12 +18,13 @@ def mod_crop(img, scale):
 
     """
     img = img.copy()
-    if img.ndim in (2, 3):
+    if img.ndim in {2, 3}:
         h, w = img.shape[0], img.shape[1]
         h_remainder, w_remainder = h % scale, w % scale
         img = img[: h - h_remainder, : w - w_remainder, ...]
     else:
-        raise ValueError(f"Wrong img ndim: {img.ndim}.")
+        msg = f"Wrong img ndim: {img.ndim}."
+        raise ValueError(msg)
     return img
 
 
@@ -67,16 +68,20 @@ def paired_random_crop(img_gts, img_lqs, lq_patch_size, scale, gt_path=None):
     gt_patch_size = lq_patch_size * scale
 
     if h_gt != h_lq * scale or w_gt != w_lq * scale:
+        msg = f"Scale mismatches. GT ({h_gt}, {w_gt}) is not {scale}x "
         raise ValueError(
-            f"Scale mismatches. GT ({h_gt}, {w_gt}) is not {scale}x ",
+            msg,
             f"multiplication of LQ ({h_lq}, {w_lq}). Please fix {gt_path}.",
         )
 
     if h_lq < lq_patch_size or w_lq < lq_patch_size:
-        raise ValueError(
+        msg = (
             f"LQ ({h_lq}, {w_lq}) is smaller than patch size "
             f"({lq_patch_size}, {lq_patch_size}). "
             f"Please remove {gt_path}."
+        )
+        raise ValueError(
+            msg
         )
 
     # randomly choose top and left coordinates for lq patch

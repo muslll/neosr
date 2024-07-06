@@ -12,14 +12,15 @@ upscale, __ = net_opt()
 
 
 class PatchesKernel3D(nn.Module):
+
     """Adapted from 'Patch Loss: A Generic Multi-Scale Perceptual Loss for
     Single Image Super-resolution':
     https://www.sciencedirect.com/science/article/pii/S0031320323002108
-    https://github.com/Suanmd/Patch-Loss-for-Super-Resolution
+    https://github.com/Suanmd/Patch-Loss-for-Super-Resolution.
     """
 
-    def __init__(self, kernelsize, kernelstride, kernelpadding=0):
-        super(PatchesKernel3D, self).__init__()
+    def __init__(self, kernelsize, kernelstride, kernelpadding=0) -> None:
+        super().__init__()
         kernel = (
             torch.eye(kernelsize**2)
             .view(kernelsize**2, 1, kernelsize, kernelsize)
@@ -41,17 +42,17 @@ class PatchesKernel3D(nn.Module):
         with torch.no_grad():
             x = F.conv2d(x, self.weight, self.bias, self.stride, self.padding)
 
-        x = (
+        return (
             x.permute(0, 2, 3, 1)
             .reshape(batchsize, channels, -1, self.kernelsize**2)
             .permute(0, 2, 1, 3)
         )
-        return x
 
 
 @LOSS_REGISTRY.register()
 class vgg_perceptual_loss(nn.Module):
-    """Perceptual loss with VGG19
+
+    """Perceptual loss with VGG19.
 
     Args:
     ----
@@ -88,15 +89,16 @@ class vgg_perceptual_loss(nn.Module):
         patch_weight: float = 1.0,
         **kwargs,
     ) -> None:
-        super(vgg_perceptual_loss, self).__init__()
+        super().__init__()
         self.loss_weight = loss_weight
         self.layer_weights = layer_weights
         self.patch_weights = patch_weight
         self.patchloss = patchloss
         self.ipk = ipk
 
-        if self.patchloss == False and self.ipk == True:
-            raise ValueError("Please enable PatchLoss to use IPK.")
+        if self.patchloss is False and self.ipk is True:
+            msg = "Please enable PatchLoss to use IPK."
+            raise ValueError(msg)
 
         if patchloss:
             if upscale == 4:
@@ -106,8 +108,9 @@ class vgg_perceptual_loss(nn.Module):
                 self.perceptual_kernels = [3, 6]
                 self.ipk_kernels = [3, 5, 7]
             else:
+                msg = f"PatchLoss does not support upscale ratio {upscale}."
                 raise NotImplementedError(
-                    f"PatchLoss does not support upscale ratio {upscale}."
+                    msg
                 )
 
         self.vgg = VGGFeatureExtractor(
@@ -127,7 +130,8 @@ class vgg_perceptual_loss(nn.Module):
         elif self.criterion_type == "fro":
             self.criterion = None
         else:
-            raise NotImplementedError(f"{criterion} criterion not supported.")
+            msg = f"{criterion} criterion not supported."
+            raise NotImplementedError(msg)
 
     @torch.no_grad()
     # @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type='cuda')
@@ -161,7 +165,7 @@ class vgg_perceptual_loss(nn.Module):
                     torch.sqrt(torch.sum(gt_trans**2, dim=1)),
                 )
                 cosine_x_y_d = torch.mul((1 - cosine_x_y), dy)  # y = (1-x)dy
-                loss = loss + torch.mean(cosine_x_y_d)
+                loss += torch.mean(cosine_x_y_d)
 
         # FPK
         else:
@@ -181,7 +185,7 @@ class vgg_perceptual_loss(nn.Module):
                     torch.sqrt(torch.sum(gt_trans**2, dim=1)),
                 )
                 cosine_x_y_d = torch.mul((1 - cosine_x_y), dy)  # y = (1-x)dy
-                loss = loss + torch.mean(cosine_x_y_d)
+                loss += torch.mean(cosine_x_y_d)
 
         return loss
 
@@ -205,7 +209,7 @@ class vgg_perceptual_loss(nn.Module):
         # calculate perceptual loss
         if self.loss_weight > 0:
             percep_loss = 0
-            for k in x_features.keys():
+            for k in x_features:
                 if self.criterion_type == "fro":
                     # note: linalg.norm uses Frobenius norm by default
                     percep_loss += (

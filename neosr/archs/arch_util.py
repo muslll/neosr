@@ -20,10 +20,7 @@ def net_opt() -> tuple[int, bool]:
 
     if args.input is None:
         upscale = opt["scale"]
-        if "train" in opt["datasets"]:
-            training = True
-        else:
-            training = False
+        training = "train" in opt["datasets"]
     else:
         upscale = args.scale
         training = False
@@ -32,9 +29,10 @@ def net_opt() -> tuple[int, bool]:
 
 
 class DySample(nn.Module):
+
     """Adapted from 'Learning to Upsample by Learning to Sample':
     https://arxiv.org/abs/2308.15085
-    https://github.com/tiny-smart/dysample
+    https://github.com/tiny-smart/dysample.
     """
 
     def __init__(
@@ -44,11 +42,12 @@ class DySample(nn.Module):
         scale: int = 2,
         groups: int = 4,
         end_convolution: bool = True,
-    ):
+    ) -> None:
         super().__init__()
 
         try:
-            assert in_channels >= groups and in_channels % groups == 0
+            assert in_channels >= groups
+            assert in_channels % groups == 0
         except:
             msg = "Incorrect in_channels and groups values."
             raise ValueError(msg)
@@ -122,7 +121,7 @@ def drop_path(
     x, drop_prob: float = 0.0, training: bool = False, scale_by_keep: bool = True
 ):
     """Drop paths (Stochastic Depth) per sample.
-    From: https://github.com/rwightman/pytorch-image-models/blob/master/timm/models/layers/drop.py
+    From: https://github.com/rwightman/pytorch-image-models/blob/master/timm/models/layers/drop.py.
     """
     if drop_prob == 0.0 or not training:
         return x
@@ -137,12 +136,13 @@ def drop_path(
 
 
 class DropPath(nn.Module):
+
     """Drop paths (Stochastic Depth) per sample.
-    From: https://github.com/rwightman/pytorch-image-models/blob/master/timm/models/layers/drop.py
+    From: https://github.com/rwightman/pytorch-image-models/blob/master/timm/models/layers/drop.py.
     """
 
-    def __init__(self, drop_prob: float = 0.0, scale_by_keep: bool = True):
-        super(DropPath, self).__init__()
+    def __init__(self, drop_prob: float = 0.0, scale_by_keep: bool = True) -> None:
+        super().__init__()
         self.drop_prob = drop_prob
         self.scale_by_keep = scale_by_keep
         __, training = net_opt()
