@@ -9,7 +9,7 @@ initialized_logger = {}
 
 
 class AvgTimer:
-    def __init__(self, window: int = 200):
+    def __init__(self, window: int = 200) -> None:
         self.window = window  # average window
         self.current_time = 0
         self.total_time = 0
@@ -17,10 +17,10 @@ class AvgTimer:
         self.avg_time = 0
         self.start()
 
-    def start(self):
+    def start(self) -> None:
         self.start_time = self.tic = time.time()
 
-    def record(self):
+    def record(self) -> None:
         self.count += 1
         self.toc = time.time()
         self.current_time = self.toc - self.tic
@@ -43,6 +43,7 @@ class AvgTimer:
 
 
 class MessageLogger:
+
     """Message logger for printing.
 
     Args:
@@ -59,7 +60,7 @@ class MessageLogger:
 
     def __init__(
         self, opt: dict[str, Any], start_iter: int = 1, tb_logger: None = None
-    ):
+    ) -> None:
         self.exp_name = opt["name"]
         self.interval = opt["logger"].get("print_freq", 100)
         self.accumulate = opt["datasets"]["train"].get("accumulate", 1)
@@ -70,7 +71,7 @@ class MessageLogger:
         self.start_time = time.time()
         self.logger = get_root_logger()
 
-    def reset_start_time(self):
+    def reset_start_time(self) -> None:
         self.start_time = time.time()
 
     @master_only
@@ -97,7 +98,7 @@ class MessageLogger:
         # time and estimated time
         if "time" in log_vars.keys():
             iter_time = 1 / log_vars.pop("time")
-            iter_time = iter_time / self.accumulate
+            iter_time /= self.accumulate
 
             total_time = time.time() - self.start_time
             time_sec_avg = total_time / (
@@ -127,12 +128,11 @@ class MessageLogger:
 def init_tb_logger(log_dir):
     from torch.utils.tensorboard import SummaryWriter
 
-    tb_logger = SummaryWriter(log_dir=log_dir)
-    return tb_logger
+    return SummaryWriter(log_dir=log_dir)
 
 
 @master_only
-def init_wandb_logger(opt):
+def init_wandb_logger(opt) -> None:
     """We now only use wandb to sync tensorboard log."""
     import wandb
 

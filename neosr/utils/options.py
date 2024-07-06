@@ -26,8 +26,9 @@ def toml_load(f) -> dict[str, Any]:
     try:
         with open(f, "rb") as f:
             return tomllib.load(f)
-    except tomllib.TOMLDecodeError:
-        print("Error decoding TOML file.")
+    except:
+        msg = "Error decoding TOML file."
+        raise tomllib.TOMLDecodeError(msg)
         sys.exit(1)
 
 
@@ -267,7 +268,7 @@ def parse_options(
 
 
 @master_only
-def copy_opt_file(opt_file: str, experiments_root: str):
+def copy_opt_file(opt_file: str, experiments_root: str) -> None:
     # copy the toml file to the experiment root
     import sys
     import time
@@ -277,7 +278,7 @@ def copy_opt_file(opt_file: str, experiments_root: str):
     filename = osp.join(experiments_root, osp.basename(opt_file))
     copyfile(opt_file, filename)
 
-    with open(filename, "r+") as f:
+    with open(filename, "r+", encoding="locale") as f:
         lines = f.readlines()
         lines.insert(0, f"# GENERATE TIME: {time.asctime()}\n# CMD:\n# {cmd}\n\n")
         f.seek(0)

@@ -1,8 +1,10 @@
 # Modified from https://github.com/open-mmlab/mmcv/blob/master/mmcv/fileio/file_client.py  # noqa: E501
 from abc import ABC, abstractmethod
+from typing import Never
 
 
 class BaseStorageBackend(ABC):
+
     """Abstract class of storage backends.
 
     All backends need to implement two apis: ``get()`` and ``get_text()``.
@@ -20,22 +22,22 @@ class BaseStorageBackend(ABC):
 
 
 class HardDiskBackend(BaseStorageBackend):
+
     """Raw hard disks storage backend."""
 
     def get(self, filepath):
         filepath = str(filepath)
         with open(filepath, "rb") as f:
-            value_buf = f.read()
-        return value_buf
+            return f.read()
 
     def get_text(self, filepath):
         filepath = str(filepath)
-        with open(filepath) as f:
-            value_buf = f.read()
-        return value_buf
+        with open(filepath, encoding="locale") as f:
+            return f.read()
 
 
 class LmdbBackend(BaseStorageBackend):
+
     """Lmdb storage backend.
 
     Args:
@@ -66,11 +68,12 @@ class LmdbBackend(BaseStorageBackend):
         lock=False,
         readahead=False,
         **kwargs,
-    ):
+    ) -> None:
         try:
             import lmdb
         except ImportError:
-            raise ImportError("Please install lmdb to enable LmdbBackend.")
+            msg = "Please install lmdb to enable LmdbBackend."
+            raise ImportError(msg)
 
         if isinstance(client_keys, str):
             client_keys = [client_keys]
@@ -105,14 +108,14 @@ class LmdbBackend(BaseStorageBackend):
         ), f"client_key {client_key} is not in lmdb clients."
         client = self._client[client_key]
         with client.begin(write=False) as txn:
-            value_buf = txn.get(filepath.encode("ascii"))
-        return value_buf
+            return txn.get(filepath.encode("ascii"))
 
-    def get_text(self, filepath):
+    def get_text(self, filepath) -> Never:
         raise NotImplementedError
 
 
 class FileClient:
+
     """A general file client to access files in different backend.
 
     The client loads a file or text in a specified backend from its path
@@ -129,11 +132,14 @@ class FileClient:
 
     _backends = {"disk": HardDiskBackend, "lmdb": LmdbBackend}
 
-    def __init__(self, backend="disk", **kwargs):
+    def __init__(self, backend="disk", **kwargs) -> None:
         if backend not in self._backends:
-            raise ValueError(
+            msg = (
                 f"Backend {backend} is not supported. Currently supported ones"
                 f" are {list(self._backends.keys())}"
+            )
+            raise ValueError(
+                msg
             )
         self.backend = backend
         self.client = self._backends[backend](**kwargs)

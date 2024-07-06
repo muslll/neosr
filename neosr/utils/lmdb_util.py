@@ -17,7 +17,7 @@ def make_lmdb_from_imgs(
     multiprocessing_read=True,
     n_thread=80,
     map_size=None,
-):
+) -> None:
     """Make lmdb from images.
 
     Contents of lmdb. The file structure is:
@@ -70,11 +70,11 @@ def make_lmdb_from_imgs(
         f"but got {len(img_path_list)} and {len(keys)}"
     )
     print(f"Create lmdb for {data_path}, save to {lmdb_path}...")
-    print(f"Totoal images: {len(img_path_list)}")
+    print(f"Total images: {len(img_path_list)}")
     if not lmdb_path.endswith(".lmdb"):
-        raise ValueError("lmdb_path must end with '.lmdb'.")
+        msg = "lmdb_path must end with '.lmdb'."
+        raise ValueError(msg)
     if osp.exists(lmdb_path):
-        print(f"Folder {lmdb_path} already exists. Exit.")
         sys.exit(1)
 
     if multiprocessing_read:
@@ -84,7 +84,7 @@ def make_lmdb_from_imgs(
         print(f"Read images with multiprocessing, #thread: {n_thread} ...")
         pbar = tqdm(total=len(img_path_list), unit="image")
 
-        def callback(arg):
+        def callback(arg) -> None:
             """Get the image data and update pbar."""
             key, dataset[key], shapes[key] = arg
             pbar.update(1)
@@ -120,7 +120,7 @@ def make_lmdb_from_imgs(
     # write data to lmdb
     pbar = tqdm(total=len(img_path_list), unit="chunk")
     txn = env.begin(write=True)
-    txt_file = open(osp.join(lmdb_path, "meta_info.txt"), "w")
+    txt_file = open(osp.join(lmdb_path, "meta_info.txt"), "w", encoding="locale")
     for idx, (path, key) in enumerate(zip(img_path_list, keys, strict=False)):
         pbar.update(1)
         pbar.set_description(f"Write {key}")
@@ -176,6 +176,7 @@ def read_img_worker(path, key, compress_level):
 
 
 class LmdbMaker:
+
     """LMDB Maker.
 
     Args:
@@ -188,9 +189,10 @@ class LmdbMaker:
 
     """
 
-    def __init__(self, lmdb_path, map_size=1024**4, batch=5000, compress_level=1):
+    def __init__(self, lmdb_path, map_size=1024**4, batch=5000, compress_level=1) -> None:
         if not lmdb_path.endswith(".lmdb"):
-            raise ValueError("lmdb_path must end with '.lmdb'.")
+            msg = "lmdb_path must end with '.lmdb'."
+            raise ValueError(msg)
         if osp.exists(lmdb_path):
             print(f"Folder {lmdb_path} already exists. Exit.")
             sys.exit(1)
@@ -200,10 +202,10 @@ class LmdbMaker:
         self.compress_level = compress_level
         self.env = lmdb.open(lmdb_path, map_size=map_size)
         self.txn = self.env.begin(write=True)
-        self.txt_file = open(osp.join(lmdb_path, "meta_info.txt"), "w")
+        self.txt_file = open(osp.join(lmdb_path, "meta_info.txt"), "w", encoding="locale")
         self.counter = 0
 
-    def put(self, img_byte, key, img_shape):
+    def put(self, img_byte, key, img_shape) -> None:
         self.counter += 1
         key_byte = key.encode("ascii")
         self.txn.put(key_byte, img_byte)
@@ -214,7 +216,7 @@ class LmdbMaker:
             self.txn.commit()
             self.txn = self.env.begin(write=True)
 
-    def close(self):
+    def close(self) -> None:
         self.txn.commit()
         self.env.close()
         self.txt_file.close()

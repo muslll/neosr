@@ -2,6 +2,7 @@
 
 
 class Registry:
+
     """The registry that provides name -> object mapping, to support third-party
     users' custom modules.
 
@@ -26,7 +27,7 @@ class Registry:
         BACKBONE_REGISTRY.register(MyBackbone)
     """
 
-    def __init__(self, name):
+    def __init__(self, name) -> None:
         """Args:
         ----
             name (str): the name of this registry
@@ -35,7 +36,7 @@ class Registry:
         self._name = name
         self._obj_map = {}
 
-    def _do_register(self, name, obj, suffix=None):
+    def _do_register(self, name, obj, suffix=None) -> None:
         if isinstance(suffix, str):
             name = name + "_" + suffix
 
@@ -62,19 +63,20 @@ class Registry:
         # used as a function call
         name = obj.__name__
         self._do_register(name, obj, suffix)
+        return None
 
     def get(self, name, suffix="neosr"):
         ret = self._obj_map.get(name)
         if ret is None:
             ret = self._obj_map.get(name + "_" + suffix)
-            print(f"Name {name} is not found, use name: {name}_{suffix}!")
         if ret is None:
+            msg = f"No object named '{name}' found in '{self._name}' registry!"
             raise KeyError(
-                f"No object named '{name}' found in '{self._name}' registry!"
+                msg
             )
         return ret
 
-    def __contains__(self, name):
+    def __contains__(self, name) -> bool:
         return name in self._obj_map
 
     def __iter__(self):

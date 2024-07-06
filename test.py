@@ -11,7 +11,7 @@ from neosr.utils import get_root_logger, get_time_str, make_exp_dirs
 from neosr.utils.options import parse_options
 
 
-def test_pipeline(root_path):
+def test_pipeline(root_path) -> None:
     # parse options, set distributed setting, set ramdom seed
     opt, _ = parse_options(root_path, is_train=False)
 

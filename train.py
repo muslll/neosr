@@ -97,7 +97,8 @@ def create_train_val_dataloader(opt, logger):
             logger.info(f"Number of val images/folders: {len(val_set)}")
             val_loaders.append(val_loader)
         else:
-            raise ValueError(f"Dataset phase {phase} is not recognized.")
+            msg = f"Dataset phase {phase} is not recognized."
+            raise ValueError(msg)
 
     return train_loader, train_sampler, val_loaders, total_epochs, total_iters
 
@@ -126,7 +127,7 @@ def load_resume_state(opt):
     return resume_state
 
 
-def train_pipeline(root_path):
+def train_pipeline(root_path) -> None:
     # parse options, set distributed setting, set random seed
     opt, args = parse_options(root_path, is_train=True)
     opt["root_path"] = root_path

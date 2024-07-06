@@ -40,8 +40,7 @@ def rgb2ycbcr(img, y_only=False):
                 [24.966, 112.0, -18.214],
             ],
         ) + [16, 128, 128]
-    out_img = _convert_output_type_range(out_img, img_type)
-    return out_img
+    return _convert_output_type_range(out_img, img_type)
 
 
 def bgr2ycbcr(img, y_only=False):
@@ -82,8 +81,7 @@ def bgr2ycbcr(img, y_only=False):
                 [65.481, -37.797, 112.0],
             ],
         ) + [16, 128, 128]
-    out_img = _convert_output_type_range(out_img, img_type)
-    return out_img
+    return _convert_output_type_range(out_img, img_type)
 
 
 def ycbcr2rgb(img):
@@ -120,8 +118,7 @@ def ycbcr2rgb(img):
             [0.00625893, -0.00318811, 0],
         ],
     ) * 255.0 + [-222.921, 135.576, -276.836]
-    out_img = _convert_output_type_range(out_img, img_type)
-    return out_img
+    return _convert_output_type_range(out_img, img_type)
 
 
 def ycbcr2bgr(img):
@@ -158,8 +155,7 @@ def ycbcr2bgr(img):
             [0, -0.00318811, 0.00625893],
         ],
     ) * 255.0 + [-276.836, 135.576, -222.921]
-    out_img = _convert_output_type_range(out_img, img_type)
-    return out_img
+    return _convert_output_type_range(out_img, img_type)
 
 
 def _convert_input_type_range(img):
@@ -179,13 +175,14 @@ def _convert_input_type_range(img):
     """
     img_type = img.dtype
     img = img.astype(np.float32)
-    if img_type == np.float32 or img_type == np.float16:
+    if img_type in {np.float32, np.float16}:
         pass
     elif img_type == np.uint8:
         img /= 255.0
     else:
+        msg = f"The img type should be np.float32, np.float16 or np.uint8, but got {img_type}"
         raise TypeError(
-            f"The img type should be np.float32, np.float16 or np.uint8, but got {img_type}"
+            msg
         )
     return img
 
@@ -211,9 +208,10 @@ def _convert_output_type_range(img, dst_type):
         (ndarray): The converted image with desired type and range.
 
     """
-    if dst_type not in (np.uint8, np.float32, np.float16):
+    if dst_type not in {np.uint8, np.float32, np.float16}:
+        msg = f"The dst_type should be np.float32, np.float16 or np.uint8, but got {dst_type}"
         raise TypeError(
-            f"The dst_type should be np.float32, np.float16 or np.uint8, but got {dst_type}"
+            msg
         )
     if dst_type == np.uint8:
         img = img.round()
@@ -256,5 +254,4 @@ def rgb2ycbcr_pt(img, y_only=False):
             torch.matmul(img.permute(0, 2, 3, 1), weight).permute(0, 3, 1, 2) + bias
         )
 
-    out_img = out_img / 255.0
-    return out_img
+    return out_img / 255.0

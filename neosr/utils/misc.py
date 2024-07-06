@@ -10,7 +10,7 @@ import torch
 from .dist_util import master_only
 
 
-def set_random_seed(seed: int):
+def set_random_seed(seed: int) -> None:
     """Set random seeds."""
     random.seed(seed)
     torch.manual_seed(seed)
@@ -20,7 +20,7 @@ def get_time_str() -> str:
     return time.strftime("%Y%m%d_%H%M%S", time.localtime())
 
 
-def mkdir_and_rename(path: str):
+def mkdir_and_rename(path: str) -> None:
     """mkdirs. If path exists, rename it with timestamp and create a new one.
 
     Args:
@@ -36,7 +36,7 @@ def mkdir_and_rename(path: str):
 
 
 @master_only
-def make_exp_dirs(opt: dict[str, Any]):
+def make_exp_dirs(opt: dict[str, Any]) -> None:
     """Make dirs for experiments."""
     path_opt = opt["path"].copy()
     if opt["is_train"]:
@@ -74,18 +74,16 @@ def scandir(
         A generator for all the interested files with relative paths.
 
     """
-    if (suffix is not None) and not isinstance(suffix, (str, tuple)):
-        raise TypeError('"suffix" must be a string or tuple of strings')
+    if (suffix is not None) and not isinstance(suffix, str | tuple):
+        msg = '"suffix" must be a string or tuple of strings'
+        raise TypeError(msg)
 
     root = dir_path
 
     def _scandir(dir_path, suffix, recursive):
         for entry in os.scandir(dir_path):
             if not entry.name.startswith(".") and entry.is_file():
-                if full_path:
-                    return_path = entry.path
-                else:
-                    return_path = osp.relpath(entry.path, root)
+                return_path = entry.path if full_path else osp.relpath(entry.path, root)
 
                 if suffix is None or return_path.endswith(suffix):
                     yield return_path
@@ -97,7 +95,7 @@ def scandir(
     return _scandir(dir_path, suffix=suffix, recursive=recursive)
 
 
-def check_resume(opt, resume_iter):
+def check_resume(opt, resume_iter) -> None:
     """Check resume states and pretrain_network paths.
 
     Args:
@@ -128,14 +126,14 @@ def check_resume(opt, resume_iter):
                 # print(f"Set {name} to {opt['path'][name]}")
 
         # change param_key to params in resume
-        param_keys = [key for key in opt["path"].keys() if key.startswith("param_key")]
+        param_keys = [key for key in opt["path"] if key.startswith("param_key")]
         for param_key in param_keys:
             if opt["path"][param_key] == "params_ema":
                 opt["path"][param_key] = "params"
                 # print(f'Set {param_key} to params')
 
 
-def sizeof_fmt(size, suffix="B"):
+def sizeof_fmt(size, suffix="B") -> str:
     """Get human readable file size.
 
     Args:
