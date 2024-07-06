@@ -122,9 +122,7 @@ class image(base):
         self.gradscaler_g = torch.cuda.amp.GradScaler(
             enabled=self.use_amp, init_scale=2.0**5
         )
-        self.gradscaler_d = torch.cuda.amp.GradScaler(
-            enabled=self.use_amp, init_scale=2.0**5
-        )
+        self.gradscaler_d = torch.cuda.amp.GradScaler(enabled=self.use_amp)
 
         # LQ matching for Color/Luma losses
         self.match_lq_colors = self.opt["train"].get("match_lq_colors", False)

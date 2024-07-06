@@ -4,7 +4,7 @@ import inspect
 from collections.abc import Mapping
 from itertools import repeat
 from pathlib import Path
-from typing import Any, Protocol, TypeVar
+from typing import Callable, Tuple, Any, Protocol, TypeVar
 
 import torch
 from torch import nn
@@ -13,7 +13,7 @@ from torch.nn import functional as F
 from neosr.utils.options import parse_options
 
 
-def net_opt():
+def net_opt() -> Tuple[int, bool]:
     # initialize options parsing
     root_path = Path(__file__).parents[2]
     opt, args = parse_options(root_path, is_train=True)
@@ -71,7 +71,7 @@ class DySample(nn.Module):
 
         self.register_buffer("init_pos", self._init_pos())
 
-    def _init_pos(self):
+    def _init_pos(self) ->     torch.Tensor:
         h = torch.arange((-self.scale + 1) / 2, (self.scale - 1) / 2 + 1) / self.scale
         return (
             torch.stack(torch.meshgrid([h, h], indexing="ij"))
@@ -80,7 +80,7 @@ class DySample(nn.Module):
             .reshape(1, -1, 1, 1)
         )
 
-    def forward(self, x):
+    def forward(self, x:     torch.Tensor) ->     torch.Tensor:
         offset = self.offset(x) * self.scope(x).sigmoid() * 0.5 + self.init_pos
         B, _, H, W = offset.shape
         offset = offset.view(B, 2, -1, H, W)
@@ -155,7 +155,7 @@ class DropPath(nn.Module):
         return drop_path(x, self.drop_prob, self.training, self.scale_by_keep)
 
 
-def store_neosr_defaults(*, extra_parameters: Mapping[str, object] = {}):
+def store_neosr_defaults(*, extra_parameters: Mapping[str, object] = {}) -> Callable:
     """
     Stores the neosr default hyperparameters in a `neosr_params` attribute.
     Based on Spandrel implementation (MIT license):
@@ -209,7 +209,7 @@ def store_neosr_defaults(*, extra_parameters: Mapping[str, object] = {}):
 
 
 # From PyTorch
-def _ntuple(n):
+def _ntuple(n: int) -> Callable:
     def parse(x):
         if isinstance(x, collections.abc.Iterable):
             return x

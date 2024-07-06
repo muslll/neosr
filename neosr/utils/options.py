@@ -11,9 +11,11 @@ import torch
 
 from neosr.utils import set_random_seed
 from neosr.utils.dist_util import get_dist_info, init_dist, master_only
+from pathlib import PosixPath
+from typing import Any, Dict, Tuple, Union
 
 
-def toml_load(f):
+def toml_load(f: str) -> Dict[str, Any]:
     """Load TOML file
     Args:
         f (str): File path or a python string.
@@ -28,7 +30,7 @@ def toml_load(f):
         sys.exit(1)
 
 
-def parse_options(root_path, is_train=True):
+def parse_options(root_path: Union[PosixPath, str], is_train: bool=True) -> Tuple[Dict[str, Any], argparse.Namespace]:
     parser = argparse.ArgumentParser(prog='neosr',
                         usage=argparse.SUPPRESS,
                         description='''-------- neosr command-line options --------''')
@@ -209,7 +211,7 @@ def parse_options(root_path, is_train=True):
 
 
 @master_only
-def copy_opt_file(opt_file, experiments_root):
+def copy_opt_file(opt_file: str, experiments_root: str):
     # copy the toml file to the experiment root
     import sys
     import time

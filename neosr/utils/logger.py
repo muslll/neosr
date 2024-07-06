@@ -3,13 +3,14 @@ import logging
 import time
 
 from .dist_util import get_dist_info, master_only
+from typing import Any, Dict, Optional
 
 initialized_logger = {}
 
 
 class AvgTimer():
 
-    def __init__(self, window=200):
+    def __init__(self, window: int=200):
         self.window = window  # average window
         self.current_time = 0
         self.total_time = 0
@@ -55,7 +56,7 @@ class MessageLogger():
         tb_logger (obj:`tb_logger`): Tensorboard logger. Default： None.
     """
 
-    def __init__(self, opt, start_iter=1, tb_logger=None):
+    def __init__(self, opt: Dict[str, Any], start_iter: int=1, tb_logger: None=None):
         self.exp_name = opt['name']
         self.interval = opt['logger'].get('print_freq', 100)
         self.accumulate = opt['datasets']['train'].get('accumulate', 1)
@@ -144,7 +145,7 @@ def init_wandb_logger(opt):
 
     logger.info(f'Use wandb logger with id={wandb_id}; project={project}.')
 
-def get_root_logger(logger_name='neosr', log_level=logging.INFO, log_file=None):
+def get_root_logger(logger_name: str='neosr', log_level: int=logging.INFO, log_file: Optional[str]=None) -> logging.Logger:
     """Get the root logger.
 
     The logger will be initialized if it has not been initialized. By default a

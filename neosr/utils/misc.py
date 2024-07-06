@@ -6,19 +6,20 @@ from os import path as osp
 import numpy as np
 import torch
 from .dist_util import master_only
+from typing import Any, Dict, Iterator
 
 
-def set_random_seed(seed):
+def set_random_seed(seed: int):
     """Set random seeds."""
     random.seed(seed)
     torch.manual_seed(seed)
 
 
-def get_time_str():
+def get_time_str() -> str:
     return time.strftime('%Y%m%d_%H%M%S', time.localtime())
 
 
-def mkdir_and_rename(path):
+def mkdir_and_rename(path: str):
     """mkdirs. If path exists, rename it with timestamp and create a new one.
 
     Args:
@@ -32,7 +33,7 @@ def mkdir_and_rename(path):
 
 
 @master_only
-def make_exp_dirs(opt):
+def make_exp_dirs(opt: Dict[str, Any]):
     """Make dirs for experiments."""
     path_opt = opt['path'].copy()
     if opt['is_train']:
@@ -46,7 +47,7 @@ def make_exp_dirs(opt):
             os.makedirs(path, exist_ok=True)
 
 
-def scandir(dir_path, suffix=None, recursive=False, full_path=False):
+def scandir(dir_path: str, suffix: None=None, recursive: bool=False, full_path: bool=False) -> Iterator[Any]:
     """Scan a directory to find the interested files.
 
     Args:

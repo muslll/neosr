@@ -5,6 +5,7 @@ import subprocess
 import torch
 import torch.distributed as dist
 import torch.multiprocessing as mp
+from typing import Callable, Tuple
 
 
 def init_dist(launcher, backend='nccl', **kwargs):
@@ -58,7 +59,7 @@ def _init_dist_slurm(backend, port=None):
     dist.init_process_group(backend=backend)
 
 
-def get_dist_info():
+def get_dist_info() -> Tuple[int, int]:
     if dist.is_available():
         initialized = dist.is_initialized()
     else:
@@ -72,7 +73,7 @@ def get_dist_info():
     return rank, world_size
 
 
-def master_only(func):
+def master_only(func: Callable) -> Callable:
 
     @functools.wraps(func)
     def wrapper(*args, **kwargs):

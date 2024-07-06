@@ -7,6 +7,7 @@ from torchvision.models import vgg
 from torchvision.models import VGG19_Weights
 
 from neosr.utils.registry import ARCH_REGISTRY
+from typing import Dict, List
 
 VGG_PRETRAIN_PATH = 'experiments/pretrained_models/vgg19-dcbb9e9d.pth'
 NAMES = {
@@ -62,13 +63,13 @@ class VGGFeatureExtractor(nn.Module):
     """
 
     def __init__(self,
-                 layer_name_list,
-                 vgg_type='vgg19',
-                 use_input_norm=True,
-                 range_norm=False,
-                 requires_grad=False,
-                 remove_pooling=False,
-                 pooling_stride=2):
+                 layer_name_list: List[str],
+                 vgg_type: str='vgg19',
+                 use_input_norm: bool=True,
+                 range_norm: bool=False,
+                 requires_grad: bool=False,
+                 remove_pooling: bool=False,
+                 pooling_stride: int=2):
         super(VGGFeatureExtractor, self).__init__()
 
         self.layer_name_list = layer_name_list
@@ -134,7 +135,7 @@ class VGGFeatureExtractor(nn.Module):
                 [0.25, 0.25, 0.25], device='cuda').view(1, 3, 1, 1))
 
 
-    def forward(self, x):
+    def forward(self, x:     torch.Tensor) -> Dict[str,     torch.Tensor]:
         """Forward function.
 
         Args:

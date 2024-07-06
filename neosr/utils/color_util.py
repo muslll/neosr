@@ -255,7 +255,7 @@ def rgb_to_cbcr(img: torch.Tensor) -> torch.Tensor:
     """
 
     if not isinstance(img, torch.Tensor):
-        raise TypeError(f"Input type is not a Tensor. Got {type(image)}")
+        raise TypeError(f"Input type is not a Tensor. Got {type(img)}")
 
     if len(img.shape) < 3 or img.shape[-3] != 3:
         raise ValueError(
@@ -283,7 +283,7 @@ def rgb_to_luma(img: torch.Tensor) -> torch.Tensor:
     """RGB to CIELAB L*"""
 
     if not isinstance(img, torch.Tensor):
-        raise TypeError(f"Input type is not a Tensor. Got {type(image)}")
+        raise TypeError(f"Input type is not a Tensor. Got {type(img)}")
 
     if len(img.shape) < 3 or img.shape[-3] != 3:
         raise ValueError(
