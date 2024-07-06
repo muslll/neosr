@@ -1,10 +1,7 @@
 import collections.abc
-import functools
-import inspect
-from collections.abc import Callable, Mapping
+from collections.abc import Callable
 from itertools import repeat
 from pathlib import Path
-from typing import Any, Protocol, TypeVar
 
 import torch
 from torch import nn
@@ -153,58 +150,6 @@ class DropPath(nn.Module):
 
     def forward(self, x):
         return drop_path(x, self.drop_prob, self.training, self.scale_by_keep)
-
-
-def store_neosr_defaults(*, extra_parameters: Mapping[str, object] = {}) -> Callable:
-    """Stores the neosr default hyperparameters in a `neosr_params` attribute.
-    Based on Spandrel implementation (MIT license):
-        https://github.com/chaiNNer-org/spandrel
-    """
-
-    def get_arg_defaults(spec: inspect.FullArgSpec) -> dict[str, Any]:
-        defaults = {}
-        if spec.kwonlydefaults is not None:
-            defaults = spec.kwonlydefaults
-
-        if spec.defaults is not None:
-            defaults = {
-                **defaults,
-                **dict(
-                    zip(spec.args[-len(spec.defaults) :], spec.defaults, strict=False)
-                ),
-            }
-
-        return defaults
-
-    class WithHyperparameters(Protocol):
-        neosr_params: dict[str, Any]
-
-    C = TypeVar("C", bound=WithHyperparameters)
-
-    def inner(cls: type[C]) -> type[C]:
-        old_init = cls.__init__
-
-        spec = inspect.getfullargspec(old_init)
-        defaults = get_arg_defaults(spec)
-
-        @functools.wraps(old_init)
-        def new_init(self: C, **kwargs):
-            # remove extra parameters from kwargs
-            for k, v in extra_parameters.items():
-                if k in kwargs:
-                    if kwargs[k] != v:
-                        raise ValueError(
-                            f"Expected hyperparameter {k} to be {v}, but got {kwargs[k]}"
-                        )
-                    del kwargs[k]
-
-            self.hyperparameters = {**extra_parameters, **defaults, **kwargs}
-            old_init(self, **kwargs)
-
-        cls.__init__ = new_init
-        return cls
-
-    return inner
 
 
 # From PyTorch

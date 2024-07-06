@@ -77,28 +77,28 @@ class otf(data.Dataset):
             self.paths = sorted(list(scandir(self.gt_folder, full_path=True)))
 
         # blur settings for the first degradation
-        self.blur_kernel_size = opt["blur_kernel_size"]
-        self.kernel_list = opt["kernel_list"]
+        self.blur_kernel_size = opt.get("blur_kernel_size", None)
+        self.kernel_list = opt.get("kernel_list", None)
         # a list for each kernel probability
-        self.kernel_prob = opt["kernel_prob"]
-        self.blur_sigma = opt["blur_sigma"]
+        self.kernel_prob = opt.get("kernel_prob", None)
+        self.blur_sigma = opt.get("blur_sigma", None)
         # betag used in generalized Gaussian blur kernels
-        self.betag_range = opt["betag_range"]
+        self.betag_range = opt.get("betag_range", None)
         # betap used in plateau blur kernels
-        self.betap_range = opt["betap_range"]
-        self.sinc_prob = opt["sinc_prob"]  # the probability for sinc filters
+        self.betap_range = opt.get("betap_range", None)
+        self.sinc_prob = opt.get("sinc_prob", None)  # the probability for sinc filters
 
         # blur settings for the second degradation
-        self.blur_kernel_size2 = opt["blur_kernel_size2"]
-        self.kernel_list2 = opt["kernel_list2"]
-        self.kernel_prob2 = opt["kernel_prob2"]
-        self.blur_sigma2 = opt["blur_sigma2"]
-        self.betag_range2 = opt["betag_range2"]
-        self.betap_range2 = opt["betap_range2"]
-        self.sinc_prob2 = opt["sinc_prob2"]
+        self.blur_kernel_size2 = opt.get("blur_kernel_size2", None)
+        self.kernel_list2 = opt.get("kernel_list2", None)
+        self.kernel_prob2 = opt.get("kernel_prob2", None)
+        self.blur_sigma2 = opt.get("blur_sigma2", None)
+        self.betag_range2 = opt.get("betag_range2", None)
+        self.betap_range2 = opt.get("betap_range2", None)
+        self.sinc_prob2 = opt.get("sinc_prob2", None)
 
         # a final sinc filter
-        self.final_sinc_prob = opt["final_sinc_prob"]
+        self.final_sinc_prob = opt.get("final_sinc_prob", None)
 
         # kernel size ranges from 7 to 21
         self.kernel_range = [2 * v + 1 for v in range(3, 11)]
@@ -146,7 +146,9 @@ class otf(data.Dataset):
             raise AttributeError(gt_path)
 
         # -------------------- Do augmentation for training: flip, rotation -------------------- #
-        img_gt = basic_augment(img_gt, self.opt["use_hflip"], self.opt["use_rot"])
+        img_gt = basic_augment(
+            img_gt, self.opt.get("use_hflip", True), self.opt.get("use_rot", True)
+        )
 
         # crop or pad to 512
         # TODO: 512 is hard-coded. You may change it accordingly
@@ -169,7 +171,7 @@ class otf(data.Dataset):
 
         # ------------------------ Generate kernels (used in the first degradation) ------------------------ #
         kernel_size = random.choice(self.kernel_range)
-        if rng.uniform() < self.opt["sinc_prob"]:
+        if rng.uniform() < self.opt.get("sinc_prob", None):
             # this sinc filter setting is for kernels ranging from [7, 21]
             if kernel_size < 13:
                 omega_c = rng.uniform(np.pi / 3, np.pi)
@@ -194,7 +196,7 @@ class otf(data.Dataset):
 
         # ------------------------ Generate kernels (used in the second degradation) ------------------------ #
         kernel_size = random.choice(self.kernel_range)
-        if rng.uniform() < self.opt["sinc_prob2"]:
+        if rng.uniform() < self.opt.get("sinc_prob2", None):
             if kernel_size < 13:
                 omega_c = rng.uniform(np.pi / 3, np.pi)
             else:
@@ -218,7 +220,7 @@ class otf(data.Dataset):
         kernel2 = np.pad(kernel2, ((pad_size, pad_size), (pad_size, pad_size)))
 
         # ------------------------------------- the final sinc kernel ------------------------------------- #
-        if rng.uniform() < self.opt["final_sinc_prob"]:
+        if rng.uniform() < self.opt.get("final_sinc_prob", None):
             kernel_size = random.choice(self.kernel_range)
             omega_c = rng.uniform(np.pi / 3, np.pi)
             sinc_kernel = circular_lowpass_kernel(omega_c, kernel_size, pad_to=21)

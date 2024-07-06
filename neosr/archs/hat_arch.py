@@ -5,7 +5,7 @@ from einops import rearrange
 from torch import nn
 from torch.nn.init import trunc_normal_
 
-from neosr.archs.arch_util import DropPath, net_opt, store_neosr_defaults, to_2tuple
+from neosr.archs.arch_util import DropPath, net_opt, to_2tuple
 from neosr.utils.registry import ARCH_REGISTRY
 
 upscale, __ = net_opt()
@@ -827,7 +827,6 @@ class Upsample(nn.Sequential):
         super(Upsample, self).__init__(*m)
 
 
-@store_neosr_defaults()
 class hat(nn.Module):
     r"""Hybrid Attention Transformer
         A PyTorch implementation of : `Activating More Pixels in Image Super-Resolution Transformer`.
@@ -857,8 +856,6 @@ class hat(nn.Module):
         resi_connection: The convolutional block before residual connection. '1conv'/'3conv'
 
     """
-
-    neosr_params = {"rgb_mean": (0.4488, 0.4371, 0.4040)}
 
     def __init__(
         self,

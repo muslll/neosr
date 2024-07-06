@@ -13,7 +13,7 @@ from neosr.utils import set_random_seed
 from neosr.utils.dist_util import get_dist_info, init_dist, master_only
 
 
-def toml_load(f: str) -> dict[str, Any]:
+def toml_load(f) -> dict[str, Any]:
     """Load TOML file
     Args:
         f (str): File path or a python string.
@@ -33,7 +33,7 @@ def toml_load(f: str) -> dict[str, Any]:
 
 def parse_options(
     root_path: PosixPath | str, is_train: bool = True
-) -> tuple[dict[str, Any], argparse.Namespace]:
+) -> tuple[dict[str, Any] | None, argparse.Namespace]:
     parser = argparse.ArgumentParser(
         prog="neosr",
         usage=argparse.SUPPRESS,
@@ -249,7 +249,7 @@ def parse_options(
             if "debug" in opt["name"]:
                 if "val" in opt:
                     opt["val"]["val_freq"] = 8
-                opt.get["logger"]["print_freq"] = 1
+                opt["logger"]["print_freq"] = 1
                 opt["logger"]["save_checkpoint_freq"] = 8
         else:  # test
             results_root = opt["path"].get("results_root")

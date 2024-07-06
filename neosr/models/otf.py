@@ -10,8 +10,7 @@ from neosr.data.degradations import (
 )
 from neosr.data.transforms import paired_random_crop
 from neosr.models.image import image
-from neosr.utils import DiffJPEG
-from neosr.utils.img_process_util import filter2D
+from neosr.utils.diffjpeg import DiffJPEG, filter2D
 from neosr.utils.registry import MODEL_REGISTRY
 from neosr.utils.rng import rng
 
@@ -26,7 +25,9 @@ class otf(image):
         super(otf, self).__init__(opt)
         # simulate JPEG compression artifacts
         self.jpeger = DiffJPEG(differentiable=False).cuda()
-        self.queue_size = opt.get("queue_size", 180)
+        queue = opt["datasets"]["train"].get("queue_size", 180)
+        batch = opt["datasets"]["train"]["batch_size"]
+        self.queue_size = (queue // batch) * batch
         self.patch_size = opt["datasets"]["train"].get("patch_size")
         self.device = torch.device("cuda")
 
@@ -82,9 +83,7 @@ class otf(image):
         """Accept data from dataloader, and then add two-order degradations to obtain LQ images."""
         if self.is_train:
             # training data synthesis
-            self.gt = data["gt"].to(
-                device=self.device, memory_format=torch.channels_last, non_blocking=True
-            )
+            self.gt = data["gt"].to(device=self.device, non_blocking=True)
 
             self.kernel1 = data["kernel1"].to(device=self.device, non_blocking=True)
             self.kernel2 = data["kernel2"].to(device=self.device, non_blocking=True)
@@ -99,22 +98,29 @@ class otf(image):
             out = filter2D(self.gt, self.kernel1)
             # random resize
             updown_type = random.choices(
-                ["up", "down", "keep"], self.opt["resize_prob"]
+                ["up", "down", "keep"],
+                self.opt["datasets"]["train"].get("resize_prob", None),
             )[0]
             if updown_type == "up":
-                scale = rng.uniform(1, self.opt["resize_range"][1])
+                scale = rng.uniform(
+                    1, self.opt["datasets"]["train"].get("resize_range", None)[1]
+                )
             elif updown_type == "down":
-                scale = rng.uniform(self.opt["resize_range"][0], 1)
+                scale = rng.uniform(
+                    self.opt["datasets"]["train"].get("resize_range", None)[0], 1
+                )
             else:
                 scale = 1
             mode = random.choice(["area", "bilinear", "bicubic"])
             out = F.interpolate(out, scale_factor=scale, mode=mode)
             # add noise
-            gray_noise_prob = self.opt["gray_noise_prob"]
-            if rng.uniform() < self.opt["gaussian_noise_prob"]:
+            gray_noise_prob = self.opt["datasets"]["train"].get("gray_noise_prob", None)
+            if rng.uniform() < self.opt["datasets"]["train"].get(
+                "gaussian_noise_prob", None
+            ):
                 out = random_add_gaussian_noise_pt(
                     out,
-                    sigma_range=self.opt["noise_range"],
+                    sigma_range=self.opt["datasets"]["train"].get("noise_range", None),
                     clip=True,
                     rounds=False,
                     gray_prob=gray_noise_prob,
@@ -122,29 +128,40 @@ class otf(image):
             else:
                 out = random_add_poisson_noise_pt(
                     out,
-                    scale_range=self.opt["poisson_scale_range"],
+                    scale_range=self.opt["datasets"]["train"].get(
+                        "poisson_scale_range", None
+                    ),
                     gray_prob=gray_noise_prob,
                     clip=True,
                     rounds=False,
                 )
             # JPEG compression
-            jpeg_p = out.new_zeros(out.size(0)).uniform_(*self.opt["jpeg_range"])
+            jpeg_p = out.new_zeros(out.size(0)).uniform_(
+                *self.opt["datasets"]["train"].get("jpeg_range", None)
+            )
             # clamp to [0, 1], otherwise JPEGer will result in unpleasant artifacts
             out = torch.clamp(out, 0, 1)
             out = self.jpeger(out, quality=jpeg_p)
 
             # ----------------------- The second degradation process ----------------------- #
             # blur
-            if rng.uniform() < self.opt["second_blur_prob"]:
+            if rng.uniform() < self.opt["datasets"]["train"].get(
+                "second_blur_prob", None
+            ):
                 out = filter2D(out, self.kernel2)
             # random resize
             updown_type = random.choices(
-                ["up", "down", "keep"], self.opt["resize_prob2"]
+                ["up", "down", "keep"],
+                self.opt["datasets"]["train"].get("resize_prob2", None),
             )[0]
             if updown_type == "up":
-                scale = rng.uniform(1, self.opt["resize_range2"][1])
+                scale = rng.uniform(
+                    1, self.opt["datasets"]["train"].get("resize_range2", None)[1]
+                )
             elif updown_type == "down":
-                scale = rng.uniform(self.opt["resize_range2"][0], 1)
+                scale = rng.uniform(
+                    self.opt["datasets"]["train"].get("resize_range2", None)[0], 1
+                )
             else:
                 scale = 1
             mode = random.choice(["area", "bilinear", "bicubic"])
@@ -157,11 +174,15 @@ class otf(image):
                 mode=mode,
             )
             # add noise
-            gray_noise_prob = self.opt["gray_noise_prob2"]
-            if rng.uniform() < self.opt["gaussian_noise_prob2"]:
+            gray_noise_prob = self.opt["datasets"]["train"].get(
+                "gray_noise_prob2", None
+            )
+            if rng.uniform() < self.opt["datasets"]["train"].get(
+                "gaussian_noise_prob2", None
+            ):
                 out = random_add_gaussian_noise_pt(
                     out,
-                    sigma_range=self.opt["noise_range2"],
+                    sigma_range=self.opt["datasets"]["train"].get("noise_range2", None),
                     clip=True,
                     rounds=False,
                     gray_prob=gray_noise_prob,
@@ -169,7 +190,9 @@ class otf(image):
             else:
                 out = random_add_poisson_noise_pt(
                     out,
-                    scale_range=self.opt["poisson_scale_range2"],
+                    scale_range=self.opt["datasets"]["train"].get(
+                        "poisson_scale_range2", None
+                    ),
                     gray_prob=gray_noise_prob,
                     clip=True,
                     rounds=False,
@@ -192,12 +215,16 @@ class otf(image):
                 )
                 out = filter2D(out, self.sinc_kernel)
                 # JPEG compression
-                jpeg_p = out.new_zeros(out.size(0)).uniform_(*self.opt["jpeg_range2"])
+                jpeg_p = out.new_zeros(out.size(0)).uniform_(
+                    *self.opt["datasets"]["train"].get("jpeg_range2", None)
+                )
                 out = torch.clamp(out, 0, 1)
                 out = self.jpeger(out, quality=jpeg_p)
             else:
                 # JPEG compression
-                jpeg_p = out.new_zeros(out.size(0)).uniform_(*self.opt["jpeg_range2"])
+                jpeg_p = out.new_zeros(out.size(0)).uniform_(
+                    *self.opt["datasets"]["train"].get("jpeg_range2", None)
+                )
                 out = torch.clamp(out, 0, 1)
                 out = self.jpeger(out, quality=jpeg_p)
                 # resize back + the final sinc filter
@@ -238,15 +265,9 @@ class otf(image):
                 )
         else:
             # for paired training or validation
-            self.lq = data["lq"].to(
-                device=self.device, memory_format=torch.channels_last, non_blocking=True
-            )
+            self.lq = data["lq"].to(device=self.device, non_blocking=True)
             if "gt" in data:
-                self.gt = data["gt"].to(
-                    device=self.device,
-                    memory_format=torch.channels_last,
-                    non_blocking=True,
-                )
+                self.gt = data["gt"].to(device=self.device, non_blocking=True)
 
     def nondist_validation(self, dataloader, current_iter, tb_logger, save_img):
         # do not use the synthetic process during validation
