@@ -170,8 +170,8 @@ class mssim_loss(nn.Module):
             A1 = torch.clamp(A1, 0.003921, 0.996078)
 
         # equ 12, 13 in ref1
-        l = A1 / B1
+        l1 = A1 / B1
         cs = A2 / B2
-        ssim = l * cs
+        ssim = l1 * cs
 
         return ssim, cs

@@ -1,4 +1,4 @@
-from os import path as osp
+from pathlib import Path
 
 import cv2
 import numpy as np
@@ -37,7 +37,7 @@ def read_img_seq(path, require_mod_crop=False, scale=1, return_imgname=False):
     imgs = torch.stack(imgs, dim=0)
 
     if return_imgname:
-        imgnames = [osp.splitext(osp.basename(path))[0] for path in img_paths]
+        imgnames = [Path(Path(path).name).stem for path in img_paths]
         return imgs, imgnames
     return imgs
 
@@ -160,16 +160,18 @@ def paired_paths_from_lmdb(folders, keys):
         )
         raise ValueError(msg)
     # ensure that the two meta_info files are the same
-    with open(osp.join(input_folder, "meta_info.txt"), encoding="locale") as fin:
+    with Path.open(Path(input_folder) / "meta_info.txt", encoding="locale") as fin:
         input_lmdb_keys = [line.split(".")[0] for line in fin]
-    with open(osp.join(gt_folder, "meta_info.txt"), encoding="locale") as fin:
+    with Path.open(Path(gt_folder) / "meta_info.txt", encoding="locale") as fin:
         gt_lmdb_keys = [line.split(".")[0] for line in fin]
     if set(input_lmdb_keys) != set(gt_lmdb_keys):
         msg = f"Keys in {input_key}_folder and {gt_key}_folder are different."
         raise ValueError(msg)
     paths = []
-    for lmdb_key in sorted(input_lmdb_keys):
-        paths.append({f"{input_key}_path": lmdb_key, f"{gt_key}_path": lmdb_key})
+    paths.extend(
+        {f"{input_key}_path": lmdb_key, f"{gt_key}_path": lmdb_key}
+        for lmdb_key in sorted(input_lmdb_keys)
+    )
     return paths
 
 
@@ -211,21 +213,22 @@ def paired_paths_from_meta_info_file(folders, keys, meta_info_file, filename_tmp
     input_folder, gt_folder = folders
     input_key, gt_key = keys
 
-    with open(meta_info_file, encoding="locale") as fin:
+    with Path.open(meta_info_file, encoding="locale") as fin:
         gt_names = [line.strip().split(" ")[0] for line in fin]
 
     paths = []
     for gt_name in gt_names:
-        basename, ext = osp.splitext(osp.basename(gt_name))
+        basename = Path(Path(gt_name).name).stem
+        ext = Path(Path(gt_name).name).suffix
         input_name = f"{filename_tmpl.format(basename)}{ext}"
-        input_path = osp.join(input_folder, input_name)
+        input_path = Path(input_folder) / input_name
         assert input_name in input_path, f"{input_name} is not in {input_key}_paths."
-        gt_path = osp.join(gt_folder, gt_name)
+        gt_path = Path(gt_folder) / gt_name
         paths.append({f"{input_key}_path": input_path, f"{gt_key}_path": gt_path})
     return paths
 
 
-def paired_paths_from_folder(folders, keys, filename_tmpl):
+def paired_paths_from_folder(folders, keys):
     """Generate paired paths from folders.
 
     Args:
@@ -234,9 +237,6 @@ def paired_paths_from_folder(folders, keys, filename_tmpl):
             be [input_folder, gt_folder].
         keys (list[str]): A list of keys identifying folders. The order should
             be in consistent with folders, e.g., ['lq', 'gt'].
-        filename_tmpl (str): Template for each filename. Note that the
-            template excludes the file extension. Usually the filename_tmpl is
-            for files in the input folder.
 
     Returns:
     -------
@@ -280,7 +280,7 @@ def paths_from_folder(folder):
 
     """
     paths = list(scandir(folder))
-    return [osp.join(folder, path) for path in paths]
+    return [Path(folder) / path for path in paths]
 
 
 def paths_from_lmdb(folder):
@@ -298,5 +298,5 @@ def paths_from_lmdb(folder):
     if not folder.endswith(".lmdb"):
         msg = f"Folder {folder}folder should in lmdb format."
         raise ValueError(msg)
-    with open(osp.join(folder, "meta_info.txt"), encoding="locale") as fin:
+    with Path.open(Path(folder) / "meta_info.txt", encoding="locale") as fin:
         return [line.split(".")[0] for line in fin]

@@ -85,7 +85,7 @@ class vgg_perceptual_loss(nn.Module):
         patchloss: bool = False,
         ipk: bool = False,
         patch_weight: float = 1.0,
-        **kwargs,
+        **kwargs,  # noqa: ARG002
     ) -> None:
         super().__init__()
         self.loss_weight = loss_weight

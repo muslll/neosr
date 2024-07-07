@@ -39,7 +39,7 @@ class adan(Optimizer):
         max_grad_norm=0.0,
         no_prox=True,
         foreach: bool = True,
-        **kwargs,
+        **kwargs,  # noqa: ARG002
     ) -> None:
         if not max_grad_norm >= 0.0:
             msg = f"Invalid Max grad norm: {max_grad_norm}"

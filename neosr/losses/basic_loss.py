@@ -22,7 +22,7 @@ def mse_loss(pred, target):
 def huber_loss(
     pred: torch.Tensor, target: torch.Tensor, delta: float = 1.0
 ) -> torch.Tensor:
-    return F.huber_loss(pred, target, delta=1.0)
+    return F.huber_loss(pred, target, delta)
 
 
 @LOSS_REGISTRY.register()
@@ -46,7 +46,7 @@ class L1Loss(nn.Module):
         self.loss_weight = loss_weight
         self.reduction = reduction
 
-    def forward(self, pred, target, weight=None, **kwargs):
+    def forward(self, pred, target, weight=None, **kwargs):  # noqa: ARG002
         """Args:
         ----
             pred (Tensor): of shape (N, C, H, W). Predicted tensor.
@@ -80,7 +80,7 @@ class MSELoss(nn.Module):
         self.loss_weight = loss_weight
         self.reduction = reduction
 
-    def forward(self, pred, target, weight=None, **kwargs):
+    def forward(self, pred, target, weight=None, **kwargs):  # noqa: ARG002
         """Args:
         ----
             pred (Tensor): of shape (N, C, H, W). Predicted tensor.
@@ -110,18 +110,20 @@ class HuberLoss(nn.Module):
     def __init__(
         self, loss_weight: float = 1.0, reduction: str = "mean", delta: float = 1.0
     ) -> None:
-        super(HuberLoss, self).__init__()
+        super().__init__()
         if reduction not in {"none", "mean", "sum"}:
-            raise ValueError(
-                f"Unsupported reduction mode: {reduction}. Supported ones are: {_reduction_modes}"
-            )
+            msg = f"Unsupported reduction mode: {reduction}. Supported ones are: {_reduction_modes}"
+            raise ValueError(msg)
 
         self.loss_weight = loss_weight
         self.reduction = reduction
         self.delta = delta
 
     def forward(
-        self, pred: torch.Tensor, target: torch.Tensor, weight: float = None, **kwargs
+        self,
+        pred: torch.Tensor,
+        target: torch.Tensor,
+        **kwargs,  # noqa: ARG002
     ) -> torch.Tensor:
         """Args:
         ----
@@ -131,7 +133,7 @@ class HuberLoss(nn.Module):
 
         """
         return self.loss_weight * huber_loss(
-            pred, target, weight, delta=self.delta, reduction=self.reduction
+            pred, target, delta=self.delta, reduction=self.reduction
         )
 
 
@@ -184,7 +186,10 @@ class chc(nn.Module):
         self.clip_max = clip_max
 
     def forward(
-        self, pred: torch.Tensor, target: torch.Tensor, **kwargs
+        self,
+        pred: torch.Tensor,
+        target: torch.Tensor,
+        **kwargs,  # noqa: ARG002
     ) -> torch.Tensor:
         """Args:
         ----

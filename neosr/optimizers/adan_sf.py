@@ -41,7 +41,7 @@ class adan_sf(Optimizer):
         self,
         params,
         lr: float = 1.6e-3,
-        betas: list[float] = [0.98, 0.92, 0.987],
+        betas: list[float] = (0.98, 0.92, 0.987),
         eps: float = 1e-8,
         weight_decay: float = 0.02,
         max_grad_norm: float = 0.0,
@@ -49,7 +49,7 @@ class adan_sf(Optimizer):
         r: float = 0.0,
         weight_lr_power: float = 2.0,
         schedule_free: bool = True,
-        **kwargs,
+        **kwargs,  # noqa: ARG002
     ) -> None:
         if not max_grad_norm >= 0.0:
             msg = f"Invalid Max grad norm: {max_grad_norm}"
@@ -206,7 +206,7 @@ class adan_sf(Optimizer):
 
                 if not group["train_mode"]:
                     msg = "Not in train mode!"
-                    raise Exception(msg)
+                    raise ValueError(msg)
             else:
                 ckp1 = None
 

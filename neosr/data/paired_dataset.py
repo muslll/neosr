@@ -1,5 +1,6 @@
-import os
 import random
+import time
+from pathlib import Path
 
 from torch.utils import data
 from torchvision.transforms.functional import normalize
@@ -30,8 +31,6 @@ class paired(data.Dataset):
         dataroot_lq (str): Data root path for lq.
         meta_info (str): Path for meta information file.
         io_backend (dict): IO backend type and other kwarg.
-        filename_tmpl (str): Template for each filename. Note that the template excludes the file extension.
-            Default: '{}'.
         patch_size (int): Cropped patched size for lq patches.
         use_hflip (bool): Use horizontal flips.
         use_rot (bool): Use rotation (use vertical flip and transposing h and w for implementation).
@@ -52,9 +51,7 @@ class paired(data.Dataset):
         self.mean = opt.get("mean", None)
         self.std = opt.get("std", None)
         self.color = self.opt.get("color", None) != "y"
-
         self.gt_folder, self.lq_folder = opt["dataroot_gt"], opt["dataroot_lq"]
-        self.filename_tmpl = opt.get("filename_tmpl", "{}")
 
         # file client (lmdb io backend)
         if self.io_backend_opt["type"] == "lmdb":
@@ -66,20 +63,20 @@ class paired(data.Dataset):
         elif "meta_info" in self.opt and self.opt.get("meta_info", None) is not None:
             # disk backend with meta_info
             # Each line in the meta_info describes the relative path to an image
-            with open(self.opt["meta_info"], encoding="locale") as fin:
+            with Path.open(self.opt["meta_info"], encoding="locale") as fin:
                 paths = [line.strip() for line in fin]
             self.paths = []
             for path in paths:
                 gt_path, lq_path = path.split(", ")
-                gt_path = os.path.join(self.gt_folder, gt_path)
-                lq_path = os.path.join(self.lq_folder, lq_path)
+                gt_path = Path(self.gt_folder) / gt_path
+                lq_path = Path(self.lq_folder) / lq_path
                 self.paths.append({"gt_path": gt_path, "lq_path": lq_path})
         else:
             # disk backend
             # it will scan the whole folder to get meta info
             # it will be time-consuming for folders with too many files. It is recommended using an extra meta txt file
             self.paths = paired_paths_from_folder(
-                [self.lq_folder, self.gt_folder], ["lq", "gt"], self.filename_tmpl
+                [self.lq_folder, self.gt_folder], ["lq", "gt"]
             )
 
     def __getitem__(self, index):

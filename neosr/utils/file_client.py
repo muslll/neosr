@@ -1,7 +1,7 @@
 # Modified from https://github.com/open-mmlab/mmcv/blob/master/mmcv/fileio/file_client.py
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Never
+from typing import ClassVar, Never
 
 
 class BaseStorageBackend(ABC):
@@ -66,7 +66,7 @@ class LmdbBackend(BaseStorageBackend):
         **kwargs,
     ) -> None:
         try:
-            import lmdb
+            import lmdb  # noqa: PLC0415
         except ImportError:
             msg = "Please install lmdb to enable LmdbBackend."
             raise ImportError(msg)
@@ -125,7 +125,7 @@ class FileClient:
 
     """
 
-    _backends = {"disk": HardDiskBackend, "lmdb": LmdbBackend}
+    _backends: ClassVar[list[str, str]] = {"disk": HardDiskBackend, "lmdb": LmdbBackend}
 
     def __init__(self, backend="disk", **kwargs) -> None:
         if backend not in self._backends:

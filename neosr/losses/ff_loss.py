@@ -47,21 +47,20 @@ class ff_loss(nn.Module):
         patch_factor = self.patch_factor
         _, _, h, w = x.shape
         assert (
-            h % patch_factor == 0 and w % patch_factor == 0
+            h % patch_factor == 0
+        ), "Patch factor should be divisible by image height and width"
+        assert (
+            w % patch_factor == 0
         ), "Patch factor should be divisible by image height and width"
         patch_list = []
         patch_h = h // patch_factor
         patch_w = w // patch_factor
-        for i in range(patch_factor):
-            for j in range(patch_factor):
-                patch_list.append(
-                    x[
-                        :,
-                        :,
-                        i * patch_h : (i + 1) * patch_h,
-                        j * patch_w : (j + 1) * patch_w,
-                    ]
-                )
+
+        patch_list.extend([
+            x[:, :, i * patch_h : (i + 1) * patch_h, j * patch_w : (j + 1) * patch_w]
+            for i in range(patch_factor)
+            for j in range(patch_factor)
+        ])
 
         # stack to patch tensor
         y = torch.stack(patch_list, 1)
@@ -96,17 +95,19 @@ class ff_loss(nn.Module):
                 matrix_tmp /= matrix_tmp.max()
             else:
                 matrix_tmp /= (
-                    matrix_tmp.max(-1).values.max(-1).values[:, :, :, None, None]
+                    matrix_tmp.max(-1).values.max(-1).values[:, :, :, None, None]  # noqa: PD011
                 )
 
             matrix_tmp[torch.isnan(matrix_tmp)] = 0.0
             matrix_tmp = torch.clamp(matrix_tmp, min=0.0, max=1.0)
             weight_matrix = matrix_tmp.clone().detach()
 
-        assert weight_matrix.min().item() >= 0 and weight_matrix.max().item() <= 1, (
-            "The values of spectrum weight matrix should be in the range [0, 1], "
-            f"but got Min: {weight_matrix.min().item():.10f} Max: {weight_matrix.max().item():.10f}"
-        )
+        assert (
+            weight_matrix.min().item() >= 0
+        ), "The values of spectrum weight matrix should be in the range [0, 1]"
+        assert (
+            weight_matrix.max().item() <= 1
+        ), "The values of spectrum weight matrix should be in the range [0, 1]"
 
         # frequency distance using (squared) Euclidean distance
         tmp = (recon_freq - real_freq) ** 2
@@ -123,7 +124,7 @@ class ff_loss(nn.Module):
         pred: torch.Tensor,
         target: torch.Tensor,
         matrix: torch.Tensor = None,
-        **kwargs,
+        **kwargs,  # noqa: ARG002
     ) -> torch.Tensor:
         """Forward function to calculate focal frequency loss.
 

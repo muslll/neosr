@@ -80,9 +80,9 @@ class color_loss(nn.Module):
             msg = f"{criterion} criterion has not been supported."
             raise NotImplementedError(msg)
 
-    def forward(self, input: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
-        input_uv = rgb_to_cbcr(input)
-        target_uv = rgb_to_cbcr(target)
+    def forward(self, net_output: torch.Tensor, gt: torch.Tensor) -> torch.Tensor:
+        input_uv = rgb_to_cbcr(net_output)
+        target_uv = rgb_to_cbcr(gt)
 
         # TODO: test downscale operation
         if self.avgpool:

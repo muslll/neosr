@@ -3,7 +3,6 @@ import os
 import random
 import sys
 import tomllib
-from os import path as osp
 from pathlib import Path, PosixPath
 from typing import Any
 
@@ -215,9 +214,9 @@ def parse_options(
             if "scale" in opt:
                 dataset["scale"] = opt["scale"]
             if dataset.get("dataroot_gt") is not None:
-                dataset["dataroot_gt"] = osp.expanduser(dataset["dataroot_gt"])
+                dataset["dataroot_gt"] = str(Path(dataset["dataroot_gt"]).expanduser())
             if dataset.get("dataroot_lq") is not None:
-                dataset["dataroot_lq"] = osp.expanduser(dataset["dataroot_lq"])
+                dataset["dataroot_lq"] = str(Path(dataset["dataroot_lq"]).expanduser())
 
         # paths
         if opt.get("path") is not None:
@@ -225,7 +224,7 @@ def parse_options(
                 if (val is not None) and (
                     "resume_state" in key or "pretrain_network" in key
                 ):
-                    opt["path"][key] = osp.expanduser(val)
+                    opt["path"][key] = str(Path(val).expanduser())
 
         if is_train:
             experiments_root = opt.get("path")
@@ -233,7 +232,7 @@ def parse_options(
                 experiments_root = experiments_root.get("experiments_root")
             if experiments_root is None:
                 experiments_root = Path(root_path) / "experiments"
-            experiments_root = osp.join(experiments_root, opt["name"])
+            experiments_root = Path(experiments_root) / opt["name"]
 
             if opt.get("path") is None:
                 opt["path"] = {}
@@ -268,9 +267,9 @@ def parse_options(
 @master_only
 def copy_opt_file(opt_file: str, experiments_root: str) -> None:
     # copy the toml file to the experiment root
-    import sys
-    import time
-    from shutil import copyfile
+    import sys  # noqa: PLC0415
+    import time  # noqa: PLC0415
+    from shutil import copyfile  # noqa: PLC0415
 
     cmd = " ".join(sys.argv)
     filename = Path(experiments_root) / Path(opt_file).name

@@ -50,8 +50,8 @@ class adamw_sf(Optimizer):
         warmup_steps=0,
         r=0.0,
         weight_lr_power=2.0,
-        schedule_free=True,
-        foreach=hasattr(torch, "_foreach_mul_"),
+        schedule_free=True,  # noqa: ARG002
+        foreach: bool = True,
     ) -> None:
         defaults = {
             "lr": lr,
@@ -132,7 +132,7 @@ class adamw_sf(Optimizer):
 
             if not group["train_mode"]:
                 msg = "Not in train mode!"
-                raise Exception(msg)
+                raise ValueError(msg)
 
             active_p = [p for p in group["params"] if p.grad is not None]
 

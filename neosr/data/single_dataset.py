@@ -1,4 +1,4 @@
-from os import path as osp
+from pathlib import Path
 
 from torch.utils import data
 from torchvision.transforms.functional import normalize
@@ -46,10 +46,9 @@ class single(data.Dataset):
             self.io_backend_opt["client_keys"] = ["lq"]
             self.paths = paths_from_lmdb(self.lq_folder)
         elif "meta_info_file" in self.opt:
-            with open(self.opt["meta_info_file"], encoding="locale") as fin:
+            with Path.open(self.opt["meta_info_file"], encoding="locale") as fin:
                 self.paths = [
-                    osp.join(self.lq_folder, line.rstrip().split(" ")[0])
-                    for line in fin
+                    Path(self.lq_folder) / line.rstrip().split(" ")[0] for line in fin
                 ]
         else:
             self.paths = sorted(scandir(self.lq_folder, full_path=True))

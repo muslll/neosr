@@ -1,6 +1,6 @@
 import math
 from collections import OrderedDict
-from os import path as osp
+from pathlib import Path
 
 import torch
 from torch.nn import functional as F
@@ -13,10 +13,7 @@ from neosr.losses import build_loss
 from neosr.losses.wavelet_guided import wavelet_guided
 from neosr.metrics import calculate_metric
 from neosr.models.base import base
-from neosr.optimizers.adamw_sf import adamw_sf
-from neosr.optimizers.adan import adan
-from neosr.optimizers.adan_sf import adan_sf
-from neosr.optimizers.fsam import fsam
+from neosr.optimizers import adamw_sf, adan, adan_sf, fsam
 from neosr.utils import get_root_logger, imwrite, tensor2img
 from neosr.utils.registry import MODEL_REGISTRY
 
@@ -513,16 +510,16 @@ class image(base):
         else:
             self.gradscaler_g.scale(l_g_total).backward()
 
-        if (self.n_accumulated) % self.accum_iters == 0:
+        if (
+            self.n_accumulated % self.accum_iters == 0
+            and self.gradclip
+            and not (self.sam is not None and current_iter >= self.sam_init)
+        ):
             # gradient clipping on generator
-            if self.gradclip:
-                if self.sam is not None and current_iter >= self.sam_init:
-                    pass
-                else:
-                    self.gradscaler_g.unscale_(self.optimizer_g)
-                torch.nn.utils.clip_grad_norm_(
-                    self.net_g.parameters(), 1.0, error_if_nonfinite=False
-                )
+            self.gradscaler_g.unscale_(self.optimizer_g)
+            torch.nn.utils.clip_grad_norm_(
+                self.net_g.parameters(), 1.0, error_if_nonfinite=False
+            )
 
         # optimize net_d
         if self.net_d is not None:
@@ -570,14 +567,17 @@ class image(base):
                     self.gradscaler_d.scale(l_d_real).backward()
                     self.gradscaler_d.scale(l_d_fake).backward()
 
-            # clip and step() discriminator
-            if (self.n_accumulated) % self.accum_iters == 0:
+            # clip discriminator
+            if (
+                self.n_accumulated % self.accum_iters == 0
+                and self.gradclip
+                and not (self.sam is not None and current_iter >= self.sam_init)
+            ):
                 # gradient clipping on discriminator
-                if self.gradclip:
-                    self.gradscaler_d.unscale_(self.optimizer_d)
-                    torch.nn.utils.clip_grad_norm_(
-                        self.net_d.parameters(), 1.0, error_if_nonfinite=False
-                    )
+                self.gradscaler_d.unscale_(self.optimizer_d)
+                torch.nn.utils.clip_grad_norm_(
+                    self.net_d.parameters(), 1.0, error_if_nonfinite=False
+                )
 
             # add total discriminator loss for tensorboard tracking
             loss_dict["l_d_total"] = (l_d_real + l_d_fake) / 2
@@ -727,10 +727,7 @@ class image(base):
                 outputs = []
                 for chop in img_chops:
                     if self.is_train:
-                        if self.ema > 0:
-                            out = self.net_g_ema(chop)
-                        else:
-                            out = self.net_g(chop)  # image processing of each partition
+                        out = self.net_g_ema(chop) if self.ema > 0 else self.net_g(chop)
                     else:
                         out = self.net_g(chop)
 
@@ -794,8 +791,8 @@ class image(base):
                 total=len(dataloader), unit="image", colour="green", ascii=" >="
             )
 
-        for idx, val_data in enumerate(dataloader):
-            img_name = osp.splitext(osp.basename(val_data["lq_path"][0]))[0]
+        for _idx, val_data in enumerate(dataloader):
+            img_name = Path(Path(val_data["lq_path"][0]).name).stem  # [0]
             self.feed_data(val_data)
             self.test()
 
@@ -817,22 +814,22 @@ class image(base):
             val_suffix = self.opt["val"].get("suffix", None)
             if save_img:
                 if self.opt["is_train"]:
-                    save_img_path = osp.join(
-                        self.opt["path"]["visualization"],
-                        img_name,
-                        f"{img_name}_{current_iter}.png",
+                    save_img_path = (
+                        Path(self.opt["path"]["visualization"])
+                        / img_name
+                        / f"{img_name}_{current_iter}.png"
                     )
                 elif val_suffix is not None:
-                    save_img_path = osp.join(
-                        self.opt["path"]["visualization"],
-                        dataset_name,
-                        f'{img_name}_{self.opt["val"]["suffix"]}.png',
+                    save_img_path = (
+                        Path(self.opt["path"]["visualization"])
+                        / dataset_name
+                        / f'{img_name}_{self.opt["val"]["suffix"]}.png'
                     )
                 else:
-                    save_img_path = osp.join(
-                        self.opt["path"]["visualization"],
-                        dataset_name,
-                        f'{img_name}_{self.opt["name"]}.png',
+                    save_img_path = (
+                        Path(self.opt["path"]["visualization"])
+                        / dataset_name
+                        / f'{img_name}_{self.opt["name"]}.png'
                     )
                 imwrite(sr_img, save_img_path)
 
@@ -861,7 +858,7 @@ class image(base):
 
         if with_metrics:
             for metric in self.metric_results:
-                self.metric_results[metric] /= idx + 1
+                self.metric_results[metric] /= _idx + 1
                 # update the best metric result
                 self._update_best_metric_result(
                     dataset_name, metric, self.metric_results[metric], current_iter

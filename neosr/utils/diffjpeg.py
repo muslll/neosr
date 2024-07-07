@@ -278,7 +278,7 @@ class CompressJpeg(nn.Module):
         """
         y, cb, cr = self.l1(image * 255)
         components = {"y": y, "cb": cb, "cr": cr}
-        for k in components.items():
+        for k in components:  # noqa: PLC0206
             comp = self.l2(components[k])
             if k in {"cb", "cr"}:
                 comp = self.c_quantize(comp, factor=factor)
@@ -466,7 +466,7 @@ class DeCompressJpeg(nn.Module):
 
     """
 
-    def __init__(self, rounding=torch.round) -> None:
+    def __init__(self) -> None:
         super().__init__()
         self.c_dequantize = CDequantize()
         self.y_dequantize = YDequantize()
@@ -489,7 +489,7 @@ class DeCompressJpeg(nn.Module):
 
         """
         components = {"y": y, "cb": cb, "cr": cr}
-        for k in components.items():
+        for k in components:  # noqa: PLC0206
             if k in {"cb", "cr"}:
                 comp = self.c_dequantize(components[k], factor=factor)
                 height, width = int(imgh / 2), int(imgw / 2)
@@ -525,7 +525,7 @@ class DiffJPEG(nn.Module):
         rounding = diff_round if differentiable else torch.round
 
         self.compress = CompressJpeg(rounding=rounding)
-        self.decompress = DeCompressJpeg(rounding=rounding)
+        self.decompress = DeCompressJpeg()
 
     def forward(self, x, quality):
         """Args:

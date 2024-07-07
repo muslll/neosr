@@ -32,7 +32,7 @@ def rgb2ycbcr(img, y_only=False):
     if y_only:
         out_img = np.dot(img, [65.481, 128.553, 24.966]) + 16.0
     else:
-        out_img = np.matmul(
+        out_img = np.matmul(  # noqa: RUF005
             img,
             [
                 [65.481, -37.797, 112.0],
@@ -73,7 +73,7 @@ def bgr2ycbcr(img, y_only=False):
     if y_only:
         out_img = np.dot(img, [24.966, 128.553, 65.481]) + 16.0
     else:
-        out_img = np.matmul(
+        out_img = np.matmul(  # noqa: RUF005
             img,
             [
                 [24.966, 112.0, -18.214],

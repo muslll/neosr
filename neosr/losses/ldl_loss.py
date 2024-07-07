@@ -88,9 +88,9 @@ class ldl_loss(nn.Module):
         pixel_level_weight = self.get_local_weights(residual_sr.clone())
         return patch_level_weight * pixel_level_weight
 
-    def forward(self, input: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
-        overall_weight = self.get_refined_artifact_map(target, input)
-        self.output = torch.mul(overall_weight, input)
-        self.gt = torch.mul(overall_weight, target)
+    def forward(self, net_output: torch.Tensor, gt: torch.Tensor) -> torch.Tensor:
+        overall_weight = self.get_refined_artifact_map(gt, net_output)
+        self.output = torch.mul(overall_weight, net_output)
+        self.gt = torch.mul(overall_weight, gt)
 
         return self.criterion(self.output, self.gt) * self.loss_weight

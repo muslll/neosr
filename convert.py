@@ -1,6 +1,7 @@
 import warnings
 from copy import deepcopy
 from os import path as osp
+from pathlib import Path
 
 import numpy as np
 import onnx
@@ -40,7 +41,7 @@ def load_net():
         elif "params_ema" in load_net:
             param_key = "params_ema"
         load_net = load_net[param_key]
-    except:
+    except:  # noqa: S110
         pass
 
     # remove unnecessary 'module.'
@@ -114,7 +115,7 @@ def to_onnx() -> None:
         dyn_axes = None
 
     # add _fp32 suffix to output str
-    filename, extension = osp.splitext(args.output)
+    filename, extension = osp.splitext(args.output)  # noqa: PTH122
     output_fp32 = filename + "_fp32" + extension
     # begin conversion
     print("-------- Starting ONNX conversion (this can take a while)...")
@@ -147,8 +148,8 @@ def to_onnx() -> None:
 
     if args.optimize:
         print("-------- Running ONNX optimization...")
-        # filename, extension = osp.splitext(args.output)
-        # output_optimized = filename + "_fp32_optimized" + extension
+        filename, extension = osp.splitext(args.output)  # noqa: PTH122
+        output_optimized = filename + "_fp32_optimized" + extension
         session_opt = onnxruntime.SessionOptions()
         # ENABLE_ALL can cause compatibility issues, leaving EXTENDED as default
         session_opt.graph_optimization_level = (
@@ -178,6 +179,9 @@ def to_onnx() -> None:
         )
 
     if args.fulloptimization:
+        msg = "ONNXSimplify has been temporarily disabled."
+        raise ValueError(msg)
+        """
         # error if network can't run through onnxsim
         opt_error = ["omnisr"]
         if args.network in opt_error:
@@ -187,7 +191,7 @@ def to_onnx() -> None:
         print("-------- Running full optimization (this can take a while)...")
         output_fp32_fulloptimized = filename + "_fp32_fullyoptimized" + extension
         output_fp16_fulloptimized = filename + "_fp16_fullyoptimized" + extension
-        """
+
         # run onnxsim
         if args.optimize:
             simplified, check = simplify(onnx.load(output_optimized))
@@ -196,7 +200,6 @@ def to_onnx() -> None:
         else:
             simplified, check = simplify(load_onnx)
         assert check, "Couldn't validate ONNX model."
-        """
 
         # save and verify
         if args.fp16:
@@ -209,11 +212,12 @@ def to_onnx() -> None:
         print(
             f"-------- Model successfully optimized. Saved at: {output_fp32_fulloptimized}\n"
         )
+        """
 
 
 if __name__ == "__main__":
     torch.set_default_device("cuda")
     warnings.filterwarnings("ignore", category=UserWarning)
-    root_path = osp.abspath(osp.join(__file__, osp.pardir))
+    root_path = Path(Path(__file__) / osp.pardir).resolve()
     __, args = parse_options(root_path)
     to_onnx()

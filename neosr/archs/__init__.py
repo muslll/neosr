@@ -1,6 +1,6 @@
 import importlib
 from copy import deepcopy
-from os import path as osp
+from pathlib import Path
 
 from neosr.utils import get_root_logger, scandir
 from neosr.utils.registry import ARCH_REGISTRY
@@ -11,11 +11,9 @@ __all__ = ["build_network"]
 def build_network(opt):
     # automatically scan and import arch modules for registry
     # scan all the files under the 'archs' folder and collect files ending with '_arch.py'
-    arch_folder = osp.dirname(osp.abspath(__file__))
+    arch_folder = Path(Path(__file__).resolve()).parent
     arch_filenames = [
-        osp.splitext(osp.basename(v))[0]
-        for v in scandir(arch_folder)
-        if v.endswith("_arch.py")
+        Path(Path(v).name).stem for v in scandir(arch_folder) if v.endswith("_arch.py")
     ]
     # import all the arch modules
     _arch_modules = [

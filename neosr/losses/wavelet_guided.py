@@ -36,14 +36,14 @@ def mypad(x, pad, mode="constant", value=0):
         # Vertical only
         if pad[0] == 0 and pad[1] == 0:
             m1, m2 = pad[2], pad[3]
-            l = x.shape[-2]
-            xe = reflect(np.arange(-m1, l + m2, dtype="int32"), -0.5, l - 0.5)
+            lv = x.shape[-2]
+            xe = reflect(np.arange(-m1, lv + m2, dtype="int32"), -0.5, lv - 0.5)
             return x[:, :, xe]
         # horizontal only
         if pad[2] == 0 and pad[3] == 0:
             m1, m2 = pad[0], pad[1]
-            l = x.shape[-1]
-            xe = reflect(np.arange(-m1, l + m2, dtype="int32"), -0.5, l - 0.5)
+            lh = x.shape[-1]
+            xe = reflect(np.arange(-m1, lh + m2, dtype="int32"), -0.5, lh - 0.5)
             return x[:, :, :, xe]
         # Both
         m1, m2 = pad[0], pad[1]
@@ -235,9 +235,7 @@ def afb2d_atrous(x, filts, mode="symmetric", dilation=1):
     return afb1d_atrous(lohi, h0_col, h1_col, mode=mode, dim=2, dilation=dilation)
 
 
-def sfb1d_atrous(
-    lo, hi, g0, g1, mode="symmetric", dim=-1, dilation=1, pad1=None, pad=None
-):
+def sfb1d_atrous(lo, hi, g0, g1, mode="symmetric", dim=-1, dilation=1, pad=None):
     """1D synthesis filter bank of an image tensor with no upsampling. Used for
     the stationary wavelet transform.
     """

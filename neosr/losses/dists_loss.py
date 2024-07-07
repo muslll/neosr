@@ -1,4 +1,4 @@
-from os import path as osp
+from pathlib import Path
 
 import numpy as np
 import torch
@@ -10,9 +10,7 @@ from neosr.utils.registry import LOSS_REGISTRY
 
 
 class L2pooling(nn.Module):
-    def __init__(
-        self, filter_size=5, stride=2, channels=None, as_loss=True, pad_off=0
-    ) -> None:
+    def __init__(self, filter_size=5, stride=2, channels=None, as_loss=True) -> None:
         super().__init__()
         self.padding = (filter_size - 2) // 2
         self.stride = stride
@@ -28,14 +26,10 @@ class L2pooling(nn.Module):
             # send to cuda
             self.filter = self.filter.cuda()
 
-    def forward(self, input):
-        input = input**2
+    def forward(self, x):
+        x = x**2
         out = F.conv2d(
-            input,
-            self.filter,
-            stride=self.stride,
-            padding=self.padding,
-            groups=input.shape[1],
+            x, self.filter, stride=self.stride, padding=self.padding, groups=x.shape[1]
         )
         return (out + 1e-12).sqrt()
 
@@ -57,7 +51,11 @@ class dists_loss(nn.Module):
     """
 
     def __init__(
-        self, as_loss=True, loss_weight=1.0, load_weights=True, **kwargs
+        self,
+        as_loss=True,
+        loss_weight=1.0,
+        load_weights=True,
+        **kwargs,  # noqa: ARG002
     ) -> None:
         super().__init__()
         self.as_loss = as_loss
@@ -98,9 +96,9 @@ class dists_loss(nn.Module):
         self.beta.data.normal_(0.1, 0.01)
 
         if load_weights:
-            current_dir = osp.dirname(osp.abspath(__file__))
-            model_path = osp.join(current_dir, "dists_weights.pth")
-            weights = torch.load(model_path) if osp.exists(model_path) else None
+            current_dir = Path(Path(__file__).resolve()).parent
+            model_path = Path(current_dir) / "dists_weights.pth"
+            weights = torch.load(model_path) if Path(model_path).exists() else None
 
             self.alpha.data = weights["alpha"]
             self.beta.data = weights["beta"]

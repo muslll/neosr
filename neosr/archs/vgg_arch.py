@@ -1,5 +1,5 @@
-import os
 from collections import OrderedDict
+from pathlib import Path
 
 import torch
 from torch import nn
@@ -124,7 +124,7 @@ class VGGFeatureExtractor(nn.Module):
             idx = self.names.index(v)
             max_idx = max(idx, max_idx)
 
-        if os.path.exists(VGG_PRETRAIN_PATH):
+        if Path(VGG_PRETRAIN_PATH).exists():
             vgg_net = getattr(vgg, vgg_type)
             state_dict = torch.load(
                 VGG_PRETRAIN_PATH, map_location=torch.device("cuda")

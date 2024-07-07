@@ -1,8 +1,7 @@
 import math
-import os
-import os.path as osp
 import random
 import time
+from pathlib import Path
 
 import cv2
 import numpy as np
@@ -60,16 +59,16 @@ class otf(data.Dataset):
             if not self.gt_folder.endswith(".lmdb"):
                 msg = f"'dataroot_gt' should end with '.lmdb', but received {self.gt_folder}"
                 raise ValueError(msg)
-            with open(
-                osp.join(self.gt_folder, "meta_info.txt"), encoding="locale"
+            with Path.open(
+                Path(self.gt_folder) / "meta_info.txt", encoding="locale"
             ) as fin:
                 self.paths = [line.split(".")[0] for line in fin]
         elif "meta_info" in self.opt and self.opt["meta_info"] is not None:
             # disk backend with meta_info
             # Each line in the meta_info describes the relative path to an image
-            with open(self.opt["meta_info"], encoding="locale") as fin:
+            with Path.open(self.opt["meta_info"], encoding="locale") as fin:
                 paths = [line.strip().split(" ")[0] for line in fin]
-                self.paths = [os.path.join(self.gt_folder, v) for v in paths]
+                self.paths = [Path(self.gt_folder) / v for v in paths]
         else:
             # disk backend
             # it will scan the whole folder to get meta info

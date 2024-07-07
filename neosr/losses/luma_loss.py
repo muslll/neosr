@@ -76,9 +76,9 @@ class luma_loss(nn.Module):
             msg = f"{criterion} criterion has not been supported."
             raise NotImplementedError(msg)
 
-    def forward(self, input: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
-        input_luma = rgb_to_luma(input)
-        target_luma = rgb_to_luma(target)
+    def forward(self, net_output: torch.Tensor, gt: torch.Tensor) -> torch.Tensor:
+        input_luma = rgb_to_luma(net_output)
+        target_luma = rgb_to_luma(gt)
 
         if self.avgpool:
             input_luma = torch.nn.AvgPool2d(kernel_size=int(self.scale))(input_luma)

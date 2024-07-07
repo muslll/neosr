@@ -10,7 +10,12 @@ from neosr.utils.registry import METRIC_REGISTRY
 
 @METRIC_REGISTRY.register()
 def calculate_psnr(
-    img, img2, crop_border=4, input_order="HWC", test_y_channel=False, **kwargs
+    img,
+    img2,
+    crop_border=4,
+    input_order="HWC",
+    test_y_channel=False,
+    **kwargs,  # noqa: ARG001
 ):
     """Calculate PSNR (Peak Signal-to-Noise Ratio).
 
@@ -57,7 +62,12 @@ def calculate_psnr(
 
 @METRIC_REGISTRY.register()
 def calculate_ssim(
-    img, img2, crop_border=4, input_order="HWC", test_y_channel=False, **kwargs
+    img,
+    img2,
+    crop_border=4,
+    input_order="HWC",
+    test_y_channel=False,
+    **kwargs,  # noqa: ARG001
 ):
     """Calculate SSIM (structural similarity).
 
@@ -104,8 +114,7 @@ def calculate_ssim(
     img2 = img2.astype(np.float64)
 
     ssims = []
-    for i in range(img.shape[2]):
-        ssims.append(_ssim(img[..., i], img2[..., i]))
+    ssims.extend([_ssim(img[..., i], img2[..., i]) for i in range(img.shape[2])])
     return np.array(ssims).mean()
 
 
@@ -146,7 +155,7 @@ def _ssim(img, img2):
 
 
 @METRIC_REGISTRY.register()
-def calculate_dists(img, img2, **kwargs):
+def calculate_dists(img, img2, **kwargs):  # noqa: ARG001
     assert (
         img.shape == img2.shape
     ), f"Image shapes are different: {img.shape}, {img2.shape}."

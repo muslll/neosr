@@ -1,15 +1,12 @@
-import os
 import time
 from collections import OrderedDict
 from copy import deepcopy
+from pathlib import Path
 
 import torch
 from torch.nn.parallel import DataParallel, DistributedDataParallel
 
-from neosr.optimizers.adamw_sf import adamw_sf
-from neosr.optimizers.adamw_win import adamw_win
-from neosr.optimizers.adan import adan
-from neosr.optimizers.adan_sf import adan_sf
+from neosr.optimizers import adamw_sf, adamw_win, adan, adan_sf
 from neosr.utils import get_root_logger
 from neosr.utils.dist_util import master_only
 
@@ -195,8 +192,10 @@ class base:
     def _get_init_lr(self):
         """Get the initial lr, which is set by the scheduler."""
         init_lr_groups_l = []
-        for optimizer in self.optimizers:
-            init_lr_groups_l.append([v["initial_lr"] for v in optimizer.param_groups])
+        init_lr_groups_l.extend([
+            [v["initial_lr"] for v in optimizer.param_groups]
+            for optimizer in self.optimizers
+        ])
         return init_lr_groups_l
 
     def update_learning_rate(self, current_iter, warmup_iter=-1) -> None:
@@ -205,8 +204,8 @@ class base:
         Args:
         ----
             current_iter (int): Current iteration.
-            warmup_iter (int)： Warm-up iter numbers. -1 for no warm-up.
-                Default： -1.
+            warmup_iter (int): Warm-up iter numbers. -1 for no warm-up.
+                Default: -1.
 
         """
         if current_iter > 0 and self.n_accumulated == 0:
@@ -219,8 +218,10 @@ class base:
             # modify warming-up learning rates
             # currently only support linearly warm up
             warm_up_lr_l = []
-            for init_lr_g in init_lr_g_l:
-                warm_up_lr_l.append([v / warmup_iter * current_iter for v in init_lr_g])
+            warm_up_lr_l.extend([
+                [v / warmup_iter * current_iter for v in init_lr_g]
+                for init_lr_g in init_lr_g_l
+            ])
             # set learning rate
             self._set_lr(warm_up_lr_l)
 
@@ -265,7 +266,7 @@ class base:
         if current_iter == -1:
             current_iter = "latest"
         save_filename = f"{net_label}_{current_iter}.pth"
-        save_path = os.path.join(self.opt["path"]["models"], save_filename)
+        save_path = Path(self.opt["path"]["models"]) / save_filename
 
         net = net if isinstance(net, list) else [net]
         param_key = param_key if isinstance(param_key, list) else [param_key]
@@ -275,12 +276,12 @@ class base:
 
         save_dict = {}
         for net_, param_key_ in zip(net, param_key, strict=True):
-            net_ = self.get_bare_model(net_)
-            state_dict = net_.state_dict()
+            net__ = self.get_bare_model(net_)
+            state_dict = net__.state_dict()
             new_state_dict = OrderedDict()
             for key, param in state_dict.items():
                 if key.startswith("module."):  # remove unnecessary 'module.'
-                    key = key[7:]
+                    key = key[7:]  # noqa: PLW2901
                 if key.startswith("n_averaged"):  # skip n_averaged from EMA
                     continue
                 new_state_dict[key] = param.cpu()
@@ -296,11 +297,9 @@ class base:
         while retry > 0:
             try:
                 torch.save(save_dict, save_path)
-            except Exception as e:
+            except OSError:
                 logger = get_root_logger()
-                logger.warning(
-                    f"Save model error: {e}, remaining retry times: {retry - 1}"
-                )
+                logger.warning(f"Save model error. Remaining retry times: {retry - 1}")
                 time.sleep(1)
             else:
                 break
@@ -344,7 +343,7 @@ class base:
             else:
                 param_key = self.param_key
             load_net = load_net[param_key]
-        except:
+        except:  # noqa: S110
             pass
 
         if param_key:
@@ -386,7 +385,7 @@ class base:
             for s in self.schedulers:
                 state["schedulers"].append(s.state_dict())
             save_filename = f"{int(current_iter)}.state"
-            save_path = os.path.join(self.opt["path"]["training_states"], save_filename)
+            save_path = Path(self.opt["path"]["training_states"]) / save_filename
 
             if self.sf_optim_g and self.is_train:
                 self.optimizer_g.eval()
@@ -398,10 +397,10 @@ class base:
             while retry > 0:
                 try:
                     torch.save(state, save_path)
-                except Exception as e:
+                except OSError:
                     logger = get_root_logger()
                     logger.warning(
-                        f"Save training state error: {e}, remaining retry times: {retry - 1}"
+                        f"Save training state error. Remaining retry times: {retry - 1}"
                     )
                     time.sleep(1)
                 else:

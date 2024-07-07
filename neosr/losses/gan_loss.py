@@ -40,12 +40,12 @@ class gan_loss(nn.Module):
             msg = f"GAN type {self.gan_type} is not implemented."
             raise NotImplementedError(msg)
 
-    def get_target_label(self, input, target_is_real):
+    def get_target_label(self, net_output, target_is_real):
         """Get target label.
 
         Args:
         ----
-            input (Tensor): Input tensor.
+            net_output (Tensor): Input tensor.
             target_is_real (bool): Whether the target is real or fake.
 
         Returns:
@@ -55,12 +55,12 @@ class gan_loss(nn.Module):
 
         """
         target_val = self.real_label_val if target_is_real else self.fake_label_val
-        return input.new_ones(input.size()) * target_val
+        return net_output.new_ones(net_output.size()) * target_val
 
-    def forward(self, input, target_is_real, is_disc=False):
+    def forward(self, net_output, target_is_real, is_disc=False):
         """Args:
         ----
-            input (Tensor): The input for the loss module, i.e., the network
+            net_output (Tensor): The input for the loss module, i.e., the network
                 prediction.
             target_is_real (bool): Whether the targe is real or fake.
             is_disc (bool): Whether the loss for discriminators or not.
@@ -71,8 +71,8 @@ class gan_loss(nn.Module):
             Tensor: GAN loss value.
 
         """
-        target_label = self.get_target_label(input, target_is_real)
-        loss = self.loss(input, target_label)
+        target_label = self.get_target_label(net_output, target_is_real)
+        loss = self.loss(net_output, target_label)
 
         # loss_weight is always 1.0 for discriminators
         return loss if is_disc else loss * self.loss_weight

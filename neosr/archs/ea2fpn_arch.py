@@ -197,8 +197,7 @@ class SegmentationBlock(nn.Module):
 
         blocks = [Conv3x3GNMish(in_channels, out_channels, upsample=bool(n_upsamples))]
         if n_upsamples > 1:
-            for _ in range(1, n_upsamples):
-                blocks.append(Conv3x3GNMish(out_channels, out_channels, upsample=True))
+            blocks.extend(Conv3x3GNMish(out_channels, out_channels, upsample=True) for _ in range(1, n_upsamples))
         self.block = nn.Sequential(*blocks)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -215,11 +214,11 @@ class ea2fpn(nn.Module):
     def __init__(
         self,
         class_num: int = 6,
-        encoder_channels: list[int] = [512, 256, 128, 64],
+        encoder_channels: list[int] = [512, 256, 128, 64],  # noqa: B006
         pyramid_channels: int = 64,
         segmentation_channels: int = 64,
         dropout: float = 0.2,
-        **kwargs,
+        **kwargs,  # noqa: ARG002
     ) -> None:
         super().__init__()
         self.base_model = models.resnet18(weights=ResNet18_Weights.DEFAULT)

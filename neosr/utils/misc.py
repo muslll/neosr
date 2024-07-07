@@ -30,7 +30,7 @@ def mkdir_and_rename(path: str) -> None:
 
     """
     if Path(path).exists():
-        new_name = path + "_archived_" + get_time_str()
+        new_name = str(path) + "_archived_" + get_time_str()
         print(f"Path already exists. Renaming it to {new_name}", flush=True)
         Path(path).rename(new_name)
     Path(path).mkdir(parents=True, exist_ok=True)

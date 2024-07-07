@@ -3,7 +3,7 @@ import os
 import random
 from copy import deepcopy
 from functools import partial
-from os import path as osp
+from pathlib import Path
 
 import numpy as np
 import torch
@@ -17,12 +17,11 @@ __all__ = ["build_dataloader", "build_dataset"]
 
 # automatically scan and import dataset modules for registry
 # scan all the files under the data folder with '_dataset' in file names
-data_folder = osp.dirname(osp.abspath(__file__))
+data_folder = Path(Path(__file__).resolve()).parent
 dataset_filenames = [
-    osp.splitext(osp.basename(v))[0]
-    for v in scandir(data_folder)
-    if v.endswith("_dataset.py")
+    Path(Path(v).name).stem for v in scandir(data_folder) if v.endswith("_dataset.py")
 ]
+
 # import all the dataset modules
 _dataset_modules = [
     importlib.import_module(f"neosr.data.{file_name}")
@@ -119,6 +118,8 @@ def build_dataloader(
 def worker_init_fn(worker_id, num_workers, rank, seed) -> None:
     # Set the worker seed to num_workers * rank + worker_id + seed
     worker_seed = num_workers * rank + worker_id + seed
-    np.random.seed(worker_seed)
+    # NOTE: set seed on old generator as a precaution, but
+    # it is redundand since we use np.random.Generator
+    np.random.seed(worker_seed)  # noqa: NPY002
     torch.manual_seed(worker_seed)
     random.seed(worker_seed)

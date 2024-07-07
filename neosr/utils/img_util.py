@@ -1,5 +1,4 @@
 import math
-import os
 from pathlib import Path
 
 import cv2
@@ -185,7 +184,7 @@ def imwrite(img, file_path, params=None, auto_mkdir=True) -> None:
         dir_name = Path(Path(file_path).parent).resolve()
         Path(dir_name).mkdir(parents=True, exist_ok=True)
     try:
-        cv2.imencode(os.path.splitext(file_path)[1], img, params)[1].tofile(file_path)
+        cv2.imencode(Path(file_path).suffix, img, params)[1].tofile(file_path)
     except:
         msg = "Failed to write images."
         raise OSError(msg)

@@ -214,8 +214,8 @@ def apply_augment(
     img_gt,
     img_lq,
     scale=1,
-    augs=["none", "mixup", "cutmix", "resizemix", "cutblur"],
-    prob=[0.1, 0.3, 0.2, 0.7, 0.8],
+    augs=["none", "mixup", "cutmix", "resizemix", "cutblur"],  # noqa: B006
+    prob=[0.1, 0.3, 0.2, 0.7, 0.8],  # noqa: B006
     multi_prob=0.3,
 ):
     r"""Applies Augmentations.
