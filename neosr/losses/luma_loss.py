@@ -1,10 +1,10 @@
 import torch
-from torch import nn
+from torch import Tensor, nn
 
 from neosr.utils.registry import LOSS_REGISTRY
 
 
-def rgb_to_luma(img: torch.Tensor) -> torch.Tensor:
+def rgb_to_luma(img: Tensor) -> Tensor:
     """RGB to CIELAB L*."""
     if not isinstance(img, torch.Tensor):
         msg = f"Input type is not a Tensor. Got {type(img)}"
@@ -65,6 +65,7 @@ class luma_loss(nn.Module):
         self.criterion_type = criterion
         self.avgpool = avgpool
         self.scale = scale
+        self.criterion: nn.L1Loss | nn.MSELoss | nn.HuberLoss
 
         if self.criterion_type == "l1":
             self.criterion = nn.L1Loss()
@@ -76,7 +77,7 @@ class luma_loss(nn.Module):
             msg = f"{criterion} criterion has not been supported."
             raise NotImplementedError(msg)
 
-    def forward(self, net_output: torch.Tensor, gt: torch.Tensor) -> torch.Tensor:
+    def forward(self, net_output: Tensor, gt: Tensor) -> Tensor:
         input_luma = rgb_to_luma(net_output)
         target_luma = rgb_to_luma(gt)
 

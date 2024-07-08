@@ -1,20 +1,25 @@
+from collections.abc import Callable, Iterable
+from typing import Any
+
 import torch
+from torch import Tensor
+from torch.optim import Optimizer
 
 
-class fsam(torch.optim.Optimizer):
+class fsam(Optimizer):
     """Adapted from 'Friendly Sharpness-Aware Minimization':
     https://arxiv.org/html/2403.12350v1
     https://github.com/nblt/F-SAM.
     """
 
-    def __init__(
+    def __init__(  # type: ignore[no-untyped-def]
         self,
-        params,
-        base_optimizer,
-        rho=0.5,
-        sigma=1,
-        lmbda=0.9,
-        adaptive=True,
+        params: Iterable[Tensor],
+        base_optimizer: Callable[..., Any],
+        rho: float = 0.5,
+        sigma: float = 1.0,
+        lmbda: float = 0.9,
+        adaptive: bool = True,
         **kwargs,
     ) -> None:
         assert rho >= 0.0, f"Invalid rho, should be non-negative: {rho}"
@@ -29,7 +34,7 @@ class fsam(torch.optim.Optimizer):
         self.lmbda = lmbda
 
     @torch.no_grad()
-    def first_step(self, zero_grad=False) -> None:
+    def first_step(self, zero_grad: bool = False) -> None:
         for group in self.param_groups:
             for p in group["params"]:
                 if p.grad is None:
@@ -62,7 +67,7 @@ class fsam(torch.optim.Optimizer):
             self.zero_grad(set_to_none=True)
 
     @torch.no_grad()
-    def second_step(self, zero_grad=False) -> None:
+    def second_step(self, zero_grad: bool = False) -> None:
         for group in self.param_groups:
             for p in group["params"]:
                 if p.grad is None:
@@ -75,7 +80,9 @@ class fsam(torch.optim.Optimizer):
             self.zero_grad(set_to_none=True)
 
     @torch.no_grad()
-    def step(self, closure=None, current_iter=None) -> None:
+    def step(
+        self, closure: Callable[..., Any] | None = None, current_iter: int | None = None
+    ):
         assert (
             closure is not None
         ), "Sharpness Aware Minimization requires closure, but it was not provided"
@@ -103,6 +110,6 @@ class fsam(torch.optim.Optimizer):
             p=2,
         )
 
-    def load_state_dict(self, state_dict) -> None:
+    def load_state_dict(self, state_dict: dict[Any, Any]) -> None:
         super().load_state_dict(state_dict)
         self.base_optimizer.param_groups = self.param_groups

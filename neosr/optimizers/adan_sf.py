@@ -1,4 +1,6 @@
 import math
+from collections.abc import Callable, Iterable
+from typing import Any
 
 import torch
 from torch import Tensor
@@ -37,11 +39,11 @@ class adan_sf(Optimizer):
 
     """
 
-    def __init__(
+    def __init__(  # type: ignore[no-untyped-def]
         self,
-        params,
+        params: Iterable[Tensor],
         lr: float = 1.6e-3,
-        betas: list[float] = (0.98, 0.92, 0.987),
+        betas: tuple[float, float, float] = (0.98, 0.92, 0.987),
         eps: float = 1e-8,
         weight_decay: float = 0.02,
         max_grad_norm: float = 0.0,
@@ -86,7 +88,7 @@ class adan_sf(Optimizer):
         }
         super().__init__(params, defaults)
 
-    def __setstate__(self, state):
+    def __setstate__(self, state: dict[str, bool]) -> None:
         super().__setstate__(state)
         for group in self.param_groups:
             group.setdefault("schedule_free", True)
@@ -134,11 +136,11 @@ class adan_sf(Optimizer):
                 group["train_mode"] = True
 
     @torch.no_grad()
-    def step(self, closure=None):
+    def step(self, closure: Callable[..., Any] | None = None):  # type: ignore[no-untyped-def]
         """Performs a single optimization step."""
         loss = None
         if closure is not None:
-            with torch.enable_grad():
+            with torch.enable_grad():  # type: ignore[no-untyped-call]
                 loss = closure()
 
         if self.defaults["max_grad_norm"] > 0:

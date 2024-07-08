@@ -1,3 +1,4 @@
+# type: ignore  # noqa: PGH003
 from collections import OrderedDict
 
 import torch

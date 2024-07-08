@@ -1,3 +1,4 @@
+# type: ignore  # noqa: PGH003
 from torch import nn
 from torch.nn import functional as F
 from torch.nn.utils import spectral_norm

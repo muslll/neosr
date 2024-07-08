@@ -1,6 +1,6 @@
 import torch
 import torch.fft
-from torch import nn
+from torch import Tensor, nn
 
 from neosr.utils.registry import LOSS_REGISTRY
 
@@ -38,7 +38,7 @@ class ff_loss(nn.Module):
         self.log_matrix = log_matrix
         self.batch_matrix = batch_matrix
 
-    def tensor2freq(self, x: torch.Tensor) -> torch.Tensor:
+    def tensor2freq(self, x: Tensor) -> Tensor:
         # for amp dtype
         if x.dtype is not torch.float32:
             x = x.to(torch.float32)
@@ -70,11 +70,8 @@ class ff_loss(nn.Module):
         return torch.stack([freq.real, freq.imag], -1)
 
     def loss_formulation(
-        self,
-        recon_freq: torch.Tensor,
-        real_freq: torch.Tensor,
-        matrix: torch.Tensor = None,
-    ) -> torch.Tensor:
+        self, recon_freq: Tensor, real_freq: Tensor, matrix: Tensor | None = None
+    ) -> Tensor:
         # spectrum weight matrix
         if matrix is not None:
             # if the matrix is predefined
@@ -121,11 +118,11 @@ class ff_loss(nn.Module):
     @torch.cuda.amp.custom_fwd(cast_inputs=torch.float32)
     def forward(
         self,
-        pred: torch.Tensor,
-        target: torch.Tensor,
-        matrix: torch.Tensor = None,
+        pred: Tensor,
+        target: Tensor,
+        matrix: Tensor | None = None,
         **kwargs,  # noqa: ARG002
-    ) -> torch.Tensor:
+    ) -> Tensor:
         """Forward function to calculate focal frequency loss.
 
         Args:

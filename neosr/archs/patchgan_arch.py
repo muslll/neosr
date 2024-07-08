@@ -1,3 +1,4 @@
+# type: ignore  # noqa: PGH003
 import functools
 
 from torch import nn

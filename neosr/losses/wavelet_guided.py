@@ -2,10 +2,10 @@ import numpy as np
 import pywt
 import torch
 import torch.nn.functional as F
-from torch import nn
+from torch import Tensor, nn
 
 
-def reflect(x, minx, maxx):
+def reflect(x: Tensor, minx: float, maxx: float) -> Tensor:
     """Reflect the values in matrix *x* about the scalar values *minx* and
     *maxx*.  Hence a vector *x* containing a long linearly increasing series is
     converted into a waveform which ramps linearly up and down between *minx*
@@ -14,16 +14,14 @@ def reflect(x, minx, maxx):
     .. codeauthor:: Rich Wareham <rjw57@cantab.net>, Aug 2013
     .. codeauthor:: Nick Kingsbury, Cambridge University, January 1999.
     """
-    x = np.asanyarray(x)
     rng = maxx - minx
     rng_by_2 = 2 * rng
-    mod = np.fmod(x - minx, rng_by_2)
-    normed_mod = np.where(mod < 0, mod + rng_by_2, mod)
-    out = np.where(normed_mod >= rng, rng_by_2 - normed_mod, normed_mod) + minx
-    return np.array(out, dtype=x.dtype)
+    mod = torch.fmod(x - minx, rng_by_2)
+    normed_mod = torch.where(mod < 0, mod + rng_by_2, mod)
+    return torch.where(normed_mod >= rng, rng_by_2 - normed_mod, normed_mod) + minx
 
 
-def mypad(x, pad, mode="constant", value=0):
+def mypad(x: Tensor, pad: tuple[int, int, int, int], mode: str = "constant") -> Tensor:
     """Function to do numpy like padding on tensors. Only works for 2-D
     padding.
     Inputs:
@@ -37,53 +35,61 @@ def mypad(x, pad, mode="constant", value=0):
         if pad[0] == 0 and pad[1] == 0:
             m1, m2 = pad[2], pad[3]
             lv = x.shape[-2]
-            xe = reflect(np.arange(-m1, lv + m2, dtype="int32"), -0.5, lv - 0.5)
+            xe = reflect(torch.arange(-m1, lv + m2), -0.5, lv - 0.5)
             return x[:, :, xe]
         # horizontal only
         if pad[2] == 0 and pad[3] == 0:
             m1, m2 = pad[0], pad[1]
             lh = x.shape[-1]
-            xe = reflect(np.arange(-m1, lh + m2, dtype="int32"), -0.5, lh - 0.5)
+            xe = reflect(torch.arange(-m1, lh + m2), -0.5, lh - 0.5)
             return x[:, :, :, xe]
         # Both
         m1, m2 = pad[0], pad[1]
         l1 = x.shape[-1]
-        xe_row = reflect(np.arange(-m1, l1 + m2, dtype="int32"), -0.5, l1 - 0.5)
+        xe_row = reflect(torch.arange(-m1, l1 + m2), -0.5, l1 - 0.5)
         m1, m2 = pad[2], pad[3]
         l2 = x.shape[-2]
-        xe_col = reflect(np.arange(-m1, l2 + m2, dtype="int32"), -0.5, l2 - 0.5)
-        i = np.outer(xe_col, np.ones(xe_row.shape[0]))
-        j = np.outer(np.ones(xe_col.shape[0]), xe_row)
+        xe_col = reflect(torch.arange(-m1, l2 + m2), -0.5, l2 - 0.5)
+        i = torch.outer(xe_col, torch.ones(xe_row.shape[0]))
+        j = torch.outer(torch.ones(xe_col.shape[0]), xe_row)
         return x[:, :, i, j]
     if mode == "periodic":
         # Vertical only
         if pad[0] == 0 and pad[1] == 0:
-            xe = np.arange(x.shape[-2])
-            xe = np.pad(xe, (pad[2], pad[3]), mode="wrap")
+            xe = torch.arange(x.shape[-2])
+            xe = F.pad(xe.unsqueeze(0), (pad[2], pad[3]), mode="circular").squeeze(0)
             return x[:, :, xe]
         # Horizontal only
         if pad[2] == 0 and pad[3] == 0:
-            xe = np.arange(x.shape[-1])
-            xe = np.pad(xe, (pad[0], pad[1]), mode="wrap")
+            xe = torch.arange(x.shape[-1])
+            xe = F.pad(xe.unsqueeze(0), (pad[0], pad[1]), mode="circular").squeeze(0)
             return x[:, :, :, xe]
         # Both
-        xe_col = np.arange(x.shape[-2])
-        xe_col = np.pad(xe_col, (pad[2], pad[3]), mode="wrap")
-        xe_row = np.arange(x.shape[-1])
-        xe_row = np.pad(xe_row, (pad[0], pad[1]), mode="wrap")
-        i = np.outer(xe_col, np.ones(xe_row.shape[0]))
-        j = np.outer(np.ones(xe_col.shape[0]), xe_row)
+        xe_col = torch.arange(x.shape[-2])
+        xe_col = torch.nn.functional.pad(
+            xe_col.unsqueeze(0), (pad[2], pad[3]), mode="circular"
+        ).squeeze(0)
+        xe_row = torch.arange(x.shape[-1])
+        xe_row = torch.nn.functional.pad(
+            xe_row.unsqueeze(0), (pad[0], pad[1]), mode="circular"
+        ).squeeze(0)
+        i = torch.outer(xe_col, torch.ones(xe_row.shape[0]))
+        j = torch.outer(torch.ones(xe_col.shape[0]), xe_row)
         return x[:, :, i, j]
-
     if mode in {"constant", "reflect", "replicate"}:
-        return F.pad(x, pad, mode, value)
+        return F.pad(x, pad, mode, 0)
     if mode == "zero":
         return F.pad(x, pad)
     msg = f"Unkown pad type: {mode}"
     raise ValueError(msg)
 
 
-def prep_filt_afb2d(h0_col, h1_col, h0_row=None, h1_row=None, device=None):
+def prep_filt_afb2d(
+    h0_col: Tensor,
+    h1_col: Tensor,
+    h0_row: Tensor | None = None,
+    h1_row: Tensor | None = None,
+) -> tuple[Tensor, Tensor, Tensor, Tensor]:
     """Prepares the filters to be of the right form for the afb2d function.  In
     particular, makes the tensors the right shape. It takes mirror images of
     them as as afb2d uses conv2d which acts like normal correlation.
@@ -94,24 +100,27 @@ def prep_filt_afb2d(h0_col, h1_col, h0_row=None, h1_row=None, device=None):
             same as column filter
         h1_row (array-like): high pass row filter bank. If none, will assume the
             same as column filter
-        device: which device to put the tensors on to
     Returns:
         (h0_col, h1_col, h0_row, h1_row).
     """
-    h0_col = np.array(h0_col[::-1]).ravel()
-    h1_col = np.array(h1_col[::-1]).ravel()
-    t = torch.get_default_dtype()
-    h0_row = h0_col if h0_row is None else np.array(h0_row[::-1]).ravel()
-    h1_row = h1_col if h1_row is None else np.array(h1_row[::-1]).ravel()
-    h0_col = torch.tensor(h0_col, device=device, dtype=t).reshape((1, 1, -1, 1))
-    h1_col = torch.tensor(h1_col, device=device, dtype=t).reshape((1, 1, -1, 1))
-    h0_row = torch.tensor(h0_row, device=device, dtype=t).reshape((1, 1, 1, -1))
-    h1_row = torch.tensor(h1_row, device=device, dtype=t).reshape((1, 1, 1, -1))
+    h0_col = h0_col.flip(dims=(0,)).flatten()
+    h1_col = h1_col.flip(dims=(0,)).flatten()
+    h0_row = h0_col if h0_row is None else h0_row.flip(dims=(0,)).flatten()
+    h1_row = h1_col if h1_row is None else h1_row.flip(dims=(0,)).flatten()
+    h0_col = torch.tensor(h0_col, device="cuda").reshape((1, 1, -1, 1))
+    h1_col = torch.tensor(h1_col, device="cuda").reshape((1, 1, -1, 1))
+    h0_row = torch.tensor(h0_row, device="cuda").reshape((1, 1, 1, -1))
+    h1_row = torch.tensor(h1_row, device="cuda").reshape((1, 1, 1, -1))
 
     return h0_col, h1_col, h0_row, h1_row
 
 
-def prep_filt_sfb2d(g0_col, g1_col, g0_row=None, g1_row=None, device=None):
+def prep_filt_sfb2d(
+    g0_col: Tensor,
+    g1_col: Tensor,
+    g0_row: Tensor | None = None,
+    g1_row: Tensor | None = None,
+) -> tuple[Tensor, Tensor, Tensor, Tensor]:
     """Prepares the filters to be of the right form for the sfb2d function.  In
     particular, makes the tensors the right shape. It does not mirror image them
     as as sfb2d uses conv2d_transpose which acts like normal convolution.
@@ -122,26 +131,31 @@ def prep_filt_sfb2d(g0_col, g1_col, g0_row=None, g1_row=None, device=None):
             same as column filter
         g1_row (array-like): high pass row filter bank. If none, will assume the
             same as column filter
-        device: which device to put the tensors on to
     Returns:
         (g0_col, g1_col, g0_row, g1_row).
     """
-    g0_col = np.array(g0_col).ravel()
-    g1_col = np.array(g1_col).ravel()
-    t = torch.get_default_dtype()
+    g0_col = g0_col.flip(dims=(0,)).flatten()
+    g1_col = g1_col.flip(dims=(0,)).flatten()
     if g0_row is None:
         g0_row = g0_col
     if g1_row is None:
         g1_row = g1_col
-    g0_col = torch.tensor(g0_col, device=device, dtype=t).reshape((1, 1, -1, 1))
-    g1_col = torch.tensor(g1_col, device=device, dtype=t).reshape((1, 1, -1, 1))
-    g0_row = torch.tensor(g0_row, device=device, dtype=t).reshape((1, 1, 1, -1))
-    g1_row = torch.tensor(g1_row, device=device, dtype=t).reshape((1, 1, 1, -1))
+    g0_col = torch.tensor(g0_col, device="cuda").reshape((1, 1, -1, 1))
+    g1_col = torch.tensor(g1_col, device="cuda").reshape((1, 1, -1, 1))
+    g0_row = torch.tensor(g0_row, device="cuda").reshape((1, 1, 1, -1))
+    g1_row = torch.tensor(g1_row, device="cuda").reshape((1, 1, 1, -1))
 
     return g0_col, g1_col, g0_row, g1_row
 
 
-def afb1d_atrous(x, h0, h1, mode="symmetric", dim=-1, dilation=1):
+def afb1d_atrous(
+    x: Tensor,
+    h0: Tensor,
+    h1: Tensor,
+    mode: str = "symmetric",
+    dim: int = -1,
+    dilation: int = 1,
+) -> Tensor:
     """1D analysis filter bank (along one dimension only) of an image without
     downsampling. Does the a trous algorithm.
     Inputs:
@@ -194,7 +208,12 @@ def afb1d_atrous(x, h0, h1, mode="symmetric", dim=-1, dilation=1):
     return F.conv2d(x, h, groups=C, dilation=dilation)
 
 
-def afb2d_atrous(x, filts, mode="symmetric", dilation=1):
+def afb2d_atrous(
+    x: Tensor,
+    filts: tuple[Tensor, Tensor, Tensor, Tensor],
+    mode: str = "symmetric",
+    dilation: int = 1,
+) -> Tensor:
     """Does a single level 2d wavelet decomposition of an input. Does separate
     row and column filtering by two calls to `afb1d_atrous`
     Inputs:
@@ -216,15 +235,17 @@ def afb2d_atrous(x, filts, mode="symmetric", dilation=1):
     if len(filts) == 2:
         h0, h1 = filts
         if True in tensorize:
-            h0_col, h1_col, h0_row, h1_row = prep_filt_afb2d(h0, h1, device=x.device)
+            h0_col, h1_col, h0_row, h1_row = prep_filt_afb2d(h0, h1)
         else:
             h0_col = h0
             h0_row = h0.transpose(2, 3)
             h1_col = h1
             h1_row = h1.transpose(2, 3)
     elif len(filts) == 4:
+        h0, h1, h0_col, h1_col = filts
         if True in tensorize:
-            h0_col, h1_col, h0_row, h1_row = prep_filt_afb2d(*filts, device=x.device)
+            # h0_col, h1_col, h0_row, h1_row = prep_filt_afb2d(*filts)
+            h0_col, h1_col, h0_row, h1_row = prep_filt_afb2d(h0, h1, h0_col, h1_col)
         else:
             h0_col, h1_col, h0_row, h1_row = filts
     else:
@@ -235,7 +256,16 @@ def afb2d_atrous(x, filts, mode="symmetric", dilation=1):
     return afb1d_atrous(lohi, h0_col, h1_col, mode=mode, dim=2, dilation=dilation)
 
 
-def sfb1d_atrous(lo, hi, g0, g1, mode="symmetric", dim=-1, dilation=1, pad=None):
+def sfb1d_atrous(
+    lo: Tensor,
+    hi: Tensor,
+    g0: Tensor,
+    g1: Tensor,
+    mode: str = "symmetric",
+    dim: int = -1,
+    dilation: int = 1,
+    pad: tuple[int, int, int, int] | None = None,
+) -> Tensor:
     """1D synthesis filter bank of an image tensor with no upsampling. Used for
     the stationary wavelet transform.
     """
@@ -243,11 +273,11 @@ def sfb1d_atrous(lo, hi, g0, g1, mode="symmetric", dim=-1, dilation=1, pad=None)
     d = dim % 4
     # If g0, g1 are not tensors, make them. If they are, then assume that they
     # are in the right order
-    if not isinstance(g0, torch.Tensor):
+    if not isinstance(g0, Tensor):
         g0 = torch.tensor(
             np.copy(np.array(g0).ravel()), dtype=torch.float, device=lo.device
         )
-    if not isinstance(g1, torch.Tensor):
+    if not isinstance(g1, Tensor):
         g1 = torch.tensor(
             np.copy(np.array(g1).ravel()), dtype=torch.float, device=lo.device
         )
@@ -297,7 +327,14 @@ def sfb1d_atrous(lo, hi, g0, g1, mode="symmetric", dim=-1, dilation=1, pad=None)
     return y / (2 * dilation)
 
 
-def sfb2d_atrous(ll, lh, hl, hh, filts, mode="symmetric"):
+def sfb2d_atrous(
+    ll: Tensor,
+    lh: Tensor,
+    hl: Tensor,
+    hh: Tensor,
+    filts: tuple[Tensor, Tensor, Tensor | None, Tensor | None],
+    mode: str = "symmetric",
+) -> Tensor:
     """Does a single level 2d wavelet reconstruction of wavelet coefficients.
     Does separate row and column filtering by two calls to `sfb1d_atrous`
     Inputs:
@@ -315,21 +352,11 @@ def sfb2d_atrous(ll, lh, hl, hh, filts, mode="symmetric"):
             input size.  Otherwise, the output size will be slightly larger than
             half.
     """
-    tensorize = [not isinstance(x, torch.Tensor) for x in filts]
     if len(filts) == 2:
         g0, g1 = filts
-        if True in tensorize:
-            g0_col, g1_col, g0_row, g1_row = prep_filt_sfb2d(g0, g1)
-        else:
-            g0_col = g0
-            g0_row = g0.transpose(2, 3)
-            g1_col = g1
-            g1_row = g1.transpose(2, 3)
+        g0_col, g1_col, g0_row, g1_row = prep_filt_sfb2d(g0, g1)
     elif len(filts) == 4:
-        if True in tensorize:
-            g0_col, g1_col, g0_row, g1_row = prep_filt_sfb2d(*filts)
-        else:
-            g0_col, g1_col, g0_row, g1_row = filts
+        g0_col, g1_col, g0_row, g1_row = prep_filt_sfb2d(*filts)
     else:
         msg = "Unknown form for input filts"
         raise ValueError(msg)
@@ -353,7 +380,7 @@ class SWTForward(nn.Module):
             as our default scheme.
     """
 
-    def __init__(self, J=1, wave="db1", mode="symmetric") -> None:
+    def __init__(self, J: int = 1, wave: str = "db1", mode: str = "symmetric") -> None:
         super().__init__()
         if isinstance(wave, str):
             wave = pywt.Wavelet(wave)
@@ -369,17 +396,18 @@ class SWTForward(nn.Module):
 
         # Prepare the filters
         filts = prep_filt_afb2d(h0_col, h1_col, h0_row, h1_row)
-        self.h0_col = nn.Parameter(filts[0], requires_grad=False)
-        self.h1_col = nn.Parameter(filts[1], requires_grad=False)
-        self.h0_row = nn.Parameter(filts[2], requires_grad=False)
-        self.h1_row = nn.Parameter(filts[3], requires_grad=False)
+        with torch.no_grad():
+            self.h0_col = nn.Parameter(filts[0])
+            self.h1_col = nn.Parameter(filts[1])
+            self.h0_row = nn.Parameter(filts[2])
+            self.h1_row = nn.Parameter(filts[3])
 
         self.J = J
         self.mode = mode
 
     # @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type='cuda')
     @torch.cuda.amp.custom_fwd(cast_inputs=torch.float32)
-    def forward(self, x):
+    def forward(self, x: Tensor) -> list[Tensor]:
         """Forward pass of the SWT.
 
         Args:
@@ -406,7 +434,7 @@ class SWTForward(nn.Module):
 
 
 @torch.no_grad()
-def wavelet_guided(output, gt):
+def wavelet_guided(output: Tensor, gt: Tensor) -> tuple[Tensor, Tensor]:
     wavelet = pywt.Wavelet("sym7")
     dlo = wavelet.dec_lo
     an_lo = np.divide(dlo, sum(dlo))
@@ -424,14 +452,14 @@ def wavelet_guided(output, gt):
         + output[:, 1:2, :, :] * 128.553
         + output[:, 2:, :, :] * 24.966
     )
-    wavelet_sr = sfm(sr_img_y)[0]
+    wavelet_sr: Tensor = sfm(sr_img_y)[0]
 
     # LL = wavelet_sr[:, 0:1, :, :]
-    LH = wavelet_sr[:, 1:2, :, :]
-    HL = wavelet_sr[:, 2:3, :, :]
-    HH = wavelet_sr[:, 3:, :, :]
+    LH: Tensor = wavelet_sr[:, 1:2, :, :]
+    HL: Tensor = wavelet_sr[:, 2:3, :, :]
+    HH: Tensor = wavelet_sr[:, 3:, :, :]
 
-    combined_HF = torch.cat((LH, HL, HH), axis=1)
+    combined_HF = torch.cat((LH, HL, HH), dim=1)
 
     # wavelet bands of hr image
     hr_img_y = 16.0 + (
@@ -439,12 +467,12 @@ def wavelet_guided(output, gt):
         + gt[:, 1:2, :, :] * 128.553
         + gt[:, 2:, :, :] * 24.966
     )
-    wavelet_hr = sfm(hr_img_y)[0]
+    wavelet_hr: Tensor = sfm(hr_img_y)[0]
 
     # LL_gt = wavelet_hr[:, 0:1, :, :]
-    LH_gt = wavelet_hr[:, 1:2, :, :]
-    HL_gt = wavelet_hr[:, 2:3, :, :]
-    HH_gt = wavelet_hr[:, 3:, :, :]
-    combined_HF_gt = torch.cat((LH_gt, HL_gt, HH_gt), axis=1)
+    LH_gt: Tensor = wavelet_hr[:, 1:2, :, :]
+    HL_gt: Tensor = wavelet_hr[:, 2:3, :, :]
+    HH_gt: Tensor = wavelet_hr[:, 3:, :, :]
+    combined_HF_gt = torch.cat((LH_gt, HL_gt, HH_gt), dim=1)
 
     return combined_HF, combined_HF_gt

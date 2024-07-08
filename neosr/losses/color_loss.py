@@ -1,11 +1,11 @@
 import torch
-from torch import nn
+from torch import Tensor, nn
 
 from neosr.losses.basic_loss import chc
 from neosr.utils.registry import LOSS_REGISTRY
 
 
-def rgb_to_cbcr(img: torch.Tensor) -> torch.Tensor:
+def rgb_to_cbcr(img: Tensor) -> Tensor:
     """RGB to *CbCr. Outputs tensor with only CbCr channels.
     ITU-R BT.601 primaries are used in this converison.
 
@@ -68,6 +68,8 @@ class color_loss(nn.Module):
         self.avgpool = avgpool
         self.scale = scale
 
+        self.criterion: nn.L1Loss | nn.MSELoss | nn.HuberLoss | chc
+
         if self.criterion_type == "l1":
             self.criterion = nn.L1Loss()
         elif self.criterion_type == "l2":
@@ -80,7 +82,7 @@ class color_loss(nn.Module):
             msg = f"{criterion} criterion has not been supported."
             raise NotImplementedError(msg)
 
-    def forward(self, net_output: torch.Tensor, gt: torch.Tensor) -> torch.Tensor:
+    def forward(self, net_output: Tensor, gt: Tensor) -> Tensor:
         input_uv = rgb_to_cbcr(net_output)
         target_uv = rgb_to_cbcr(gt)
 

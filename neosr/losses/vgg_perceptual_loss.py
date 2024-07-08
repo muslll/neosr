@@ -18,7 +18,9 @@ class PatchesKernel3D(nn.Module):
     https://github.com/Suanmd/Patch-Loss-for-Super-Resolution.
     """
 
-    def __init__(self, kernelsize, kernelstride, kernelpadding=0) -> None:
+    def __init__(
+        self, kernelsize: int, kernelstride: int, kernelpadding: int = 0
+    ) -> None:
         super().__init__()
         kernel = (
             torch.eye(kernelsize**2)
@@ -34,7 +36,7 @@ class PatchesKernel3D(nn.Module):
 
     # @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type='cuda')
     @torch.cuda.amp.custom_fwd(cast_inputs=torch.float32)
-    def forward(self, x):
+    def forward(self, x: Tensor) -> Tensor:
         batchsize = x.shape[0]
         channels = x.shape[1]
         x = x.reshape(batchsize * channels, x.shape[-2], x.shape[-1]).unsqueeze(1)
@@ -116,6 +118,7 @@ class vgg_perceptual_loss(nn.Module):
             range_norm=range_norm,
         )
 
+        self.criterion: nn.L1Loss | nn.MSELoss | nn.HuberLoss
         self.criterion_type = criterion
         if self.criterion_type == "l1":
             self.criterion = nn.L1Loss()
@@ -123,8 +126,6 @@ class vgg_perceptual_loss(nn.Module):
             self.criterion = nn.MSELoss()
         elif self.criterion_type == "huber":
             self.criterion = nn.HuberLoss()
-        elif self.criterion_type == "fro":
-            self.criterion = None
         else:
             msg = f"{criterion} criterion not supported."
             raise NotImplementedError(msg)
@@ -132,7 +133,7 @@ class vgg_perceptual_loss(nn.Module):
     @torch.no_grad()
     # @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type='cuda')
     @torch.cuda.amp.custom_fwd(cast_inputs=torch.float32)
-    def patch(self, x, gt, is_ipk=False):
+    def patch(self, x: Tensor, gt: Tensor, is_ipk: bool = False) -> Tensor:
         """Args:
         ----
             is_ipk (bool): defines if it's IPK (Image Patch Kernel)
@@ -161,7 +162,6 @@ class vgg_perceptual_loss(nn.Module):
                     torch.sqrt(torch.sum(gt_trans**2, dim=1)),
                 )
                 cosine_x_y_d = torch.mul((1 - cosine_x_y), dy)  # y = (1-x)dy
-                loss += torch.mean(cosine_x_y_d)
 
         # FPK
         else:
@@ -181,11 +181,10 @@ class vgg_perceptual_loss(nn.Module):
                     torch.sqrt(torch.sum(gt_trans**2, dim=1)),
                 )
                 cosine_x_y_d = torch.mul((1 - cosine_x_y), dy)  # y = (1-x)dy
-                loss += torch.mean(cosine_x_y_d)
 
-        return loss
+        return loss + torch.mean(cosine_x_y_d)
 
-    def forward(self, x: Tensor, gt: Tensor) -> tuple[Tensor, Tensor]:
+    def forward(self, x: Tensor, gt: Tensor) -> float:
         """Forward function.
 
         Args:
@@ -195,7 +194,7 @@ class vgg_perceptual_loss(nn.Module):
 
         Returns:
         -------
-            Tensor: Forward results.
+            Float: loss value.
 
         """
         # extract vgg features
@@ -206,13 +205,7 @@ class vgg_perceptual_loss(nn.Module):
         if self.loss_weight > 0:
             percep_loss = 0
             for k in x_features:
-                if self.criterion_type == "fro":
-                    # note: linalg.norm uses Frobenius norm by default
-                    percep_loss += (
-                        torch.linalg.norm(x_features[k] - gt_features[k])
-                        * self.layer_weights[k]
-                    )
-                elif self.patchloss:
+                if self.patchloss:
                     percep_loss += (
                         self.patch(x_features[k], gt_features[k])
                         * self.layer_weights[k]

@@ -27,7 +27,7 @@ class base:
             # Schedule-Free Discriminator
             self.net_d = opt.get("network_d", None)
             if self.net_d is not None:
-                self.sf_optim_d = opt["train"].get["optim_d"].get("schedule_free", False)
+                self.sf_optim_d = opt["train"]["optim_d"].get("schedule_free", False)
         else:
             self.sf_optim_g = None
             self.sf_optim_d = None

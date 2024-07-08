@@ -3,14 +3,20 @@ from pathlib import Path
 import numpy as np
 import torch
 import torch.nn.functional as F
-from torch import nn
+from torch import Tensor, nn
 from torchvision import models
 
 from neosr.utils.registry import LOSS_REGISTRY
 
 
 class L2pooling(nn.Module):
-    def __init__(self, filter_size=5, stride=2, channels=None, as_loss=True) -> None:
+    def __init__(
+        self,
+        filter_size: int = 5,
+        stride: int = 2,
+        channels: int = 64,
+        as_loss: bool = True,
+    ) -> None:
         super().__init__()
         self.padding = (filter_size - 2) // 2
         self.stride = stride
@@ -24,9 +30,9 @@ class L2pooling(nn.Module):
 
         if as_loss is False:
             # send to cuda
-            self.filter = self.filter.cuda()
+            self.filter: Tensor = self.filter.cuda()
 
-    def forward(self, x):
+    def forward(self, x: Tensor) -> Tensor:
         x = x**2
         out = F.conv2d(
             x, self.filter, stride=self.stride, padding=self.padding, groups=x.shape[1]
@@ -52,9 +58,9 @@ class dists_loss(nn.Module):
 
     def __init__(
         self,
-        as_loss=True,
-        loss_weight=1.0,
-        load_weights=True,
+        as_loss: bool = True,
+        loss_weight: float = 1.0,
+        load_weights: bool = True,
         **kwargs,  # noqa: ARG002
     ) -> None:
         super().__init__()
@@ -108,7 +114,7 @@ class dists_loss(nn.Module):
                 self.alpha.data = self.alpha.data.cuda()
                 self.beta.data = self.beta.data.cuda()
 
-    def forward_once(self, x):
+    def forward_once(self, x: Tensor) -> list[Tensor]:
         h = x
         h = self.stage1(h)
         h_relu1_2 = h
@@ -124,11 +130,9 @@ class dists_loss(nn.Module):
 
     # @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type='cuda')
     @torch.cuda.amp.custom_fwd(cast_inputs=torch.float32)
-    def forward(self, x, y):
+    def forward(self, x: Tensor, y: Tensor) -> Tensor:
         feats0 = self.forward_once(x)
         feats1 = self.forward_once(y)
-        dist1 = 0
-        dist2 = 0
         c1 = 1e-6
         c2 = 1e-6
 
@@ -136,11 +140,13 @@ class dists_loss(nn.Module):
         alpha = torch.split(self.alpha / w_sum, self.chns, dim=1)
         beta = torch.split(self.beta / w_sum, self.chns, dim=1)
         for k in range(len(self.chns)):
+            dist1 = 0
             x_mean = feats0[k].mean([2, 3], keepdim=True)
             y_mean = feats1[k].mean([2, 3], keepdim=True)
             S1 = (2 * x_mean * y_mean + c1) / (x_mean**2 + y_mean**2 + c1)
             dist1 = dist1 + (alpha[k] * S1).sum(1, keepdim=True)
 
+            dist2 = 0
             x_var = ((feats0[k] - x_mean) ** 2).mean([2, 3], keepdim=True)
             y_var = ((feats1[k] - y_mean) ** 2).mean([2, 3], keepdim=True)
             xy_cov = (feats0[k] * feats1[k]).mean(
@@ -150,9 +156,9 @@ class dists_loss(nn.Module):
             dist2 = dist2 + (beta[k] * S2).sum(1, keepdim=True)
 
         if self.as_loss:
-            out = 1 - (dist1 + dist2).mean()
+            out = 1 - (dist1 + dist2).mean()  # type: ignore[attr-defined]
             out *= self.loss_weight
         else:
-            out = 1 - (dist1 + dist2).squeeze()
+            out = 1 - (dist1 + dist2).squeeze()  # type: ignore[attr-defined]
 
         return out

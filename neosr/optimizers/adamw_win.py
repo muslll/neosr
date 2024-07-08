@@ -1,6 +1,9 @@
 import math
+from collections.abc import Callable, Iterable
+from typing import Any
 
 import torch
+from torch import Tensor
 from torch.optim.optimizer import Optimizer
 
 
@@ -32,15 +35,15 @@ class adamw_win(Optimizer):
 
     def __init__(
         self,
-        params,
-        lr=5e-4,
-        betas=(0.98, 0.999),
-        reckless_steps=(2.0, 8.0),
-        eps=1e-8,
-        weight_decay=0.02,
-        amsgrad=False,
-        max_grad_norm=0.0,
-        acceleration_mode="win2",
+        params: Iterable[Tensor],
+        lr: float = 5e-4,
+        betas: tuple[float, float] = (0.98, 0.999),
+        reckless_steps: tuple[float, float] = (2.0, 8.0),
+        eps: float = 1e-8,
+        weight_decay: float = 0.02,
+        amsgrad: bool = False,
+        max_grad_norm: float = 0.0,
+        acceleration_mode: str = "win2",
     ) -> None:
         if not lr >= 0.0:
             msg = f"Invalid learning rate: {lr}"
@@ -74,13 +77,13 @@ class adamw_win(Optimizer):
 
         super().__init__(params, defaults)
 
-    def __setstate__(self, state):
+    def __setstate__(self, state: dict[str, bool]):
         super().__setstate__(state)
         for group in self.param_groups:
             group.setdefault("amsgrad", False)
 
     @torch.no_grad()
-    def step(self, closure=None):
+    def step(self, closure: Callable[..., Any] | None = None):
         """Performs a single optimization step.
 
         Arguments:

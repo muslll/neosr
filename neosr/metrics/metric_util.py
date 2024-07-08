@@ -1,9 +1,10 @@
 import numpy as np
+from numpy.typing import ArrayLike
 
 from neosr.utils import bgr2ycbcr
 
 
-def reorder_image(img, input_order="HWC"):
+def reorder_image(img: np.ndarray, input_order: str = "HWC") -> ArrayLike:
     """Reorder images to 'HWC' order.
 
     If the input_order is (h, w), return (h, w, 1);
@@ -32,7 +33,7 @@ def reorder_image(img, input_order="HWC"):
     return img
 
 
-def to_y_channel(img):
+def to_y_channel(img: np.ndarray) -> ArrayLike:
     """Change to Y channel of YCbCr.
 
     Args:

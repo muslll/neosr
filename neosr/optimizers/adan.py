@@ -1,4 +1,6 @@
 import math
+from collections.abc import Callable, Iterable
+from typing import Any
 
 import torch
 from torch import Tensor
@@ -31,13 +33,13 @@ class adan(Optimizer):
 
     def __init__(
         self,
-        params,
-        lr=5e-4,
-        betas=(0.98, 0.92, 0.99),
-        eps=1e-8,
-        weight_decay=0.02,
-        max_grad_norm=0.0,
-        no_prox=True,
+        params: Iterable[Tensor],
+        lr: float = 5e-4,
+        betas: tuple[float, float, float] = (0.98, 0.92, 0.99),
+        eps: float = 1e-8,
+        weight_decay: float = 0.02,
+        max_grad_norm: float = 0.0,
+        no_prox: bool = True,
         foreach: bool = True,
         **kwargs,  # noqa: ARG002
     ) -> None:
@@ -71,7 +73,7 @@ class adan(Optimizer):
         }
         super().__init__(params, defaults)
 
-    def __setstate__(self, state):
+    def __setstate__(self, state: dict[str, bool]) -> None:
         super().__setstate__(state)
         for group in self.param_groups:
             group.setdefault("no_prox", False)
@@ -93,7 +95,7 @@ class adan(Optimizer):
                     state["exp_avg_diff"] = torch.zeros_like(p)
 
     @torch.no_grad()
-    def step(self, closure=None):
+    def step(self, closure: Callable[..., Any] | None = None):
         """Performs a single optimization step."""
         loss = None
         if closure is not None:

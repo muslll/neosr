@@ -1,6 +1,9 @@
 import math
+from collections.abc import Callable, Iterable
+from typing import Any
 
 import torch
+from torch import Tensor
 from torch.optim.optimizer import Optimizer
 
 
@@ -42,15 +45,15 @@ class adamw_sf(Optimizer):
 
     def __init__(
         self,
-        params,
-        lr=8e-4,
-        betas=(0.9, 0.99),
-        eps=1e-8,
-        weight_decay=0,
-        warmup_steps=0,
-        r=0.0,
-        weight_lr_power=2.0,
-        schedule_free=True,  # noqa: ARG002
+        params: Iterable[Tensor],
+        lr: float = 8e-4,
+        betas: tuple[float, float] = (0.9, 0.99),
+        eps: float = 1e-8,
+        weight_decay: float = 0.0,
+        warmup_steps: float = 0.0,
+        r: float = 0.0,
+        weight_lr_power: float = 2.0,
+        schedule_free: bool = True,  # noqa: ARG002
         foreach: bool = True,
     ) -> None:
         defaults = {
@@ -93,7 +96,7 @@ class adamw_sf(Optimizer):
                         p.data.lerp_(end=state["z"], weight=1 - beta1)
                 group["train_mode"] = True
 
-    def step(self, closure=None):
+    def step(self, closure: Callable[..., Any] | None = None):
         """Performs a single optimization step.
 
         Arguments:
@@ -185,11 +188,11 @@ class adamw_sf(Optimizer):
                     z = state["z"]
                     exp_avg_sq = state["exp_avg_sq"]
 
-                    exp_avg_sq.mul_(beta2).addcmul_(grad, grad, value=1 - beta2)
-                    denom = exp_avg_sq.sqrt().add_(eps)
+                    exp_avg_sq.mul_(beta2).addcmul_(grad, grad, value=1 - beta2)  # type: ignore[attr-defined]
+                    denom = exp_avg_sq.sqrt().add_(eps)  # type: ignore[attr-defined]
 
                     # Reuse grad buffer for memory efficiency
-                    grad_normalized = grad.div_(denom)
+                    grad_normalized = grad.div_(denom)  # type: ignore[attr-defined]
 
                     # Weight decay calculated at y
                     if decay != 0:
@@ -197,11 +200,11 @@ class adamw_sf(Optimizer):
 
                     # These operations update y in-place,
                     # without computing x explicitly.
-                    y.lerp_(end=z, weight=ckp1)
-                    y.add_(grad_normalized, alpha=lr * (beta1 * (1 - ckp1) - 1))
+                    y.lerp_(end=z, weight=ckp1)  # type: ignore[attr-defined]
+                    y.add_(grad_normalized, alpha=lr * (beta1 * (1 - ckp1) - 1))  # type: ignore[attr-defined]
 
                     # z step
-                    z.sub_(grad_normalized, alpha=lr)
+                    z.sub_(grad_normalized, alpha=lr)  # type: ignore[attr-defined]
 
             group["k"] = k + 1
         return loss

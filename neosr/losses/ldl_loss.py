@@ -1,5 +1,5 @@
 import torch
-from torch import nn
+from torch import Tensor, nn
 from torch.nn import functional as F
 
 from neosr.utils.registry import LOSS_REGISTRY
@@ -26,6 +26,7 @@ class ldl_loss(nn.Module):
         self.loss_weight = loss_weight
         self.ksize = ksize
         self.criterion_type = criterion
+        self.criterion: nn.L1Loss | nn.MSELoss | nn.HuberLoss
 
         if self.criterion_type == "l1":
             self.criterion = nn.L1Loss()
@@ -37,7 +38,7 @@ class ldl_loss(nn.Module):
             msg = f"{criterion} criterion has not been supported."
             raise NotImplementedError(msg)
 
-    def get_local_weights(self, residual: torch.Tensor) -> torch.Tensor:
+    def get_local_weights(self, residual: Tensor) -> Tensor:
         """Get local weights for generating the artifact map of LDL.
 
         It is only called by the `get_refined_artifact_map` function.
@@ -63,9 +64,7 @@ class ldl_loss(nn.Module):
             .squeeze(-1)
         )
 
-    def get_refined_artifact_map(
-        self, img_gt: torch.Tensor, img_output: torch.Tensor
-    ) -> torch.Tensor:
+    def get_refined_artifact_map(self, img_gt: Tensor, img_output: Tensor) -> Tensor:
         """Calculate the artifact map of LDL
         (Details or Artifacts: A Locally Discriminative Learning Approach to Realistic Image Super-Resolution. In CVPR 2022).
 
@@ -88,7 +87,7 @@ class ldl_loss(nn.Module):
         pixel_level_weight = self.get_local_weights(residual_sr.clone())
         return patch_level_weight * pixel_level_weight
 
-    def forward(self, net_output: torch.Tensor, gt: torch.Tensor) -> torch.Tensor:
+    def forward(self, net_output: Tensor, gt: Tensor) -> Tensor:
         overall_weight = self.get_refined_artifact_map(gt, net_output)
         self.output = torch.mul(overall_weight, net_output)
         self.gt = torch.mul(overall_weight, gt)

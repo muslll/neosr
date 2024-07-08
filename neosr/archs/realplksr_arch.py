@@ -1,3 +1,4 @@
+# type: ignore  # noqa: PGH003
 from functools import partial
 
 import torch

@@ -1,28 +1,24 @@
 import torch
-from torch import nn
+from torch import Tensor, nn
 from torch.nn import functional as F
 
-from neosr.losses.loss_util import weighted_loss
 from neosr.utils.registry import LOSS_REGISTRY
 
-_reduction_modes = ["none", "mean", "sum"]
+_reduction_modes: list[str] = ["none", "mean", "sum"]
 
 
-@weighted_loss
-def l1_loss(pred, target):
-    return F.l1_loss(pred, target, reduction="none")
+def l1_loss(pred: Tensor, target: Tensor, reduction: str) -> Tensor:
+    return F.l1_loss(pred, target, reduction=reduction)
 
 
-@weighted_loss
-def mse_loss(pred, target):
-    return F.mse_loss(pred, target, reduction="none")
+def mse_loss(pred: Tensor, target: Tensor, reduction: str) -> Tensor:
+    return F.mse_loss(pred, target, reduction=reduction)
 
 
-@weighted_loss
 def huber_loss(
-    pred: torch.Tensor, target: torch.Tensor, delta: float = 1.0
-) -> torch.Tensor:
-    return F.huber_loss(pred, target, delta)
+    pred: torch.Tensor, target: torch.Tensor, reduction: str, delta: float = 1.0
+) -> Tensor:
+    return F.huber_loss(pred, target, reduction=reduction, delta=delta)
 
 
 @LOSS_REGISTRY.register()
@@ -37,7 +33,7 @@ class L1Loss(nn.Module):
 
     """
 
-    def __init__(self, loss_weight=1.0, reduction="mean") -> None:
+    def __init__(self, loss_weight: float = 1.0, reduction: str = "mean") -> None:
         super().__init__()
         if reduction not in {"none", "mean", "sum"}:
             msg = f"Unsupported reduction mode: {reduction}. Supported ones are: {_reduction_modes}"
@@ -46,7 +42,7 @@ class L1Loss(nn.Module):
         self.loss_weight = loss_weight
         self.reduction = reduction
 
-    def forward(self, pred, target, weight=None, **kwargs):  # noqa: ARG002
+    def forward(self, pred: Tensor, target: Tensor, **kwargs) -> Tensor:  # noqa: ARG002
         """Args:
         ----
             pred (Tensor): of shape (N, C, H, W). Predicted tensor.
@@ -54,9 +50,7 @@ class L1Loss(nn.Module):
             weight (Tensor, optional): of shape (N, C, H, W). Element-wise weights. Default: None.
 
         """
-        return self.loss_weight * l1_loss(
-            pred, target, weight, reduction=self.reduction
-        )
+        return self.loss_weight * l1_loss(pred, target, reduction=self.reduction)
 
 
 @LOSS_REGISTRY.register()
@@ -71,7 +65,7 @@ class MSELoss(nn.Module):
 
     """
 
-    def __init__(self, loss_weight=1.0, reduction="mean") -> None:
+    def __init__(self, loss_weight: float = 1.0, reduction: str = "mean") -> None:
         super().__init__()
         if reduction not in {"none", "mean", "sum"}:
             msg = f"Unsupported reduction mode: {reduction}. Supported ones are: {_reduction_modes}"
@@ -80,7 +74,7 @@ class MSELoss(nn.Module):
         self.loss_weight = loss_weight
         self.reduction = reduction
 
-    def forward(self, pred, target, weight=None, **kwargs):  # noqa: ARG002
+    def forward(self, pred: Tensor, target: Tensor, **kwargs) -> Tensor:  # noqa: ARG002
         """Args:
         ----
             pred (Tensor): of shape (N, C, H, W). Predicted tensor.
@@ -88,9 +82,7 @@ class MSELoss(nn.Module):
             weight (Tensor, optional): of shape (N, C, H, W). Element-wise weights. Default: None.
 
         """
-        return self.loss_weight * mse_loss(
-            pred, target, weight, reduction=self.reduction
-        )
+        return self.loss_weight * mse_loss(pred, target, reduction=self.reduction)
 
 
 @LOSS_REGISTRY.register()
@@ -121,10 +113,10 @@ class HuberLoss(nn.Module):
 
     def forward(
         self,
-        pred: torch.Tensor,
-        target: torch.Tensor,
+        pred: Tensor,
+        target: Tensor,
         **kwargs,  # noqa: ARG002
-    ) -> torch.Tensor:
+    ) -> Tensor:
         """Args:
         ----
             pred (Tensor): of shape (N, C, H, W). Predicted tensor.
@@ -187,10 +179,10 @@ class chc(nn.Module):
 
     def forward(
         self,
-        pred: torch.Tensor,
-        target: torch.Tensor,
+        pred: Tensor,
+        target: Tensor,
         **kwargs,  # noqa: ARG002
-    ) -> torch.Tensor:
+    ) -> Tensor:
         """Args:
         ----
             pred (Tensor): of shape (N, C, H, W). Predicted tensor.

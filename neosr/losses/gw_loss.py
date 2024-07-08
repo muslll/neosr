@@ -1,6 +1,6 @@
 import torch
 import torch.nn.functional as F
-from torch import nn
+from torch import Tensor, nn
 
 from neosr.losses.basic_loss import chc
 from neosr.utils.registry import LOSS_REGISTRY
@@ -22,6 +22,7 @@ class gw_loss(nn.Module):
         self.corner = corner
         self.loss_weight = loss_weight
         self.criterion_type = criterion
+        self.criterion: nn.L1Loss | nn.MSELoss | nn.HuberLoss | chc | None
 
         if self.criterion_type == "l1":
             self.criterion = nn.L1Loss()
@@ -37,28 +38,29 @@ class gw_loss(nn.Module):
             msg = f"{criterion} criterion has not been supported."
             raise NotImplementedError(msg)
 
-    def forward(self, x1, x2):
+    def forward(self, x1: Tensor, x2: Tensor) -> Tensor:
         Y_x1 = torch.mean(x1, dim=1, keepdim=True)
         Y_x2 = torch.mean(x2, dim=1, keepdim=True)
-        sobel_0 = [[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]]
-        sobel_90 = [[-1, -2, -1], [0, 0, 0], [1, 2, 1]]
-        sobel_45 = [[-2, -1, 0], [-1, 0, 1], [0, 1, 2]]
-        sobel_135 = [[0, -1, -2], [1, 0, -1], [2, 1, 0]]
+        sobel_0 = torch.tensor([[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]])
+        sobel_90 = torch.tensor([[-1, -2, -1], [0, 0, 0], [1, 2, 1]])
+        sobel_45 = torch.tensor([[-2, -1, 0], [-1, 0, 1], [0, 1, 2]])
+        sobel_135 = torch.tensor([[0, -1, -2], [1, 0, -1], [2, 1, 0]])
 
         _b, c, _w, _h = Y_x1.shape
-        sobel_0 = torch.FloatTensor(sobel_0).expand(c, 1, 3, 3)
-        sobel_90 = torch.FloatTensor(sobel_90).expand(c, 1, 3, 3)
-        sobel_45 = torch.FloatTensor(sobel_45).expand(c, 1, 3, 3)
-        sobel_135 = torch.FloatTensor(sobel_135).expand(c, 1, 3, 3)
+        sobel_0 = sobel_0.expand(c, 1, 3, 3)
+        sobel_90 = sobel_90.expand(c, 1, 3, 3)
+        sobel_45 = sobel_45.expand(c, 1, 3, 3)
+        sobel_135 = sobel_135.expand(c, 1, 3, 3)
         sobel_0 = sobel_0.type_as(Y_x1)
         sobel_90 = sobel_90.type_as(Y_x1)
         sobel_45 = sobel_0.type_as(Y_x1)
         sobel_135 = sobel_90.type_as(Y_x1)
 
-        weight_0 = nn.Parameter(data=sobel_0, requires_grad=False)
-        weight_90 = nn.Parameter(data=sobel_90, requires_grad=False)
-        weight_45 = nn.Parameter(data=sobel_45, requires_grad=False)
-        weight_135 = nn.Parameter(data=sobel_135, requires_grad=False)
+        with torch.no_grad():
+            weight_0 = nn.Parameter(data=sobel_0)
+            weight_90 = nn.Parameter(data=sobel_90)
+            weight_45 = nn.Parameter(data=sobel_45)
+            weight_135 = nn.Parameter(data=sobel_135)
 
         I1_0 = F.conv2d(Y_x1, weight_0, stride=1, padding=1, groups=c)
         I2_0 = F.conv2d(Y_x2, weight_0, stride=1, padding=1, groups=c)

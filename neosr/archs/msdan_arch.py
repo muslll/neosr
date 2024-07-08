@@ -1,3 +1,4 @@
+# type: ignore  # noqa: PGH003
 import torch
 import torch.nn
 from torch import nn as nn

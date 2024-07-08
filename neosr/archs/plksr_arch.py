@@ -1,3 +1,4 @@
+# type: ignore  # noqa: PGH003
 from collections.abc import Sequence
 from functools import partial
 from typing import Literal
