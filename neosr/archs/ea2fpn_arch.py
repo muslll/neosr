@@ -214,7 +214,7 @@ class ea2fpn(nn.Module):
     def __init__(
         self,
         class_num: int = 6,
-        encoder_channels: list[int] = [512, 256, 128, 64],  # noqa: B006
+        encoder_channels: tuple[int] = (512, 256, 128, 64),
         pyramid_channels: int = 64,
         segmentation_channels: int = 64,
         dropout: float = 0.2,

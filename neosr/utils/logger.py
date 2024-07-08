@@ -5,16 +5,16 @@ from typing import Any
 
 from .dist_util import get_dist_info, master_only
 
-initialized_logger = {}
+initialized_logger: dict[Any, Any] = {}
 
 
 class AvgTimer:
     def __init__(self, window: int = 200) -> None:
         self.window = window  # average window
-        self.current_time = 0
-        self.total_time = 0
-        self.count = 0
-        self.avg_time = 0
+        self.current_time: float = 0
+        self.total_time: float = 0
+        self.count: int = 0
+        self.avg_time: float = 0
         self.start()
 
     def start(self) -> None:
@@ -52,14 +52,12 @@ class MessageLogger:
             logger (dict): Contains 'print_freq' (str) for logger interval.
             train (dict): Contains 'total_iter' (int) for total iters.
             use_tb_logger (bool): Use tensorboard logger.
-        start_iter (int): Start iter. Default: 1.
         tb_logger (obj:`tb_logger`): Tensorboard logger. Default: None.
+        start_iter (int): Start iter. Default: 1.
 
     """
 
-    def __init__(
-        self, opt: dict[str, Any], start_iter: int = 1, tb_logger: None = None
-    ) -> None:
+    def __init__(self, opt: dict[str, Any], tb_logger, start_iter: int = 1) -> None:
         self.exp_name = opt["name"]
         self.interval = opt["logger"].get("print_freq", 100)
         self.accumulate = opt["datasets"]["train"].get("accumulate", 1)
@@ -74,7 +72,7 @@ class MessageLogger:
         self.start_time = time.time()
 
     @master_only
-    def __call__(self, log_vars):
+    def __call__(self, log_vars: dict[Any, Any]):
         """Format logging message.
 
         Args:
@@ -88,9 +86,9 @@ class MessageLogger:
 
         """
         # epoch, iter, learning rates
-        epoch = log_vars.pop("epoch")
-        current_iter = int(log_vars.pop("iter"))
-        lrs = log_vars.pop("lrs")
+        epoch: int = log_vars.pop("epoch")
+        current_iter: int = int(log_vars.pop("iter"))
+        lrs: list[Any] = log_vars.pop("lrs")
 
         message = f"[ epoch:{epoch:4d} ] [ iter:{current_iter:7,d} ]"
 

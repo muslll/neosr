@@ -1,8 +1,9 @@
 import numpy as np
 import torch
+from numpy.typing import ArrayLike, DTypeLike
 
 
-def rgb2ycbcr(img, y_only=False):
+def rgb2ycbcr(img: np.ndarray, y_only: bool = False) -> ArrayLike:
     """Convert a RGB image to YCbCr image.
 
     This function produces the same results as Matlab's `rgb2ycbcr` function.
@@ -43,7 +44,7 @@ def rgb2ycbcr(img, y_only=False):
     return _convert_output_type_range(out_img, img_type)
 
 
-def bgr2ycbcr(img, y_only=False):
+def bgr2ycbcr(img: np.ndarray, y_only: bool = False) -> ArrayLike:
     """Convert a BGR image to YCbCr image.
 
     The bgr version of rgb2ycbcr.
@@ -84,7 +85,7 @@ def bgr2ycbcr(img, y_only=False):
     return _convert_output_type_range(out_img, img_type)
 
 
-def ycbcr2rgb(img):
+def ycbcr2rgb(img: np.ndarray) -> ArrayLike:
     """Convert a YCbCr image to RGB image.
 
     This function produces the same results as Matlab's ycbcr2rgb function.
@@ -121,7 +122,7 @@ def ycbcr2rgb(img):
     return _convert_output_type_range(out_img, img_type)
 
 
-def ycbcr2bgr(img):
+def ycbcr2bgr(img: np.ndarray) -> ArrayLike:
     """Convert a YCbCr image to BGR image.
 
     The bgr version of ycbcr2rgb.
@@ -158,7 +159,7 @@ def ycbcr2bgr(img):
     return _convert_output_type_range(out_img, img_type)
 
 
-def _convert_input_type_range(img):
+def _convert_input_type_range(img: np.ndarray) -> np.ndarray:
     """Convert the type and range of the input image.
 
     It converts the input image to np.float32 type and range of [0, 1].
@@ -185,7 +186,7 @@ def _convert_input_type_range(img):
     return img
 
 
-def _convert_output_type_range(img, dst_type):
+def _convert_output_type_range(img: np.ndarray, dst_type: DTypeLike) -> np.ndarray:
     """Convert the type and range of the image according to dst_type.
 
     It converts the image to desired type and range. If `dst_type` is uint8,
@@ -216,7 +217,7 @@ def _convert_output_type_range(img, dst_type):
     return img.astype(dst_type)
 
 
-def rgb2ycbcr_pt(img, y_only=False):
+def rgb2ycbcr_pt(img: torch.Tensor, y_only: bool = False):
     """Convert RGB images to YCbCr images (PyTorch version).
 
     It implements the ITU-R BT.601 conversion for standard-definition television. See more details in

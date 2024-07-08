@@ -13,22 +13,22 @@ class BaseStorageBackend(ABC):
     """
 
     @abstractmethod
-    def get(self, filepath):
+    def get(self, filepath: str) -> bytes:
         pass
 
     @abstractmethod
-    def get_text(self, filepath):
+    def get_text(self, filepath: str) -> str:
         pass
 
 
 class HardDiskBackend(BaseStorageBackend):
     """Raw hard disks storage backend."""
 
-    def get(self, filepath):
+    def get(self, filepath: str) -> bytes:
         filepath = str(filepath)
         return Path(filepath).read_bytes()
 
-    def get_text(self, filepath):
+    def get_text(self, filepath: str) -> str:
         filepath = str(filepath)
         return Path(filepath).read_text(encoding="locale")
 
@@ -59,10 +59,10 @@ class LmdbBackend(BaseStorageBackend):
     def __init__(
         self,
         db_paths,
-        client_keys="default",
-        readonly=True,
-        lock=False,
-        readahead=False,
+        client_keys: str | list[str] = "default",
+        readonly: bool = True,
+        lock: bool = False,
+        readahead: bool = False,
         **kwargs,
     ) -> None:
         try:
@@ -89,7 +89,7 @@ class LmdbBackend(BaseStorageBackend):
                 path, readonly=readonly, lock=lock, readahead=readahead, **kwargs
             )
 
-    def get(self, filepath, client_key):
+    def get(self, filepath: str, client_key: str) -> bytes:  # type: ignore[override]
         """Get values according to the filepath from one lmdb named client_key.
 
         Args:
@@ -106,7 +106,7 @@ class LmdbBackend(BaseStorageBackend):
         with client.begin(write=False) as txn:
             return txn.get(filepath.encode("ascii"))
 
-    def get_text(self, filepath) -> Never:
+    def get_text(self, filepath: str, client_keys: str | list[str]) -> Never:  # type: ignore[override]
         raise NotImplementedError
 
 
@@ -119,13 +119,15 @@ class FileClient:
 
     Attributes
     ----------
-        backend (str): The storage backend type. Options are "disk",
-            "memcached" and "lmdb".
+        backend (str): The storage backend type. Options are "disk" or "lmdb".
         client (:obj:`BaseStorageBackend`): The backend object.
 
     """
 
-    _backends: ClassVar[list[str, str]] = {"disk": HardDiskBackend, "lmdb": LmdbBackend}
+    _backends: ClassVar[dict[str, type[BaseStorageBackend]]] = {
+        "disk": HardDiskBackend,
+        "lmdb": LmdbBackend,
+    }
 
     def __init__(self, backend="disk", **kwargs) -> None:
         if backend not in self._backends:
@@ -137,12 +139,12 @@ class FileClient:
         self.backend = backend
         self.client = self._backends[backend](**kwargs)
 
-    def get(self, filepath, client_key="default"):
+    def get(self, filepath: str, client_key: str | list[str] = "default") -> bytes:
         # client_key is used only for lmdb, where different fileclients have
         # different lmdb environments.
         if self.backend == "lmdb":
-            return self.client.get(filepath, client_key)
+            return self.client.get(filepath, client_key)  # type: ignore[call-arg]
         return self.client.get(filepath)
 
-    def get_text(self, filepath):
+    def get_text(self, filepath: str) -> str:
         return self.client.get_text(filepath)

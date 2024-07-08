@@ -199,7 +199,7 @@ def train_pipeline(root_path) -> None:
         current_iter = 0
 
     # create message logger (formatted outputs)
-    msg_logger = MessageLogger(opt, current_iter, tb_logger)
+    msg_logger = MessageLogger(opt, tb_logger, current_iter)
 
     # dataloader prefetcher
     prefetcher = CUDAPrefetcher(train_loader, opt)

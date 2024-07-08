@@ -8,7 +8,7 @@ from typing import Any
 
 import torch
 
-from .dist_util import master_only
+from neosr.utils.dist_util import master_only
 
 
 def set_random_seed(seed: int) -> None:
@@ -96,7 +96,7 @@ def scandir(
     return _scandir(dir_path, suffix=suffix, recursive=recursive)
 
 
-def check_resume(opt, resume_iter) -> None:
+def check_resume(opt: dict[str, Any], resume_iter: int) -> None:
     """Check resume states and pretrain_network paths.
 
     Args:
@@ -133,7 +133,7 @@ def check_resume(opt, resume_iter) -> None:
                 # print(f'Set {param_key} to params')
 
 
-def sizeof_fmt(size, suffix="B") -> str:
+def sizeof_fmt(size: int, suffix: str = "B") -> str:
     """Get human readable file size.
 
     Args:
@@ -149,5 +149,5 @@ def sizeof_fmt(size, suffix="B") -> str:
     for unit in ["", "K", "M", "G", "T", "P", "E", "Z"]:
         if abs(size) < 1024.0:
             return f"{size:3.1f} {unit}{suffix}"
-        size /= 1024.0
+        size //= 1024
     return f"{size:3.1f} Y{suffix}"

@@ -1,5 +1,9 @@
 # Modified from: https://github.com/facebookresearch/fvcore/blob/master/fvcore/common/registry.py
 
+# pyright: strict
+from collections.abc import Callable, Iterable, Iterator
+from typing import Any
+
 
 class Registry:
     """The registry that provides name -> object mapping, to support third-party
@@ -26,16 +30,21 @@ class Registry:
         BACKBONE_REGISTRY.register(MyBackbone)
     """
 
-    def __init__(self, name) -> None:
+    def __init__(self, name: str) -> None:
         """Args:
         ----
             name (str): the name of this registry
 
         """
         self._name = name
-        self._obj_map = {}
+        self._obj_map: dict[str, Callable[..., object] | type[str] | str] = {}
 
-    def _do_register(self, name, obj, suffix=None) -> None:
+    def _do_register(
+        self,
+        name: str,
+        obj: Callable[..., object] | type[str] | str,
+        suffix: str | None = None,
+    ) -> None:
         if isinstance(suffix, str):
             name = name + "_" + suffix
 
@@ -45,14 +54,20 @@ class Registry:
         )
         self._obj_map[name] = obj
 
-    def register(self, obj=None, suffix=None):
+    def register(
+        self,
+        obj: Callable[..., object] | type[str] | None = None,
+        suffix: str | None = None,
+    ) -> Callable[..., object] | type[str] | str | None:
         """Register the given object under the the name `obj.__name__`.
         Can be used as either a decorator or not.
         See docstring of this class for usage.
         """
         if obj is None:
             # used as a decorator
-            def deco(func_or_class):
+            def deco(
+                func_or_class: Callable[..., object] | type[str],
+            ) -> Callable[..., object] | type[str]:
                 name = func_or_class.__name__
                 self._do_register(name, func_or_class, suffix)
                 return func_or_class
@@ -60,11 +75,13 @@ class Registry:
             return deco
 
         # used as a function call
-        name = obj.__name__
+        name = obj if isinstance(obj, str) else obj.__name__
         self._do_register(name, obj, suffix)
         return None
 
-    def get(self, name, suffix="neosr"):
+    def get(
+        self, name: str, suffix: str = "neosr"
+    ) -> Callable[..., object] | type[str] | str:
         ret = self._obj_map.get(name)
         if ret is None:
             ret = self._obj_map.get(name + "_" + suffix)
@@ -73,13 +90,13 @@ class Registry:
             raise KeyError(msg)
         return ret
 
-    def __contains__(self, name) -> bool:
+    def __contains__(self, name: str) -> bool:
         return name in self._obj_map
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[tuple[str, Callable[..., Any] | type[str] | str]]:
         return iter(self._obj_map.items())
 
-    def keys(self):
+    def keys(self) -> Iterable[str]:
         return self._obj_map.keys()
 
 

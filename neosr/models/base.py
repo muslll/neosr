@@ -21,16 +21,15 @@ class base:
         self.optimizers = []
         self.schedulers = []
 
-        # Schedule-Free Generator
         if self.is_train:
+            # Schedule-Free Generator
             self.sf_optim_g = opt["train"]["optim_g"].get("schedule_free", False)
+            # Schedule-Free Discriminator
+            self.net_d = opt.get("network_d", None)
+            if self.net_d is not None:
+                self.sf_optim_d = opt["train"].get["optim_d"].get("schedule_free", False)
         else:
             self.sf_optim_g = None
-        # Schedule-Free Discriminator
-        self.net_d = opt.get("network_d", None)
-        if self.net_d is not None:
-            self.sf_optim_d = opt["train"]["optim_d"].get("schedule_free", False)
-        else:
             self.sf_optim_d = None
 
     def feed_data(self, data) -> None:
