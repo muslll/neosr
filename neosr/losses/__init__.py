@@ -31,7 +31,7 @@ def build_loss(opt: dict[str, Any]):
     """
     opt = deepcopy(opt)
     loss_type = opt.pop("type")
-    loss = LOSS_REGISTRY.get(loss_type)(**opt)
+    loss = LOSS_REGISTRY.get(loss_type)(**opt)  # type: ignore[operator]
     logger = get_root_logger()
     logger.info(f"Loss [{loss.__class__.__name__}] enabled.")
     return loss

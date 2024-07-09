@@ -12,11 +12,11 @@ from torchvision.utils import make_grid
 
 
 def img2tensor(
-    imgs: np.ndarray | list[np.ndarray],
+    imgs: np.ndarray | ArrayLike | list[np.ndarray] | list[ArrayLike],
     bgr2rgb: bool = True,
     float32: bool = True,
     color: bool = True,
-) -> list[Tensor]:
+) -> list[Tensor] | Tensor:
     """Numpy array to tensor.
 
     Args:
@@ -29,12 +29,12 @@ def img2tensor(
 
     Returns:
     -------
-        list[tensor] | tensor: Tensor images. If returned results only have
+        Tensor: Tensor images. If returned results only have
             one element, just return tensor.
 
     """
 
-    def _totensor(img, bgr2rgb, float32, color):
+    def _totensor(img, bgr2rgb: bool, float32: bool, color: bool) -> Tensor:
         if color:
             if img.shape[2] == 3 and bgr2rgb:
                 if img.dtype == "float64":
@@ -154,7 +154,7 @@ def tensor2img_fast(
 
 def imfrombytes(
     content: bytes, flag: str = "color", float32: bool = False
-) -> ArrayLike:
+) -> np.ndarray | ArrayLike:
     """Read an image from bytes.
 
     Args:

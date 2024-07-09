@@ -1,3 +1,5 @@
+from typing import cast
+
 import cv2
 import numpy as np
 import torch
@@ -157,8 +159,8 @@ def _ssim(img: np.ndarray, img2: np.ndarray) -> float:
 
 @METRIC_REGISTRY.register()
 def calculate_dists(
-    img: Tensor | np.ndarray,
-    img2: Tensor | np.ndarray,
+    img: np.ndarray,
+    img2: np.ndarray,
     **kwargs,  # noqa: ARG001
 ) -> float:
     """Calculates DISTS metric.
@@ -178,7 +180,7 @@ def calculate_dists(
     ), f"Image shapes are different: {img.shape}, {img2.shape}."
 
     # to tensor
-    img, img2 = img2tensor([img, img2])
+    img, img2 = cast(Tensor, img2tensor([img, img2]))
     # normalize to [0, 1]
     img, img2 = img / 255, img2 / 255
     # add dim

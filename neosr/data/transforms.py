@@ -1,8 +1,10 @@
 import random
+from typing import cast
 
 import cv2
 import numpy as np
 import torch
+from numpy.typing import ArrayLike
 from torch import Tensor
 
 
@@ -31,12 +33,15 @@ def mod_crop(img: np.ndarray, scale: int) -> np.ndarray:
 
 
 def paired_random_crop(
-    img_gts: list[np.ndarray | Tensor] | np.ndarray | Tensor,
-    img_lqs: list[np.ndarray | Tensor] | np.ndarray | Tensor,
+    img_gts: list[np.ndarray | Tensor] | np.ndarray | Tensor | ArrayLike,
+    img_lqs: list[np.ndarray | Tensor] | np.ndarray | Tensor | ArrayLike,
     lq_patch_size: int,
     scale: int,
     gt_path: str | None = None,
-):
+) -> tuple[
+    list[np.ndarray | Tensor] | np.ndarray | Tensor,
+    list[np.ndarray | Tensor] | np.ndarray | Tensor,
+]:
     """Paired random crop. Support Numpy array and Tensor inputs.
 
     It crops lists of lq and gt images with corresponding locations.
@@ -60,9 +65,9 @@ def paired_random_crop(
 
     """
     if not isinstance(img_gts, list):
-        img_gts = [img_gts]
+        img_gts = cast(list[np.ndarray], [img_gts])
     if not isinstance(img_lqs, list):
-        img_lqs = [img_lqs]
+        img_lqs = cast(list[np.ndarray], [img_lqs])
 
     # determine input type: Numpy array or Tensor
     input_type = "Tensor" if torch.is_tensor(img_gts[0]) else "Numpy"
@@ -126,16 +131,21 @@ def paired_random_crop(
 
 
 def basic_augment(
-    imgs: list[np.ndarray] | np.ndarray,
+    imgs: list[np.ndarray] | list[ArrayLike] | np.ndarray | ArrayLike,
     hflip: bool = True,
     rotation: bool = True,
     flip_prob: float = 0.5,
     rotation_prob: float = 0.5,
     return_status: bool = False,
 ) -> (
-    list[np.ndarray]
+    list[ArrayLike]
+    | list[np.ndarray]
     | np.ndarray
-    | tuple[list[np.ndarray] | np.ndarray, tuple[bool, bool, bool]]
+    | ArrayLike
+    | tuple[
+        list[np.ndarray] | list[ArrayLike] | np.ndarray | ArrayLike,
+        tuple[bool, bool, bool],
+    ]
 ):
     """Augment: horizontal flips OR rotate (0, 90, 180, 270 degrees).
 
@@ -161,18 +171,18 @@ def basic_augment(
     vflip = rotation and random.random() <= flip_prob
     rot90 = rotation and random.random() <= rotation_prob
 
-    def _augment(img):
+    def _augment(img: np.ndarray) -> np.ndarray | ArrayLike:
         if hflip:  # horizontal
-            cv2.flip(img, 1, img)
+            cv2.flip(img, 1, img)  # type: ignore[arg-type]
         if vflip:  # vertical
-            cv2.flip(img, 0, img)
+            cv2.flip(img, 0, img)  # type: ignore[arg-type]
         if rot90:
             img = img.transpose(1, 0, 2)
         return img
 
     if not isinstance(imgs, list):
         imgs = [imgs]
-    imgs = [_augment(img) for img in imgs]
+    imgs = [_augment(cast(np.ndarray, img)) for img in imgs]
     if len(imgs) == 1:
         imgs = imgs[0]
 

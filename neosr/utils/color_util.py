@@ -1,9 +1,10 @@
 import numpy as np
 import torch
-from numpy.typing import ArrayLike, DTypeLike
+from numpy.typing import DTypeLike
+from torch import Tensor
 
 
-def rgb2ycbcr(img: np.ndarray, y_only: bool = False) -> ArrayLike:
+def rgb2ycbcr(img: np.ndarray, y_only: bool = False) -> np.ndarray:
     """Convert a RGB image to YCbCr image.
 
     This function produces the same results as Matlab's `rgb2ycbcr` function.
@@ -44,7 +45,7 @@ def rgb2ycbcr(img: np.ndarray, y_only: bool = False) -> ArrayLike:
     return _convert_output_type_range(out_img, img_type)
 
 
-def bgr2ycbcr(img: np.ndarray, y_only: bool = False) -> ArrayLike:
+def bgr2ycbcr(img: np.ndarray, y_only: bool = False) -> np.ndarray:
     """Convert a BGR image to YCbCr image.
 
     The bgr version of rgb2ycbcr.
@@ -85,7 +86,7 @@ def bgr2ycbcr(img: np.ndarray, y_only: bool = False) -> ArrayLike:
     return _convert_output_type_range(out_img, img_type)
 
 
-def ycbcr2rgb(img: np.ndarray) -> ArrayLike:
+def ycbcr2rgb(img: np.ndarray) -> np.ndarray:
     """Convert a YCbCr image to RGB image.
 
     This function produces the same results as Matlab's ycbcr2rgb function.
@@ -122,7 +123,7 @@ def ycbcr2rgb(img: np.ndarray) -> ArrayLike:
     return _convert_output_type_range(out_img, img_type)
 
 
-def ycbcr2bgr(img: np.ndarray) -> ArrayLike:
+def ycbcr2bgr(img: np.ndarray) -> np.ndarray:
     """Convert a YCbCr image to BGR image.
 
     The bgr version of ycbcr2rgb.
@@ -217,7 +218,7 @@ def _convert_output_type_range(img: np.ndarray, dst_type: DTypeLike) -> np.ndarr
     return img.astype(dst_type)
 
 
-def rgb2ycbcr_pt(img: torch.Tensor, y_only: bool = False):
+def rgb2ycbcr_pt(img: Tensor, y_only: bool = False) -> Tensor:
     """Convert RGB images to YCbCr images (PyTorch version).
 
     It implements the ITU-R BT.601 conversion for standard-definition television. See more details in

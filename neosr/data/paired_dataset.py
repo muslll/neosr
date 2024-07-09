@@ -1,6 +1,6 @@
 import random
 import time
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from torch import Tensor
 from torch.utils import data
@@ -15,6 +15,10 @@ from neosr.data.file_client import FileClient
 from neosr.data.transforms import basic_augment, paired_random_crop
 from neosr.utils import get_root_logger, imfrombytes, img2tensor
 from neosr.utils.registry import DATASET_REGISTRY
+
+if TYPE_CHECKING:
+    import numpy as np
+    from numpy.typing import ArrayLike
 
 
 @DATASET_REGISTRY.register()
@@ -48,11 +52,13 @@ class paired(data.Dataset):
     def __init__(self, opt: dict[Any, Any]) -> None:
         super().__init__()
         self.opt = opt
-        self.file_client = None
-        self.io_backend_opt: dict[str, str] | None = opt.get("io_backend")
+        self.file_client: FileClient | None = None
+        io_backend_opt: dict[str, str] | None = opt.get("io_backend")
         # default to 'disk' if not specified
-        if self.io_backend_opt is None:
-            self.io_backend_opt = {"type": "disk"}
+        if io_backend_opt is None:
+            self.io_backend_opt: dict[str, str] = {"type": "disk"}
+        else:
+            self.io_backend_opt = io_backend_opt
         # mean and std for normalizing the input images
         self.mean = opt.get("mean")
         self.std = opt.get("std")
@@ -63,7 +69,7 @@ class paired(data.Dataset):
         if self.io_backend_opt["type"] == "lmdb":
             self.io_backend_opt["db_paths"] = [self.lq_folder, self.gt_folder]  # type: ignore[assignment]
             self.io_backend_opt["client_keys"] = ["lq", "gt"]  # type: ignore[assignment]
-            self.paths = paired_paths_from_lmdb(
+            self.paths: list[str] | list[dict[str, str]] = paired_paths_from_lmdb(
                 [self.lq_folder, self.gt_folder], ["lq", "gt"]
             )
         elif "meta_info" in self.opt and self.opt.get("meta_info", None) is not None:
@@ -92,19 +98,19 @@ class paired(data.Dataset):
 
         # Load gt and lq images. Dimension order: HWC; channel order: BGR;
         # image range: [0, 1], float32.
-        gt_path = self.paths[index]["gt_path"]
+        gt_path = self.paths[index]["gt_path"]  # type: ignore[index]
         img_bytes = self.file_client.get(gt_path, "gt")  # type: ignore[attr-defined]
 
         try:
-            img_gt = imfrombytes(img_bytes, float32=True)
+            img_gt: np.ndarray | ArrayLike = imfrombytes(img_bytes, float32=True)
         except AttributeError:
             raise AttributeError(gt_path)
 
-        lq_path = self.paths[index]["lq_path"]
+        lq_path = self.paths[index]["lq_path"]  # type: ignore[index]
         img_bytes = self.file_client.get(lq_path, "lq")  # type: ignore[attr-defined]
 
         try:
-            img_lq = imfrombytes(img_bytes, float32=True)
+            img_lq: np.ndarray | ArrayLike = imfrombytes(img_bytes, float32=True)
         except AttributeError:
             raise AttributeError(lq_path)
 
@@ -141,11 +147,11 @@ class paired(data.Dataset):
                 img_gt, img_lq, patch_size, scale, gt_path
             )
             # flip, rotation
-            img_gt, img_lq = basic_augment([img_gt, img_lq], hflip=flip, rotation=rot)
+            img_gt, img_lq = basic_augment([img_gt, img_lq], hflip=flip, rotation=rot)  # type: ignore[misc,assignment]
 
         # crop the unmatched GT images during validation or testing
         if self.opt["phase"] != "train":
-            img_gt = img_gt[0 : img_lq.shape[0] * scale, 0 : img_lq.shape[1] * scale, :]
+            img_gt = img_gt[0 : img_lq.shape[0] * scale, 0 : img_lq.shape[1] * scale, :]  # type: ignore[index,union-attr,call-overload]
 
         # BGR to RGB, HWC to CHW, numpy to tensor
         img_gt, img_lq = img2tensor(

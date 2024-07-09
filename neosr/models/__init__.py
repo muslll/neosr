@@ -1,6 +1,7 @@
 import importlib
 from copy import deepcopy
 from pathlib import Path
+from typing import Any
 
 from neosr.utils import get_root_logger, scandir
 from neosr.utils.registry import MODEL_REGISTRY
@@ -10,7 +11,7 @@ __all__ = ["build_model"]
 # automatically scan and import model modules for registry
 # scan all the files under the 'models' folder and collect files
 model_folder = Path(Path(__file__).resolve()).parent
-model_filenames = [Path(Path(v).name).stem for v in scandir(model_folder)]
+model_filenames = [Path(Path(v).name).stem for v in scandir(str(model_folder))]
 
 # import all the model modules
 _model_modules = [
@@ -19,7 +20,7 @@ _model_modules = [
 ]
 
 
-def build_model(opt):
+def build_model(opt: dict[str, Any]):
     """Build model from options.
 
     Args:

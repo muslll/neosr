@@ -5,7 +5,7 @@ from neosr.utils.color_util import (
     ycbcr2bgr,
     ycbcr2rgb,
 )
-from neosr.utils.diffjpeg import DiffJPEG
+from neosr.utils.diffjpeg import DiffJPEG  # type: ignore[attr-defined]
 from neosr.utils.img_util import (
     crop_border,
     imfrombytes,
@@ -30,6 +30,7 @@ from neosr.utils.misc import (
     sizeof_fmt,
 )
 from neosr.utils.options import toml_load
+from neosr.utils.registry import Registry
 
 __all__ = [
     "AvgTimer",
@@ -37,6 +38,8 @@ __all__ = [
     "DiffJPEG",
     # logger.py
     "MessageLogger",
+    # registry
+    "Registry",
     #  color_util.py
     "bgr2ycbcr",
     "check_resume",

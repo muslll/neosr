@@ -1,18 +1,14 @@
+from collections.abc import Callable
 from pathlib import Path
 
-import numpy as np
+from numpy.random import default_rng
 
 from neosr.utils.options import parse_options
 
 
-def rng():
+def rng() -> Callable:
     root_path = Path(__file__).parents[2]
-    opt, __ = parse_options(root_path, is_train=True)
-    seed = opt["manual_seed"]
-
-    if seed is not None:
-        rng = np.random.default_rng(seed=seed)
-    else:
-        rng = np.random.default_rng()
-
-    return rng
+    opt, __ = parse_options(str(root_path), is_train=True)
+    if opt is not None:
+        seed: int | None = opt.get("manual_seed", None)
+    return default_rng(seed=seed) if seed is not None else default_rng()  # type: ignore[return-value]

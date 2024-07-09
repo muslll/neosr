@@ -33,11 +33,13 @@ class single(data.Dataset):
         super().__init__()
         self.opt = opt
         # file client (io backend)
-        self.file_client = None
-        self.io_backend_opt: dict[str, str] | None = opt.get("io_backend")
+        self.file_client: FileClient | None = None
+        io_backend_opt: dict[str, str] | None = opt.get("io_backend")
         # default to 'disk' if not specified
-        if self.io_backend_opt is None:
+        if io_backend_opt is None:
             self.io_backend_opt = {"type": "disk"}
+        else:
+            self.io_backend_opt = io_backend_opt
         self.mean = opt.get("mean")
         self.std = opt.get("std")
         self.lq_folder = opt["dataroot_lq"]
@@ -48,9 +50,10 @@ class single(data.Dataset):
             self.io_backend_opt["client_keys"] = ["lq"]  # type: ignore[assignment]
             self.paths = paths_from_lmdb(self.lq_folder)
         elif "meta_info_file" in self.opt:
-            with Path.open(self.opt["meta_info_file"], encoding="locale") as fin:
+            with Path(str(self.opt["meta_info_file"])).open(encoding="utf-8") as fin:
                 self.paths = [
-                    Path(self.lq_folder) / line.rstrip().split(" ")[0] for line in fin
+                    str(Path(self.lq_folder) / line.rstrip()).split(" ")[0]
+                    for line in fin
                 ]
         else:
             self.paths = sorted(scandir(self.lq_folder, full_path=True))

@@ -58,7 +58,7 @@ class Registry:
         self,
         obj: Callable[..., object] | type[str] | None = None,
         suffix: str | None = None,
-    ) -> Callable[..., object] | type[str] | str | None:
+    ) -> Callable[..., object]:
         """Register the given object under the the name `obj.__name__`.
         Can be used as either a decorator or not.
         See docstring of this class for usage.
@@ -77,7 +77,7 @@ class Registry:
         # used as a function call
         name = obj if isinstance(obj, str) else obj.__name__
         self._do_register(name, obj, suffix)
-        return None
+        return None  # type: ignore[return-value]
 
     def get(
         self, name: str, suffix: str = "neosr"

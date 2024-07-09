@@ -31,7 +31,7 @@ def mixup(
         msg = "img_gt and img_lq have to be the same resolution."
         raise ValueError(msg)
 
-    lam = rng.uniform(alpha_min, alpha_max)
+    lam = rng.uniform(alpha_min, alpha_max)  # type: ignore[attr-defined]
 
     # mixup process
     rand_index = torch.randperm(img_gt.size(0))
@@ -71,8 +71,8 @@ def cutmix(img_gt: Tensor, img_lq: Tensor, alpha: float = 0.9) -> tuple[Tensor, 
         cut_h = int(H * cut_rat)
 
         # uniform
-        cx = rng.integers(W)
-        cy = rng.integers(H)
+        cx = rng.integers(W)  # type: ignore[attr-defined]
+        cy = rng.integers(H)  # type: ignore[attr-defined]
 
         bbx1 = np.clip(cx - cut_w // 2, 0, W)
         bby1 = np.clip(cy - cut_h // 2, 0, H)
@@ -81,7 +81,7 @@ def cutmix(img_gt: Tensor, img_lq: Tensor, alpha: float = 0.9) -> tuple[Tensor, 
 
         return bbx1, bby1, bbx2, bby2
 
-    lam = rng.uniform(0, alpha)
+    lam = rng.uniform(0, alpha)  # type: ignore[attr-defined]
     rand_index = torch.randperm(img_gt.size(0))
 
     # mixup process
@@ -122,8 +122,8 @@ def resizemix(
         cut_h = int(H * tao)
 
         # uniform
-        cx = rng.integers(W)
-        cy = rng.integers(H)
+        cx = rng.integers(W)  # type: ignore[attr-defined]
+        cy = rng.integers(H)  # type: ignore[attr-defined]
 
         bbx1 = np.clip(cx - cut_w // 2, 0, W)
         bby1 = np.clip(cy - cut_h // 2, 0, H)
@@ -140,7 +140,7 @@ def resizemix(
     img_lq_resize = img_lq_resize[rand_index]
 
     # generate tao
-    tao = rng.uniform(scope[0], scope[1])
+    tao = rng.uniform(scope[0], scope[1])  # type: ignore[attr-defined]
 
     # random box
     bbx1, bby1, bbx2, bby2 = rand_bbox_tao(img_gt.size(), tao)
@@ -197,8 +197,8 @@ def cutblur(
         cut_h = int(H * lam)
 
         # uniform
-        cx = rng.integers(W)
-        cy = rng.integers(H)
+        cx = rng.integers(W)  # type: ignore[attr-defined]
+        cy = rng.integers(H)  # type: ignore[attr-defined]
 
         bbx1 = np.clip(cx - cut_w // 2, 0, W)
         bby1 = np.clip(cy - cut_h // 2, 0, H)
@@ -207,7 +207,7 @@ def cutblur(
 
         return bbx1, bby1, bbx2, bby2
 
-    lam = rng.uniform(0.2, alpha)
+    lam = rng.uniform(0.2, alpha)  # type: ignore[attr-defined]
     bbx1, bby1, bbx2, bby2 = rand_bbox(img_gt.size(), lam)
 
     # apply cutblur
@@ -264,8 +264,8 @@ def apply_augment(
             1,
         )
 
-    if rng.random() < multi_prob:
-        num_augs = rng.integers(2, len(augs)) if len(augs) > 2 else len(augs)
+    if rng.random() < multi_prob:  # type: ignore[attr-defined]
+        num_augs = rng.integers(2, len(augs)) if len(augs) > 2 else len(augs)  # type: ignore[attr-defined]
         weighted = list(zip(augs, prob, strict=False))
         aug: str | list[str]
         aug = []
