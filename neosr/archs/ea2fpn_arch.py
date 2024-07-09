@@ -1,6 +1,6 @@
 import torch
 import torch.nn.modules.module
-from torch import nn
+from torch import Tensor, nn
 from torch.nn import Conv2d, Module, Parameter
 from torch.nn.utils import spectral_norm
 from torchvision import models
@@ -10,7 +10,13 @@ from neosr.archs.arch_util import DySample
 from neosr.utils.registry import ARCH_REGISTRY
 
 
-def conv3otherMish(in_planes, out_planes, kernel_size=None, stride=None, padding=None):
+def conv3otherMish(
+    in_planes: int,
+    out_planes: int,
+    kernel_size: int | None = None,
+    stride: int | None = None,
+    padding: int | None = None,
+) -> nn.Sequential:
     # 3x3 convolution with padding and mish
     if kernel_size is None:
         kernel_size = 3
@@ -35,11 +41,11 @@ def conv3otherMish(in_planes, out_planes, kernel_size=None, stride=None, padding
                 bias=True,
             )
         ),
-        nn.Mish(inplace=True),  # inplace=True
+        nn.Mish(inplace=True),
     )
 
 
-def l2_norm(x: torch.Tensor) -> torch.Tensor:
+def l2_norm(x: Tensor) -> Tensor:
     return torch.einsum("bcn, bn->bcn", x, 1 / torch.norm(x, p=2, dim=-2))
 
 
@@ -80,7 +86,7 @@ class ConvBnMish(nn.Module):
         if self.has_mish:
             self.mish = nn.Mish(inplace=inplace)
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: Tensor) -> Tensor:
         x = self.conv(x)
         if self.has_bn:
             x = self.bn(x)
@@ -107,7 +113,7 @@ class Attention(Module):
             in_channels=in_places, out_channels=in_places, kernel_size=1
         )
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: Tensor) -> Tensor:
         # Apply the feature map to the queries and keys
         batch_size, chnnels, height, width = x.shape
         Q = self.query_conv(x).view(batch_size, -1, width * height)
@@ -139,9 +145,7 @@ class AttentionAggregationModule(nn.Module):
         self.convblk = ConvBnMish(in_chan, out_chan, ksize=1, stride=1, pad=0)
         self.conv_atten = Attention(out_chan)
 
-    def forward(
-        self, s5: torch.Tensor, s4: torch.Tensor, s3: torch.Tensor, s2: torch.Tensor
-    ) -> torch.Tensor:
+    def forward(self, s5: Tensor, s4: Tensor, s3: Tensor, s2: Tensor) -> Tensor:
         fcat = torch.cat([s5, s4, s3, s2], dim=1)
         feat = self.convblk(fcat)
         atten = self.conv_atten(feat)
@@ -167,7 +171,7 @@ class Conv3x3GNMish(nn.Module):
             nn.Mish(inplace=True),
         )
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: Tensor) -> Tensor:
         x = self.block(x)
         if self.upsample:
             x = self.dysample(x)
@@ -182,7 +186,7 @@ class FPNBlock(nn.Module):
             in_channels=64, out_ch=64, scale=2, groups=4, end_convolution=False
         )
 
-    def forward(self, x: list[torch.Tensor]) -> torch.Tensor:
+    def forward(self, x: Tensor) -> Tensor:
         x, skip = x
         x = self.dysample(x)
         skip = self.skip_conv(skip)
@@ -197,10 +201,13 @@ class SegmentationBlock(nn.Module):
 
         blocks = [Conv3x3GNMish(in_channels, out_channels, upsample=bool(n_upsamples))]
         if n_upsamples > 1:
-            blocks.extend(Conv3x3GNMish(out_channels, out_channels, upsample=True) for _ in range(1, n_upsamples))
+            blocks.extend(
+                Conv3x3GNMish(out_channels, out_channels, upsample=True)
+                for _ in range(1, n_upsamples)
+            )
         self.block = nn.Sequential(*blocks)
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: Tensor) -> Tensor:
         return self.block(x)
 
 
@@ -214,7 +221,7 @@ class ea2fpn(nn.Module):
     def __init__(
         self,
         class_num: int = 6,
-        encoder_channels: tuple[int] = (512, 256, 128, 64),
+        encoder_channels: tuple[int, int, int, int] = (512, 256, 128, 64),
         pyramid_channels: int = 64,
         segmentation_channels: int = 64,
         dropout: float = 0.2,
@@ -267,7 +274,7 @@ class ea2fpn(nn.Module):
         )
         self.apply(self._init_weights)
 
-    def _init_weights(self, m: torch.nn.modules.module.Module) -> None:
+    def _init_weights(self, m: nn.Module) -> None:
         if isinstance(m, nn.Linear):
             nn.init.trunc_normal_(m.weight, std=0.02)
             if isinstance(m, nn.Linear) and m.bias is not None:
@@ -278,7 +285,7 @@ class ea2fpn(nn.Module):
             nn.init.constant_(m.bias, 0)
             nn.init.constant_(m.weight, 1.0)
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: Tensor) -> Tensor:
         # ==> get encoder features
         c1 = self.layer_down0(x)
         c2 = self.layer_down1(c1)

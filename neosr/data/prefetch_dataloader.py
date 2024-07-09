@@ -1,11 +1,13 @@
 import queue as Queue
-import threading
+from collections.abc import Iterator
+from threading import Thread
+from typing import Any
 
 import torch
 from torch.utils.data import DataLoader
 
 
-class PrefetchGenerator(threading.Thread):
+class PrefetchGenerator(Thread):
     """A general prefetch generator.
 
     Reference: https://stackoverflow.com/questions/7323664/python-generator-pre-fetch
@@ -17,9 +19,9 @@ class PrefetchGenerator(threading.Thread):
 
     """
 
-    def __init__(self, generator, num_prefetch_queue) -> None:
-        threading.Thread.__init__(self)
-        self.queue = Queue.Queue(num_prefetch_queue)
+    def __init__(self, generator, num_prefetch_queue: int) -> None:
+        Thread.__init__(self)
+        self.queue: Queue.Queue[Any] = Queue.Queue(num_prefetch_queue)
         self.generator = generator
         self.daemon = True
         self.start()
@@ -29,13 +31,13 @@ class PrefetchGenerator(threading.Thread):
             self.queue.put(item)
         self.queue.put(None)
 
-    def __next__(self):
-        next_item = self.queue.get()
+    def __next__(self) -> Any:
+        next_item = self.queue.get()  # type: Any
         if next_item is None:
             raise StopIteration
         return next_item
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator:
         return self
 
 
@@ -56,7 +58,7 @@ class PrefetchDataLoader(DataLoader):
 
     """
 
-    def __init__(self, num_prefetch_queue, **kwargs) -> None:
+    def __init__(self, num_prefetch_queue: int, **kwargs) -> None:
         self.num_prefetch_queue = num_prefetch_queue
         super().__init__(**kwargs)
 
@@ -78,7 +80,7 @@ class CUDAPrefetcher:
 
     """
 
-    def __init__(self, loader, opt) -> None:
+    def __init__(self, loader: DataLoader, opt: dict[str, Any]) -> None:
         self.ori_loader = loader
         self.loader = iter(loader)
         self.opt = opt

@@ -403,13 +403,13 @@ files = [
 ]
 
 [[package]]
-name = "tensorboard"
-version = "2.17.0"
+name = "tb-nightly"
+version = "2.18.0a20240708"
 description = "TensorBoard lets you watch Tensors Flow"
 optional = false
 python-versions = ">=3.9"
 files = [
-    {file = "tensorboard-2.17.0-py3-none-any.whl", hash = "sha256:859a499a9b1fb68a058858964486627100b71fcb21646861c61d31846a6478fb"},
+    {file = "tb_nightly-2.18.0a20240708-py3-none-any.whl", hash = "sha256:32c5d8c9ebb9f7425a59f7385c009c06c65f0c28ab125e6ac4b73e2442306f76"},
 ]
 
 [package.dependencies]
@@ -475,4 +475,4 @@ watchdog = ["watchdog (>=2.3)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "981cfb1838077df5180136bf05dbf3d4df4b5f031cb36eb86895385b528f0a91"
+content-hash = "afeb1592cc16dddf66d974aa7a7a83febe61f375211984d5edc9a5e76edd8907"

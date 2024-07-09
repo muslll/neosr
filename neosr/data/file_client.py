@@ -1,7 +1,7 @@
 # Modified from https://github.com/open-mmlab/mmcv/blob/master/mmcv/fileio/file_client.py
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import ClassVar, Never
+from typing import Any, ClassVar
 
 
 class BaseStorageBackend(ABC):
@@ -13,24 +13,16 @@ class BaseStorageBackend(ABC):
     """
 
     @abstractmethod
-    def get(self, filepath: str) -> bytes:
-        pass
-
-    @abstractmethod
-    def get_text(self, filepath: str) -> str:
+    def get(self, filepath: str, client_key: str | None = None) -> bytes:
         pass
 
 
 class HardDiskBackend(BaseStorageBackend):
     """Raw hard disks storage backend."""
 
-    def get(self, filepath: str) -> bytes:
-        filepath = str(filepath)
-        return Path(filepath).read_bytes()
-
-    def get_text(self, filepath: str) -> str:
-        filepath = str(filepath)
-        return Path(filepath).read_text(encoding="locale")
+    def get(self, filepath: str | Path) -> bytes:  # type: ignore[override]
+        with Path(filepath).open("rb") as f:
+            return f.read()
 
 
 class LmdbBackend(BaseStorageBackend):
@@ -73,7 +65,6 @@ class LmdbBackend(BaseStorageBackend):
 
         if isinstance(client_keys, str):
             client_keys = [client_keys]
-
         if isinstance(db_paths, list):
             self.db_paths = [str(v) for v in db_paths]
         elif isinstance(db_paths, str):
@@ -89,7 +80,7 @@ class LmdbBackend(BaseStorageBackend):
                 path, readonly=readonly, lock=lock, readahead=readahead, **kwargs
             )
 
-    def get(self, filepath: str, client_key: str) -> bytes:  # type: ignore[override]
+    def get(self, filepath: str, client_key: str | None = "default") -> bytes:
         """Get values according to the filepath from one lmdb named client_key.
 
         Args:
@@ -98,16 +89,16 @@ class LmdbBackend(BaseStorageBackend):
             client_key (str): Used for distinguishing different lmdb envs.
 
         """
-        filepath = str(filepath)
+        if client_key is None:
+            msg = "Didn't receive a client_key"
+            raise ValueError(msg)
         assert (
             client_key in self._client
         ), f"client_key {client_key} is not in lmdb clients."
         client = self._client[client_key]
-        with client.begin(write=False) as txn:
-            return txn.get(filepath.encode("ascii"))
 
-    def get_text(self, filepath: str, client_keys: str | list[str]) -> Never:  # type: ignore[override]
-        raise NotImplementedError
+        with client.begin(write=False) as txn:
+            return txn.get(str(filepath).encode("utf-8"))
 
 
 class FileClient:
@@ -129,6 +120,8 @@ class FileClient:
         "lmdb": LmdbBackend,
     }
 
+    client: Any
+
     def __init__(self, backend="disk", **kwargs) -> None:
         if backend not in self._backends:
             msg = (
@@ -145,6 +138,3 @@ class FileClient:
         if self.backend == "lmdb":
             return self.client.get(filepath, client_key)  # type: ignore[call-arg]
         return self.client.get(filepath)
-
-    def get_text(self, filepath: str) -> str:
-        return self.client.get_text(filepath)

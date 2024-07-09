@@ -1,13 +1,19 @@
 import random
 import time
-from pathlib import Path
+from typing import Any
 
+from torch import Tensor
 from torch.utils import data
 from torchvision.transforms.functional import normalize
 
-from neosr.data.data_util import paired_paths_from_folder, paired_paths_from_lmdb
+from neosr.data.data_util import (
+    paired_paths_from_folder,
+    paired_paths_from_lmdb,
+    paired_paths_from_meta_info_file,
+)
+from neosr.data.file_client import FileClient
 from neosr.data.transforms import basic_augment, paired_random_crop
-from neosr.utils import FileClient, get_root_logger, imfrombytes, img2tensor
+from neosr.utils import get_root_logger, imfrombytes, img2tensor
 from neosr.utils.registry import DATASET_REGISTRY
 
 
@@ -39,38 +45,36 @@ class paired(data.Dataset):
 
     """
 
-    def __init__(self, opt) -> None:
+    def __init__(self, opt: dict[Any, Any]) -> None:
         super().__init__()
         self.opt = opt
         self.file_client = None
-        self.io_backend_opt = opt.get("io_backend")
+        self.io_backend_opt: dict[str, str] | None = opt.get("io_backend")
         # default to 'disk' if not specified
         if self.io_backend_opt is None:
             self.io_backend_opt = {"type": "disk"}
         # mean and std for normalizing the input images
-        self.mean = opt.get("mean", None)
-        self.std = opt.get("std", None)
+        self.mean = opt.get("mean")
+        self.std = opt.get("std")
         self.color = self.opt.get("color", None) != "y"
         self.gt_folder, self.lq_folder = opt["dataroot_gt"], opt["dataroot_lq"]
 
         # file client (lmdb io backend)
         if self.io_backend_opt["type"] == "lmdb":
-            self.io_backend_opt["db_paths"] = [self.lq_folder, self.gt_folder]
-            self.io_backend_opt["client_keys"] = ["lq", "gt"]
+            self.io_backend_opt["db_paths"] = [self.lq_folder, self.gt_folder]  # type: ignore[assignment]
+            self.io_backend_opt["client_keys"] = ["lq", "gt"]  # type: ignore[assignment]
             self.paths = paired_paths_from_lmdb(
                 [self.lq_folder, self.gt_folder], ["lq", "gt"]
             )
         elif "meta_info" in self.opt and self.opt.get("meta_info", None) is not None:
             # disk backend with meta_info
             # Each line in the meta_info describes the relative path to an image
-            with Path.open(self.opt["meta_info"], encoding="locale") as fin:
-                paths = [line.strip() for line in fin]
-            self.paths = []
-            for path in paths:
-                gt_path, lq_path = path.split(", ")
-                gt_path = Path(self.gt_folder) / gt_path
-                lq_path = Path(self.lq_folder) / lq_path
-                self.paths.append({"gt_path": gt_path, "lq_path": lq_path})
+            self.paths = paired_paths_from_meta_info_file(
+                [self.lq_folder, self.gt_folder],
+                ["lq", "gt"],
+                self.opt["meta_info_file"],
+            )
+
         else:
             # disk backend
             # it will scan the whole folder to get meta info
@@ -79,16 +83,17 @@ class paired(data.Dataset):
                 [self.lq_folder, self.gt_folder], ["lq", "gt"]
             )
 
-    def __getitem__(self, index):
+    def __getitem__(self, index: int) -> dict[str, str | Tensor]:
         if self.file_client is None:
             self.file_client = FileClient(
-                self.io_backend_opt.pop("type"), **self.io_backend_opt
+                self.io_backend_opt.pop("type"),  # type: ignore[union-attr]
+                **self.io_backend_opt,
             )
 
         # Load gt and lq images. Dimension order: HWC; channel order: BGR;
         # image range: [0, 1], float32.
         gt_path = self.paths[index]["gt_path"]
-        img_bytes = self.file_client.get(gt_path, "gt")
+        img_bytes = self.file_client.get(gt_path, "gt")  # type: ignore[attr-defined]
 
         try:
             img_gt = imfrombytes(img_bytes, float32=True)
@@ -96,7 +101,7 @@ class paired(data.Dataset):
             raise AttributeError(gt_path)
 
         lq_path = self.paths[index]["lq_path"]
-        img_bytes = self.file_client.get(lq_path, "lq")
+        img_bytes = self.file_client.get(lq_path, "lq")  # type: ignore[attr-defined]
 
         try:
             img_lq = imfrombytes(img_bytes, float32=True)

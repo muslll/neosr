@@ -2,6 +2,7 @@ import random
 
 import numpy as np
 import torch
+from torch import Tensor
 from torch.nn import functional as F
 
 from neosr.utils.rng import rng
@@ -10,7 +11,9 @@ rng = rng()
 
 
 @torch.no_grad()
-def mixup(img_gt, img_lq, alpha_min=0.4, alpha_max=0.6):
+def mixup(
+    img_gt: Tensor, img_lq: Tensor, alpha_min: float = 0.4, alpha_max: float = 0.6
+) -> tuple[Tensor, Tensor]:
     r"""MixUp augmentation.
 
     "Mixup: Beyond Empirical Risk Minimization (https://arxiv.org/abs/1710.09412)".
@@ -41,7 +44,7 @@ def mixup(img_gt, img_lq, alpha_min=0.4, alpha_max=0.6):
 
 
 @torch.no_grad()
-def cutmix(img_gt, img_lq, alpha=0.9):
+def cutmix(img_gt: Tensor, img_lq: Tensor, alpha: float = 0.9) -> tuple[Tensor, Tensor]:
     r"""CutMix augmentation.
 
     "CutMix: Regularization Strategy to Train Strong Classifiers with
@@ -92,7 +95,9 @@ def cutmix(img_gt, img_lq, alpha=0.9):
 
 
 @torch.no_grad()
-def resizemix(img_gt, img_lq, scope=(0.2, 0.9)):
+def resizemix(
+    img_gt: Tensor, img_lq: Tensor, scope: tuple[float, float] = (0.2, 0.9)
+) -> tuple[Tensor, Tensor]:
     r"""ResizeMix augmentation.
 
     "ResizeMix: Mixing Data with Preserved Object Information and True Labels
@@ -164,7 +169,9 @@ def resizemix(img_gt, img_lq, scope=(0.2, 0.9)):
 
 
 @torch.no_grad()
-def cutblur(img_gt, img_lq, alpha=0.7):
+def cutblur(
+    img_gt: Tensor, img_lq: Tensor, alpha: float = 0.7
+) -> tuple[Tensor, Tensor]:
     r"""CutBlur Augmentation.
 
     "Rethinking Data Augmentation for Image Super-resolution:
@@ -211,13 +218,19 @@ def cutblur(img_gt, img_lq, alpha=0.7):
 
 @torch.no_grad()
 def apply_augment(
-    img_gt,
-    img_lq,
-    scale=1,
-    augs: tuple[str] = ("none", "mixup", "cutmix", "resizemix", "cutblur"),
-    prob: tuple[str] = (0.1, 0.3, 0.2, 0.7, 0.8),
-    multi_prob=0.3,
-):
+    img_gt: Tensor,
+    img_lq: Tensor,
+    scale: int = 1,
+    augs: tuple[str, str, str, str, str] = (
+        "none",
+        "mixup",
+        "cutmix",
+        "resizemix",
+        "cutblur",
+    ),
+    prob: tuple[float, float, float, float, float] = (0.1, 0.3, 0.2, 0.7, 0.8),
+    multi_prob: float = 0.3,
+) -> tuple[Tensor, Tensor]:
     r"""Applies Augmentations.
 
     Args:
@@ -254,6 +267,7 @@ def apply_augment(
     if rng.random() < multi_prob:
         num_augs = rng.integers(2, len(augs)) if len(augs) > 2 else len(augs)
         weighted = list(zip(augs, prob, strict=False))
+        aug: str | list[str]
         aug = []
         for _ in range(num_augs):
             choice = random.choices(weighted, k=1)

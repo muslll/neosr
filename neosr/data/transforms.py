@@ -1,10 +1,12 @@
 import random
 
 import cv2
+import numpy as np
 import torch
+from torch import Tensor
 
 
-def mod_crop(img, scale):
+def mod_crop(img: np.ndarray, scale: int) -> np.ndarray:
     """Mod crop images, used during testing.
 
     Args:
@@ -28,7 +30,13 @@ def mod_crop(img, scale):
     return img
 
 
-def paired_random_crop(img_gts, img_lqs, lq_patch_size, scale, gt_path=None):
+def paired_random_crop(
+    img_gts: list[np.ndarray | Tensor] | np.ndarray | Tensor,
+    img_lqs: list[np.ndarray | Tensor] | np.ndarray | Tensor,
+    lq_patch_size: int,
+    scale: int,
+    gt_path: str | None = None,
+):
     """Paired random crop. Support Numpy array and Tensor inputs.
 
     It crops lists of lq and gt images with corresponding locations.
@@ -60,8 +68,9 @@ def paired_random_crop(img_gts, img_lqs, lq_patch_size, scale, gt_path=None):
     input_type = "Tensor" if torch.is_tensor(img_gts[0]) else "Numpy"
 
     if input_type == "Tensor":
-        h_lq, w_lq = img_lqs[0].size()[-2:]
-        h_gt, w_gt = img_gts[0].size()[-2:]
+        h_lq, w_lq = img_lqs[0].shape[2:]
+        h_gt, w_gt = img_gts[0].shape[2:]
+        print(h_lq)
     else:
         h_lq, w_lq = img_lqs[0].shape[0:2]
         h_gt, w_gt = img_gts[0].shape[0:2]
@@ -117,12 +126,16 @@ def paired_random_crop(img_gts, img_lqs, lq_patch_size, scale, gt_path=None):
 
 
 def basic_augment(
-    imgs,
-    hflip=True,
-    rotation=True,
-    flip_prob=0.5,
-    rotation_prob=0.5,
-    return_status=False,
+    imgs: list[np.ndarray] | np.ndarray,
+    hflip: bool = True,
+    rotation: bool = True,
+    flip_prob: float = 0.5,
+    rotation_prob: float = 0.5,
+    return_status: bool = False,
+) -> (
+    list[np.ndarray]
+    | np.ndarray
+    | tuple[list[np.ndarray] | np.ndarray, tuple[bool, bool, bool]]
 ):
     """Augment: horizontal flips OR rotate (0, 90, 180, 270 degrees).
 

@@ -6,7 +6,6 @@ from neosr.utils.color_util import (
     ycbcr2rgb,
 )
 from neosr.utils.diffjpeg import DiffJPEG
-from neosr.utils.file_client import FileClient
 from neosr.utils.img_util import (
     crop_border,
     imfrombytes,
@@ -36,8 +35,6 @@ __all__ = [
     "AvgTimer",
     # diffjpeg
     "DiffJPEG",
-    # file_client.py
-    "FileClient",
     # logger.py
     "MessageLogger",
     #  color_util.py

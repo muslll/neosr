@@ -1,10 +1,12 @@
 from pathlib import Path
+from typing import Any
 
 from torch.utils import data
 from torchvision.transforms.functional import normalize
 
 from neosr.data.data_util import paths_from_lmdb
-from neosr.utils import FileClient, imfrombytes, img2tensor, scandir
+from neosr.data.file_client import FileClient
+from neosr.utils import imfrombytes, img2tensor, scandir
 from neosr.utils.registry import DATASET_REGISTRY
 
 
@@ -27,23 +29,23 @@ class single(data.Dataset):
 
     """
 
-    def __init__(self, opt) -> None:
+    def __init__(self, opt: dict[Any, Any]) -> None:
         super().__init__()
         self.opt = opt
         # file client (io backend)
         self.file_client = None
-        self.io_backend_opt = opt.get("io_backend")
+        self.io_backend_opt: dict[str, str] | None = opt.get("io_backend")
         # default to 'disk' if not specified
         if self.io_backend_opt is None:
             self.io_backend_opt = {"type": "disk"}
-        self.mean = opt.get("mean", None)
-        self.std = opt.get("std", None)
+        self.mean = opt.get("mean")
+        self.std = opt.get("std")
         self.lq_folder = opt["dataroot_lq"]
         self.color = self.opt.get("color", None) != "y"
 
         if self.io_backend_opt["type"] == "lmdb":
-            self.io_backend_opt["db_paths"] = [self.lq_folder]
-            self.io_backend_opt["client_keys"] = ["lq"]
+            self.io_backend_opt["db_paths"] = [self.lq_folder]  # type: ignore[assignment]
+            self.io_backend_opt["client_keys"] = ["lq"]  # type: ignore[assignment]
             self.paths = paths_from_lmdb(self.lq_folder)
         elif "meta_info_file" in self.opt:
             with Path.open(self.opt["meta_info_file"], encoding="locale") as fin:
@@ -56,12 +58,13 @@ class single(data.Dataset):
     def __getitem__(self, index):
         if self.file_client is None:
             self.file_client = FileClient(
-                self.io_backend_opt.pop("type"), **self.io_backend_opt
+                self.io_backend_opt.pop("type"),  # type: ignore[union-attr]
+                **self.io_backend_opt,
             )
 
         # load lq image
         lq_path = self.paths[index]
-        img_bytes = self.file_client.get(lq_path, "lq")
+        img_bytes = self.file_client.get(lq_path, "lq")  # type: ignore[attr-defined]
 
         try:
             img_lq = imfrombytes(img_bytes, float32=True)

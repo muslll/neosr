@@ -2,13 +2,13 @@ from collections import OrderedDict
 from pathlib import Path
 
 import torch
-from torch import nn
+from torch import Tensor, nn
 from torchvision.models import VGG19_Weights, vgg
 
 from neosr.utils.registry import ARCH_REGISTRY
 
-VGG_PRETRAIN_PATH = "experiments/pretrained_models/vgg19-dcbb9e9d.pth"
-NAMES = {
+VGG_PRETRAIN_PATH: str = "experiments/pretrained_models/vgg19-dcbb9e9d.pth"
+NAMES: dict[str, list[str]] = {
     "vgg19": [
         "conv1_1",
         "relu1_1",
@@ -51,7 +51,7 @@ NAMES = {
 }
 
 
-def insert_bn(names):
+def insert_bn(names: list[str]) -> list[str]:
     """Insert bn layer after each conv.
 
     Args:
@@ -135,7 +135,7 @@ class VGGFeatureExtractor(nn.Module):
 
         features = vgg_net.features[: max_idx + 1]
 
-        modified_net = OrderedDict()
+        modified_net: OrderedDict[str, nn.Module] = OrderedDict()
         for k, v in zip(self.names, features, strict=False):
             if "pool" in k:
                 # if remove_pooling is true, pooling operation will be removed
@@ -144,7 +144,7 @@ class VGGFeatureExtractor(nn.Module):
                 # in some cases, we may want to change the default stride
                 modified_net[k] = nn.MaxPool2d(kernel_size=2, stride=pooling_stride)
             else:
-                modified_net[k] = v
+                modified_net[k] = v  # type: ignore[assignment]
 
         self.vgg_net = nn.Sequential(modified_net)
 
@@ -173,7 +173,7 @@ class VGGFeatureExtractor(nn.Module):
                 "std", torch.tensor([0.25, 0.25, 0.25], device="cuda").view(1, 3, 1, 1)
             )
 
-    def forward(self, x: torch.Tensor) -> dict[str, torch.Tensor]:
+    def forward(self, x: Tensor) -> dict[str, Tensor]:
         """Forward function.
 
         Args:

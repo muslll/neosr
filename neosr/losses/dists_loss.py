@@ -104,7 +104,11 @@ class dists_loss(nn.Module):
         if load_weights:
             current_dir = Path(Path(__file__).resolve()).parent
             model_path = Path(current_dir) / "dists_weights.pth"
-            weights = torch.load(model_path) if Path(model_path).exists() else None
+            weights = (
+                torch.load(model_path, weights_only=True)
+                if Path(model_path).exists()
+                else None
+            )
 
             self.alpha.data = weights["alpha"]
             self.beta.data = weights["beta"]

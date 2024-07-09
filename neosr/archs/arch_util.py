@@ -1,10 +1,9 @@
-import collections.abc
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from itertools import repeat
 from pathlib import Path
 
 import torch
-from torch import nn
+from torch import Tensor, nn
 from torch.nn import functional as F
 
 from neosr.utils.options import parse_options
@@ -66,7 +65,7 @@ class DySample(nn.Module):
 
         self.register_buffer("init_pos", self._init_pos())
 
-    def _init_pos(self) -> torch.Tensor:
+    def _init_pos(self) -> Tensor:
         h = torch.arange((-self.scale + 1) / 2, (self.scale - 1) / 2 + 1) / self.scale
         return (
             torch.stack(torch.meshgrid([h, h], indexing="ij"))
@@ -75,7 +74,7 @@ class DySample(nn.Module):
             .reshape(1, -1, 1, 1)
         )
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: Tensor) -> Tensor:
         offset = self.offset(x) * self.scope(x).sigmoid() * 0.5 + self.init_pos
         B, _, H, W = offset.shape
         offset = offset.view(B, 2, -1, H, W)
@@ -118,7 +117,7 @@ class DySample(nn.Module):
 
 def drop_path(
     x, drop_prob: float = 0.0, training: bool = False, scale_by_keep: bool = True
-):
+) -> Tensor:
     """Drop paths (Stochastic Depth) per sample.
     From: https://github.com/rwightman/pytorch-image-models/blob/master/timm/models/layers/drop.py
     """
@@ -146,14 +145,14 @@ class DropPath(nn.Module):
         __, training = net_opt()
         self.training = training
 
-    def forward(self, x):
+    def forward(self, x: Tensor) -> Tensor:
         return drop_path(x, self.drop_prob, self.training, self.scale_by_keep)
 
 
 # From PyTorch
 def _ntuple(n: int) -> Callable:
     def parse(x):
-        if isinstance(x, collections.abc.Iterable):
+        if isinstance(x, Iterable):
             return x
         return tuple(repeat(x, n))
 

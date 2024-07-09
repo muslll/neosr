@@ -4,10 +4,12 @@ import random
 from copy import deepcopy
 from functools import partial
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import torch
 import torch.utils.data
+from torch.utils import data
 
 from neosr.utils import get_root_logger, scandir
 from neosr.utils.dist_util import get_dist_info
@@ -19,7 +21,9 @@ __all__ = ["build_dataloader", "build_dataset"]
 # scan all the files under the data folder with '_dataset' in file names
 data_folder = Path(Path(__file__).resolve()).parent
 dataset_filenames = [
-    Path(Path(v).name).stem for v in scandir(data_folder) if v.endswith("_dataset.py")
+    Path(Path(v).name).stem
+    for v in scandir(str(data_folder))
+    if v.endswith("_dataset.py")
 ]
 
 # import all the dataset modules
@@ -29,7 +33,7 @@ _dataset_modules = [
 ]
 
 
-def build_dataset(dataset_opt):
+def build_dataset(dataset_opt: dict[str, Any]):
     """Build dataset from options.
 
     Args:
@@ -46,8 +50,13 @@ def build_dataset(dataset_opt):
 
 
 def build_dataloader(
-    dataset, dataset_opt, num_gpu=1, dist=False, sampler=None, seed=None
-):
+    dataset: data.Dataset,
+    dataset_opt: dict[str, Any],
+    num_gpu: int = 1,
+    dist: bool = False,
+    sampler: None = None,
+    seed: int | None = None,
+) -> data.DataLoader:
     """Build dataloader.
 
     Args:
@@ -112,10 +121,10 @@ def build_dataloader(
     dataloader_args["pin_memory"] = dataset_opt.get("pin_memory", True)
     dataloader_args["persistent_workers"] = dataset_opt.get("persistent_workers", False)
 
-    return torch.utils.data.DataLoader(**dataloader_args)
+    return data.DataLoader(**dataloader_args)
 
 
-def worker_init_fn(worker_id, num_workers, rank, seed) -> None:
+def worker_init_fn(worker_id: int, num_workers: int, rank: int, seed: int) -> None:
     # Set the worker seed to num_workers * rank + worker_id + seed
     worker_seed = num_workers * rank + worker_id + seed
     # NOTE: set seed on old generator as a precaution, but

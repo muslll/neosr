@@ -2,15 +2,18 @@ import math
 import random
 import time
 from pathlib import Path
+from typing import Any
 
 import cv2
 import numpy as np
 import torch
+from torch import Tensor
 from torch.utils import data
 
 from neosr.data.degradations import circular_lowpass_kernel, random_mixed_kernels
+from neosr.data.file_client import FileClient
 from neosr.data.transforms import basic_augment
-from neosr.utils import FileClient, get_root_logger, imfrombytes, img2tensor, scandir
+from neosr.utils import get_root_logger, imfrombytes, img2tensor, scandir
 from neosr.utils.registry import DATASET_REGISTRY
 from neosr.utils.rng import rng
 
@@ -37,25 +40,25 @@ class otf(data.Dataset):
 
     """
 
-    def __init__(self, opt) -> None:
+    def __init__(self, opt: dict[Any, Any]) -> None:
         super().__init__()
         self.opt = opt
         self.file_client = None
-        self.io_backend_opt = opt.get("io_backend")
+        self.io_backend_opt: dict[str, str] | None = opt.get("io_backend")
         # default to 'disk' if not specified
         if self.io_backend_opt is None:
             self.io_backend_opt = {"type": "disk"}
         self.color = self.opt.get("color", None) != "y"
         self.gt_folder = opt["dataroot_gt"]
 
-        if opt.get("dataroot_lq", None) is not None:
+        if opt.get("dataroot_lq") is not None:
             msg = "'dataroot_lq' not supported by otf, please switch to paired"
             raise ValueError(msg)
 
         # file client (lmdb io backend)
         if self.io_backend_opt["type"] == "lmdb":
-            self.io_backend_opt["db_paths"] = [self.gt_folder]
-            self.io_backend_opt["client_keys"] = ["gt"]
+            self.io_backend_opt["db_paths"] = [self.gt_folder]  # type: ignore[assignment]
+            self.io_backend_opt["client_keys"] = ["gt"]  # type: ignore[assignment]
             if not self.gt_folder.endswith(".lmdb"):
                 msg = f"'dataroot_gt' should end with '.lmdb', but received {self.gt_folder}"
                 raise ValueError(msg)
@@ -66,9 +69,9 @@ class otf(data.Dataset):
         elif "meta_info" in self.opt and self.opt["meta_info"] is not None:
             # disk backend with meta_info
             # Each line in the meta_info describes the relative path to an image
-            with Path.open(self.opt["meta_info"], encoding="locale") as fin:
+            with Path(self.opt["meta_info"]).open(encoding="locale") as fin:
                 paths = [line.strip().split(" ")[0] for line in fin]
-                self.paths = [Path(self.gt_folder) / v for v in paths]
+                self.paths = [str(Path((self.gt_folder) / v)) for v in paths]
         else:
             # disk backend
             # it will scan the whole folder to get meta info
@@ -76,28 +79,28 @@ class otf(data.Dataset):
             self.paths = sorted(scandir(self.gt_folder, full_path=True))
 
         # blur settings for the first degradation
-        self.blur_kernel_size = opt.get("blur_kernel_size", None)
-        self.kernel_list = opt.get("kernel_list", None)
+        self.blur_kernel_size = opt.get("blur_kernel_size")
+        self.kernel_list = opt.get("kernel_list")
         # a list for each kernel probability
-        self.kernel_prob = opt.get("kernel_prob", None)
-        self.blur_sigma = opt.get("blur_sigma", None)
+        self.kernel_prob = opt.get("kernel_prob")
+        self.blur_sigma = opt.get("blur_sigma")
         # betag used in generalized Gaussian blur kernels
-        self.betag_range = opt.get("betag_range", None)
+        self.betag_range = opt.get("betag_range")
         # betap used in plateau blur kernels
-        self.betap_range = opt.get("betap_range", None)
-        self.sinc_prob = opt.get("sinc_prob", None)  # the probability for sinc filters
+        self.betap_range = opt.get("betap_range")
+        self.sinc_prob = opt.get("sinc_prob")  # the probability for sinc filters
 
         # blur settings for the second degradation
-        self.blur_kernel_size2 = opt.get("blur_kernel_size2", None)
-        self.kernel_list2 = opt.get("kernel_list2", None)
-        self.kernel_prob2 = opt.get("kernel_prob2", None)
-        self.blur_sigma2 = opt.get("blur_sigma2", None)
-        self.betag_range2 = opt.get("betag_range2", None)
-        self.betap_range2 = opt.get("betap_range2", None)
-        self.sinc_prob2 = opt.get("sinc_prob2", None)
+        self.blur_kernel_size2 = opt.get("blur_kernel_size2")
+        self.kernel_list2 = opt.get("kernel_list2")
+        self.kernel_prob2 = opt.get("kernel_prob2")
+        self.blur_sigma2 = opt.get("blur_sigma2")
+        self.betag_range2 = opt.get("betag_range2")
+        self.betap_range2 = opt.get("betap_range2")
+        self.sinc_prob2 = opt.get("sinc_prob2")
 
         # a final sinc filter
-        self.final_sinc_prob = opt.get("final_sinc_prob", None)
+        self.final_sinc_prob = opt.get("final_sinc_prob")
 
         # kernel size ranges from 7 to 21
         self.kernel_range = [2 * v + 1 for v in range(3, 11)]
@@ -109,10 +112,11 @@ class otf(data.Dataset):
             self.pulse_tensor = torch.zeros(21, 21, dtype=torch.float32)
         self.pulse_tensor[10, 10] = 1
 
-    def __getitem__(self, index):
+    def __getitem__(self, index: int) -> dict[str, str | Tensor]:
         if self.file_client is None:
             self.file_client = FileClient(
-                self.io_backend_opt.pop("type"), **self.io_backend_opt
+                self.io_backend_opt.pop("type"),  # type: ignore[union-attr]
+                **self.io_backend_opt,
             )
 
         # -------------------------------- Load gt images -------------------------------- #
@@ -122,7 +126,7 @@ class otf(data.Dataset):
         retry = 3
         while retry > 0:
             try:
-                img_bytes = self.file_client.get(gt_path, "gt")
+                img_bytes = self.file_client.get(gt_path, "gt")  # type: ignore[attr-defined]
                 if img_bytes is None:
                     msg = f"No data returned from path: {gt_path}"
                     raise ValueError(msg)

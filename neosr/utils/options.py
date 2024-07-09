@@ -193,7 +193,7 @@ def parse_options(
             torch.cuda.manual_seed_all(seed)
             torch.backends.cudnn.deterministic = True
             torch.backends.cudnn.benchmark = False
-            torch.use_deterministic_algorithms(True, warn_only=True)
+            torch.use_deterministic_algorithms(mode=True, warn_only=True)
         set_random_seed(seed + opt["rank"])
 
         opt["auto_resume"] = args.auto_resume

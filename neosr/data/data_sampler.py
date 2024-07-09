@@ -1,4 +1,5 @@
 import math
+from collections.abc import Iterator
 
 import torch
 from torch.utils.data.sampler import Sampler
@@ -21,7 +22,9 @@ class EnlargedSampler(Sampler):
 
     """
 
-    def __init__(self, dataset, num_replicas, rank, ratio=1) -> None:
+    def __init__(
+        self, dataset, num_replicas: int = 1, rank: int = 1, ratio: int = 1
+    ) -> None:
         self.dataset = dataset
         self.num_replicas = num_replicas
         self.rank = rank
@@ -29,7 +32,7 @@ class EnlargedSampler(Sampler):
         self.num_samples = math.ceil(len(self.dataset) * ratio / self.num_replicas)
         self.total_size = self.num_samples * self.num_replicas
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[int]:
         # deterministically shuffle based on epoch
         g = torch.Generator(device="cuda")
         g.manual_seed(self.epoch)
@@ -47,5 +50,5 @@ class EnlargedSampler(Sampler):
     def __len__(self) -> int:
         return self.num_samples
 
-    def set_epoch(self, epoch) -> None:
+    def set_epoch(self, epoch: int) -> None:
         self.epoch = epoch
