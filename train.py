@@ -5,8 +5,11 @@ import sys
 import time
 from os import path as osp
 from pathlib import Path
+from typing import Any
 
 import torch
+from torch.utils import data
+from torch.utils.data.sampler import Sampler
 
 from neosr.data import build_dataloader, build_dataset
 from neosr.data.data_sampler import EnlargedSampler
@@ -27,7 +30,7 @@ from neosr.utils import (
 from neosr.utils.options import copy_opt_file, parse_options
 
 
-def init_tb_loggers(opt):
+def init_tb_loggers(opt: dict[str, Any]):
     # initialize wandb logger before tensorboard logger to allow proper sync
     if (
         (opt["logger"].get("wandb") is not None)
@@ -46,7 +49,9 @@ def init_tb_loggers(opt):
     return tb_logger
 
 
-def create_train_val_dataloader(opt, logger):
+def create_train_val_dataloader(
+    opt: dict[str, Any], logger: logging.Logger
+) -> tuple[data.DataLoader | None, Sampler, list[data.DataLoader], int, int]:
     # create train and val dataloaders
     train_loader, val_loaders = None, []
     for phase, dataset_opt in opt["datasets"].items():
@@ -73,7 +78,7 @@ def create_train_val_dataloader(opt, logger):
                 / (dataset_opt["batch_size"] * accumulate * opt["world_size"])
             )
             total_iters = int(opt["train"]["total_iter"] * accumulate)
-            total_epochs = math.ceil(total_iters / (num_iter_per_epoch))
+            total_epochs: int = math.ceil(total_iters / (num_iter_per_epoch))
             logger.info(
                 'Training statistics:'
                 f'\n\tStarting model: {opt["name"]}'
@@ -104,7 +109,7 @@ def create_train_val_dataloader(opt, logger):
     return train_loader, train_sampler, val_loaders, total_epochs, total_iters
 
 
-def load_resume_state(opt):
+def load_resume_state(opt: dict[str, Any]):
     resume_state_path = None
     if opt["auto_resume"]:
         state_path = Path("experiments") / opt["name"] / "training_states"
@@ -128,7 +133,7 @@ def load_resume_state(opt):
     return resume_state
 
 
-def train_pipeline(root_path) -> None:
+def train_pipeline(root_path: str) -> None:
     # parse options, set distributed setting, set random seed
     opt, args = parse_options(root_path, is_train=True)
     opt["root_path"] = root_path
@@ -168,7 +173,7 @@ def train_pipeline(root_path) -> None:
     # Otherwise the logger will not be properly initialized
     log_file = Path(opt["path"]["log"]) / f"train_{opt["name"]}_{get_time_str()}.log"
     logger = get_root_logger(
-        logger_name="neosr", log_level=logging.INFO, log_file=log_file
+        logger_name="neosr", log_level=logging.INFO, log_file=str(log_file)
     )
     logger.info(
         f"\n------------------------ neosr ------------------------\nPytorch Version: {torch.__version__}"
@@ -202,7 +207,8 @@ def train_pipeline(root_path) -> None:
     msg_logger = MessageLogger(opt, tb_logger, current_iter)
 
     # dataloader prefetcher
-    prefetcher = CUDAPrefetcher(train_loader, opt)
+    if train_loader is not None:
+        prefetcher = CUDAPrefetcher(train_loader, opt)
 
     if opt.get("use_amp", False):
         logger.info("AMP enabled.")
@@ -227,7 +233,7 @@ def train_pipeline(root_path) -> None:
 
     try:
         for epoch in range(start_epoch, total_epochs + 1):
-            train_sampler.set_epoch(epoch)
+            train_sampler.set_epoch(epoch)  # type: ignore[attr-defined]
             prefetcher.reset()
             train_data = prefetcher.next()
 
@@ -313,4 +319,4 @@ def train_pipeline(root_path) -> None:
 
 if __name__ == "__main__":
     root_path = Path.resolve(Path(__file__) / osp.pardir)
-    train_pipeline(root_path)
+    train_pipeline(str(root_path))

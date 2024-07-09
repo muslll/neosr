@@ -219,5 +219,5 @@ if __name__ == "__main__":
     torch.set_default_device("cuda")
     warnings.filterwarnings("ignore", category=UserWarning)
     root_path = Path(Path(__file__) / osp.pardir).resolve()
-    __, args = parse_options(root_path)
+    __, args = parse_options(str(root_path))
     to_onnx()

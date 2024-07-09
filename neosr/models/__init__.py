@@ -30,7 +30,7 @@ def build_model(opt: dict[str, Any]):
 
     """
     opt = deepcopy(opt)
-    model = MODEL_REGISTRY.get(opt["model_type"])(opt)
+    model = MODEL_REGISTRY.get(opt["model_type"])(opt)  # type: ignore[operator]
     logger = get_root_logger()
     logger.info(f"Using model [{model.__class__.__name__}].")
     return model

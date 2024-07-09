@@ -10,6 +10,7 @@ import numpy as np
 import torch
 import torch.utils.data
 from torch.utils import data
+from torch.utils.data.sampler import Sampler
 
 from neosr.utils import get_root_logger, scandir
 from neosr.utils.dist_util import get_dist_info
@@ -54,7 +55,7 @@ def build_dataloader(
     dataset_opt: dict[str, Any],
     num_gpu: int = 1,
     dist: bool = False,
-    sampler: None = None,
+    sampler: Sampler | None = None,
     seed: int | None = None,
 ) -> data.DataLoader:
     """Build dataloader.

@@ -26,7 +26,7 @@ def build_network(opt: dict[str, Any]):
     if opt is not None:
         opt = deepcopy(opt)
     network_type = opt.pop("type")
-    net = ARCH_REGISTRY.get(network_type)(**opt)
+    net = ARCH_REGISTRY.get(network_type)(**opt)  # type: ignore[operator]
     logger = get_root_logger()
     logger.info(f"Using network [{net.__class__.__name__}].")
     return net

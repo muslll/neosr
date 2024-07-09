@@ -33,7 +33,7 @@ def toml_load(f) -> dict[str, Any]:
 
 def parse_options(
     root_path: PosixPath | str, is_train: bool = True
-) -> tuple[dict[str, Any] | None, argparse.Namespace]:
+) -> tuple[dict[str, Any], argparse.Namespace]:
     parser = argparse.ArgumentParser(
         prog="neosr",
         usage=argparse.SUPPRESS,
@@ -259,7 +259,7 @@ def parse_options(
             opt["path"]["log"] = results_root
             opt["path"]["visualization"] = results_root
     else:
-        opt = None
+        opt = {}
 
     return opt, args
 

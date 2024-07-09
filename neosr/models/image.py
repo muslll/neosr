@@ -1,8 +1,10 @@
 import math
 from collections import OrderedDict
 from pathlib import Path
+from typing import TYPE_CHECKING, Any
 
 import torch
+from torch import Tensor
 from torch.nn import functional as F
 from torch.optim.swa_utils import AveragedModel, get_ema_multi_avg_fn
 from tqdm import tqdm
@@ -17,12 +19,15 @@ from neosr.optimizers import adamw_sf, adan, adan_sf, fsam
 from neosr.utils import get_root_logger, imwrite, tensor2img
 from neosr.utils.registry import MODEL_REGISTRY
 
+if TYPE_CHECKING:
+    from torch.optim.optimizer import Optimizer
+
 
 @MODEL_REGISTRY.register()
 class image(base):
     """Single-Image Super-Resolution model."""
 
-    def __init__(self, opt) -> None:
+    def __init__(self, opt: dict[str, Any]) -> None:
         super().__init__(opt)
 
         # define network net_g
@@ -90,12 +95,12 @@ class image(base):
         # set nets to training mode
         self.net_g.train()
         if self.sf_optim_g and self.is_train:
-            self.optimizer_g.train()
+            self.optimizer_g.train()  # type: ignore[attr-defined]
 
         if self.net_d is not None:
             self.net_d.train()
             if self.sf_optim_d and self.is_train:
-                self.optimizer_d.train()
+                self.optimizer_d.train()  # type: ignore[attr-defined]
 
         # scale ratio var
         self.scale = self.opt["scale"]
@@ -298,7 +303,7 @@ class image(base):
         # SAM
         if self.sam is not None:
             if optim_type in {"AdamW", "adamw"}:
-                base_optimizer = torch.optim.AdamW
+                base_optimizer: type[Optimizer] = torch.optim.AdamW
             elif optim_type in {"Adan", "adan"}:
                 base_optimizer = adan
             elif optim_type in {"AdamW_SF", "adamw_sf"}:
@@ -342,10 +347,10 @@ class image(base):
             self.optimizers.append(self.optimizer_d)
 
     @torch.no_grad()
-    def feed_data(self, data) -> None:
-        self.lq = data["lq"].to(self.device, non_blocking=True)
+    def feed_data(self, data: dict[str, str | Tensor]) -> None:
+        self.lq = data["lq"].to(self.device, non_blocking=True)  # type: ignore[union-attr]
         if "gt" in data:
-            self.gt = data["gt"].to(self.device, non_blocking=True)
+            self.gt = data["gt"].to(self.device, non_blocking=True)  # type: ignore[union-attr]
 
         # augmentation
         if self.is_train and self.aug is not None:
@@ -360,7 +365,7 @@ class image(base):
                     prob=self.aug_prob,
                 )
 
-    def eco_strategy(self, current_iter):
+    def eco_strategy(self, current_iter: int):
         """Adapted version of "Empirical Centroid-oriented Optimization":
         https://arxiv.org/abs/2312.17526.
         """
@@ -401,7 +406,7 @@ class image(base):
 
         return self.output, self.gt
 
-    def closure(self, current_iter):
+    def closure(self, current_iter: int):
         if self.net_d is not None:
             for p in self.net_d.parameters():
                 p.requires_grad = False
@@ -436,7 +441,7 @@ class image(base):
                 with torch.no_grad():
                     (combined_HF, combined_HF_gt) = wavelet_guided(self.output, self.gt)
 
-            l_g_total = 0
+            l_g_total: Tensor = torch.zeros(1)
             loss_dict = OrderedDict()
 
             # pixel loss
@@ -531,7 +536,7 @@ class image(base):
             ):
                 if self.cri_gan:
                     if self.sf_optim_d:
-                        self.optimizer_d.eval()
+                        self.optimizer_d.eval()  # type: ignore[attr-defined]
 
                     # real
                     if self.wavelet_guided and self.wavelet_init >= current_iter:
@@ -539,7 +544,9 @@ class image(base):
                     else:
                         real_d_pred = self.net_d(self.gt)
 
-                    l_d_real = self.cri_gan(real_d_pred, target_is_real=True, is_disc=True)
+                    l_d_real = self.cri_gan(
+                        real_d_pred, target_is_real=True, is_disc=True
+                    )
                     loss_dict["l_d_real"] = l_d_real
                     loss_dict["out_d_real"] = torch.mean(real_d_pred.detach())
 
@@ -549,12 +556,14 @@ class image(base):
                     else:
                         fake_d_pred = self.net_d(self.output.detach())
 
-                    l_d_fake = self.cri_gan(fake_d_pred, target_is_real=False, is_disc=True)
+                    l_d_fake = self.cri_gan(
+                        fake_d_pred, target_is_real=False, is_disc=True
+                    )
                     loss_dict["l_d_fake"] = l_d_fake
                     loss_dict["out_d_fake"] = torch.mean(fake_d_pred.detach())
 
                     if self.sf_optim_d:
-                        self.optimizer_d.train()
+                        self.optimizer_d.train()  # type: ignore[attr-defined]
 
             if self.cri_gan:
                 l_d_real /= self.accum_iters
@@ -597,7 +606,7 @@ class image(base):
         # return generator loss
         return l_g_total
 
-    def optimize_parameters(self, current_iter) -> None:
+    def optimize_parameters(self, current_iter: int) -> None:
         # increment accumulation counter
         self.n_accumulated += 1
         # reset accumulation counter
@@ -639,7 +648,7 @@ class image(base):
         scale = self.opt["scale"]
         if self.tile == -1:
             if self.sf_optim_g and self.is_train:
-                self.optimizer_g.eval()
+                self.optimizer_g.eval()  # type: ignore[attr-defined]
 
             with torch.inference_mode():
                 if hasattr(self, "ema"):
@@ -652,7 +661,7 @@ class image(base):
 
             self.net_g.train()
             if self.sf_optim_g and self.is_train:
-                self.optimizer_g.train()
+                self.optimizer_g.train()  # type: ignore[attr-defined]
         # test by partitioning
         else:
             _, C, h, w = self.lq.size()
@@ -721,7 +730,7 @@ class image(base):
                 self.net_g.eval()
 
             if self.sf_optim_g and self.is_train:
-                self.optimizer_g.eval()
+                self.optimizer_g.eval()  # type: ignore[attr-defined]
 
             with torch.inference_mode():
                 outputs = []
@@ -750,17 +759,21 @@ class image(base):
                 self.output = _img
             self.net_g.train()
             if self.sf_optim_g and self.is_train:
-                self.optimizer_g.train()
+                self.optimizer_g.train()  # type: ignore[attr-defined]
             _, _, h, w = self.output.size()
             self.output = self.output[
                 :, :, 0 : h - mod_pad_h * scale, 0 : w - mod_pad_w * scale
             ]
 
-    def dist_validation(self, dataloader, current_iter, tb_logger, save_img) -> None:
+    def dist_validation(
+        self, dataloader, current_iter: int, tb_logger, save_img: bool = True
+    ) -> None:
         if self.opt["rank"] == 0:
             self.nondist_validation(dataloader, current_iter, tb_logger, save_img)
 
-    def nondist_validation(self, dataloader, current_iter, tb_logger, save_img) -> None:
+    def nondist_validation(
+        self, dataloader, current_iter: int, tb_logger, save_img: bool = True
+    ) -> None:
         # flag to not apply augmentation during val
         self.is_train = False
 
@@ -776,7 +789,7 @@ class image(base):
 
         if with_metrics:
             if not hasattr(self, "metric_results"):  # only execute in the first run
-                self.metric_results = dict.fromkeys(
+                self.metric_results: dict[str, float] = dict.fromkeys(
                     self.opt["val"]["metrics"].keys(), 0
                 )
             # initialize the best metric results for each dataset_name (supporting multiple validation datasets)
@@ -831,7 +844,7 @@ class image(base):
                         / dataset_name
                         / f'{img_name}_{self.opt["name"]}.png'
                     )
-                imwrite(sr_img, save_img_path)
+                imwrite(sr_img, str(save_img_path))  # type: ignore[arg-type]
 
             # check for dataset option save_tb, to save images on tb_logger
             if self.is_train:
@@ -869,7 +882,7 @@ class image(base):
         self.is_train = True
 
     def _log_validation_metric_values(
-        self, current_iter, dataset_name, tb_logger
+        self, current_iter: int, dataset_name: str, tb_logger
     ) -> None:
         log_str = f"Validation {dataset_name}\n\n"
         for metric, value in self.metric_results.items():
@@ -897,7 +910,7 @@ class image(base):
             out_dict["gt"] = self.gt.detach().cpu()
         return out_dict
 
-    def save(self, epoch, current_iter) -> None:
+    def save(self, epoch: int, current_iter: int) -> None:
         """Save networks and training state."""
         if self.ema > 0:
             self.save_network(self.net_g_ema, "net_g", current_iter)
@@ -909,7 +922,9 @@ class image(base):
 
         self.save_training_state(epoch, current_iter)
 
-    def _print_different_keys_loading(self, crt_net, load_net, strict=True) -> None:
+    def _print_different_keys_loading(
+        self, crt_net, load_net: dict[Any, Any], strict: bool = True
+    ) -> None:
         """Print keys with different name or different size when loading models.
 
         1. Print keys with different names.

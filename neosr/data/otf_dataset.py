@@ -43,7 +43,7 @@ class otf(data.Dataset):
 
     """
 
-    def __init__(self, opt: dict[Any, Any]) -> None:
+    def __init__(self, opt: dict[str, Any]) -> None:
         super().__init__()
         self.opt = opt
         self.file_client: FileClient | None = None

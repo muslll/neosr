@@ -2,49 +2,72 @@ import time
 from collections import OrderedDict
 from copy import deepcopy
 from pathlib import Path
+from typing import TYPE_CHECKING, Any, cast
 
 import torch
+from torch import Tensor, nn
 from torch.nn.parallel import DataParallel, DistributedDataParallel
+from torch.optim.optimizer import Optimizer
 
 from neosr.optimizers import adamw_sf, adamw_win, adan, adan_sf
 from neosr.utils import get_root_logger
 from neosr.utils.dist_util import master_only
 
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
 
 class base:
     """Default model."""
 
-    def __init__(self, opt) -> None:
+    def __init__(self, opt: dict[str, Any]) -> None:
         self.opt = opt
         self.device = torch.device("cuda")
         self.is_train = opt["is_train"]
-        self.optimizers = []
-        self.schedulers = []
+        self.optimizers: list[Any] = []
+        self.schedulers: list[Any] = []
+        self.optimizer_g: Optimizer
+        self.optimizer_d: Optimizer
+        self.log_dict: dict[str, Any]
+        self.n_accumulated: int
+        self._print_different_keys_loading: Callable
 
         if self.is_train:
             # Schedule-Free Generator
             self.sf_optim_g = opt["train"]["optim_g"].get("schedule_free", False)
             # Schedule-Free Discriminator
-            self.net_d = opt.get("network_d", None)
+            self.net_d = opt.get("network_d")
             if self.net_d is not None:
                 self.sf_optim_d = opt["train"]["optim_d"].get("schedule_free", False)
         else:
             self.sf_optim_g = None
             self.sf_optim_d = None
 
-    def feed_data(self, data) -> None:
+    def feed_data(self, data: dict[str, str | Tensor]) -> None:
         pass
 
-    def optimize_parameters(self) -> None:
+    def optimize_parameters(self, current_iter: int) -> None:
         pass
 
     def get_current_visuals(self) -> None:
         pass
 
-    def save(self, epoch, current_iter) -> None:
+    def save(self, epoch: int, current_iter: int) -> None:
         pass
 
-    def validation(self, dataloader, current_iter, tb_logger, save_img=True) -> None:
+    def dist_validation(
+        self, dataloader, current_iter: int, tb_logger, save_img: bool = True
+    ) -> None:
+        pass
+
+    def nondist_validation(
+        self, dataloader, current_iter: int, tb_logger, save_img: bool = True
+    ) -> None:
+        pass
+
+    def validation(
+        self, dataloader, current_iter: int, tb_logger, save_img: bool = True
+    ) -> None:
         """Validation function.
 
         Args:
@@ -60,8 +83,9 @@ class base:
         else:
             self.nondist_validation(dataloader, current_iter, tb_logger, save_img)
 
-    def _initialize_best_metric_results(self, dataset_name) -> None:
+    def _initialize_best_metric_results(self, dataset_name: str) -> None:
         """Initialize the best metric results dict for recording the best metric value and iteration."""
+        self.best_metric_results: dict[Any, Any]
         if (
             hasattr(self, "best_metric_results")
             and dataset_name in self.best_metric_results
@@ -79,7 +103,7 @@ class base:
         self.best_metric_results[dataset_name] = record
 
     def _update_best_metric_result(
-        self, dataset_name, metric, val, current_iter
+        self, dataset_name, metric: str, val, current_iter: int
     ) -> None:
         if self.best_metric_results[dataset_name][metric]["better"] == "higher":
             if val >= self.best_metric_results[dataset_name][metric]["val"]:
@@ -89,10 +113,10 @@ class base:
             self.best_metric_results[dataset_name][metric]["val"] = val
             self.best_metric_results[dataset_name][metric]["iter"] = current_iter
 
-    def get_current_log(self):
+    def get_current_log(self) -> dict[str, Any]:
         return self.log_dict
 
-    def model_to_device(self, net):
+    def model_to_device(self, net: nn.Module) -> nn.Module:
         """Model to device. It also warps models with DistributedDataParallel
         or DataParallel.
 
@@ -102,14 +126,14 @@ class base:
 
         """
         if self.opt.get("use_amp", False) is True:
-            net = net.to(
+            net = net.to(  # type: ignore[call-overload]
                 self.device, non_blocking=True, memory_format=torch.channels_last
             )
         else:
-            net = net.to(self.device, non_blocking=True)
+            net = net.to(self.device, non_blocking=True)  # type: ignore[attr-defined]
 
         if self.opt.get("compile", False) is True:
-            net = torch.compile(net)
+            net = torch.compile(net)  # type: ignore[assignment]
             # see option fullgraph=True
 
         if self.opt["dist"]:
@@ -120,12 +144,12 @@ class base:
                 find_unused_parameters=find_unused_parameters,
             )
         elif self.opt["num_gpu"] > 1:
-            net = DataParallel(net)
+            net = DataParallel(net)  # type: ignore[type-var]
         return net
 
-    def get_optimizer(self, optim_type, params, lr, **kwargs):
+    def get_optimizer(self, optim_type: str, params, lr: float, **kwargs) -> Optimizer:
         if optim_type in {"Adam", "adam"}:
-            optimizer = torch.optim.Adam(params, lr, **kwargs)
+            optimizer: Optimizer = torch.optim.Adam(params, lr, **kwargs)
         elif optim_type in {"AdamW", "adamw"}:
             optimizer = torch.optim.AdamW(params, lr, **kwargs)
         elif optim_type in {"NAdam", "nadam"}:
@@ -142,7 +166,7 @@ class base:
             msg = f"optimizer {optim_type} is not supported yet."
             raise NotImplementedError(msg)
 
-        return optimizer
+        return cast(Optimizer, optimizer)
 
     def setup_schedulers(self) -> None:
         """Set up schedulers."""
@@ -168,7 +192,7 @@ class base:
                 msg = f"Scheduler {scheduler_type} is not implemented yet."
                 raise NotImplementedError(msg)
 
-    def get_bare_model(self, net):
+    def get_bare_model(self, net: nn.Module) -> nn.Module:
         """Get bare model, especially under wrapping with
         DistributedDataParallel or DataParallel.
         """
@@ -188,7 +212,7 @@ class base:
             for param_group, lr in zip(optimizer.param_groups, lr_groups, strict=True):
                 param_group["lr"] = lr
 
-    def _get_init_lr(self):
+    def _get_init_lr(self) -> list[list[Any]]:
         """Get the initial lr, which is set by the scheduler."""
         init_lr_groups_l = []
         init_lr_groups_l.extend([
@@ -197,7 +221,7 @@ class base:
         ])
         return init_lr_groups_l
 
-    def update_learning_rate(self, current_iter, warmup_iter=-1) -> None:
+    def update_learning_rate(self, current_iter: int, warmup_iter: int = -1) -> None:
         """Update learning rate.
 
         Args:
@@ -228,7 +252,7 @@ class base:
         return [param_group["lr"] for param_group in self.optimizers[0].param_groups]
 
     @master_only
-    def print_network(self, net) -> None:
+    def print_network(self, net: nn.Module) -> None:
         """Print the str and parameter number of a network.
 
         Args:
@@ -250,7 +274,13 @@ class base:
         logger.info(net_str)
 
     @master_only
-    def save_network(self, net, net_label, current_iter, param_key="params") -> None:
+    def save_network(
+        self,
+        net: nn.Module | list[nn.Module],
+        net_label: list[nn.Module],
+        current_iter: int | str,
+        param_key: str | list[str] = "params",
+    ) -> None:
         """Save networks.
 
         Args:
@@ -287,9 +317,9 @@ class base:
             save_dict[param_key_] = new_state_dict
 
         if self.sf_optim_g and self.is_train:
-            self.optimizer_g.eval()
+            self.optimizer_g.eval()  # type: ignore[attr-defined]
         if self.net_d is not None and self.sf_optim_d and self.is_train:
-            self.optimizer_d.eval()
+            self.optimizer_d.eval()  # type: ignore[attr-defined]
 
         # avoid occasional writing errors
         retry = 3
@@ -310,11 +340,13 @@ class base:
             raise OSError(msg)
 
         if self.sf_optim_g and self.is_train:
-            self.optimizer_g.train()
+            self.optimizer_g.train()  # type: ignore[attr-defined]
         if self.net_d is not None and self.sf_optim_d and self.is_train:
-            self.optimizer_d.train()
+            self.optimizer_d.train()  # type: ignore[attr-defined]
 
-    def load_network(self, net, load_path, param_key, strict=True) -> None:
+    def load_network(
+        self, net: nn.Module, load_path: str, param_key: str, strict: bool = True
+    ) -> None:
         """Load network.
 
         Args:
@@ -362,7 +394,7 @@ class base:
         torch.cuda.empty_cache()
 
     @master_only
-    def save_training_state(self, epoch, current_iter) -> None:
+    def save_training_state(self, epoch: int, current_iter: int) -> None:
         """Save training states during training, which will be used for
         resuming.
 
@@ -380,16 +412,16 @@ class base:
                 "schedulers": [],
             }
             for o in self.optimizers:
-                state["optimizers"].append(o.state_dict())
+                state["optimizers"].append(o.state_dict())  # type: ignore[attr-defined]
             for s in self.schedulers:
-                state["schedulers"].append(s.state_dict())
+                state["schedulers"].append(s.state_dict())  # type: ignore[attr-defined]
             save_filename = f"{int(current_iter)}.state"
             save_path = Path(self.opt["path"]["training_states"]) / save_filename
 
             if self.sf_optim_g and self.is_train:
-                self.optimizer_g.eval()
+                self.optimizer_g.eval()  # type: ignore[attr-defined]
             if self.net_d is not None and self.sf_optim_d and self.is_train:
-                self.optimizer_d.eval()
+                self.optimizer_d.eval()  # type: ignore[attr-defined]
 
             # avoid occasional writing errors
             retry = 3
@@ -412,11 +444,11 @@ class base:
                 raise OSError(msg)
 
             if self.sf_optim_g and self.is_train:
-                self.optimizer_g.train()
+                self.optimizer_g.train()  # type: ignore[attr-defined]
             if self.net_d is not None and self.sf_optim_d and self.is_train:
-                self.optimizer_d.train()
+                self.optimizer_d.train()  # type: ignore[attr-defined]
 
-    def resume_training(self, resume_state) -> None:
+    def resume_training(self, resume_state: dict[Any, Any]) -> None:
         """Reload the optimizers and schedulers for resumed training.
 
         Args:
@@ -437,7 +469,7 @@ class base:
         for i, s in enumerate(resume_schedulers):
             self.schedulers[i].load_state_dict(s)
 
-    def reduce_loss_dict(self, loss_dict):
+    def reduce_loss_dict(self, loss_dict: dict[Any, Any]) -> OrderedDict:
         """Reduce loss dict.
 
         In distributed training, it averages the losses among different GPUs .
@@ -450,11 +482,11 @@ class base:
         with torch.inference_mode():
             if self.opt["dist"]:
                 keys = []
-                losses = []
+                _losses = []
                 for name, value in loss_dict.items():
                     keys.append(name)
-                    losses.append(value)
-                losses = torch.stack(losses, 0)
+                    _losses.append(value)
+                losses = torch.stack(_losses, 0)
                 torch.distributed.reduce(losses, dst=0)
                 if self.opt["rank"] == 0:
                     losses /= self.opt["world_size"]

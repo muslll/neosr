@@ -56,7 +56,10 @@ def make_exp_dirs(opt: dict[str, Any]) -> None:
 
 
 def scandir(
-    dir_path: str, suffix: None = None, recursive: bool = False, full_path: bool = False
+    dir_path: str,
+    suffix: str | None = None,
+    recursive: bool = False,
+    full_path: bool = False,
 ) -> Iterator[Any]:
     """Scan a directory to find the interested files.
 

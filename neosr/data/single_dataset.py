@@ -29,7 +29,7 @@ class single(data.Dataset):
 
     """
 
-    def __init__(self, opt: dict[Any, Any]) -> None:
+    def __init__(self, opt: dict[str, Any]) -> None:
         super().__init__()
         self.opt = opt
         # file client (io backend)

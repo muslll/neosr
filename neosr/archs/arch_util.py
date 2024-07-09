@@ -12,7 +12,7 @@ from neosr.utils.options import parse_options
 def net_opt() -> tuple[int, bool]:
     # initialize options parsing
     root_path = Path(__file__).parents[2]
-    opt, args = parse_options(root_path, is_train=True)
+    opt, args = parse_options(str(root_path), is_train=True)
 
     # set variable for scale factor and training phase
     # conditions needed due to convert.py

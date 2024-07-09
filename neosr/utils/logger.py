@@ -3,7 +3,7 @@ import logging
 import time
 from typing import Any
 
-from .dist_util import get_dist_info, master_only
+from neosr.utils.dist_util import get_dist_info, master_only
 
 initialized_logger: dict[Any, Any] = {}
 
@@ -72,7 +72,7 @@ class MessageLogger:
         self.start_time = time.time()
 
     @master_only
-    def __call__(self, log_vars: dict[Any, Any]):
+    def __call__(self, log_vars: dict[str, Any]):
         """Format logging message.
 
         Args:
@@ -122,14 +122,14 @@ class MessageLogger:
 
 
 @master_only
-def init_tb_logger(log_dir):
+def init_tb_logger(log_dir: str):
     from torch.utils.tensorboard import SummaryWriter  # noqa: PLC0415
 
     return SummaryWriter(log_dir=log_dir)
 
 
 @master_only
-def init_wandb_logger(opt) -> None:
+def init_wandb_logger(opt: dict[str, Any]) -> None:
     """We now only use wandb to sync tensorboard log."""
     import wandb  # noqa: PLC0415
 

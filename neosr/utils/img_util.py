@@ -63,7 +63,7 @@ def tensor2img(
     rgb2bgr: bool = True,
     out_type: DTypeLike = np.uint8,
     min_max: tuple[int, int] = (0, 1),
-) -> ArrayLike:
+) -> list[np.ndarray] | np.ndarray:
     """Convert torch Tensors into image numpy arrays.
 
     After clamping to [min, max], values will be normalized to [0, 1].

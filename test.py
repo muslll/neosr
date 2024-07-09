@@ -12,7 +12,7 @@ from neosr.utils import get_root_logger, get_time_str, make_exp_dirs
 from neosr.utils.options import parse_options
 
 
-def test_pipeline(root_path) -> None:
+def test_pipeline(root_path: str) -> None:
     # parse options, set distributed setting, set ramdom seed
     opt, _ = parse_options(root_path, is_train=False)
 
@@ -23,7 +23,7 @@ def test_pipeline(root_path) -> None:
     make_exp_dirs(opt)
     log_file = Path(opt["path"]["log"]) / f"test_{opt["name"]}_{get_time_str()}.log"
     logger = get_root_logger(
-        logger_name="neosr", log_level=logging.INFO, log_file=log_file
+        logger_name="neosr", log_level=logging.INFO, log_file=str(log_file)
     )
 
     # create test dataset and dataloader
@@ -47,7 +47,7 @@ def test_pipeline(root_path) -> None:
 
     try:
         for test_loader in test_loaders:
-            test_set_name = test_loader.dataset.opt["name"]
+            test_set_name = test_loader.dataset.opt["name"]  # type: ignore[attr-defined]
             logger.info(f"Testing {test_set_name}...")
             start_time = time()
             model.validation(
@@ -58,7 +58,7 @@ def test_pipeline(root_path) -> None:
             )
             end_time = time()
             total_time = end_time - start_time
-            n_img = len(test_loader.dataset)
+            n_img = len(test_loader.dataset)  # type: ignore[arg-type]
             fps = n_img / total_time
             logger.info(f"Inference took {total_time:.2f} seconds, at {fps:.2f} fps.")
     except KeyboardInterrupt:
@@ -68,4 +68,4 @@ def test_pipeline(root_path) -> None:
 
 if __name__ == "__main__":
     root_path = Path.resolve(Path(__file__) / osp.pardir)
-    test_pipeline(root_path)
+    test_pipeline(str(root_path))
