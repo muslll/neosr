@@ -1,4 +1,5 @@
 from collections import OrderedDict
+from typing import cast
 
 import torch
 from torch import Tensor, nn
@@ -111,7 +112,7 @@ class vgg_perceptual_loss(nn.Module):
                 msg = f"PatchLoss does not support upscale ratio {upscale}."
                 raise NotImplementedError(msg)
 
-        self.vgg = VGGFeatureExtractor(
+        self.vgg = VGGFeatureExtractor(  # type: ignore[reportCallIssue]
             layer_name_list=list(layer_weights.keys()),
             vgg_type=vgg_type,
             use_input_norm=use_input_norm,
@@ -133,7 +134,7 @@ class vgg_perceptual_loss(nn.Module):
     @torch.no_grad()
     # @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type='cuda')
     @torch.cuda.amp.custom_fwd(cast_inputs=torch.float32)
-    def patch(self, x: Tensor, gt: Tensor, is_ipk: bool = False) -> Tensor:
+    def patch(self, x: Tensor, gt: Tensor, is_ipk: bool = False) -> float:
         """Args:
         ----
             is_ipk (bool): defines if it's IPK (Image Patch Kernel)
@@ -162,6 +163,7 @@ class vgg_perceptual_loss(nn.Module):
                     torch.sqrt(torch.sum(gt_trans**2, dim=1)),
                 )
                 cosine_x_y_d = torch.mul((1 - cosine_x_y), dy)  # y = (1-x)dy
+                loss = loss + cast(float, torch.mean(cosine_x_y_d))
 
         # FPK
         else:
@@ -181,8 +183,9 @@ class vgg_perceptual_loss(nn.Module):
                     torch.sqrt(torch.sum(gt_trans**2, dim=1)),
                 )
                 cosine_x_y_d = torch.mul((1 - cosine_x_y), dy)  # y = (1-x)dy
+                loss = loss + cast(float, torch.mean(cosine_x_y_d))
 
-        return loss + torch.mean(cosine_x_y_d)
+        return loss
 
     def forward(self, x: Tensor, gt: Tensor) -> float:
         """Forward function.
@@ -200,10 +203,10 @@ class vgg_perceptual_loss(nn.Module):
         # extract vgg features
         x_features = self.vgg(x)
         gt_features = self.vgg(gt.detach())
+        percep_loss: float = 0.0
 
         # calculate perceptual loss
         if self.loss_weight > 0:
-            percep_loss = 0
             for k in x_features:
                 if self.patchloss:
                     percep_loss += (
@@ -224,4 +227,6 @@ class vgg_perceptual_loss(nn.Module):
                 ipk = self.patch(x, gt, is_ipk=True)
                 percep_loss += ipk
 
-        return percep_loss * self.loss_weight
+            percep_loss = percep_loss * self.loss_weight
+
+        return percep_loss

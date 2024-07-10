@@ -1,7 +1,6 @@
 import math
 from collections.abc import Sequence
 from pathlib import Path
-from typing import cast
 
 import cv2
 import numpy as np
@@ -12,7 +11,7 @@ from torchvision.utils import make_grid
 
 
 def img2tensor(
-    imgs: np.ndarray | ArrayLike | list[np.ndarray] | list[ArrayLike],
+    imgs: np.ndarray | ArrayLike | list[np.ndarray | ArrayLike],
     bgr2rgb: bool = True,
     float32: bool = True,
     color: bool = True,
@@ -69,7 +68,6 @@ def tensor2img(
     After clamping to [min, max], values will be normalized to [0, 1].
 
     Args:
-    ----
         tensor (Tensor or list[Tensor]): Accept shapes:
             1) 4D mini-batch Tensor of shape (B x 3/1 x H x W);
             2) 3D Tensor of shape (3/1 x H x W);
@@ -82,10 +80,8 @@ def tensor2img(
         min_max (tuple[int]): min and max values for clamp.
 
     Returns:
-    -------
         (Tensor or list): 3D ndarray of shape (H x W x C) OR 2D ndarray of
         shape (H x W). The channel order is BGR.
-
     """
     if not (
         torch.is_tensor(tensor)
@@ -95,9 +91,10 @@ def tensor2img(
         raise TypeError(msg)
 
     if torch.is_tensor(tensor):
-        tensors: Tensor | list[Tensor] = [cast(Tensor, tensor)]
+        tensor = [tensor]  # type: ignore[reportAssignmentType,list-item]
+
     result = []
-    for _tensor in tensors:
+    for _tensor in tensor:
         _tensor = _tensor.squeeze(0).float().detach().cpu().clamp_(*min_max)
         _tensor = (_tensor - min_max[0]) / (min_max[1] - min_max[0])
 
@@ -114,8 +111,9 @@ def tensor2img(
             img_np = img_np.transpose(1, 2, 0)
             if img_np.shape[2] == 1:  # gray image
                 img_np = np.squeeze(img_np, axis=2)
-            elif rgb2bgr:
-                img_np = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
+            else:
+                if rgb2bgr:
+                    img_np = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
         elif n_dim == 2:
             img_np = _tensor.numpy()
         else:

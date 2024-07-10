@@ -62,7 +62,7 @@ class PrefetchDataLoader(DataLoader):
         self.num_prefetch_queue = num_prefetch_queue
         super().__init__(**kwargs)
 
-    def __iter__(self):
+    def __iter__(self):  # type: ignore[reportIncompatibleMethodOverride]
         return PrefetchGenerator(super().__iter__(), self.num_prefetch_queue)
 
 
@@ -95,7 +95,7 @@ class CUDAPrefetcher:
             self.batch = None
             return
         # put tensors to gpu
-        with torch.cuda.stream(self.stream):
+        with torch.cuda.stream(self.stream):  # type: ignore[reportArgumentType]
             for k, v in self.batch.items():
                 if torch.is_tensor(v):
                     self.batch[k] = self.batch[k].to(

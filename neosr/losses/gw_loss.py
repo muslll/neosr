@@ -1,9 +1,14 @@
+from typing import TYPE_CHECKING
+
 import torch
 import torch.nn.functional as F
 from torch import Tensor, nn
 
-from neosr.losses.basic_loss import chc
+from neosr.losses.basic_loss import chc_loss
 from neosr.utils.registry import LOSS_REGISTRY
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 @LOSS_REGISTRY.register()
@@ -22,7 +27,7 @@ class gw_loss(nn.Module):
         self.corner = corner
         self.loss_weight = loss_weight
         self.criterion_type = criterion
-        self.criterion: nn.L1Loss | nn.MSELoss | nn.HuberLoss | chc | None
+        self.criterion: nn.L1Loss | nn.MSELoss | nn.HuberLoss | Callable | None
 
         if self.criterion_type == "l1":
             self.criterion = nn.L1Loss()
@@ -31,7 +36,7 @@ class gw_loss(nn.Module):
         elif self.criterion_type == "huber":
             self.criterion = nn.HuberLoss()
         elif self.criterion_type == "chc":
-            self.criterion = chc()
+            self.criterion = chc_loss()  # type: ignore[reportGeneralTypeIssues]
         elif self.criterion_type is None:
             self.criterion = None
         else:

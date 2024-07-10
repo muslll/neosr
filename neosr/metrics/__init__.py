@@ -7,7 +7,7 @@ from neosr.utils.registry import METRIC_REGISTRY
 __all__ = ["calculate_dists", "calculate_psnr", "calculate_ssim"]
 
 
-def calculate_metric(data, opt: dict[str, Any]):
+def calculate_metric(data, opt: dict[str, Any]) -> float:
     """Calculate metric from data and options.
 
     Args:
@@ -18,4 +18,4 @@ def calculate_metric(data, opt: dict[str, Any]):
     """
     opt = deepcopy(opt)
     metric_type = opt.pop("type")
-    return METRIC_REGISTRY.get(metric_type)(**data, **opt)  # type: ignore[operator]
+    return METRIC_REGISTRY.get(metric_type)(**data, **opt)  # type: ignore[operator,return-value]

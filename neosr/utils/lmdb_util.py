@@ -126,8 +126,8 @@ def make_lmdb_from_imgs(
         pbar.set_description(f"Write {key}")
         key_byte = key.encode("ascii")
         if multiprocessing_read:
-            img_byte = dataset[key]
-            h, w, c = shapes[key]
+            img_byte = dataset[key]  # type: ignore[reportPossiblyUnboundVariable]
+            h, w, c = shapes[key]  # type: ignore[reportPossiblyUnboundVariable]
         else:
             _, img_byte, img_shape = read_img_worker(
                 Path(data_path) / path, key, compress_level

@@ -63,7 +63,7 @@ def create_train_val_dataloader(
             )
             num_gpu = opt.get("num_gpu", "auto")
             train_loader = build_dataloader(
-                train_set,
+                train_set,  # type: ignore[reportArgumentType]
                 dataset_opt,
                 num_gpu=num_gpu,
                 dist=opt["dist"],
@@ -73,7 +73,7 @@ def create_train_val_dataloader(
 
             accumulate = opt["datasets"]["train"].get("accumulate", 1)
             num_iter_per_epoch = math.ceil(
-                len(train_set)
+                len(train_set)  # type: ignore[reportArgumentType]
                 * dataset_enlarge_ratio
                 / (dataset_opt["batch_size"] * accumulate * opt["world_size"])
             )
@@ -82,7 +82,7 @@ def create_train_val_dataloader(
             logger.info(
                 'Training statistics:'
                 f'\n\tStarting model: {opt["name"]}'
-                f'\n\tNumber of train images: {len(train_set)}'
+                f'\n\tNumber of train images: {len(train_set)}'  # type: ignore[reportArgumentType]
                 f'\n\tDataset enlarge ratio: {dataset_enlarge_ratio}'
                 f'\n\tBatch size per gpu: {dataset_opt["batch_size"]}'
                 f'\n\tAccumulated batches: {dataset_opt["batch_size"] * accumulate}'
@@ -93,20 +93,20 @@ def create_train_val_dataloader(
         elif phase.split("_")[0] == "val":
             val_set = build_dataset(dataset_opt)
             val_loader = build_dataloader(
-                val_set,
+                val_set,  # type: ignore[reportArgumentType]
                 dataset_opt,
                 num_gpu=opt["num_gpu"],
                 dist=opt["dist"],
                 sampler=None,
                 seed=opt["manual_seed"],
             )
-            logger.info(f"Number of val images/folders: {len(val_set)}")
+            logger.info(f"Number of val images/folders: {len(val_set)}")  # type: ignore[reportArgumentType]
             val_loaders.append(val_loader)
         else:
             msg = f"Dataset phase {phase} is not recognized."
             raise ValueError(msg)
 
-    return train_loader, train_sampler, val_loaders, total_epochs, total_iters
+    return train_loader, train_sampler, val_loaders, total_epochs, total_iters  # type: ignore[reportPossiblyUnboundVariable]
 
 
 def load_resume_state(opt: dict[str, Any]):
@@ -189,7 +189,8 @@ def train_pipeline(root_path: str) -> None:
     model = build_model(opt)
 
     if resume_state:  # resume training
-        model.resume_training(resume_state)  # handle optimizers and schedulers
+        # handle optimizers and schedulers
+        model.resume_training(resume_state)  # type: ignore[reportAttributeAccessIssue,attr-defined]
         logger.info(
             f"Resuming training from epoch: {resume_state["epoch"]}, iter: {int(resume_state["iter"])}"
         )
@@ -220,8 +221,7 @@ def train_pipeline(root_path: str) -> None:
     accumulate = opt["datasets"]["train"].get("accumulate", 1)
     print_freq = opt["logger"].get("print_freq", 100)
     save_checkpoint_freq = opt["logger"]["save_checkpoint_freq"]
-    if opt.get("val") is not None:
-        val_freq = opt["val"]["val_freq"]
+    val_freq = opt["val"]["val_freq"] if opt.get("val") is not None else 100
 
     # training
     logger.info(
@@ -234,8 +234,8 @@ def train_pipeline(root_path: str) -> None:
     try:
         for epoch in range(start_epoch, total_epochs + 1):
             train_sampler.set_epoch(epoch)  # type: ignore[attr-defined]
-            prefetcher.reset()
-            train_data = prefetcher.next()
+            prefetcher.reset()  # type: ignore[reportPossiblyUnboundVariable]
+            train_data = prefetcher.next()  # type: ignore[reportPossiblyUnboundVariable]
 
             while train_data is not None:
                 # data_timer.record()
@@ -244,10 +244,10 @@ def train_pipeline(root_path: str) -> None:
                 if current_iter > total_iters:
                     break
                 # training
-                model.feed_data(train_data)
-                model.optimize_parameters(current_iter)
+                model.feed_data(train_data)  # type: ignore[reportAttributeAccessIssue,attr-defined]
+                model.optimize_parameters(current_iter)  # type: ignore[reportFunctionMemberAccess,attr-defined]
                 # update learning rate
-                model.update_learning_rate(
+                model.update_learning_rate(  # type: ignore[reportFunctionMemberAccess,attr-defined]
                     current_iter, warmup_iter=opt["train"].get("warmup_iter", -1)
                 )
                 iter_timer.record()
@@ -264,23 +264,23 @@ def train_pipeline(root_path: str) -> None:
 
                 if current_iter_log % print_freq == 0:
                     log_vars = {"epoch": epoch, "iter": current_iter_log}
-                    log_vars.update({"lrs": model.get_current_learning_rate()})
+                    log_vars.update({"lrs": model.get_current_learning_rate()})  # type: ignore[reportFunctionMemberAccess,attr-defined]
                     log_vars.update({
                         "time": iter_timer.get_avg_time()
                         # "data_time": data_timer.get_avg_time(),
                     })
-                    log_vars.update(model.get_current_log())
+                    log_vars.update(model.get_current_log())  # type: ignore[reportFunctionMemberAccess,attr-defined]
                     msg_logger(log_vars)
 
                 # save models and training states
                 if current_iter_log % save_checkpoint_freq == 0:
                     logger.info("Saving models and training states.")
-                    model.save(epoch, int(current_iter_log))
+                    model.save(epoch, int(current_iter_log))  # type: ignore[reportFunctionMemberAccess,attr-defined]
 
                 # validation
                 if opt.get("val") is not None and (current_iter_log % val_freq == 0):
                     for val_loader in val_loaders:
-                        model.validation(
+                        model.validation(  # type: ignore[reportFunctionMemberAccess,attr-defined]
                             val_loader,
                             int(current_iter_log),
                             tb_logger,
@@ -289,7 +289,7 @@ def train_pipeline(root_path: str) -> None:
 
                 # data_timer.start()
                 iter_timer.start()
-                train_data = prefetcher.next()
+                train_data = prefetcher.next()  # type: ignore[reportPossiblyUnboundVariable]
             # end of iter
 
         # end of epoch
@@ -297,17 +297,18 @@ def train_pipeline(root_path: str) -> None:
         consumed_time = str(datetime.timedelta(seconds=int(time.time() - start_time)))
         logger.info(f"End of training. Time consumed: {consumed_time}")
         logger.info("Save the latest model.")
-        model.save(epoch=-1, current_iter=-1)  # -1 stands for the latest
+        # -1 stands for the latest
+        model.save(epoch=-1, current_iter=-1)  # type: ignore[reportFunctionMemberAccess,attr-defined]
 
     except KeyboardInterrupt:
         logger.info("Interrupted, saving latest models.")
-        model.save(epoch, int(current_iter_log))
+        model.save(epoch, int(current_iter_log))  # type: ignore[reportFunctionMemberAccess,attr-defined]
         sys.exit(0)
 
     if opt.get("val") is not None:
         accumulate = opt["datasets"]["train"].get("accumulate", 1)
         for val_loader in val_loaders:
-            model.validation(
+            model.validation(  # type: ignore[reportFunctionMemberAccess,attr-defined]
                 val_loader,
                 int(current_iter / accumulate),
                 tb_logger,

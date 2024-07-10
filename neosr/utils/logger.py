@@ -123,7 +123,7 @@ class MessageLogger:
 
 @master_only
 def init_tb_logger(log_dir: str):
-    from torch.utils.tensorboard import SummaryWriter  # noqa: PLC0415
+    from torch.utils.tensorboard import SummaryWriter  # type: ignore # noqa: PGH003, PLC0415, I001
 
     return SummaryWriter(log_dir=log_dir)
 
@@ -131,7 +131,7 @@ def init_tb_logger(log_dir: str):
 @master_only
 def init_wandb_logger(opt: dict[str, Any]) -> None:
     """We now only use wandb to sync tensorboard log."""
-    import wandb  # noqa: PLC0415
+    import wandb  # type: ignore # noqa: PGH003, PLC0415
 
     logger = get_root_logger()
 

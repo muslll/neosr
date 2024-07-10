@@ -1,4 +1,5 @@
 import importlib
+from collections.abc import Callable
 from copy import deepcopy
 from pathlib import Path
 from typing import Any
@@ -20,7 +21,7 @@ _model_modules = [
 ]
 
 
-def build_model(opt: dict[str, Any]):
+def build_model(opt: dict[str, Any]) -> Callable | object:
     """Build model from options.
 
     Args:

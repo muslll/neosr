@@ -3,7 +3,7 @@ from typing import Any
 
 import torch
 from torch import Tensor
-from torch.optim import Optimizer
+from torch.optim.optimizer import Optimizer
 
 
 class fsam(Optimizer):
@@ -80,7 +80,7 @@ class fsam(Optimizer):
             self.zero_grad(set_to_none=True)
 
     @torch.no_grad()
-    def step(
+    def step(  # type: ignore[reportIncompatibleMethodOverride]
         self, closure: Callable[..., Any] | None = None, current_iter: int | None = None
     ):
         assert (

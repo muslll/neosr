@@ -129,12 +129,14 @@ class otf(data.Dataset):
         gt_path = self.paths[index]
         # avoid errors caused by high latency in reading files
         retry = 3
+        img_gt = None
         while retry > 0:
             try:
                 img_bytes = self.file_client.get(gt_path, "gt")  # type: ignore[attr-defined]
                 if img_bytes is None:
                     msg = f"No data returned from path: {gt_path}"
                     raise ValueError(msg)
+                img_gt = imfrombytes(img_bytes, float32=True)
             except OSError as e:
                 logger = get_root_logger()
                 logger.warning(
@@ -148,11 +150,9 @@ class otf(data.Dataset):
                 break
             finally:
                 retry -= 1
-
-        try:
-            img_gt = imfrombytes(img_bytes, float32=True)
-        except AttributeError:
-            raise AttributeError(gt_path)
+        if img_gt is None:
+            msg = f"No data returned from path: {gt_path}"
+            raise ValueError
 
         # -------------------- Do augmentation for training: flip, rotation -------------------- #
         img_gt = basic_augment(  # type: ignore[assignment]
@@ -167,8 +167,13 @@ class otf(data.Dataset):
         if h < crop_pad_size or w < crop_pad_size:
             pad_h = max(0, crop_pad_size - h)
             pad_w = max(0, crop_pad_size - w)
-            img_gt = cv2.copyMakeBorder(  # type: ignore[call-overload]
-                img_gt, 0, pad_h, 0, pad_w, cv2.BORDER_REFLECT_101
+            img_gt = cv2.copyMakeBorder(
+                img_gt,  # type: ignore[reportArgumentType]
+                0,
+                pad_h,
+                0,
+                pad_w,
+                cv2.BORDER_REFLECT_101,  # type: ignore[call-overload,reportArgumentType]
             )
         # crop
         if img_gt.shape[0] > crop_pad_size or img_gt.shape[1] > crop_pad_size:  # type: ignore[union-attr]
@@ -238,7 +243,7 @@ class otf(data.Dataset):
             sinc_kernel = self.pulse_tensor
 
         # BGR to RGB, HWC to CHW, numpy to tensor
-        img_gt = img2tensor([img_gt], bgr2rgb=True, float32=True, color=self.color)[0]
+        img_gt = img2tensor([img_gt], bgr2rgb=True, float32=True, color=self.color)[0]  # type: ignore[reportArgumentType,arg-type]
         # NOTE: using torch.tensor(device='cuda') won't work.
         # Keeping old constructor for now.
         kernel = torch.FloatTensor(kernel)

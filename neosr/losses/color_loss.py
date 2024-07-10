@@ -1,8 +1,13 @@
+from typing import TYPE_CHECKING
+
 import torch
 from torch import Tensor, nn
 
-from neosr.losses.basic_loss import chc
+from neosr.losses.basic_loss import chc_loss
 from neosr.utils.registry import LOSS_REGISTRY
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 def rgb_to_cbcr(img: Tensor) -> Tensor:
@@ -67,8 +72,7 @@ class color_loss(nn.Module):
         self.criterion_type = criterion
         self.avgpool = avgpool
         self.scale = scale
-
-        self.criterion: nn.L1Loss | nn.MSELoss | nn.HuberLoss | chc
+        self.criterion: nn.L1Loss | nn.MSELoss | nn.HuberLoss | Callable
 
         if self.criterion_type == "l1":
             self.criterion = nn.L1Loss()
@@ -77,7 +81,7 @@ class color_loss(nn.Module):
         elif self.criterion_type == "huber":
             self.criterion = nn.HuberLoss()
         elif self.criterion_type == "chc":
-            self.criterion = chc()
+            self.criterion = chc_loss()  # type: ignore[reportCallIssue]
         else:
             msg = f"{criterion} criterion has not been supported."
             raise NotImplementedError(msg)

@@ -33,6 +33,7 @@ def load_net():
     load_net = torch.load(args.input, map_location=torch.device("cuda"))
     # find parameter key
     print("-------- Finding parameter key...")
+    param_key: str | None = None
     try:
         if "params-ema" in load_net:
             param_key = "params-ema"
@@ -51,8 +52,8 @@ def load_net():
             load_net.pop(k)
 
     # load_network and send to device
-    net.load_state_dict(load_net, strict=True)
-    net = net.to(device="cuda", non_blocking=True)
+    net.load_state_dict(load_net, strict=True)  # type: ignore[reportAttributeAccessIssue,attr-defined]
+    net = net.to(device="cuda", non_blocking=True)  # type: ignore[reportAttributeAccessIssue,attr-defined]
     print(f"-------- Successfully loaded network [{args.network}].")
     torch.cuda.empty_cache()
 
@@ -167,7 +168,7 @@ def to_onnx() -> None:
         output_fp16 = filename + "_fp16" + extension
         # convert to fp16
         if args.optimize:
-            to_fp16 = convert_float_to_float16(onnx.load(output_optimized))
+            to_fp16 = convert_float_to_float16(onnx.load(output_optimized))  # type: ignore[reportPossiblyUnboundVariable]
         else:
             to_fp16 = convert_float_to_float16(load_onnx)
         # save

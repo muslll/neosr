@@ -20,7 +20,7 @@ rng = rng()
 
 
 @MODEL_REGISTRY.register()
-class otf(image):
+class otf(image):  # type: ignore[reportGeneralTypeIssues]
     """On The Fly degradations, based on RealESRGAN pipeline."""
 
     def __init__(self, opt: dict[str, Any]) -> None:
@@ -29,7 +29,7 @@ class otf(image):
         self.jpeger = DiffJPEG(differentiable=False).cuda()
         queue = opt["datasets"]["train"].get("queue_size", 180)
         batch = opt["datasets"]["train"]["batch_size"]
-        self.queue_size = (queue // batch) * batch
+        self.queue_size: int = (queue // batch) * batch
         self.patch_size = opt["datasets"]["train"].get("patch_size")
         self.device = torch.device("cuda")
 
@@ -42,17 +42,25 @@ class otf(image):
         to increase the degradation diversity in a batch.
         """
         # initialize
-        b, c, h, w = cast(Tensor, self.lq.size())
+        b, c, h, w = cast(Tensor, self.lq).size()
         if not hasattr(self, "queue_lr"):
             assert (
                 self.queue_size % b == 0
             ), f"queue size {self.queue_size} should be divisible by batch size {b}"
             self.queue_lr = torch.zeros(
-                self.queue_size, c, h, w, device=self.device
+                self.queue_size,
+                c,
+                h,
+                w,
+                device=self.device,  # type: ignore[reportArgumentType]
             ).cuda()
-            _, c, h, w = self.gt.size()
+            _, c, h, w = cast(Tensor, self.gt).size()
             self.queue_gt = torch.zeros(
-                self.queue_size, c, h, w, device=self.device
+                self.queue_size,
+                c,
+                h,
+                w,
+                device=self.device,  # type: ignore[reportArgumentType]
             ).cuda()
             self.queue_ptr = 0
         if self.queue_ptr == self.queue_size:  # the pool is full
@@ -65,11 +73,11 @@ class otf(image):
             lq_dequeue = self.queue_lr[0:b, :, :, :].clone()
             gt_dequeue = self.queue_gt[0:b, :, :, :].clone()
             # update the queue
-            self.queue_lr[0:b, :, :, :] = self.lq.clone()
-            self.queue_gt[0:b, :, :, :] = self.gt.clone()
+            self.queue_lr[0:b, :, :, :] = cast(Tensor, self.lq).clone()
+            self.queue_gt[0:b, :, :, :] = cast(Tensor, self.gt).clone()
 
-            self.lq = lq_dequeue
-            self.gt = gt_dequeue
+            self.lq: Tensor = lq_dequeue
+            self.gt: Tensor = gt_dequeue
         else:
             # only do enqueue
             self.queue_lr[self.queue_ptr : self.queue_ptr + b, :, :, :] = (
@@ -243,7 +251,7 @@ class otf(image):
 
             # random crop
             patch_size = self.opt["datasets"]["train"].get("patch_size")
-            (self.gt), self.lq = paired_random_crop(
+            (self.gt), self.lq = paired_random_crop(  # type: ignore[reportAttributeAccessIssue,assignment]
                 [self.gt], self.lq, patch_size, self.opt["scale"]
             )
 

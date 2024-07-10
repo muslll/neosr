@@ -1,6 +1,5 @@
 from torch import Tensor, nn
 
-from neosr.losses.basic_loss import chc
 from neosr.utils.registry import LOSS_REGISTRY
 
 
@@ -10,7 +9,7 @@ class gan_loss(nn.Module):
 
     Args:
     ----
-        gan_type (str): Support 'bce', 'mse' (l2), 'huber' and 'chc'.
+        gan_type (str): Support 'bce', 'mse' (l2), 'huber'.
         real_label_val (float): The value for real label. Default: 1.0.
         fake_label_val (float): The value for fake label. Default: 0.0.
         loss_weight (float): Loss weight. Default: 0.1.
@@ -31,7 +30,7 @@ class gan_loss(nn.Module):
         self.loss_weight = loss_weight
         self.real_label_val = real_label_val
         self.fake_label_val = fake_label_val
-        self.loss: nn.BCEWithLogitsLoss | nn.MSELoss | nn.HuberLoss | chc
+        self.loss: nn.BCEWithLogitsLoss | nn.MSELoss | nn.HuberLoss
 
         if self.gan_type == "bce":
             self.loss = nn.BCEWithLogitsLoss()
@@ -39,8 +38,6 @@ class gan_loss(nn.Module):
             self.loss = nn.MSELoss()
         elif self.gan_type == "huber":
             self.loss = nn.HuberLoss()
-        elif self.gan_type == "chc":
-            self.loss = chc()
         else:
             msg = f"GAN type {self.gan_type} is not implemented."
             raise NotImplementedError(msg)

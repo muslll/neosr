@@ -3,6 +3,8 @@ from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
+from torch import nn
+
 from neosr.utils import get_root_logger, scandir
 from neosr.utils.registry import LOSS_REGISTRY
 
@@ -20,7 +22,7 @@ _model_modules = [
 ]
 
 
-def build_loss(opt: dict[str, Any]):
+def build_loss(opt: dict[str, Any]) -> nn.Module | object:
     """Build loss from options.
 
     Args:

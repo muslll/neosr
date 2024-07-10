@@ -83,7 +83,7 @@ class adamw_win(Optimizer):
             group.setdefault("amsgrad", False)
 
     @torch.no_grad()
-    def step(self, closure: Callable[..., Any] | None = None):
+    def step(self, closure: Callable[..., Any] | None = None) -> float:  # type: ignore[reportIncompatibleMethodOverride,override]
         """Performs a single optimization step.
 
         Arguments:
@@ -92,10 +92,7 @@ class adamw_win(Optimizer):
                 and returns the loss.
 
         """
-        loss = None
-        if closure is not None:
-            with torch.enable_grad():
-                loss = closure()
+        loss = closure() if closure is not None else 0.0
 
         # whether perform gradient clip
         if self.defaults["max_grad_norm"] > 1e-8:
@@ -111,7 +108,8 @@ class adamw_win(Optimizer):
 
             global_grad_norm = torch.sqrt(global_grad_norm)
             clip_global_grad_norm = torch.clamp(
-                max_grad_norm / (global_grad_norm + group["eps"]), max=1.0
+                max_grad_norm / (global_grad_norm + group["eps"]),  # type: ignore[reportPossiblyUnboundVariable]
+                max=1.0,
             )
 
         # parameter update
@@ -122,7 +120,7 @@ class adamw_win(Optimizer):
 
                 # Perform optimization step
                 if self.defaults["max_grad_norm"] > 1e-8:
-                    grad = p.grad.mul_(clip_global_grad_norm)
+                    grad = p.grad.mul_(clip_global_grad_norm)  # type: ignore[reportPossiblyUnboundVariable]
                 else:
                     grad = p.grad
 
@@ -170,9 +168,9 @@ class adamw_win(Optimizer):
 
                 if amsgrad:
                     # Maintains the maximum of all 2nd moment running avg. till now
-                    torch.max(max_exp_avg_sq, exp_avg_sq, out=max_exp_avg_sq)
+                    torch.max(max_exp_avg_sq, exp_avg_sq, out=max_exp_avg_sq)  # type: ignore[reportPossiblyUnboundVariable]
                     # Use the max. for normalizing running avg. of gradient
-                    denom = (max_exp_avg_sq.sqrt() / math.sqrt(bias_correction2)).add_(
+                    denom = (max_exp_avg_sq.sqrt() / math.sqrt(bias_correction2)).add_(  # type: ignore[reportPossiblyUnboundVariable]
                         group["eps"]
                     )
                 else:

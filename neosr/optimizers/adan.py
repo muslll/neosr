@@ -95,12 +95,9 @@ class adan(Optimizer):
                     state["exp_avg_diff"] = torch.zeros_like(p)
 
     @torch.no_grad()
-    def step(self, closure: Callable[..., Any] | None = None):
+    def step(self, closure: Callable[..., Any] | None = None) -> float:  # type: ignore[reportIncompatibleMethodOverride,override]
         """Performs a single optimization step."""
-        loss = None
-        if closure is not None:
-            with torch.enable_grad():
-                loss = closure()
+        loss = closure() if closure is not None else 0.0
 
         if self.defaults["max_grad_norm"] > 0:
             device = self.param_groups[0]["params"][0].device
@@ -116,7 +113,8 @@ class adan(Optimizer):
             global_grad_norm = torch.sqrt(global_grad_norm)
 
             clip_global_grad_norm = torch.clamp(
-                max_grad_norm / (global_grad_norm + group["eps"]), max=1.0
+                max_grad_norm / (global_grad_norm + group["eps"]),  # type: ignore[reportPossiblyUnboundVariable]
+                max=1.0,
             ).item()
         else:
             clip_global_grad_norm = 1.0

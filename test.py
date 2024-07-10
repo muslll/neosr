@@ -32,14 +32,14 @@ def test_pipeline(root_path: str) -> None:
         test_set = build_dataset(dataset_opt)
         num_gpu = opt.get("num_gpu", "auto")
         test_loader = build_dataloader(
-            test_set,
+            test_set,  # type: ignore[reportArgumentType]
             dataset_opt,
             num_gpu=num_gpu,
             dist=opt["dist"],
             sampler=None,
             seed=opt["manual_seed"],
         )
-        logger.info(f"Number of test images in {dataset_opt["name"]}: {len(test_set)}")
+        logger.info(f"Number of test images in {dataset_opt["name"]}: {len(test_set)}")  # type: ignore[reportArgumentType]
         test_loaders.append(test_loader)
 
     # create model
@@ -50,7 +50,7 @@ def test_pipeline(root_path: str) -> None:
             test_set_name = test_loader.dataset.opt["name"]  # type: ignore[attr-defined]
             logger.info(f"Testing {test_set_name}...")
             start_time = time()
-            model.validation(
+            model.validation(  # type: ignore[reportAttributeAccessIssue,attr-defined]
                 test_loader,
                 current_iter=opt["name"],
                 tb_logger=None,

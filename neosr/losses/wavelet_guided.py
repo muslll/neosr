@@ -295,10 +295,8 @@ def sfb1d_atrous(
     # Calculate the padding size.
     # With dilation, zeros are inserted between the filter taps but not after.
     # that means a filter that is [a b c d] becomes [a 0 b 0 c 0 d].
-    centre = L / 2
+    # TODO: test, variable was unassigned
     fsz = (L - 1) * dilation + 1
-    newcentre = fsz / 2
-    newcentre - dilation * centre
 
     # When conv_transpose2d is done, a filter with k taps expands an input with
     # N samples to be N + k - 1 samples. The 'padding' is really the opposite of
@@ -307,8 +305,6 @@ def sfb1d_atrous(
     # This means the final output size without the padding option will be
     #   N + k - 1 + k - 1
     # The final thing to worry about is making sure that the output is centred.
-    dilation - 1
-    fsz % 2
     a = fsz // 2
     b = fsz // 2 + (fsz + 1) % 2
 
@@ -383,16 +379,18 @@ class SWTForward(nn.Module):
     def __init__(self, J: int = 1, wave: str = "db1", mode: str = "symmetric") -> None:
         super().__init__()
         if isinstance(wave, str):
-            wave = pywt.Wavelet(wave)
-        if isinstance(wave, pywt.Wavelet):
-            h0_col, h1_col = wave.dec_lo, wave.dec_hi
+            _wave = pywt.Wavelet(wave)  # type: ignore[reportAttributeAccessIssue]
+        if isinstance(wave, pywt.Wavelet):  # type: ignore[reportAttributeAccessIssue]
+            h0_col, h1_col = _wave.dec_lo, _wave.dec_hi
             h0_row, h1_row = h0_col, h1_col
-        elif len(wave) == 2:
-            h0_col, h1_col = wave[0], wave[1]
+        elif len(_wave) == 2:
+            h0_col, h1_col = _wave[0], _wave[1]
             h0_row, h1_row = h0_col, h1_col
-        elif len(wave) == 4:
-            h0_col, h1_col = wave[0], wave[1]
-            h0_row, h1_row = wave[2], wave[3]
+        elif len(_wave) == 4:
+            h0_col, h1_col = _wave[0], _wave[1]
+            h0_row, h1_row = _wave[2], _wave[3]
+        else:
+            raise NotImplementedError
 
         # Prepare the filters
         filts = prep_filt_afb2d(h0_col, h1_col, h0_row, h1_row)
@@ -435,7 +433,7 @@ class SWTForward(nn.Module):
 
 @torch.no_grad()
 def wavelet_guided(output: Tensor, gt: Tensor) -> tuple[Tensor, Tensor]:
-    wavelet = pywt.Wavelet("sym7")
+    wavelet = pywt.Wavelet("sym7")  # type: ignore[reportAttributeAccessIssue]
     dlo = wavelet.dec_lo
     an_lo = np.divide(dlo, sum(dlo))
     an_hi = wavelet.dec_hi
@@ -443,7 +441,7 @@ def wavelet_guided(output: Tensor, gt: Tensor) -> tuple[Tensor, Tensor]:
     syn_lo = 2 * np.divide(rlo, sum(rlo))
     syn_hi = wavelet.rec_hi
 
-    filters = pywt.Wavelet("wavelet_normalized", [an_lo, an_hi, syn_lo, syn_hi])
+    filters = pywt.Wavelet("wavelet_normalized", [an_lo, an_hi, syn_lo, syn_hi])  # type: ignore[reportAttributeAccessIssue]
     sfm = SWTForward(1, filters, "periodic").to(gt.device, non_blocking=True)
 
     # wavelet bands of sr image

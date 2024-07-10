@@ -49,7 +49,7 @@ class base:
     def optimize_parameters(self, current_iter: int) -> None:
         pass
 
-    def get_current_visuals(self) -> None:
+    def get_current_visuals(self) -> OrderedDict | None:
         pass
 
     def save(self, epoch: int, current_iter: int) -> None:
@@ -149,11 +149,11 @@ class base:
 
     def get_optimizer(self, optim_type: str, params, lr: float, **kwargs) -> Optimizer:
         if optim_type in {"Adam", "adam"}:
-            optimizer: Optimizer = torch.optim.Adam(params, lr, **kwargs)
+            optimizer: Optimizer = torch.optim.Adam(params, lr, **kwargs)  # type: ignore[reportPrivateImportUsage]
         elif optim_type in {"AdamW", "adamw"}:
-            optimizer = torch.optim.AdamW(params, lr, **kwargs)
+            optimizer = torch.optim.AdamW(params, lr, **kwargs)  # type: ignore[reportPrivateImportUsage]
         elif optim_type in {"NAdam", "nadam"}:
-            optimizer = torch.optim.NAdam(params, lr, **kwargs)
+            optimizer = torch.optim.NAdam(params, lr, **kwargs)  # type: ignore[reportPrivateImportUsage]
         elif optim_type in {"Adan", "adan"}:
             optimizer = adan(params, lr, **kwargs)
         elif optim_type in {"AdamW_Win", "adamw_win"}:
@@ -323,11 +323,11 @@ class base:
 
         # avoid occasional writing errors
         retry = 3
+        logger = get_root_logger()
         while retry > 0:
             try:
                 torch.save(save_dict, save_path)
             except OSError:
-                logger = get_root_logger()
                 logger.warning(f"Save model error. Remaining retry times: {retry - 1}")
                 time.sleep(1)
             else:
@@ -425,11 +425,11 @@ class base:
 
             # avoid occasional writing errors
             retry = 3
+            logger = get_root_logger()
             while retry > 0:
                 try:
                     torch.save(state, save_path)
                 except OSError:
-                    logger = get_root_logger()
                     logger.warning(
                         f"Save training state error. Remaining retry times: {retry - 1}"
                     )
@@ -487,7 +487,8 @@ class base:
                     keys.append(name)
                     _losses.append(value)
                 losses = torch.stack(_losses, 0)
-                torch.distributed.reduce(losses, dst=0)
+                losses = torch.distributed.reduce(losses, dst=0)  # type: ignore[reportAttributeAccessIssue]
+                print(losses)
                 if self.opt["rank"] == 0:
                     losses /= self.opt["world_size"]
                 loss_dict = dict(zip(keys, losses, strict=True))

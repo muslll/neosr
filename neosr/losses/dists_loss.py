@@ -74,19 +74,19 @@ class dists_loss(nn.Module):
         self.stage4 = torch.nn.Sequential()
         self.stage5 = torch.nn.Sequential()
         for x in range(4):
-            self.stage1.add_module(str(x), vgg_pretrained_features[x])
+            self.stage1.add_module(str(x), vgg_pretrained_features[x])  # type: ignore[reportIndexIssue]
         self.stage2.add_module(str(4), L2pooling(channels=64, as_loss=as_loss))
         for x in range(5, 9):
-            self.stage2.add_module(str(x), vgg_pretrained_features[x])
+            self.stage2.add_module(str(x), vgg_pretrained_features[x])  # type: ignore[reportIndexIssue]
         self.stage3.add_module(str(9), L2pooling(channels=128, as_loss=as_loss))
         for x in range(10, 16):
-            self.stage3.add_module(str(x), vgg_pretrained_features[x])
+            self.stage3.add_module(str(x), vgg_pretrained_features[x])  # type: ignore[reportIndexIssue]
         self.stage4.add_module(str(16), L2pooling(channels=256, as_loss=as_loss))
         for x in range(17, 23):
-            self.stage4.add_module(str(x), vgg_pretrained_features[x])
+            self.stage4.add_module(str(x), vgg_pretrained_features[x])  # type: ignore[reportIndexIssue]
         self.stage5.add_module(str(23), L2pooling(channels=512, as_loss=as_loss))
         for x in range(24, 30):
-            self.stage5.add_module(str(x), vgg_pretrained_features[x])
+            self.stage5.add_module(str(x), vgg_pretrained_features[x])  # type: ignore[reportIndexIssue]
 
         for param in self.parameters():
             param.requires_grad = False
@@ -109,9 +109,9 @@ class dists_loss(nn.Module):
                 if Path(model_path).exists()
                 else None
             )
-
-            self.alpha.data = weights["alpha"]
-            self.beta.data = weights["beta"]
+            if weights is not None:
+                self.alpha.data = weights["alpha"]
+                self.beta.data = weights["beta"]
 
             if as_loss is False:
                 # send to cuda

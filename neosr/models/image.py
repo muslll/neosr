@@ -20,6 +20,8 @@ from neosr.utils import get_root_logger, imwrite, tensor2img
 from neosr.utils.registry import MODEL_REGISTRY
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from torch.optim.optimizer import Optimizer
 
 
@@ -32,7 +34,7 @@ class image(base):
 
         # define network net_g
         self.net_g = build_network(opt["network_g"])
-        self.net_g = self.model_to_device(self.net_g)
+        self.net_g = self.model_to_device(self.net_g)  # type: ignore[reportArgumentType,reportArgumentType,arg-type]
         if self.opt.get("print_network", False) is True:
             self.print_network(self.net_g)
 
@@ -40,7 +42,7 @@ class image(base):
         self.net_d = self.opt.get("network_d", None)
         if self.net_d is not None:
             self.net_d = build_network(self.opt["network_d"])
-            self.net_d = self.model_to_device(self.net_d)
+            self.net_d = self.model_to_device(self.net_d)  # type: ignore[reportArgumentType]
             if self.opt.get("print_network", False) is True:
                 self.print_network(self.net_d)
 
@@ -77,7 +79,7 @@ class image(base):
         self.ema = self.opt["train"].get("ema", -1)
         if self.ema > 0:
             self.net_g_ema = AveragedModel(
-                self.net_g,
+                self.net_g,  # type: ignore[reportArgumentType,arg-type]
                 multi_avg_fn=get_ema_multi_avg_fn(self.ema),
                 device=self.device,
             )
@@ -93,12 +95,12 @@ class image(base):
         self.setup_schedulers()
 
         # set nets to training mode
-        self.net_g.train()
+        self.net_g.train()  # type: ignore[reportAttributeAccessIssue,attr-defined]
         if self.sf_optim_g and self.is_train:
             self.optimizer_g.train()  # type: ignore[attr-defined]
 
         if self.net_d is not None:
-            self.net_d.train()
+            self.net_d.train()  # type: ignore[reportArgumentType]
             if self.sf_optim_d and self.is_train:
                 self.optimizer_d.train()  # type: ignore[attr-defined]
 
@@ -120,10 +122,10 @@ class image(base):
 
         # self.gradscaler_g = torch.amp.GradScaler('cuda', enabled=self.use_amp, init_scale=2.**5)
         # self.gradscaler_d = torch.amp.GradScaler('cuda', enabled=self.use_amp, init_scale=2.**5)
-        self.gradscaler_g = torch.cuda.amp.GradScaler(
+        self.gradscaler_g: Callable = torch.cuda.amp.GradScaler(  # type: ignore[assignment]
             enabled=self.use_amp, init_scale=2.0**5
         )
-        self.gradscaler_d = torch.cuda.amp.GradScaler(enabled=self.use_amp)
+        self.gradscaler_d: Callable = torch.cuda.amp.GradScaler(enabled=self.use_amp)  # type: ignore[assignment]
 
         # LQ matching for Color/Luma losses
         self.match_lq_colors = self.opt["train"].get("match_lq_colors", False)
@@ -150,28 +152,28 @@ class image(base):
 
         # define losses
         if train_opt.get("pixel_opt"):
-            self.cri_pix = build_loss(train_opt["pixel_opt"]).to(
+            self.cri_pix = build_loss(train_opt["pixel_opt"]).to(  # type: ignore[reportCallIssue,attr-defined]
                 self.device, memory_format=torch.channels_last, non_blocking=True
             )
         else:
             self.cri_pix = None
 
         if train_opt.get("mssim_opt"):
-            self.cri_mssim = build_loss(train_opt["mssim_opt"]).to(
+            self.cri_mssim = build_loss(train_opt["mssim_opt"]).to(  # type: ignore[reportCallIssue,attr-defined]
                 self.device, memory_format=torch.channels_last, non_blocking=True
             )
         else:
             self.cri_mssim = None
 
         if train_opt.get("perceptual_opt"):
-            self.cri_perceptual = build_loss(train_opt["perceptual_opt"]).to(
+            self.cri_perceptual = build_loss(train_opt["perceptual_opt"]).to(  # type: ignore[reportCallIssue,attr-defined]
                 self.device, memory_format=torch.channels_last, non_blocking=True
             )
         else:
             self.cri_perceptual = None
 
         if train_opt.get("dists_opt"):
-            self.cri_dists = build_loss(train_opt["dists_opt"]).to(
+            self.cri_dists = build_loss(train_opt["dists_opt"]).to(  # type: ignore[reportCallIssue,attr-defined]
                 self.device, memory_format=torch.channels_last, non_blocking=True
             )
         else:
@@ -179,7 +181,7 @@ class image(base):
 
         # GAN loss
         if train_opt.get("gan_opt"):
-            self.cri_gan = build_loss(train_opt["gan_opt"]).to(
+            self.cri_gan = build_loss(train_opt["gan_opt"]).to(  # type: ignore[reportCallIssue,attr-defined]
                 self.device, memory_format=torch.channels_last, non_blocking=True
             )
         else:
@@ -187,7 +189,7 @@ class image(base):
 
         # LDL loss
         if train_opt.get("ldl_opt"):
-            self.cri_ldl = build_loss(train_opt["ldl_opt"]).to(
+            self.cri_ldl = build_loss(train_opt["ldl_opt"]).to(  # type: ignore[reportCallIssue,attr-defined]
                 self.device, memory_format=torch.channels_last, non_blocking=True
             )
         else:
@@ -195,7 +197,7 @@ class image(base):
 
         # Focal Frequency Loss
         if train_opt.get("ff_opt"):
-            self.cri_ff = build_loss(train_opt["ff_opt"]).to(
+            self.cri_ff = build_loss(train_opt["ff_opt"]).to(  # type: ignore[reportCallIssue,attr-defined]
                 self.device, memory_format=torch.channels_last, non_blocking=True
             )
         else:
@@ -203,7 +205,7 @@ class image(base):
 
         # Gradient-Weighted loss
         if train_opt.get("gw_opt"):
-            self.cri_gw = build_loss(train_opt["gw_opt"]).to(
+            self.cri_gw = build_loss(train_opt["gw_opt"]).to(  # type: ignore[reportCallIssue,attr-defined]
                 self.device, memory_format=torch.channels_last, non_blocking=True
             )
         else:
@@ -211,7 +213,7 @@ class image(base):
 
         # Color loss
         if train_opt.get("color_opt"):
-            self.cri_color = build_loss(train_opt["color_opt"]).to(
+            self.cri_color = build_loss(train_opt["color_opt"]).to(  # type: ignore[reportCallIssue,attr-defined]
                 self.device, memory_format=torch.channels_last, non_blocking=True
             )
         else:
@@ -219,7 +221,7 @@ class image(base):
 
         # Luma loss
         if train_opt.get("luma_opt"):
-            self.cri_luma = build_loss(train_opt["luma_opt"]).to(
+            self.cri_luma = build_loss(train_opt["luma_opt"]).to(  # type: ignore[reportCallIssue,attr-defined]
                 self.device, memory_format=torch.channels_last, non_blocking=True
             )
         else:
@@ -279,7 +281,7 @@ class image(base):
     def setup_optimizers(self) -> None:
         train_opt = self.opt["train"]
         optim_params = []
-        for k, v in self.net_g.named_parameters():
+        for k, v in self.net_g.named_parameters():  # type: ignore[reportAttributeAccessIssue,attr-defined]
             if v.requires_grad:
                 optim_params.append(v)
             else:
@@ -303,7 +305,7 @@ class image(base):
         # SAM
         if self.sam is not None:
             if optim_type in {"AdamW", "adamw"}:
-                base_optimizer: type[Optimizer] = torch.optim.AdamW
+                base_optimizer: type[Optimizer] = torch.optim.AdamW  # type: ignore[reportPrivateImportUsage]
             elif optim_type in {"Adan", "adan"}:
                 base_optimizer = adan
             elif optim_type in {"AdamW_SF", "adamw_sf"}:
@@ -314,21 +316,21 @@ class image(base):
                 msg = f"SAM not supported by optimizer {optim_type} yet."
                 raise NotImplementedError(msg)
 
-        if self.sam in {"FSAM", "fsam"}:
-            self.sam_optimizer_g = fsam(
-                optim_params,
-                base_optimizer,
-                rho=0.5,
-                sigma=1,
-                lmbda=0.9,
-                adaptive=True,
-                **train_opt["optim_g"],
-            )
-        elif self.sam is not None:
-            msg = f"SAM type {self.sam} not supported yet."
-            raise NotImplementedError(msg)
-        else:
-            pass
+            if self.sam in {"FSAM", "fsam"}:
+                self.sam_optimizer_g = fsam(
+                    optim_params,
+                    base_optimizer,
+                    rho=0.5,
+                    sigma=1,
+                    lmbda=0.9,
+                    adaptive=True,
+                    **train_opt["optim_g"],
+                )
+            elif self.sam is not None:
+                msg = f"SAM type {self.sam} not supported yet."
+                raise NotImplementedError(msg)
+            else:
+                pass
 
         # optimizer d
         if self.net_d is not None:
@@ -342,7 +344,9 @@ class image(base):
                 raise ValueError(msg)
             # get optimizer d
             self.optimizer_d = self.get_optimizer(
-                optim_type, self.net_d.parameters(), **train_opt["optim_d"]
+                optim_type,
+                self.net_d.parameters(),  # type: ignore[reportAttributeAccessIssue]
+                **train_opt["optim_d"],
             )
             self.optimizers.append(self.optimizer_d)
 
@@ -381,7 +385,7 @@ class image(base):
             if self.ema > 0:
                 self.net_output = self.net_g_ema(self.lq)
             else:
-                self.net_output = self.net_g(self.lq)
+                self.net_output = self.net_g(self.lq)  # type: ignore[reportCallIssue,operator]
             # define gt centroid
             self.gt = ((1 - a) * self.net_output) + (a * self.gt)
             # downsampled prediction
@@ -402,13 +406,13 @@ class image(base):
         if self.ema > 0:
             self.output = self.net_g_ema(self.output)
         else:
-            self.output = self.net_g(self.output)
+            self.output = self.net_g(self.output)  # type: ignore[reportCallIssue,operator]
 
         return self.output, self.gt
 
     def closure(self, current_iter: int):
         if self.net_d is not None:
-            for p in self.net_d.parameters():
+            for p in self.net_d.parameters():  # type: ignore[reportAttributeAccessIssue,operator]
                 p.requires_grad = False
 
         # increment accumulation counter
@@ -423,11 +427,11 @@ class image(base):
             # eco
             if self.eco and current_iter <= self.eco_iters:
                 if current_iter < self.eco_init and self.pretrain is None:
-                    self.output = self.net_g(self.lq)
+                    self.output = self.net_g(self.lq)  # type: ignore[reportCallIssue,operator]
                 else:
                     self.output, self.gt = self.eco_strategy(current_iter)
             else:
-                self.output = self.net_g(self.lq)
+                self.output = self.net_g(self.lq)  # type: ignore[reportCallIssue,operator]
 
             # lq match
             if self.match_lq_colors:
@@ -439,7 +443,7 @@ class image(base):
             # wavelet guided loss
             if self.wavelet_guided and self.wavelet_init >= current_iter:
                 with torch.no_grad():
-                    (combined_HF, combined_HF_gt) = wavelet_guided(self.output, self.gt)
+                    combined_HF, combined_HF_gt = wavelet_guided(self.output, self.gt)
 
             l_g_total: Tensor = torch.zeros(1)
             loss_dict = OrderedDict()
@@ -499,7 +503,7 @@ class image(base):
                 loss_dict["l_g_luma"] = l_g_luma
             # GAN loss
             if self.cri_gan:
-                fake_g_pred = self.net_d(self.output)
+                fake_g_pred = self.net_d(self.output)  # type: ignore[reportCallIssue,reportOptionalCall]
                 l_g_gan = self.cri_gan(fake_g_pred, target_is_real=True, is_disc=False)
                 l_g_total += l_g_gan
                 loss_dict["l_g_gan"] = l_g_gan
@@ -513,7 +517,7 @@ class image(base):
         if self.sam and current_iter >= self.sam_init:
             l_g_total.backward()
         else:
-            self.gradscaler_g.scale(l_g_total).backward()
+            self.gradscaler_g.scale(l_g_total).backward()  # type: ignore[reportFunctionMemberAccess,attr-defined]
 
         if (
             self.n_accumulated % self.accum_iters == 0
@@ -521,14 +525,16 @@ class image(base):
             and not (self.sam is not None and current_iter >= self.sam_init)
         ):
             # gradient clipping on generator
-            self.gradscaler_g.unscale_(self.optimizer_g)
+            self.gradscaler_g.unscale_(self.optimizer_g)  # type: ignore[reportFunctionMemberAccess,attr-defined]
             torch.nn.utils.clip_grad_norm_(
-                self.net_g.parameters(), 1.0, error_if_nonfinite=False
+                self.net_g.parameters(),  # type: ignore[reportAttributeAccessIssue,attr-defined]
+                1.0,
+                error_if_nonfinite=False,
             )
 
         # optimize net_d
         if self.net_d is not None:
-            for p in self.net_d.parameters():
+            for p in self.net_d.parameters():  # type: ignore[reportAttributeAccessIssue,attr-defined]
                 p.requires_grad = True
 
             with torch.autocast(
@@ -540,41 +546,47 @@ class image(base):
 
                     # real
                     if self.wavelet_guided and self.wavelet_init >= current_iter:
-                        real_d_pred = self.net_d(combined_HF_gt)
+                        real_d_pred = self.net_d(combined_HF_gt)  # type: ignore[reportPossiblyUnboundVariable]
                     else:
-                        real_d_pred = self.net_d(self.gt)
+                        real_d_pred = self.net_d(self.gt)  # type: ignore[reportCallIssue]
 
                     l_d_real = self.cri_gan(
                         real_d_pred, target_is_real=True, is_disc=True
                     )
+
+                    l_d_real /= self.accum_iters
+
                     loss_dict["l_d_real"] = l_d_real
                     loss_dict["out_d_real"] = torch.mean(real_d_pred.detach())
 
                     # fake
                     if self.wavelet_guided and self.wavelet_init >= current_iter:
-                        fake_d_pred = self.net_d(combined_HF.detach())
+                        fake_d_pred = self.net_d(combined_HF.detach())  # type: ignore[reportPossiblyUnboundVariable]
                     else:
-                        fake_d_pred = self.net_d(self.output.detach())
+                        fake_d_pred = self.net_d(self.output.detach())  # type: ignore[reportCallIssue]
 
                     l_d_fake = self.cri_gan(
                         fake_d_pred, target_is_real=False, is_disc=True
                     )
+
+                    l_d_fake /= self.accum_iters
+
                     loss_dict["l_d_fake"] = l_d_fake
                     loss_dict["out_d_fake"] = torch.mean(fake_d_pred.detach())
+
+                    # add total discriminator loss for tensorboard tracking
+                    loss_dict["l_d_total"] = (l_d_real + l_d_fake) / 2
 
                     if self.sf_optim_d:
                         self.optimizer_d.train()  # type: ignore[attr-defined]
 
-            if self.cri_gan:
-                l_d_real /= self.accum_iters
-                l_d_fake /= self.accum_iters
-                # backward discriminator
-                if self.sam and current_iter >= self.sam_init:
-                    l_d_real.backward()
-                    l_d_fake.backward()
-                else:
-                    self.gradscaler_d.scale(l_d_real).backward()
-                    self.gradscaler_d.scale(l_d_fake).backward()
+                    # backward discriminator
+                    if self.sam and current_iter >= self.sam_init:
+                        l_d_real.backward()
+                        l_d_fake.backward()
+                    else:
+                        self.gradscaler_d.scale(l_d_real).backward()  # type: ignore[reportFunctionMemberAccess,attr-defined]
+                        self.gradscaler_d.scale(l_d_fake).backward()  # type: ignore[reportFunctionMemberAccess,attr-defined]
 
             # clip discriminator
             if (
@@ -583,13 +595,12 @@ class image(base):
                 and not (self.sam is not None and current_iter >= self.sam_init)
             ):
                 # gradient clipping on discriminator
-                self.gradscaler_d.unscale_(self.optimizer_d)
+                self.gradscaler_d.unscale_(self.optimizer_d)  # type: ignore[reportFunctionMemberAccess,attr-defined]
                 torch.nn.utils.clip_grad_norm_(
-                    self.net_d.parameters(), 1.0, error_if_nonfinite=False
+                    self.net_d.parameters(),  # type: ignore[reportAttributeAccessIssue,attr-defined]
+                    1.0,
+                    error_if_nonfinite=False,
                 )
-
-            # add total discriminator loss for tensorboard tracking
-            loss_dict["l_d_total"] = (l_d_real + l_d_fake) / 2
 
         # error if NaN
         if torch.isnan(l_g_total):
@@ -621,19 +632,19 @@ class image(base):
             if self.sam and current_iter >= self.sam_init:
                 self.sam_optimizer_g.step(self.closure, current_iter)
             else:
-                self.gradscaler_g.step(self.optimizer_g)
+                self.gradscaler_g.step(self.optimizer_g)  # type: ignore[reportFunctionMemberAccess,attr-defined]
             # step() for discriminator
             if self.net_d is not None:
-                self.gradscaler_d.step(self.optimizer_d)
+                self.gradscaler_d.step(self.optimizer_d)  # type: ignore[reportFunctionMemberAccess,attr-defined]
 
             # zero generator grads
             if self.sam and current_iter >= self.sam_init:
                 self.sam_optimizer_g.zero_grad(set_to_none=True)
             else:
                 # update gradscaler
-                self.gradscaler_g.update()
+                self.gradscaler_g.update()  # type: ignore[reportFunctionMemberAccess,attr-defined]
                 if self.net_d is not None:
-                    self.gradscaler_d.update()
+                    self.gradscaler_d.update()  # type: ignore[reportFunctionMemberAccess,attr-defined]
                 self.optimizer_g.zero_grad(set_to_none=True)
 
             # zero discriminator grads
@@ -641,7 +652,7 @@ class image(base):
                 self.optimizer_d.zero_grad(set_to_none=True)
 
             if self.ema > 0:
-                self.net_g_ema.update_parameters(self.net_g)
+                self.net_g_ema.update_parameters(self.net_g)  # type: ignore[reportArgumentType,arg-type]
 
     def test(self) -> None:
         self.tile = self.opt["val"].get("tile", -1)
@@ -656,10 +667,10 @@ class image(base):
                         self.net_g_ema.eval()
                         self.output = self.net_g_ema(self.lq)
                 else:
-                    self.net_g.eval()
-                    self.output = self.net_g(self.lq)
+                    self.net_g.eval()  # type: ignore[reportAttributeAccessIssue,attr-defined]
+                    self.output = self.net_g(self.lq)  # type: ignore[reportCallIssue,operator]
 
-            self.net_g.train()
+            self.net_g.train()  # type: ignore[reportAttributeAccessIssue,attr-defined]
             if self.sf_optim_g and self.is_train:
                 self.optimizer_g.train()  # type: ignore[attr-defined]
         # test by partitioning
@@ -725,9 +736,9 @@ class image(base):
                 if self.ema > 0:
                     self.net_g_ema.eval()
                 else:
-                    self.net_g.eval()
+                    self.net_g.eval()  # type: ignore[reportAttributeAccessIssue,attr-defined]
             else:
-                self.net_g.eval()
+                self.net_g.eval()  # type: ignore[reportAttributeAccessIssue,attr-defined]
 
             if self.sf_optim_g and self.is_train:
                 self.optimizer_g.eval()  # type: ignore[attr-defined]
@@ -736,9 +747,9 @@ class image(base):
                 outputs = []
                 for chop in img_chops:
                     if self.is_train:
-                        out = self.net_g_ema(chop) if self.ema > 0 else self.net_g(chop)
+                        out = self.net_g_ema(chop) if self.ema > 0 else self.net_g(chop)  # type: ignore[reportCallIssue,operator]
                     else:
-                        out = self.net_g(chop)
+                        out = self.net_g(chop)  # type: ignore[reportCallIssue,operator]
 
                     outputs.append(out)
                 _img = torch.zeros(1, C, H * scale, W * scale)
@@ -757,7 +768,7 @@ class image(base):
                             _left = slice(shave_w * scale, (shave_w + split_w) * scale)
                         _img[..., top, left] = outputs[i * row + j][..., _top, _left]
                 self.output = _img
-            self.net_g.train()
+            self.net_g.train()  # type: ignore[reportAttributeAccessIssue,attr-defined]
             if self.sf_optim_g and self.is_train:
                 self.optimizer_g.train()  # type: ignore[attr-defined]
             _, _, h, w = self.output.size()
@@ -776,16 +787,15 @@ class image(base):
     ) -> None:
         # flag to not apply augmentation during val
         self.is_train = False
-
         dataset_name = dataloader.dataset.opt["name"]
-
         dataset_type = dataloader.dataset.opt["type"]
+        # progress bar
+        use_pbar = self.opt["val"].get("pbar", True)
+
         if dataset_type == "single":
             with_metrics = False
         else:
             with_metrics = self.opt["val"].get("metrics") is not None
-
-        use_pbar = self.opt["val"].get("pbar", True)
 
         if with_metrics:
             if not hasattr(self, "metric_results"):  # only execute in the first run
@@ -798,14 +808,15 @@ class image(base):
         if with_metrics:
             self.metric_results = dict.fromkeys(self.metric_results, 0)
 
-        metric_data = {}
         if use_pbar:
             pbar = tqdm(
                 total=len(dataloader), unit="image", colour="green", ascii=" >="
             )
 
+        metric_data = {}
+
         for _idx, val_data in enumerate(dataloader):
-            img_name = Path(Path(val_data["lq_path"][0]).name).stem  # [0]
+            img_name = Path(Path(val_data["lq_path"][0]).name).stem
             self.feed_data(val_data)
             self.test()
 
@@ -861,17 +872,17 @@ class image(base):
             if with_metrics:
                 # calculate metrics
                 for name, opt_ in self.opt["val"]["metrics"].items():
-                    self.metric_results[name] += calculate_metric(metric_data, opt_)
+                    self.metric_results[name] += calculate_metric(metric_data, opt_)  # type: ignore[reportOperatorIssue]
             if use_pbar:
-                pbar.update(1)
-                pbar.set_description(f"Inferring on {img_name}")
+                pbar.update(1)  # type: ignore[reportPossiblyUnboundVariable]
+                pbar.set_description(f"Inferring on {img_name}")  # type: ignore[reportPossiblyUnboundVariable]
 
         if use_pbar:
-            pbar.close()
+            pbar.close()  # type: ignore[reportPossiblyUnboundVariable]
 
         if with_metrics:
             for metric in self.metric_results:
-                self.metric_results[metric] /= _idx + 1
+                self.metric_results[metric] /= _idx + 1  # type: ignore[reportPossiblyUnboundVariable]
                 # update the best metric result
                 self._update_best_metric_result(
                     dataset_name, metric, self.metric_results[metric], current_iter
@@ -902,7 +913,7 @@ class image(base):
                     f"metrics/{dataset_name}/{metric}", value, current_iter
                 )
 
-    def get_current_visuals(self):
+    def get_current_visuals(self) -> OrderedDict:
         out_dict = OrderedDict()
         out_dict["lq"] = self.lq.detach().cpu()
         out_dict["result"] = self.output.detach().cpu()

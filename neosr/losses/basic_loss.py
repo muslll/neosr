@@ -130,7 +130,7 @@ class HuberLoss(nn.Module):
 
 
 @LOSS_REGISTRY.register()
-class chc(nn.Module):
+class chc_loss(nn.Module):
     """Clipped pseudo-Huber with Cosine Similarity Loss.
 
        For reference on research, see:

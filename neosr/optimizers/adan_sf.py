@@ -136,12 +136,9 @@ class adan_sf(Optimizer):
                 group["train_mode"] = True
 
     @torch.no_grad()
-    def step(self, closure: Callable[..., Any] | None = None):  # type: ignore[no-untyped-def]
+    def step(self, closure: Callable[..., Any] | None = None) -> float:  # type: ignore[reportIncompatibleMethodOverride,override]
         """Performs a single optimization step."""
-        loss = None
-        if closure is not None:
-            with torch.enable_grad():  # type: ignore[no-untyped-call]
-                loss = closure()
+        loss = closure() if closure is not None else 0.0
 
         if self.defaults["max_grad_norm"] > 0:
             device = self.param_groups[0]["params"][0].device
@@ -157,7 +154,8 @@ class adan_sf(Optimizer):
             global_grad_norm = torch.sqrt(global_grad_norm)
 
             clip_global_grad_norm = torch.clamp(
-                max_grad_norm / (global_grad_norm + group["eps"]), max=1.0
+                max_grad_norm / (global_grad_norm + group["eps"]),  # type: ignore[reportPossiblyUnboundVariable]
+                max=1.0,
             ).item()
         else:
             clip_global_grad_norm = 1.0
@@ -172,9 +170,8 @@ class adan_sf(Optimizer):
             neg_pre_grads = []
 
             beta1, beta2, beta3 = group["betas"]
-            if self.defaults["schedule_free"]:
-                warmup_steps = group["warmup_steps"]
-                weight_lr_power = group["weight_lr_power"]
+            warmup_steps = group["warmup_steps"]
+            weight_lr_power = group["weight_lr_power"]
 
             # assume same step across group now to simplify things
             # per parameter step can be easily support

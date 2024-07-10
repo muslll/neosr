@@ -3,13 +3,15 @@ from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
+from torch import nn
+
 from neosr.utils import get_root_logger, scandir
 from neosr.utils.registry import ARCH_REGISTRY
 
 __all__ = ["build_network"]
 
 
-def build_network(opt: dict[str, Any]):
+def build_network(opt: dict[str, Any]) -> nn.Module | object:
     # automatically scan and import arch modules for registry
     # scan all the files under the 'archs' folder and collect files ending with '_arch.py'
     arch_folder = Path(Path(__file__).resolve()).parent

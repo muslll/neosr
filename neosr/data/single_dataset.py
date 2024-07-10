@@ -78,7 +78,7 @@ class single(data.Dataset):
         img_lq = img2tensor(img_lq, bgr2rgb=True, float32=True, color=self.color)
         # normalize
         if self.mean is not None or self.std is not None:
-            normalize(img_lq, self.mean, self.std, inplace=True)
+            normalize(img_lq, self.mean, self.std, inplace=True)  # type: ignore[reportAssignmentType]
         return {"lq": img_lq, "lq_path": lq_path}
 
     def __len__(self) -> int:

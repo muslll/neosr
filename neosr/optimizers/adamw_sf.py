@@ -96,7 +96,7 @@ class adamw_sf(Optimizer):
                         p.data.lerp_(end=state["z"], weight=1 - beta1)
                 group["train_mode"] = True
 
-    def step(self, closure: Callable[..., Any] | None = None):
+    def step(self, closure: Callable[..., Any] | None = None) -> float:  # type: ignore[reportIncompatibleMethodOverride,override]
         """Performs a single optimization step.
 
         Arguments:
@@ -105,9 +105,7 @@ class adamw_sf(Optimizer):
                 and returns the loss.
 
         """
-        loss = None
-        if closure is not None:
-            loss = closure()
+        loss = closure() if closure is not None else 0.0
 
         for group in self.param_groups:
             eps = group["eps"]

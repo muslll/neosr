@@ -3,6 +3,7 @@ from typing import cast
 import cv2
 import numpy as np
 import torch
+from cv2.typing import MatLike
 from torch import Tensor
 
 from neosr.losses.dists_loss import dists_loss
@@ -121,7 +122,7 @@ def calculate_ssim(
     return np.array(ssims).mean()
 
 
-def _ssim(img: np.ndarray, img2: np.ndarray) -> float:
+def _ssim(img: np.ndarray | MatLike, img2: np.ndarray | MatLike) -> float:
     """Calculate SSIM (structural similarity) for one channel images.
 
     It is called by func:`calculate_ssim`.
@@ -149,7 +150,9 @@ def _ssim(img: np.ndarray, img2: np.ndarray) -> float:
     mu1_mu2 = mu1 * mu2
     sigma1_sq = cv2.filter2D(img**2, -1, window)[5:-5, 5:-5] - mu1_sq
     sigma2_sq = cv2.filter2D(img2**2, -1, window)[5:-5, 5:-5] - mu2_sq
-    sigma12 = cv2.filter2D(img * img2, -1, window)[5:-5, 5:-5] - mu1_mu2
+    sigma12 = (
+        cv2.filter2D(cast(MatLike, (img * img2)), -1, window)[5:-5, 5:-5] - mu1_mu2
+    )
 
     ssim_map = ((2 * mu1_mu2 + c1) * (2 * sigma12 + c2)) / (
         (mu1_sq + mu2_sq + c1) * (sigma1_sq + sigma2_sq + c2)
@@ -159,8 +162,8 @@ def _ssim(img: np.ndarray, img2: np.ndarray) -> float:
 
 @METRIC_REGISTRY.register()
 def calculate_dists(
-    img: np.ndarray,
-    img2: np.ndarray,
+    img: np.ndarray | Tensor,
+    img2: np.ndarray | Tensor,
     **kwargs,  # noqa: ARG001
 ) -> float:
     """Calculates DISTS metric.
@@ -190,5 +193,5 @@ def calculate_dists(
         device = torch.device("cuda")
         img, img2 = img.to(device), img2.to(device)
 
-    loss = dists_loss(as_loss=False)
+    loss = dists_loss(as_loss=False)  # type: ignore[reportCallIssue]
     return loss.forward(img, img2)

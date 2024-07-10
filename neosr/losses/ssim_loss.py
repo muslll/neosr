@@ -1,4 +1,5 @@
 import math
+from typing import cast
 
 import torch
 from torch import Tensor, nn
@@ -150,7 +151,7 @@ class mssim_loss(nn.Module):
                 x = F.avg_pool2d(x, kernel_size=2, stride=2, padding=padding)
                 y = F.avg_pool2d(y, kernel_size=2, stride=2, padding=padding)
 
-        msssim = math.prod(ms_components)  # equ 7 in ref2
+        msssim = cast(Tensor, math.prod(ms_components))  # equ 7 in ref2
 
         # cosine similarity
         if self.cosim:
