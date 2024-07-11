@@ -1,0 +1,21 @@
+# Results will be saved to neosr/experiments/results/
+
+name = "test_srformer"
+model_type = "image"
+scale = 4
+#use_amp = true
+#compile = true
+
+[datasets.test_1]
+name = "val_1"
+type = "single"
+dataroot_lq = "datasets/val/"
+[val]
+#tile = 200
+
+[network_g]
+type = "srformer_light"
+#type = "srformer_medium"
+
+[path]
+pretrain_network_g = "model.pth"

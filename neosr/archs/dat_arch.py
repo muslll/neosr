@@ -1078,7 +1078,7 @@ class dat(nn.Module):
 
 
 @ARCH_REGISTRY.register()
-def dat_small(**kwargs):
+def dat_s(**kwargs):
     return dat(
         in_chans=3,
         img_range=1.0,
@@ -1093,7 +1093,7 @@ def dat_small(**kwargs):
 
 
 @ARCH_REGISTRY.register()
-def dat_medium(**kwargs):
+def dat_m(**kwargs):
     return dat(
         in_chans=3,
         img_range=1.0,
