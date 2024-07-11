@@ -79,7 +79,7 @@ class vgg_perceptual_loss(nn.Module):
 
     def __init__(
         self,
-        layer_weights: OrderedDict,
+        layer_weights: OrderedDict | dict[str, float] | None = None,
         vgg_type: str = "vgg19",
         use_input_norm: bool = True,
         range_norm: bool = False,
@@ -92,10 +92,20 @@ class vgg_perceptual_loss(nn.Module):
     ) -> None:
         super().__init__()
         self.loss_weight = loss_weight
-        self.layer_weights = layer_weights
         self.patch_weights = patch_weight
         self.patchloss = patchloss
         self.ipk = ipk
+
+        if layer_weights is not None:
+            self.layer_weights = layer_weights
+        else:
+            self.layer_weights = {
+                "conv1_2": 0.1,
+                "conv2_2": 0.1,
+                "conv3_4": 1.0,
+                "conv4_4": 1.0,
+                "conv5_4": 1.0,
+            }
 
         if self.patchloss is False and self.ipk is True:
             msg = "Please enable PatchLoss to use IPK."
@@ -113,7 +123,7 @@ class vgg_perceptual_loss(nn.Module):
                 raise NotImplementedError(msg)
 
         self.vgg = VGGFeatureExtractor(  # type: ignore[reportCallIssue]
-            layer_name_list=list(layer_weights.keys()),
+            layer_name_list=list(self.layer_weights.keys()),
             vgg_type=vgg_type,
             use_input_norm=use_input_norm,
             range_norm=range_norm,

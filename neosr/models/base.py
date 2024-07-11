@@ -1,3 +1,4 @@
+import sys
 import time
 from collections import OrderedDict
 from copy import deepcopy
@@ -10,7 +11,7 @@ from torch.nn.parallel import DataParallel, DistributedDataParallel
 from torch.optim.optimizer import Optimizer
 
 from neosr.optimizers import adamw_sf, adamw_win, adan, adan_sf
-from neosr.utils import get_root_logger
+from neosr.utils import get_root_logger, tc
 from neosr.utils.dist_util import master_only
 
 if TYPE_CHECKING:
@@ -163,8 +164,10 @@ class base:
         elif optim_type in {"Adan_SF", "adan_sf"}:
             optimizer = adan_sf(params, lr, **kwargs)
         else:
-            msg = f"optimizer {optim_type} is not supported yet."
-            raise NotImplementedError(msg)
+            logger = get_root_logger()
+            msg = f"{tc.red}Optimizer {optim_type} is not supported yet.{tc.end}"
+            logger.error(msg)
+            sys.exit(1)
 
         return cast(Optimizer, optimizer)
 
@@ -189,8 +192,10 @@ class base:
                         )
                     )
             else:
-                msg = f"Scheduler {scheduler_type} is not implemented yet."
-                raise NotImplementedError(msg)
+                logger = get_root_logger()
+                msg = f"{tc.red}Scheduler {scheduler_type} is not implemented yet.{tc.end}"
+                logger.error(msg)
+                sys.exit(1)
 
     def get_bare_model(self, net: nn.Module) -> nn.Module:
         """Get bare model, especially under wrapping with
@@ -328,7 +333,9 @@ class base:
             try:
                 torch.save(save_dict, save_path)
             except OSError:
-                logger.warning(f"Save model error. Remaining retry times: {retry - 1}")
+                logger.warning(
+                    f"{tc.red}Save model error. Remaining retry times: {retry - 1}{tc.end}"
+                )
                 time.sleep(1)
             else:
                 break
@@ -336,8 +343,9 @@ class base:
                 retry -= 1
         if retry == 0:
             logger.warning(f"Still cannot save {save_path}.")
-            msg = f"Cannot save {save_path}."
-            raise OSError(msg)
+            msg = f"{tc.red}Cannot save {save_path}.{tc.end}"
+            logger.error(msg)
+            sys.exit(1)
 
         if self.sf_optim_g and self.is_train:
             self.optimizer_g.train()  # type: ignore[attr-defined]
@@ -433,7 +441,7 @@ class base:
                     torch.save(state, save_path)
                 except OSError:
                     logger.warning(
-                        f"Save training state error. Remaining retry times: {retry - 1}"
+                        f"{tc.red}Save training state error. Remaining retry times: {retry - 1}{tc.end}"
                     )
                     time.sleep(1)
                 else:
@@ -442,8 +450,9 @@ class base:
                     retry -= 1
             if retry == 0:
                 logger.warning(f"Still cannot save {save_path}. Just ignore it.")
-                msg = "Cannot save, aborting."
-                raise OSError(msg)
+                msg = f"{tc.red}Cannot save, aborting.{tc.end}"
+                logger.error(msg)
+                sys.exit(1)
 
             if self.sf_optim_g and self.is_train:
                 self.optimizer_g.train()  # type: ignore[attr-defined]

@@ -1,4 +1,5 @@
 import math
+import sys
 from collections import OrderedDict
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -16,7 +17,7 @@ from neosr.losses.wavelet_guided import wavelet_guided
 from neosr.metrics import calculate_metric
 from neosr.models.base import base
 from neosr.optimizers import adamw_sf, adan, adan_sf, fsam
-from neosr.utils import get_root_logger, imwrite, tensor2img
+from neosr.utils import get_root_logger, imwrite, tc, tensor2img
 from neosr.utils.registry import MODEL_REGISTRY
 
 if TYPE_CHECKING:
@@ -246,46 +247,53 @@ class image(base):
         optim_d = self.opt["train"].get("optim_d", None)
         pix_losses_bool = self.cri_pix or self.cri_mssim is not None
         percep_losses_bool = self.cri_perceptual or self.cri_dists is not None
+        logger = get_root_logger()
 
         if self.sam is not None and self.use_amp is True:
             # Closure not supported:
             # https://github.com/pytorch/pytorch/blob/main/torch/amp/grad_scaler.py#L384
-            logger = get_root_logger()
-            msg = """SAM does not support GradScaler. As a result, AMP could cause
-                      instability with it. Disable AMP if you get undesirable results."""
+            msg = f"""{tc.red}SAM does not support GradScaler. As a result, AMP could cause
+                      instability with it. Disable AMP if you get undesirable results.{tc.end}"""
             logger.warning(msg)
-
         if self.sam is not None and self.accum_iters > 1:
-            msg = "SAM can't be used with gradient accumulation yet."
-            raise NotImplementedError(msg)
-
+            msg = f"{tc.red}SAM can't be used with gradient accumulation yet.{tc.end}"
+            logger.error(msg)
+            sys.exit(1)
         if pix_losses_bool is False and percep_losses_bool is False:
-            msg = "Both pixel/mssim and perceptual losses are None. Please enable at least one."
-            raise ValueError(msg)
+            msg = f"{tc.red}Both pixel/mssim and perceptual losses are None. Please enable at least one.{tc.end}"
+            logger.error(msg)
+            sys.exit(1)
         if self.net_d is None and optim_d is not None:
-            msg = "Please set a discriminator in network_d or disable optim_d."
-            raise ValueError(msg)
+            msg = f"{tc.red}Please set a discriminator in network_d or disable optim_d.{tc.end}"
+            logger.error(msg)
+            sys.exit(1)
         if self.net_d is not None and optim_d is None:
-            msg = "Please set an optimizer for the discriminator or disable network_d."
-            raise ValueError(msg)
+            msg = f"{tc.red}Please set an optimizer for the discriminator or disable network_d.{tc.end}"
+            logger.error(msg)
+            sys.exit(1)
         if self.net_d is not None and self.cri_gan is None:
-            msg = "Discriminator needs GAN to be enabled."
-            raise ValueError(msg)
+            msg = f"{tc.red}Discriminator needs GAN to be enabled.{tc.end}"
+            logger.error(msg)
+            sys.exit(1)
         if self.net_d is None and self.cri_gan is not None:
-            msg = "GAN requires a discriminator to be set."
-            raise ValueError(msg)
+            msg = f"{tc.red}GAN requires a discriminator to be set.{tc.end}"
+            logger.error(msg)
+            sys.exit(1)
         if self.aug is not None and self.patch_size % 4 != 0:
-            msg = "The patch_size value must be a multiple of 4. Please change it."
-            raise ValueError(msg)
+            msg = f"{tc.red}The patch_size value must be a multiple of 4. Please change it.{tc.end}"
+        if self.wavelet_guided and self.cri_gan is None:
+            msg = f"{tc.red}Wavelet-Guided requires GAN.{tc.end}"
+            logger.error(msg)
+            sys.exit(1)
 
     def setup_optimizers(self) -> None:
         train_opt = self.opt["train"]
         optim_params = []
+        logger = get_root_logger()
         for k, v in self.net_g.named_parameters():  # type: ignore[reportAttributeAccessIssue,attr-defined]
             if v.requires_grad:
                 optim_params.append(v)
             else:
-                logger = get_root_logger()
                 logger.warning(f"Params {k} will not be optimized.")
         # optimizer g
         optim_type = train_opt["optim_g"].pop("type")
@@ -294,8 +302,9 @@ class image(base):
             optim_type in {"AdamW_SF", "adamw_sf", "adan_sf", "Adan_SF"}
             and "schedule_free" not in train_opt["optim_g"]
         ):
-            msg = "The option 'schedule_free' must be in the config file"
-            raise ValueError(msg)
+            msg = f"{tc.red}The option 'schedule_free' must be in the config file.{tc.end}"
+            logger.error(msg)
+            sys.exit(1)
         # get optimizer g
         self.optimizer_g = self.get_optimizer(
             optim_type, optim_params, **train_opt["optim_g"]
@@ -313,8 +322,11 @@ class image(base):
             elif optim_type in {"Adan_SF", "adan_sf"}:
                 base_optimizer = adan_sf
             else:
-                msg = f"SAM not supported by optimizer {optim_type} yet."
-                raise NotImplementedError(msg)
+                msg = (
+                    f"{tc.red}SAM not supported by optimizer {optim_type} yet.{tc.end}"
+                )
+                logger.error(msg)
+                sys.exit(1)
 
             if self.sam in {"FSAM", "fsam"}:
                 self.sam_optimizer_g = fsam(
@@ -327,8 +339,9 @@ class image(base):
                     **train_opt["optim_g"],
                 )
             elif self.sam is not None:
-                msg = f"SAM type {self.sam} not supported yet."
-                raise NotImplementedError(msg)
+                msg = f"{tc.red}SAM type {self.sam} not supported yet.{tc.end}"
+                logger.error(msg)
+                sys.exit(1)
             else:
                 pass
 
@@ -340,8 +353,9 @@ class image(base):
                 optim_type in {"AdamW_SF", "adamw_sf", "adan_sf", "Adan_SF"}
                 and "schedule_free" not in train_opt["optim_d"]
             ):
-                msg = "The option 'schedule_free' must be in the config file"
-                raise ValueError(msg)
+                msg = f"{tc.red}The option 'schedule_free' must be in the config file.{tc.end}"
+                logger.error(msg)
+                sys.exit(1)
             # get optimizer d
             self.optimizer_d = self.get_optimizer(
                 optim_type,
@@ -604,10 +618,12 @@ class image(base):
 
         # error if NaN
         if torch.isnan(l_g_total):
-            msg = """
+            msg = f"""
+                  {tc.red}
                   NaN found, aborting training. Make sure you're using a proper learning rate.
                   If you have AMP enabled, try using bfloat16. For more information:
                   https://github.com/muslll/neosr/wiki/Configuration-Walkthrough
+                  {tc.end}
                   """
             raise ValueError(msg)
 
@@ -875,7 +891,7 @@ class image(base):
                     self.metric_results[name] += calculate_metric(metric_data, opt_)  # type: ignore[reportOperatorIssue]
             if use_pbar:
                 pbar.update(1)  # type: ignore[reportPossiblyUnboundVariable]
-                pbar.set_description(f"Inferring on {img_name}")  # type: ignore[reportPossiblyUnboundVariable]
+                pbar.set_description(f"{tc.light_green}Inferring on {img_name}{tc.end}")  # type: ignore[reportPossiblyUnboundVariable]
 
         if use_pbar:
             pbar.close()  # type: ignore[reportPossiblyUnboundVariable]
@@ -900,8 +916,8 @@ class image(base):
             log_str += f"\t # {metric}: {value:.4f}"
             if hasattr(self, "best_metric_results"):
                 log_str += (
-                    f'........ Best: {self.best_metric_results[dataset_name][metric]["val"]:.4f} @ '
-                    f'{self.best_metric_results[dataset_name][metric]["iter"]} iter'
+                    f'{tc.light_green}........ Best: {self.best_metric_results[dataset_name][metric]["val"]:.4f} @ '
+                    f'{self.best_metric_results[dataset_name][metric]["iter"]} iter{tc.end}'
                 )
             log_str += "\n"
 

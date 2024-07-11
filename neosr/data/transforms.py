@@ -75,7 +75,6 @@ def paired_random_crop(
     if input_type == "Tensor":
         h_lq, w_lq = img_lqs[0].shape[2:]
         h_gt, w_gt = img_gts[0].shape[2:]
-        print(h_lq)
     else:
         h_lq, w_lq = img_lqs[0].shape[0:2]
         h_gt, w_gt = img_gts[0].shape[0:2]

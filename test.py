@@ -8,7 +8,7 @@ import torch
 
 from neosr.data import build_dataloader, build_dataset
 from neosr.models import build_model
-from neosr.utils import get_root_logger, get_time_str, make_exp_dirs
+from neosr.utils import get_root_logger, get_time_str, make_exp_dirs, tc
 from neosr.utils.options import parse_options
 
 
@@ -60,9 +60,11 @@ def test_pipeline(root_path: str) -> None:
             total_time = end_time - start_time
             n_img = len(test_loader.dataset)  # type: ignore[arg-type]
             fps = n_img / total_time
-            logger.info(f"Inference took {total_time:.2f} seconds, at {fps:.2f} fps.")
+            logger.info(
+                f"{tc.light_green}Inference took {total_time:.2f} seconds, at {fps:.2f} fps.{tc.end}"
+            )
     except KeyboardInterrupt:
-        logger.info("Interrupted.")
+        logger.info(f"{tc.red}Interrupted.{tc.end}")
         sys.exit(0)
 
 

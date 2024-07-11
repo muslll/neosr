@@ -27,6 +27,7 @@ from neosr.utils import (
     make_exp_dirs,
     mkdir_and_rename,
     scandir,
+    tc,
 )
 from neosr.utils.options import copy_opt_file, parse_options
 
@@ -55,9 +56,13 @@ def create_train_val_dataloader(
 ) -> tuple[data.DataLoader | None, Sampler, list[data.DataLoader], int, int]:
     # create train and val dataloaders
     train_loader, val_loaders = None, []
+
     for phase, dataset_opt in opt["datasets"].items():
         if phase == "train":
             dataset_enlarge_ratio = dataset_opt.get("dataset_enlarge_ratio", 1)
+            # add degradations section to dataset_opt
+            if opt.get("degradations") is not None:
+                dataset_opt.update(opt["degradations"])
             train_set = build_dataset(dataset_opt)
             train_sampler = EnlargedSampler(
                 train_set, opt["world_size"], opt["rank"], dataset_enlarge_ratio
@@ -104,8 +109,9 @@ def create_train_val_dataloader(
             logger.info(f"Number of val images/folders: {len(val_set)}")  # type: ignore[reportArgumentType]
             val_loaders.append(val_loader)
         else:
-            msg = f"Dataset phase {phase} is not recognized."
-            raise ValueError(msg)
+            msg = f"{tc.red}Dataset phase {phase} is not recognized.{tc.end}"
+            logger.error(msg)
+            sys.exit(1)
 
     return train_loader, train_sampler, val_loaders, total_epochs, total_iters  # type: ignore[reportPossiblyUnboundVariable]
 
@@ -169,7 +175,7 @@ def train_pipeline(root_path: str) -> None:
     try:
         copy_opt_file(args.opt, opt["path"]["experiments_root"])
     except:
-        msg = "Failed. Make sure the option 'name' in your config file is the same as the previous state!"
+        msg = f"{tc.red}Failed. Make sure the option 'name' in your config file is the same as the previous state!{tc.end}"
         raise ValueError(msg)
 
     # WARNING: should not use get_root_logger in the above codes, including the called functions
@@ -195,7 +201,7 @@ def train_pipeline(root_path: str) -> None:
         # handle optimizers and schedulers
         model.resume_training(resume_state)  # type: ignore[reportAttributeAccessIssue,attr-defined]
         logger.info(
-            f"Resuming training from epoch: {resume_state["epoch"]}, iter: {int(resume_state["iter"])}"
+            f"{tc.light_green}Resuming training from epoch: {resume_state["epoch"]}, iter: {int(resume_state["iter"])}{tc.end}"
         )
         start_epoch = resume_state["epoch"]
         current_iter = int(
@@ -227,7 +233,7 @@ def train_pipeline(root_path: str) -> None:
 
     # training
     logger.info(
-        f"Start training from epoch: {start_epoch}, iter: {int(current_iter / accumulate)}"
+        f"{tc.light_green}Start training from epoch: {start_epoch}, iter: {int(current_iter / accumulate)}{tc.end}"
     )
     # data_timer, iter_timer = AvgTimer(), AvgTimer()
     iter_timer = AvgTimer()
@@ -284,7 +290,9 @@ def train_pipeline(root_path: str) -> None:
                         model.save(epoch, int(current_iter_log))  # type: ignore[reportFunctionMemberAccess,attr-defined]
                         sys.exit(1)
 
-                    logger.info("Saving models and training states.")
+                    logger.info(
+                        f"{tc.light_green}Saving models and training states.{tc.end}"
+                    )
                     model.save(epoch, int(current_iter_log))  # type: ignore[reportFunctionMemberAccess,attr-defined]
 
                 # validation
@@ -305,13 +313,16 @@ def train_pipeline(root_path: str) -> None:
         # end of epoch
 
         consumed_time = str(datetime.timedelta(seconds=int(time.time() - start_time)))
-        logger.info(f"End of training. Time consumed: {consumed_time}")
-        logger.info("Save the latest model.")
+        logger.info(
+            f"{tc.light_green}End of training. Time consumed: {consumed_time}{tc.end}"
+        )
+        logger.info("{tc.light_green}Save the latest model.{tc.end}")
         # -1 stands for the latest
         model.save(epoch=-1, current_iter=-1)  # type: ignore[reportFunctionMemberAccess,attr-defined]
 
     except KeyboardInterrupt:
-        logger.info("Interrupted, saving latest models.")
+        msg = f"{tc.light_green}Interrupted, saving latest models.{tc.end}"
+        logger.info(msg)
         model.save(epoch, int(current_iter_log))  # type: ignore[reportFunctionMemberAccess,attr-defined]
         sys.exit(0)
 

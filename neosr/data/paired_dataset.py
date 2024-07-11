@@ -1,4 +1,5 @@
 import random
+import sys
 import time
 from typing import TYPE_CHECKING, Any
 
@@ -13,7 +14,7 @@ from neosr.data.data_util import (
 )
 from neosr.data.file_client import FileClient
 from neosr.data.transforms import basic_augment, paired_random_crop
-from neosr.utils import get_root_logger, imfrombytes, img2tensor
+from neosr.utils import get_root_logger, imfrombytes, img2tensor, tc
 from neosr.utils.registry import DATASET_REGISTRY
 
 if TYPE_CHECKING:
@@ -90,6 +91,7 @@ class paired(data.Dataset):
             )
 
     def __getitem__(self, index: int) -> dict[str, str | Tensor]:
+        logger = get_root_logger()
         if self.file_client is None:
             self.file_client = FileClient(
                 self.io_backend_opt.pop("type"),  # type: ignore[union-attr]
@@ -119,13 +121,13 @@ class paired(data.Dataset):
         while retry > 0:
             try:
                 if img_bytes is None:
-                    msg = f"No data returned from path: {gt_path}, {lq_path}"
-                    raise ValueError(msg)
+                    msg = f"{tc.red}No data returned from path: {gt_path}, {lq_path}{tc.end}"
+                    logger.error(msg)
+                    sys.exit(1)
+
             except OSError as e:
-                logger = get_root_logger()
-                logger.warning(
-                    f"File client error: {e} in paths {gt_path}, {lq_path}, remaining retry times: {retry - 1}"
-                )
+                msg = f"{tc.red}File client error: {e} in paths {gt_path}, {lq_path}, remaining retry times: {retry - 1}{tc.end}"
+                logger.warning(msg)
                 # change another file to read
                 index = random.randint(0, self.__len__())
                 gt_path = gt_path[index]

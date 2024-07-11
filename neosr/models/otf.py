@@ -13,6 +13,7 @@ from neosr.data.degradations import (  # type: ignore[attr-defined]
 from neosr.data.transforms import paired_random_crop
 from neosr.models.image import image
 from neosr.utils.diffjpeg import DiffJPEG, filter2D  # type: ignore[attr-defined]
+from neosr.utils.misc import tc
 from neosr.utils.registry import MODEL_REGISTRY
 from neosr.utils.rng import rng
 
@@ -264,7 +265,7 @@ class otf(image):  # type: ignore[reportGeneralTypeIssues]
 
             # augmentation error handling
             if self.aug is not None and self.patch_size % 4 != 0:
-                msg = "The patch_size value must be a multiple of 4. Please change it."
+                msg = f"{tc.red}The patch_size value must be a multiple of 4 while using augmentations.{tc.end}"
                 raise ValueError(msg)
             # apply augmentation
             if self.aug is not None:

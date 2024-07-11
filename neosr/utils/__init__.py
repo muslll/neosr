@@ -29,6 +29,7 @@ from neosr.utils.misc import (
     scandir,
     set_random_seed,
     sizeof_fmt,
+    tc,
 )
 from neosr.utils.options import toml_load
 from neosr.utils.registry import Registry
@@ -62,6 +63,7 @@ __all__ = [
     "scandir",
     "set_random_seed",
     "sizeof_fmt",
+    "tc",
     "tensor2img",
     # options
     "toml_load",

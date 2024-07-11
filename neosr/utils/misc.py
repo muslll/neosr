@@ -33,6 +33,22 @@ def check_disk_space():
         raise OSError(msg)
 
 
+class tc:
+    # ansi color codes
+    std = "\x1b[38;5;195m"
+    black = "\033[0;30m"
+    red = "\033[1;31m"
+    strong_red = "\033[0;31m"
+    light_green = "\033[1;32m"
+    light_blue = "\033[1;34m"
+    light_cyan = "\033[1;36m"
+    light_white = "\033[1;37m"
+    bold = "\033[1m"
+    italic = "\033[3m"
+    underline = "\033[4m"
+    end = "\033[0m"
+
+
 def set_random_seed(seed: int) -> None:
     """Set random seeds."""
     random.seed(seed)

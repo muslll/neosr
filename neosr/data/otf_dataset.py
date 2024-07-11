@@ -1,5 +1,6 @@
 import math
 import random
+import sys
 import time
 from pathlib import Path
 from typing import Any
@@ -16,7 +17,7 @@ from neosr.data.degradations import (  # type: ignore[attr-defined]
 )
 from neosr.data.file_client import FileClient
 from neosr.data.transforms import basic_augment
-from neosr.utils import get_root_logger, imfrombytes, img2tensor, scandir
+from neosr.utils import get_root_logger, imfrombytes, img2tensor, scandir, tc
 from neosr.utils.registry import DATASET_REGISTRY
 from neosr.utils.rng import rng
 
@@ -55,18 +56,20 @@ class otf(data.Dataset):
             self.io_backend_opt = io_backend_opt
         self.color = self.opt.get("color", None) != "y"
         self.gt_folder = opt["dataroot_gt"]
+        logger = get_root_logger()
 
         if opt.get("dataroot_lq") is not None:
-            msg = "'dataroot_lq' not supported by otf, please switch to paired"
-            raise ValueError(msg)
+            msg = f"{tc.red}'dataroot_lq' not supported by otf, please switch to paired.{tc.end}"
+            logger.error(msg)
+            sys.exit(1)
 
         # file client (lmdb io backend)
         if self.io_backend_opt["type"] == "lmdb":
             self.io_backend_opt["db_paths"] = [self.gt_folder]  # type: ignore[assignment]
             self.io_backend_opt["client_keys"] = ["gt"]  # type: ignore[assignment]
             if not self.gt_folder.endswith(".lmdb"):
-                msg = f"'dataroot_gt' should end with '.lmdb', but received {self.gt_folder}"
-                raise ValueError(msg)
+                msg = f"{tc.red}'dataroot_gt' should end with '.lmdb', but received {self.gt_folder}{tc.end}"
+                logger.error(msg)
             with Path(str(Path(self.gt_folder) / "meta_info.txt")).open(
                 encoding="utf-8"
             ) as fin:
@@ -118,6 +121,7 @@ class otf(data.Dataset):
         self.pulse_tensor[10, 10] = 1
 
     def __getitem__(self, index: int) -> dict[str, str | Tensor]:
+        logger = get_root_logger()
         if self.file_client is None:
             self.file_client = FileClient(
                 self.io_backend_opt.pop("type"),  # type: ignore[union-attr]
@@ -138,10 +142,8 @@ class otf(data.Dataset):
                     raise ValueError(msg)
                 img_gt = imfrombytes(img_bytes, float32=True)
             except OSError as e:
-                logger = get_root_logger()
-                logger.warning(
-                    f"File client error: {e} in path {gt_path}, remaining retry times: {retry - 1}"
-                )
+                msg = f"{tc.red}File client error: {e} in path {gt_path}, remaining retry times: {retry - 1}{tc.end}"
+                logger.warning(msg)
                 # change another file to read
                 index = random.randint(0, self.__len__())
                 gt_path = self.paths[index]
@@ -151,8 +153,9 @@ class otf(data.Dataset):
             finally:
                 retry -= 1
         if img_gt is None:
-            msg = f"No data returned from path: {gt_path}"
-            raise ValueError
+            msg = f"{tc.red}No data returned from path: {gt_path}.{tc.end}"
+            logger.error(msg)
+            sys.exit(1)
 
         # -------------------- Do augmentation for training: flip, rotation -------------------- #
         img_gt = basic_augment(  # type: ignore[assignment]
