@@ -87,7 +87,7 @@ class MessageLogger:
         """
         # epoch, iter, learning rates
         epoch: int = log_vars.pop("epoch")
-        current_iter: int = int(log_vars.pop("iter"))
+        current_iter: int = int(log_vars.pop("iter")) // self.accumulate
         lrs: list[Any] = log_vars.pop("lrs")
 
         message = f"[ epoch:{epoch:4d} ] [ iter:{current_iter:7,d} ]"
@@ -98,9 +98,7 @@ class MessageLogger:
             iter_time /= self.accumulate
 
             total_time = time.time() - self.start_time
-            time_sec_avg = total_time / (
-                current_iter - (self.start_iter / self.accumulate) + 1
-            )
+            time_sec_avg = total_time / (current_iter - self.start_iter - 1)
             eta_sec = time_sec_avg * (self.max_iters - current_iter - 1)
             eta_str = str(datetime.timedelta(seconds=int(eta_sec)))
             message += f" [ performance: {iter_time:.3f} it/s ] [ lr: "
@@ -200,7 +198,7 @@ def get_root_logger(
     elif log_file is not None:
         logger.setLevel(log_level)
         # add file handler
-        file_handler = logging.FileHandler(log_file, "w")
+        file_handler = logging.FileHandler(log_file, "w", encoding="utf-8")
         file_handler.setFormatter(logging.Formatter(format_str))
         file_handler.setLevel(log_level)
         logger.addHandler(file_handler)

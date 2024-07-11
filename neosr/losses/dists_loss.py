@@ -105,7 +105,9 @@ class dists_loss(nn.Module):
             current_dir = Path(Path(__file__).resolve()).parent
             model_path = Path(current_dir) / "dists_weights.pth"
             weights = (
-                torch.load(model_path, weights_only=True)
+                torch.load(
+                    model_path, map_location=torch.device("cuda"), weights_only=True
+                )
                 if Path(model_path).exists()
                 else None
             )

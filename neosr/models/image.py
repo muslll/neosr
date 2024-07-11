@@ -229,7 +229,7 @@ class image(base):
 
         # Wavelet Guided loss
         self.wavelet_guided = self.opt["train"].get("wavelet_guided", False)
-        self.wavelet_init = self.opt["train"].get("wavelet_init", -1)
+        self.wavelet_init = self.opt["train"].get("wavelet_init", 0)
         if self.wavelet_guided:
             logger = get_root_logger()
             logger.info("Loss [Wavelet-Guided] enabled.")
@@ -441,7 +441,7 @@ class image(base):
                     )
 
             # wavelet guided loss
-            if self.wavelet_guided and self.wavelet_init >= current_iter:
+            if self.wavelet_guided and current_iter >= self.wavelet_init:
                 with torch.no_grad():
                     combined_HF, combined_HF_gt = wavelet_guided(self.output, self.gt)
 
@@ -545,7 +545,7 @@ class image(base):
                         self.optimizer_d.eval()  # type: ignore[attr-defined]
 
                     # real
-                    if self.wavelet_guided and self.wavelet_init >= current_iter:
+                    if self.wavelet_guided and current_iter >= self.wavelet_init:
                         real_d_pred = self.net_d(combined_HF_gt)  # type: ignore[reportPossiblyUnboundVariable]
                     else:
                         real_d_pred = self.net_d(self.gt)  # type: ignore[reportCallIssue]
@@ -560,7 +560,7 @@ class image(base):
                     loss_dict["out_d_real"] = torch.mean(real_d_pred.detach())
 
                     # fake
-                    if self.wavelet_guided and self.wavelet_init >= current_iter:
+                    if self.wavelet_guided and current_iter >= self.wavelet_init:
                         fake_d_pred = self.net_d(combined_HF.detach())  # type: ignore[reportPossiblyUnboundVariable]
                     else:
                         fake_d_pred = self.net_d(self.output.detach())  # type: ignore[reportCallIssue]

@@ -21,6 +21,7 @@ from neosr.utils.logger import (
     init_wandb_logger,
 )
 from neosr.utils.misc import (
+    check_disk_space,
     check_resume,
     get_time_str,
     make_exp_dirs,
@@ -42,6 +43,8 @@ __all__ = [
     "Registry",
     #  color_util.py
     "bgr2ycbcr",
+    # misc.py
+    "check_disk_space",
     "check_resume",
     "crop_border",
     "get_root_logger",
@@ -57,7 +60,6 @@ __all__ = [
     "rgb2ycbcr",
     "rgb2ycbcr_pt",
     "scandir",
-    # misc.py
     "set_random_seed",
     "sizeof_fmt",
     "tensor2img",

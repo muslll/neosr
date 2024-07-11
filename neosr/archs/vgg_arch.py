@@ -127,7 +127,7 @@ class VGGFeatureExtractor(nn.Module):
         if Path(VGG_PRETRAIN_PATH).exists():
             vgg_net = getattr(vgg, vgg_type)
             state_dict = torch.load(
-                VGG_PRETRAIN_PATH, map_location=torch.device("cuda")
+                VGG_PRETRAIN_PATH, map_location=torch.device("cuda"), weights_only=True
             )
             vgg_net.load_state_dict(state_dict)
         else:

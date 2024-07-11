@@ -1,4 +1,4 @@
-# type: ignore
+# type: ignore # noqa: PGH003
 from neosr.archs import *
 from neosr.data import *
 from neosr.losses import *

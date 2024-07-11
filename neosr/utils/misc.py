@@ -1,5 +1,6 @@
 import os
 import random
+import shutil
 import time
 from collections.abc import Iterator
 from os import path as osp
@@ -9,6 +10,27 @@ from typing import Any
 import torch
 
 from neosr.utils.dist_util import master_only
+
+
+def check_disk_space():
+    """
+    Check if there's enough free disk space in the current path.
+
+    Raises:
+        OSError: If the free disk space is less than 500 MB.
+    """
+    current_path = Path.cwd()
+    disk_usage = shutil.disk_usage(str(current_path))
+    free_space_mb = disk_usage.free // (1024 * 1024)
+    if free_space_mb < 500:
+        msg = f"""
+
+        Not enough free disk space in {current_path}.
+        Please free up at least 500 MB of space.
+        Attempting to save current progress...
+
+        """
+        raise OSError(msg)
 
 
 def set_random_seed(seed: int) -> None:

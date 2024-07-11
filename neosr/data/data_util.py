@@ -62,9 +62,9 @@ def paired_paths_from_lmdb(folders: list[str], keys: list[str]) -> list[str]:
         )
         raise ValueError(msg)
     # ensure that the two meta_info files are the same
-    with Path.open(Path(input_folder) / "meta_info.txt", encoding="locale") as fin:
+    with Path(Path(input_folder) / "meta_info.txt").open(encoding="utf-8") as fin:
         input_lmdb_keys = [line.split(".")[0] for line in fin]
-    with Path.open(Path(gt_folder) / "meta_info.txt", encoding="locale") as fin:
+    with Path(Path(gt_folder) / "meta_info.txt").open(encoding="utf-8") as fin:
         gt_lmdb_keys = [line.split(".")[0] for line in fin]
     if set(input_lmdb_keys) != set(gt_lmdb_keys):
         msg = f"Keys in {input_key}_folder and {gt_key}_folder are different."
@@ -114,7 +114,7 @@ def paired_paths_from_meta_info_file(
     input_folder, gt_folder = folders
     input_key, gt_key = keys
 
-    with Path(meta_info_file).open(encoding="locale") as fin:
+    with Path(meta_info_file).open(encoding="utf-8") as fin:
         gt_names = [line.strip().split(" ")[0] for line in fin]
 
     paths: list[dict[str, str]] = []
@@ -197,5 +197,5 @@ def paths_from_lmdb(folder: str) -> list[str]:
     if not folder.endswith(".lmdb"):
         msg = f"Folder {folder}folder should in lmdb format."
         raise ValueError(msg)
-    with Path.open(Path(folder) / "meta_info.txt", encoding="locale") as fin:
+    with Path(Path(folder) / "meta_info.txt").open(encoding="utf-8") as fin:
         return [line.split(".")[0] for line in fin]

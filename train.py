@@ -18,6 +18,7 @@ from neosr.models import build_model
 from neosr.utils import (
     AvgTimer,
     MessageLogger,
+    check_disk_space,
     check_resume,
     get_root_logger,
     get_time_str,
@@ -88,7 +89,7 @@ def create_train_val_dataloader(
                 f'\n\tAccumulated batches: {dataset_opt["batch_size"] * accumulate}'
                 f'\n\tWorld size (gpu number): {opt["world_size"]}'
                 f'\n\tRequired iters per epoch: {num_iter_per_epoch}'
-                f'\n\tTotal epochs: {total_epochs}. Total iters: {total_iters // accumulate}'
+                f'\n\tTotal epochs {total_epochs} for total iters {total_iters // accumulate}.'
             )
         elif phase.split("_")[0] == "val":
             val_set = build_dataset(dataset_opt)
@@ -128,7 +129,9 @@ def load_resume_state(opt: dict[str, Any]):
     if resume_state_path is None:
         resume_state = None
     else:
-        resume_state = torch.load(resume_state_path, map_location=torch.device("cuda"))
+        resume_state = torch.load(
+            resume_state_path, map_location=torch.device("cuda"), weights_only=True
+        )
         check_resume(opt, resume_state["iter"])
     return resume_state
 
@@ -198,7 +201,6 @@ def train_pipeline(root_path: str) -> None:
         current_iter = int(
             resume_state["iter"] * opt["datasets"]["train"].get("accumulate", 1)
         )
-        # current_iter = resume_state["iter"]
         torch.cuda.empty_cache()
     else:
         start_epoch = 0
@@ -253,7 +255,7 @@ def train_pipeline(root_path: str) -> None:
                 iter_timer.record()
                 if current_iter == 1:
                     # reset start time in msg_logger for more accurate eta_time
-                    # not work in resume mode
+                    # doesn't work in resume mode
                     msg_logger.reset_start_time()
 
                 # log
@@ -274,6 +276,14 @@ def train_pipeline(root_path: str) -> None:
 
                 # save models and training states
                 if current_iter_log % save_checkpoint_freq == 0:
+                    # check if there's enough disk space
+                    try:
+                        check_disk_space()
+                    except OSError as e:
+                        logger.exception(e)  # noqa: TRY401
+                        model.save(epoch, int(current_iter_log))  # type: ignore[reportFunctionMemberAccess,attr-defined]
+                        sys.exit(1)
+
                     logger.info("Saving models and training states.")
                     model.save(epoch, int(current_iter_log))  # type: ignore[reportFunctionMemberAccess,attr-defined]
 

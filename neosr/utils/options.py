@@ -23,7 +23,7 @@ def toml_load(f) -> dict[str, Any]:
 
     """
     try:
-        with Path.open(f, "rb") as f:
+        with Path(f).open("rb") as f:
             return tomllib.load(f)
     except:
         msg = "Error decoding TOML file."
@@ -275,7 +275,7 @@ def copy_opt_file(opt_file: str, experiments_root: str) -> None:
     filename = Path(experiments_root) / Path(opt_file).name
     copyfile(opt_file, filename)
 
-    with Path.open(filename, "r+", encoding="locale") as f:
+    with Path(filename).open("r+", encoding="utf-8") as f:
         lines = f.readlines()
         lines.insert(0, f"# GENERATE TIME: {time.asctime()}\n# CMD:\n# {cmd}\n\n")
         f.seek(0)

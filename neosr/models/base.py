@@ -362,7 +362,9 @@ class base:
         self.param_key = param_key
         logger = get_root_logger()
         net = self.get_bare_model(net)
-        load_net = torch.load(load_path, map_location=torch.device("cuda"))
+        load_net = torch.load(
+            load_path, map_location=torch.device("cuda"), weights_only=True
+        )
 
         try:
             if "params-ema" in load_net:

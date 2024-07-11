@@ -34,6 +34,8 @@ split-on-trailing-comma = false
 [tool.ruff.lint.per-file-ignores]
 "neosr/__init__.py" = ["F403"]
 
+[tool.mypy]
+exclude = ["import-untyped"]
 
 [build-system]
 requires = ["poetry-core"]

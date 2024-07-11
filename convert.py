@@ -30,7 +30,9 @@ def load_net():
         net_opt["window_size"] = args.window
 
     net = build_network(net_opt)
-    load_net = torch.load(args.input, map_location=torch.device("cuda"))
+    load_net = torch.load(
+        args.input, map_location=torch.device("cuda"), weights_only=True
+    )
     # find parameter key
     print("-------- Finding parameter key...")
     param_key: str | None = None
