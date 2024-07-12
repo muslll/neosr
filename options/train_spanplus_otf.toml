@@ -122,12 +122,12 @@ warmup_steps = 500
 
 #  losses
 [train.mssim_opt]
-type = "mssim"
+type = "mssim_loss"
 loss_weight = 1.0
 
 [train.perceptual_opt]
 type = "vgg_perceptual_loss"
-perceptual_weight = 1.0
+loss_weight = 1.0
 criterion = "huber"
 #patchloss = true
 #ipk = true
@@ -139,26 +139,26 @@ gan_type = "bce"
 loss_weight = 0.3
 
 [train.color_opt]
-type = "colorloss"
+type = "color_loss"
 loss_weight = 1.0
 criterion = "huber"
 
 [train.luma_opt]
-type = "lumaloss"
+type = "luma_loss"
 loss_weight = 1.0
 criterion = "huber"
 
 #[train.dists_opt]
-#type = "dists"
+#type = "dists_loss"
 #loss_weight = 0.5
 
 #[train.ldl_opt]
-#type = "HuberLoss"
+#type = "ldl_loss"
 #loss_weight = 1.0
 #criterion = "huber"
 
 #[train.ff_opt]
-#type = "focalfrequencyloss"
+#type = "ff_loss"
 #loss_weight = 1.0
 
 #[train.gw_opt]

@@ -41,6 +41,7 @@ val_freq = 1000
 [network_g]
 type = "realplksr"
 #type = "realplksr_tiny"
+#dysample = true
 
 [network_d]
 type = "ea2fpn"
