@@ -179,7 +179,7 @@ def paths_from_folder(folder: str) -> list[str]:
 
     """
     paths = list(scandir(folder))
-    return [Path(folder) / path for path in paths]
+    return [Path(str(folder)) / path for path in paths]
 
 
 def paths_from_lmdb(folder: str) -> list[str]:

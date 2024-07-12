@@ -8,7 +8,7 @@ from typing import Any
 
 import torch
 
-from neosr.utils import set_random_seed
+from neosr.utils import set_random_seed, tc
 from neosr.utils.dist_util import get_dist_info, init_dist, master_only
 
 
@@ -150,15 +150,21 @@ def parse_options(
 
     # error if no config file exists
     if args.input is None and args.opt is None:
-        msg = "Didn't get a config! Please link the config file using -opt /path/to/config.toml"
+        msg = f"""
+        {tc.red}
+        Didn't get a config! Please link the config file using -opt /path/to/config.toml
+        {tc.end}
+        """
         raise ValueError(msg)
 
     if args.input is None:
         # error if not toml
         if not args.opt.endswith(".toml"):
-            msg = """
-            neosr only support TOML configuration files now,
-            please see template files on the options/ folder.
+            msg = f"""
+            {tc.light_blue}
+            neosr has switched to TOML configuration files!
+            Please see templates on the options/ folder.
+            {tc.end}
             """
             raise ValueError(msg)
 

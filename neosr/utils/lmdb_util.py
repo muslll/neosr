@@ -105,7 +105,7 @@ def make_lmdb_from_imgs(
     # create lmdb environment
     if map_size is None:
         # obtain data size for one image
-        img = cv2.imread(Path(data_path) / img_path_list[0], cv2.IMREAD_UNCHANGED)
+        img = cv2.imread(Path(str(data_path)) / img_path_list[0], cv2.IMREAD_UNCHANGED)
         _, img_byte = cv2.imencode(
             ".png", img, [cv2.IMWRITE_PNG_COMPRESSION, compress_level]
         )

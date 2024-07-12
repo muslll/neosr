@@ -9,6 +9,7 @@ Join our <a href="https://discord.gg/NN2HGtJ3d6">Discord</a>
 
 <details>
   <summary><b>news</b></summary>
+  07.12.2024 - neosr now works with TOML configuration files! Please see the <a href="https://github.com/muslll/neosr/tree/master/options">templates</a>.<br>
   06.19.2024 - neosr now supports SOTA optimization through <a href="https://github.com/muslll/adan_schedule_free">Adan Schedule-Free</a> and <a href="https://github.com/nblt/F-SAM">F-SAM</a><br>
   05.09.2024 - Release Real-PLKSR network. <a href=https://github.com/muslll/neosr/wiki/Arch%E2%80%90specific-options#realplksr-realplksr_s>wiki</a><br>
   05.08.2024 - Release <b>Nomos-v2</b> dataset. For more details, see <a href=#datasets>datasets</a><br>
@@ -103,8 +104,9 @@ Where `options.toml` is a configuration file. Templates can be found in [options
 
 #### Under Testing
 
-| arch                                          		     | option               	     	    |
-|--------------------------------------------------------------------|--------------------------------------|
+| arch                                          		     | option               	     	   	    |
+|--------------------------------------------------------------------|----------------------------------------------|
+| [HiT-SRF](https://github.com/XiangZ-0/HiT-SR)			     | `hit_srf`, `hit_srf_medium`, `hit_srf_large` |
 
 
 ### Supported Discriminators:

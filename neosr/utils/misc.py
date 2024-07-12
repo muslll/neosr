@@ -12,25 +12,17 @@ import torch
 from neosr.utils.dist_util import master_only
 
 
-def check_disk_space():
+def check_disk_space() -> int:
     """
     Check if there's enough free disk space in the current path.
 
-    Raises:
-        OSError: If the free disk space is less than 500 MB.
+    Returns (int):
+        Free disk space in MB.
     """
     current_path = Path.cwd()
     disk_usage = shutil.disk_usage(str(current_path))
     free_space_mb = disk_usage.free // (1024 * 1024)
-    if free_space_mb < 500:
-        msg = f"""
-
-        Not enough free disk space in {current_path}.
-        Please free up at least 500 MB of space.
-        Attempting to save current progress...
-
-        """
-        raise OSError(msg)
+    return free_space_mb
 
 
 class tc:

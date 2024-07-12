@@ -283,9 +283,15 @@ def train_pipeline(root_path: str) -> None:
                 # save models and training states
                 if current_iter_log % save_checkpoint_freq == 0:
                     # check if there's enough disk space
-                    try:
-                        check_disk_space()
-                    except OSError as e:
+                    free_space = check_disk_space()
+                    if free_space < 500:
+                        msg = f"""
+                        {tc.red}
+                        Not enough free disk space in {current_path}.
+                        Please free up at least 500 MB of space.
+                        Attempting to save current progress...
+                        {tc.end}
+                        """
                         logger.exception(e)  # noqa: TRY401
                         model.save(epoch, int(current_iter_log))  # type: ignore[reportFunctionMemberAccess,attr-defined]
                         sys.exit(1)

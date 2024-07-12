@@ -3,4 +3,5 @@ options/tmp/
 __pycache__/
 .ruff_cache/
 .mypy_cache/
-.pytype/
+.pyre/
+.pyre_configuration
