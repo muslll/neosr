@@ -48,3 +48,4 @@
 | EA2FPN (bespoke, based on [`A2-FPN`](https://github.com/lironui/A2-FPN) 			      		| [Apache 2.0](https://github.com/muslll/neosr/blob/master/license.txt)		      				|
 | [`SPANPlus`](https://github.com/umzi2/SPANPlus)								| [Apache 2.0](https://github.com/umzi2/SPANPlus/blob/master/license.txt)					|
 | [`HiT-SRF`](https://github.com/XiangZ-0/HiT-SR)								| [Apache 2.0](https://github.com/XiangZ-0/HiT-SR/blob/main/LICENSE)						|
+| [`HMA`](https://github.com/korouuuuu/HMA)									| [MIT](https://github.com/korouuuuu/HMA/blob/main/LICENSE)							|

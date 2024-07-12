@@ -2,7 +2,7 @@ import math
 
 import torch
 import torch.nn.functional as F
-import torch.utils.checkpoint as checkpoint
+from torch.utils import checkpoint
 from torch import nn
 from torch.nn.init import trunc_normal_
 

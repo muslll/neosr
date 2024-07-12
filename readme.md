@@ -107,6 +107,7 @@ Where `options.toml` is a configuration file. Templates can be found in [options
 | arch                                          		     | option               	     	   	    |
 |--------------------------------------------------------------------|----------------------------------------------|
 | [HiT-SRF](https://github.com/XiangZ-0/HiT-SR)			     | `hit_srf`, `hit_srf_medium`, `hit_srf_large` |
+| [HMA](https://github.com/korouuuuu/HMA)			     | `hma`, `hma_medium`, `hma_large`		    |
 
 
 ### Supported Discriminators:
