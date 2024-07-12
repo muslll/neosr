@@ -286,15 +286,16 @@ class image(base):
             msg = f"{tc.red}Wavelet-Guided requires GAN.{tc.end}"
             logger.error(msg)
             sys.exit(1)
-        if self.opt["network_d"].get("type") == "ea2fpn" and self.patch_size == 48 and self.scale == 1:
-            msg = f"""
-            {tc.red}
-            Discriminator ea2fpn does not work with patch_size 48 while doing 1x ratio.
-            Please increase or decrease patch_size.
-            {tc.end}
-            """
-            logger.error(msg)
-            sys.exit(1)
+        if self.net_d is not None:
+            if self.opt["network_d"].get("type") == "ea2fpn" and self.patch_size == 48 and self.scale == 1:
+                msg = f"""
+                {tc.red}
+                Discriminator ea2fpn does not work with patch_size 48 while doing 1x ratio.
+                Please increase or decrease patch_size.
+                {tc.end}
+                """
+                logger.error(msg)
+                sys.exit(1)
 
 
     def setup_optimizers(self) -> None:

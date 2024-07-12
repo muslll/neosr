@@ -138,18 +138,18 @@ Where `options.toml` is a configuration file. Templates can be found in [options
 
 | loss                                                                   						| option               		      	     |
 |-----------------------------------------------------------------------------------------------------------------------|--------------------------------------------|
-| L1 Loss                                                                						| `L1Loss`, `l1`       		     	     |
-| L2 Loss                                                                						| `MSELoss`, `l2`      		     	     |
-| Huber Loss                                                             						| `HuberLoss`, `huber` 		     	     |
-| CHC (Clipped Huber with Cosine Similarity Loss)			 						| `chc`, `chc_l2`			     |
-| Perceptual Loss                                                        						| `perceptual_opt`, `PerceptualLoss`         |
-| GAN                                                                    						| `gan_opt`, `GANLoss`, `MultiScaleGANLoss`  |
-| Y**CbCr** Color Loss (bt601)                                           						| `color_opt`, `colorloss`                   |
-| Luma Loss (CIE L*)						 							| `luma_opt` `lumaloss`		     	     |
-| [MS-SSIM](https://github.com/lartpang/mssim.pytorch)			 						| `mssim_opt` `mssim`			     |
-| [LDL Loss](https://github.com/csjliang/LDL)                            						| `ldl_opt`  			             |
-| [Focal Frequency](https://github.com/EndlessSora/focal-frequency-loss) 						| `ff_opt`, `focalfrequencyloss`             |
-| [DISTS](https://github.com/dingkeyan93/DISTS)				 						| `dists_opt`, `dists`			     |
+| L1 Loss                                                                						| `L1Loss`, `l1_loss`  		     	     |
+| L2 Loss                                                                						| `MSELoss`, `mse_loss`    	     	     |
+| Huber Loss                                                             						| `HuberLoss`, `huber_loss` 	    	     |
+| CHC (Clipped Huber with Cosine Similarity Loss)			 						| `chc_loss`				     |
+| Perceptual Loss                                                        						| `perceptual_opt`, `vgg_perceptual_loss`    |
+| GAN                                                                    						| `gan_opt`, `gan_loss`			     |
+| Y**CbCr** Color Loss (bt601)                                           						| `color_opt`, `color_loss`                  |
+| Luma Loss (CIE L*)						 							| `luma_opt` `luma_loss`	     	     |
+| [MS-SSIM](https://github.com/lartpang/mssim.pytorch)			 						| `mssim_opt` `mssim_loss`		     |
+| [LDL Loss](https://github.com/csjliang/LDL)                            						| `ldl_opt`, `ldl_loss` 	             |
+| [Focal Frequency](https://github.com/EndlessSora/focal-frequency-loss) 						| `ff_opt`, `ff_loss`             	     |
+| [DISTS](https://github.com/dingkeyan93/DISTS)				 						| `dists_opt`, `dists_loss`		     |
 | [Wavelet Guided](https://github.com/mandalinadagi/WGSR)		 						| `wavelet_guided`			     |
 | [Gradient-Weighted](https://github.com/xiezw5/Component-Divide-and-Conquer-for-Real-World-Image-Super-Resolution/)	| `gw_opt`, `gw_loss`			     | 
 | [Perceptual Patch Loss](https://github.com/Suanmd/Patch-Loss-for-Super-Resolution)					| `perceptual_opt`, `patchloss`, `ipk`	     |
@@ -169,7 +169,7 @@ Where `options.toml` is a configuration file. Templates can be found in [options
 
 | model   | description                                                            | option    |
 |---------|------------------------------------------------------------------------|-----------|
-| Default | Base model, supports both Generator and Discriminator                  | `default` |
+| Default | Base model for SISR, supports both Generator and Discriminator         | `image`   |
 | OTF     | Builds on top of `default`, adding Real-ESRGAN on-the-fly degradations | `otf`     |
 
 ### Supported dataset loaders:
