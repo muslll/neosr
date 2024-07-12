@@ -46,7 +46,6 @@ type = "srformer_light"
 type = "ea2fpn"
 
 [train]
-total_iter = 1000000
 ema = 0.999
 #sam = "fsam"
 #sam_init = 1000
@@ -119,6 +118,7 @@ criterion = "huber"
 #criterion = "chc_loss"
 
 [logger]
+total_iter = 1000000
 save_checkpoint_freq = 1000
 use_tb_logger = true
 #save_tb_img = true

@@ -83,7 +83,7 @@ def create_train_val_dataloader(
                 * dataset_enlarge_ratio
                 / (dataset_opt["batch_size"] * accumulate * opt["world_size"])
             )
-            total_iters = int(opt["train"]["total_iter"] * accumulate)
+            total_iters = int(opt["logger"].get("total_iter", 1000000) * accumulate)
             total_epochs: int = math.ceil(total_iters / (num_iter_per_epoch))
             logger.info(
                 'Training statistics:'
@@ -322,7 +322,7 @@ def train_pipeline(root_path: str) -> None:
         logger.info(
             f"{tc.light_green}End of training. Time consumed: {consumed_time}{tc.end}"
         )
-        logger.info("{tc.light_green}Save the latest model.{tc.end}")
+        logger.info(f"{tc.light_green}Save the latest model.{tc.end}")
         # -1 stands for the latest
         model.save(epoch=-1, current_iter=-1)  # type: ignore[reportFunctionMemberAccess,attr-defined]
 

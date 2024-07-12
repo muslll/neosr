@@ -89,14 +89,14 @@ class MBConv(nn.Module):
 
 # CCM
 class CCM(nn.Module):
-    def __init__(self, dim, growth_rate=2.0, bias=True):
+    def __init__(self, dim, growth_rate=2.0):
         super().__init__()
         hidden_dim = int(dim * growth_rate)
 
         self.ccm = nn.Sequential(
-            nn.Conv2d(dim, hidden_dim, 3, 1, 1, bias=bias),
+            nn.Conv2d(dim, hidden_dim, 3, 1, 1),
             nn.GELU(),
-            nn.Conv2d(hidden_dim, dim, 1, 1, 0, bias=bias),
+            nn.Conv2d(hidden_dim, dim, 1, 1, 0),
         )
 
     def forward(self, x):
@@ -241,12 +241,26 @@ class SimpleSAFM(nn.Module):
         return x
 
 
+class CCM_light(nn.Module):
+    def __init__(self, dim, ffn_scale):
+        super().__init__()
+
+        self.conv = nn.Sequential(
+            nn.Conv2d(dim, int(dim*ffn_scale), 3, 1, 1, bias=False),
+            nn.GELU(),
+            nn.Conv2d(int(dim*ffn_scale), dim, 1, 1, 0, bias=False)
+        )
+
+    def forward(self, x):
+        return self.conv(x)
+
+
 class AttBlock_pp(nn.Module):
     def __init__(self, dim, ffn_scale):
         super().__init__()
 
         self.conv1 = SimpleSAFM(dim)
-        self.conv2 = CCM(dim, ffn_scale, bias=False)
+        self.conv2 = CCM_light(dim, ffn_scale)
 
     def forward(self, x):
         out = self.conv1(x)
@@ -256,7 +270,7 @@ class AttBlock_pp(nn.Module):
 
 @ARCH_REGISTRY.register()
 class light_safmnpp(nn.Module):
-    def __init__(self, dim=8, n_blocks=1, ffn_scale=2.0, upscaling_factor=upscale):
+    def __init__(self, dim=32, n_blocks=2, ffn_scale=1.5, upscaling_factor=upscale):
         super().__init__()
         self.scale = upscaling_factor
 

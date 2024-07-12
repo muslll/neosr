@@ -62,7 +62,7 @@ class MessageLogger:
         self.interval = opt["logger"].get("print_freq", 100)
         self.accumulate = opt["datasets"]["train"].get("accumulate", 1)
         self.start_iter = start_iter
-        self.max_iters = opt["train"]["total_iter"]
+        self.max_iters = opt["logger"].get("total_iter", 1000000)
         self.use_tb_logger = opt["logger"]["use_tb_logger"]
         self.tb_logger = tb_logger
         self.start_time = time.time()

@@ -126,7 +126,8 @@ class image(base):
         self.gradscaler_g: Callable = torch.cuda.amp.GradScaler(  # type: ignore[assignment]
             enabled=self.use_amp, init_scale=2.0**5
         )
-        self.gradscaler_d: Callable = torch.cuda.amp.GradScaler(enabled=self.use_amp)  # type: ignore[assignment]
+        if self.net_d is not None:
+            self.gradscaler_d: Callable = torch.cuda.amp.GradScaler(enabled=self.use_amp)  # type: ignore[assignment]
 
         # LQ matching for Color/Luma losses
         self.match_lq_colors = self.opt["train"].get("match_lq_colors", False)
@@ -285,6 +286,16 @@ class image(base):
             msg = f"{tc.red}Wavelet-Guided requires GAN.{tc.end}"
             logger.error(msg)
             sys.exit(1)
+        if self.opt["network_d"].get("type") == "ea2fpn" and self.patch_size == 48 and self.scale == 1:
+            msg = f"""
+            {tc.red}
+            Discriminator ea2fpn does not work with patch_size 48 while doing 1x ratio.
+            Please increase or decrease patch_size.
+            {tc.end}
+            """
+            logger.error(msg)
+            sys.exit(1)
+
 
     def setup_optimizers(self) -> None:
         train_opt = self.opt["train"]
@@ -396,10 +407,7 @@ class image(base):
             else:
                 a = min(current_iter / self.eco_iters, 1.0)
             # network prediction
-            if self.ema > 0:
-                self.net_output = self.net_g_ema(self.lq)
-            else:
-                self.net_output = self.net_g(self.lq)  # type: ignore[reportCallIssue,operator]
+            self.net_output = self.net_g(self.lq)  # type: ignore[reportCallIssue,operator]
             # define gt centroid
             self.gt = ((1 - a) * self.net_output) + (a * self.gt)
             # downsampled prediction
@@ -417,10 +425,7 @@ class image(base):
             self.output = ((1 - a) * self.lq_scaled) + (a * self.lq)
 
         # predict from lq centroid
-        if self.ema > 0:
-            self.output = self.net_g_ema(self.output)
-        else:
-            self.output = self.net_g(self.output)  # type: ignore[reportCallIssue,operator]
+        self.output = self.net_g(self.output)  # type: ignore[reportCallIssue,operator]
 
         return self.output, self.gt
 
@@ -555,9 +560,6 @@ class image(base):
                 device_type="cuda", dtype=self.amp_dtype, enabled=self.use_amp
             ):
                 if self.cri_gan:
-                    if self.sf_optim_d:
-                        self.optimizer_d.eval()  # type: ignore[attr-defined]
-
                     # real
                     if self.wavelet_guided and current_iter >= self.wavelet_init:
                         real_d_pred = self.net_d(combined_HF_gt)  # type: ignore[reportPossiblyUnboundVariable]
@@ -590,9 +592,6 @@ class image(base):
 
                     # add total discriminator loss for tensorboard tracking
                     loss_dict["l_d_total"] = (l_d_real + l_d_fake) / 2
-
-                    if self.sf_optim_d:
-                        self.optimizer_d.train()  # type: ignore[attr-defined]
 
                     # backward discriminator
                     if self.sam and current_iter >= self.sam_init:
