@@ -16,6 +16,7 @@ dataroot_lq = "datasets/val/"
 [network_g]
 type = "safmn"
 #type = "safmn_l"
+#type = "light_safmnpp"
 #bcie = true
 
 [path]

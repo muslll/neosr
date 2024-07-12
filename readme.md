@@ -104,11 +104,12 @@ Where `options.toml` is a configuration file. Templates can be found in [options
 
 #### Under Testing
 
-| arch                                          		     | option               	     	   	    |
-|--------------------------------------------------------------------|----------------------------------------------|
-| [HiT-SRF](https://github.com/XiangZ-0/HiT-SR)			     | `hit_srf`, `hit_srf_medium`, `hit_srf_large` |
-| [HMA](https://github.com/korouuuuu/HMA)			     | `hma`, `hma_medium`, `hma_large`		    |
-| [MAN](https://github.com/icandle/MAN)				     | `man`, `man_tiny`, `man_light`		    |
+| arch										| option					|
+|-------------------------------------------------------------------------------|-----------------------------------------------|
+| [HiT-SRF](https://github.com/XiangZ-0/HiT-SR)					| `hit_srf`, `hit_srf_medium`, `hit_srf_large`	|
+| [HMA](https://github.com/korouuuuu/HMA)					| `hma`, `hma_medium`, `hma_large`		|
+| [MAN](https://github.com/icandle/MAN)						| `man`, `man_tiny`, `man_light`		|
+| [light-SAFMN++](https://github.com/sunny2109/SAFMN/tree/main/AIS2024-RTSR)	| `light_safmnpp`				|
 
 
 ### Supported Discriminators:

@@ -89,14 +89,14 @@ class MBConv(nn.Module):
 
 # CCM
 class CCM(nn.Module):
-    def __init__(self, dim, growth_rate=2.0):
+    def __init__(self, dim, growth_rate=2.0, bias=True):
         super().__init__()
         hidden_dim = int(dim * growth_rate)
 
         self.ccm = nn.Sequential(
-            nn.Conv2d(dim, hidden_dim, 3, 1, 1),
+            nn.Conv2d(dim, hidden_dim, 3, 1, 1, bias=bias),
             nn.GELU(),
-            nn.Conv2d(hidden_dim, dim, 1, 1, 0),
+            nn.Conv2d(hidden_dim, dim, 1, 1, 0, bias=bias),
         )
 
     def forward(self, x):
@@ -212,3 +212,66 @@ class safmn(nn.Module):
 @ARCH_REGISTRY.register()
 def safmn_l(**kwargs):
     return safmn(dim=128, n_blocks=16, **kwargs)
+
+
+# light-safmn++
+class SimpleSAFM(nn.Module):
+    def __init__(self, dim):
+        super().__init__()
+
+        self.proj = nn.Conv2d(dim, dim, 3, 1, 1, bias=False)
+        self.dwconv = nn.Conv2d(
+            dim // 2, dim // 2, 3, 1, 1, groups=dim // 2, bias=False
+        )
+        self.out = nn.Conv2d(dim, dim, 1, 1, 0, bias=False)
+        self.act = nn.GELU()
+
+    def forward(self, x):
+        h, w = x.size()[-2:]
+
+        x0, x1 = self.proj(x).chunk(2, dim=1)
+
+        x2 = F.adaptive_max_pool2d(x0, (h // 8, w // 8))
+        x2 = self.dwconv(x2)
+        x2 = F.interpolate(x2, size=(h, w), mode="bilinear")
+        x2 = self.act(x2) * x0
+
+        x = torch.cat([x1, x2], dim=1)
+        x = self.out(self.act(x))
+        return x
+
+
+class AttBlock_pp(nn.Module):
+    def __init__(self, dim, ffn_scale):
+        super().__init__()
+
+        self.conv1 = SimpleSAFM(dim)
+        self.conv2 = CCM(dim, ffn_scale, bias=False)
+
+    def forward(self, x):
+        out = self.conv1(x)
+        out = self.conv2(out)
+        return out
+
+
+@ARCH_REGISTRY.register()
+class light_safmnpp(nn.Module):
+    def __init__(self, dim=8, n_blocks=1, ffn_scale=2.0, upscaling_factor=upscale):
+        super().__init__()
+        self.scale = upscaling_factor
+
+        self.to_feat = nn.Conv2d(3, dim, 3, 1, 1, bias=False)
+
+        self.feats = nn.Sequential(*[
+            AttBlock_pp(dim, ffn_scale) for _ in range(n_blocks)
+        ])
+
+        self.to_img = nn.Sequential(
+            nn.Conv2d(dim, 3 * upscaling_factor**2, 3, 1, 1, bias=False),
+            nn.PixelShuffle(upscaling_factor),
+        )
+
+    def forward(self, x):
+        x = self.to_feat(x)
+        x = self.feats(x) + x
+        return self.to_img(x)

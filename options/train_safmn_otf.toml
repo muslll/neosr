@@ -87,6 +87,7 @@ val_freq = 1000
 [network_g]
 type = "safmn"
 #type = "safmn_l"
+#type = "light_safmnpp"
 
 [network_d]
 type = "ea2fpn"
