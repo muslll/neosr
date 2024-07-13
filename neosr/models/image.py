@@ -36,7 +36,7 @@ class image(base):
         # define network net_g
         self.net_g = build_network(opt["network_g"])
         self.net_g = self.model_to_device(self.net_g)  # type: ignore[reportArgumentType,reportArgumentType,arg-type]
-        if self.opt.get("print_network", False) is True:
+        if self.opt["path"].get("print_network", False) is True:
             self.print_network(self.net_g)
 
         # define network net_d
