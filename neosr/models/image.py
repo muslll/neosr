@@ -127,7 +127,9 @@ class image(base):
             enabled=self.use_amp, init_scale=2.0**5
         )
         if self.net_d is not None:
-            self.gradscaler_d: Callable = torch.cuda.amp.GradScaler(enabled=self.use_amp)  # type: ignore[assignment]
+            self.gradscaler_d: Callable = torch.cuda.amp.GradScaler(
+                enabled=self.use_amp
+            )  # type: ignore[assignment]
 
         # LQ matching for Color/Luma losses
         self.match_lq_colors = self.opt["train"].get("match_lq_colors", False)
@@ -286,8 +288,12 @@ class image(base):
             msg = f"{tc.red}Wavelet-Guided requires GAN.{tc.end}"
             logger.error(msg)
             sys.exit(1)
-        if self.net_d is not None:
-            if self.opt["network_d"].get("type") == "ea2fpn" and self.patch_size == 48 and self.scale == 1:
+        if self.net_d is not None:  # noqa: SIM102
+            if (
+                self.opt["network_d"].get("type") == "ea2fpn"
+                and self.patch_size == 48
+                and self.scale == 1
+            ):
                 msg = f"""
                 {tc.red}
                 Discriminator ea2fpn does not work with patch_size 48 while doing 1x ratio.
@@ -296,7 +302,6 @@ class image(base):
                 """
                 logger.error(msg)
                 sys.exit(1)
-
 
     def setup_optimizers(self) -> None:
         train_opt = self.opt["train"]

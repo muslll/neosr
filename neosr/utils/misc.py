@@ -21,8 +21,7 @@ def check_disk_space() -> int:
     """
     current_path = Path.cwd()
     disk_usage = shutil.disk_usage(str(current_path))
-    free_space_mb = disk_usage.free // (1024 * 1024)
-    return free_space_mb
+    return disk_usage.free // (1024 * 1024)
 
 
 class tc:

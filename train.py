@@ -287,12 +287,12 @@ def train_pipeline(root_path: str) -> None:
                     if free_space < 500:
                         msg = f"""
                         {tc.red}
-                        Not enough free disk space in {current_path}.
+                        Not enough free disk space in {Path.cwd()}.
                         Please free up at least 500 MB of space.
                         Attempting to save current progress...
                         {tc.end}
                         """
-                        logger.exception(e)  # noqa: TRY401
+                        logger.error(msg)
                         model.save(epoch, int(current_iter_log))  # type: ignore[reportFunctionMemberAccess,attr-defined]
                         sys.exit(1)
 

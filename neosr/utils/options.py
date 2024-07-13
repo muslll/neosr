@@ -26,7 +26,7 @@ def toml_load(f) -> dict[str, Any]:
         with Path(f).open("rb") as f:
             return tomllib.load(f)
     except:
-        msg = f""" 
+        msg = f"""
         {tc.red}
         Error decoding TOML file.
         If you are on Windows, make sure your paths uses double-backslashes.
