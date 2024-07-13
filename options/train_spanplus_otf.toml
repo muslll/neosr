@@ -117,7 +117,7 @@ lr = 8e-4
 betas = [ 0.98, 0.92, 0.995 ]
 weight_decay = 0.02
 schedule_free = true
-warmup_steps = 500
+#warmup_steps = 500
 
 #  losses
 [train.mssim_opt]
