@@ -10,8 +10,8 @@ scale = 4
 
 [datasets.train]
 type = "paired"
-dataroot_gt = "C:\\datasets\\gt\\"
-dataroot_lq = "C:\\datasets\\lq\\"
+dataroot_gt = 'C:\datasets\gt\'
+dataroot_lq = 'C:\datasets\lq\'
 patch_size = 48
 batch_size = 8
 #accumulate = 1
@@ -21,8 +21,8 @@ batch_size = 8
 [datasets.val]
 name = "val"
 type = "paired"
-dataroot_gt = "C:\\datasets\\val\\gt\\"
-dataroot_lq = "C:\\datasets\\val\\lq\\"
+dataroot_gt = 'C:\datasets\val\gt\'
+dataroot_lq = 'C:\datasets\val\lq\'
 [val]
 val_freq = 1000
 #tile = 200
@@ -35,8 +35,8 @@ val_freq = 1000
 #better = "lower"
 
 [path]
-#pretrain_network_g = "experiments\\pretrain_g.pth"
-#pretrain_network_d = "experiments\\pretrain_d.pth"
+#pretrain_network_g = 'experiments\pretrain_g.pth'
+#pretrain_network_d = 'experiments\pretrain_d.pth'
 
 [network_g]
 type = "hit_srt"

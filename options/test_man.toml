@@ -9,7 +9,7 @@ scale = 4
 [datasets.test_1]
 name = "val_1"
 type = "single"
-dataroot_lq = "C:\\datasets\\val\\"
+dataroot_lq = 'C:\datasets\val\'
 [val]
 #tile = 200
 
@@ -19,4 +19,4 @@ type = "man"
 #type = "man_light"
 
 [path]
-pretrain_network_g = "C:\\model.pth"
+pretrain_network_g = 'C:\model.pth'

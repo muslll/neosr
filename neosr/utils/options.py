@@ -29,7 +29,7 @@ def toml_load(f) -> dict[str, Any]:
         msg = f"""
         {tc.red}
         Error decoding TOML file.
-        If you are on Windows, make sure your paths uses double-backslashes.
+        If you are on Windows, make sure your paths uses single-quotes.
         {tc.end}
         """
         raise tomllib.TOMLDecodeError(msg)
