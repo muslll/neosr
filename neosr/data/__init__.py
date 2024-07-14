@@ -81,7 +81,7 @@ def build_dataloader(
     # train
     if phase == "train":
         if dataset_opt.get("num_worker_per_gpu", "auto") == "auto" or None:
-            num_workers = len(os.sched_getaffinity(0))
+            num_workers = os.cpu_count()
         else:
             num_workers = dataset_opt["num_worker_per_gpu"]
         if dist:  # distributed training
