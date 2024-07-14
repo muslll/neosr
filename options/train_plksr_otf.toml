@@ -103,7 +103,7 @@ ema = 0.999
 
 [train.optim_g]
 type = "adan_sf"
-lr = 1.6e-3
+lr = 5e-4
 betas = [ 0.98, 0.92, 0.987 ]
 weight_decay = 0.02
 schedule_free = true
