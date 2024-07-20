@@ -65,7 +65,7 @@ warmup_steps = 1600
 
 [train.optim_d]
 type = "adan_sf"
-lr = 8e-4
+lr = 5e-4
 betas = [ 0.98, 0.92, 0.995 ]
 weight_decay = 0.02
 schedule_free = true
@@ -115,7 +115,6 @@ criterion = "huber"
 #[train.gw_opt]
 #type = "gw_loss"
 #loss_weight = 1.0
-#criterion = "chc"
 
 [logger]
 total_iter = 1000000
