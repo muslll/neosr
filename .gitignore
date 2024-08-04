@@ -5,3 +5,4 @@ __pycache__/
 .mypy_cache/
 .pyre/
 .pyre_configuration
+check.sh

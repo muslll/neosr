@@ -134,7 +134,7 @@ def to_onnx() -> None:
             export_params=True,
             opset_version=args.opset,
             do_constant_folding=False,
-            **(dyn_axes or {}),
+            **(dyn_axes or {}),  # type: ignore
         )
 
     print("-------- Conversion was successful. Verifying...")

@@ -21,8 +21,6 @@ from neosr.utils import get_root_logger, imwrite, tc, tensor2img
 from neosr.utils.registry import MODEL_REGISTRY
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
-
     from torch.optim.optimizer import Optimizer
 
 
@@ -121,15 +119,11 @@ class image(base):
             torch.bfloat16 if self.opt.get("bfloat16", False) is True else torch.float16
         )
 
-        # self.gradscaler_g = torch.amp.GradScaler('cuda', enabled=self.use_amp, init_scale=2.**5)
-        # self.gradscaler_d = torch.amp.GradScaler('cuda', enabled=self.use_amp, init_scale=2.**5)
-        self.gradscaler_g: Callable = torch.cuda.amp.GradScaler(  # type: ignore[assignment]
-            enabled=self.use_amp, init_scale=2.0**5
+        self.gradscaler_g = torch.amp.GradScaler(
+            "cuda", enabled=self.use_amp, init_scale=2.0**5
         )
         if self.net_d is not None:
-            self.gradscaler_d: Callable = torch.cuda.amp.GradScaler(
-                enabled=self.use_amp
-            )  # type: ignore[assignment]
+            self.gradscaler_d = torch.amp.GradScaler("cuda", enabled=self.use_amp)
 
         # LQ matching for Color/Luma losses
         self.match_lq_colors = self.opt["train"].get("match_lq_colors", False)

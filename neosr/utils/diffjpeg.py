@@ -1,4 +1,4 @@
-# type: ignore  # noqa: PGH003
+# type: ignore
 """Modified from https://github.com/mlomnitz/DiffJPEG.
 
 For images not divisible by 8

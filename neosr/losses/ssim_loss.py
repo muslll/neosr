@@ -118,8 +118,7 @@ class mssim_loss(nn.Module):
             padding=padding,
         )
 
-    # @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type='cuda')
-    @torch.cuda.amp.custom_fwd(cast_inputs=torch.float32)
+    @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type="cuda")
     def forward(self, x: Tensor, y: Tensor) -> Tensor:
         """x, y (Tensor): tensors of shape (N,C,H,W)
         Returns: Tensor.

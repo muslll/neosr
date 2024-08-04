@@ -35,8 +35,7 @@ class PatchesKernel3D(nn.Module):
         self.stride = kernelstride
         self.padding = kernelpadding
 
-    # @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type='cuda')
-    @torch.cuda.amp.custom_fwd(cast_inputs=torch.float32)
+    @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type="cuda")
     def forward(self, x: Tensor) -> Tensor:
         batchsize = x.shape[0]
         channels = x.shape[1]
@@ -142,8 +141,7 @@ class vgg_perceptual_loss(nn.Module):
             raise NotImplementedError(msg)
 
     @torch.no_grad()
-    # @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type='cuda')
-    @torch.cuda.amp.custom_fwd(cast_inputs=torch.float32)
+    @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type="cuda")
     def patch(self, x: Tensor, gt: Tensor, is_ipk: bool = False) -> float:
         """Args:
         ----

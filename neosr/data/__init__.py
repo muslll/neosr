@@ -87,7 +87,7 @@ def build_dataloader(
         if dist:  # distributed training
             batch_size = dataset_opt["batch_size"]
         else:  # non-distributed training
-            multiplier = 1 if num_gpu == 0 else num_gpu
+            multiplier: int = 1 if num_gpu == 0 else num_gpu
             batch_size = dataset_opt["batch_size"] * multiplier
             num_workers *= multiplier
         dataloader_args = {

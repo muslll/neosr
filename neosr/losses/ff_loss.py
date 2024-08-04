@@ -114,8 +114,7 @@ class ff_loss(nn.Module):
         loss = weight_matrix * freq_distance
         return torch.mean(loss)
 
-    # @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type='cuda')
-    @torch.cuda.amp.custom_fwd(cast_inputs=torch.float32)
+    @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type="cuda")
     def forward(
         self,
         pred: Tensor,

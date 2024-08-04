@@ -19,7 +19,7 @@ tb-nightly = "^2.18.0a20240708"
 
 [tool.ruff]
 lint.select = ["ALL"]
-lint.ignore = ["D", "COM812", "ISC001", "T201", "E501", "T201", "D", "CPY", "TD002", "TD003", "COM812", "ISC001", "N8", "S101", "G004", "ERA001", "PLR", "C90", "E722", "B904", "FBT001", "FBT002", "SLF001", "S311", "FIX", "PLC0206", "ANN" ]
+lint.ignore = ["D", "COM812", "ISC001", "T201", "E501", "T201", "D", "CPY", "TD002", "TD003", "COM812", "ISC001", "N8", "S101", "G004", "ERA001", "PLR", "C90", "E722", "B904", "FBT001", "FBT002", "SLF001", "S311", "FIX", "PLC0206", "ANN", "PGH003" ]
 exclude = ["*_arch.py"]
 target-version = "py312"
 preview = true

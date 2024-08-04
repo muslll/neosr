@@ -352,8 +352,7 @@ class SWTForward(nn.Module):
         self.J = J
         self.mode = mode
 
-    # @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type='cuda')
-    @torch.cuda.amp.custom_fwd(cast_inputs=torch.float32)
+    @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type="cuda")
     def forward(self, x: Tensor) -> list[Tensor]:
         """Forward pass of the SWT.
 
