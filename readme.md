@@ -98,6 +98,11 @@ Where `options.toml` is a configuration file. Templates can be found in [options
 | [DRCT](https://github.com/ming053l/DRCT)			     				    | `drct`, `drct_l`, `drct_s`   				|
 | [MSDAN](https://github.com/Supereeeee/MSDAN)			     				    | `msdan`			    				|
 | [SPANPlus](https://github.com/umzi2/SPANPlus)							    | `spanplus`, `spanplus_sts`, `spanplus_s`, `spanplus_st`   |
+| [HiT-SRF](https://github.com/XiangZ-0/HiT-SR)							    | `hit_srf`, `hit_srf_medium`, `hit_srf_large`		|
+| [HMA](https://github.com/korouuuuu/HMA)							    | `hma`, `hma_medium`, `hma_large`				|
+| [MAN](https://github.com/icandle/MAN)								    | `man`, `man_tiny`, `man_light`				|
+| [light-SAFMN++](https://github.com/sunny2109/SAFMN/tree/main/AIS2024-RTSR)			    | `light_safmnpp`						|
+| [MoSR](https://github.com/umzi2/MoSR)								    | `mosr`, `mosr_t`						|
 
 > [!NOTE]
 > For all arch-specific parameters, [read the wiki](https://github.com/muslll/neosr/wiki/Arch%E2%80%90specific-options).
@@ -106,10 +111,7 @@ Where `options.toml` is a configuration file. Templates can be found in [options
 
 | arch										| option					|
 |-------------------------------------------------------------------------------|-----------------------------------------------|
-| [HiT-SRF](https://github.com/XiangZ-0/HiT-SR)					| `hit_srf`, `hit_srf_medium`, `hit_srf_large`	|
-| [HMA](https://github.com/korouuuuu/HMA)					| `hma`, `hma_medium`, `hma_large`		|
-| [MAN](https://github.com/icandle/MAN)						| `man`, `man_tiny`, `man_light`		|
-| [light-SAFMN++](https://github.com/sunny2109/SAFMN/tree/main/AIS2024-RTSR)	| `light_safmnpp`				|
+| -										| -						|
 
 
 ### Supported Discriminators:
