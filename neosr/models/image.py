@@ -148,7 +148,7 @@ class image(base):
         if self.accum_iters in {0, None}:
             self.accum_iters = 1
 
-        # define losses
+        # pixel loss
         if train_opt.get("pixel_opt"):
             self.cri_pix = build_loss(train_opt["pixel_opt"]).to(  # type: ignore[reportCallIssue,attr-defined]
                 self.device, memory_format=torch.channels_last, non_blocking=True
@@ -156,6 +156,7 @@ class image(base):
         else:
             self.cri_pix = None
 
+        # mssim loss
         if train_opt.get("mssim_opt"):
             self.cri_mssim = build_loss(train_opt["mssim_opt"]).to(  # type: ignore[reportCallIssue,attr-defined]
                 self.device, memory_format=torch.channels_last, non_blocking=True
@@ -163,6 +164,15 @@ class image(base):
         else:
             self.cri_mssim = None
 
+        # consistency loss
+        if train_opt.get("consistency_opt"):
+            self.cri_consistency = build_loss(train_opt["consistency_opt"]).to(  # type: ignore[reportCallIssue,attr-defined]
+                self.device, memory_format=torch.channels_last, non_blocking=True
+            )
+        else:
+            self.cri_consistency = None
+
+        # vgg19 perceptual loss
         if train_opt.get("perceptual_opt"):
             self.cri_perceptual = build_loss(train_opt["perceptual_opt"]).to(  # type: ignore[reportCallIssue,attr-defined]
                 self.device, memory_format=torch.channels_last, non_blocking=True
@@ -177,7 +187,7 @@ class image(base):
         else:
             self.cri_dists = None
 
-        # GAN loss
+        # gan loss
         if train_opt.get("gan_opt"):
             self.cri_gan = build_loss(train_opt["gan_opt"]).to(  # type: ignore[reportCallIssue,attr-defined]
                 self.device, memory_format=torch.channels_last, non_blocking=True
@@ -185,7 +195,7 @@ class image(base):
         else:
             self.cri_gan = None
 
-        # LDL loss
+        # ldl loss
         if train_opt.get("ldl_opt"):
             self.cri_ldl = build_loss(train_opt["ldl_opt"]).to(  # type: ignore[reportCallIssue,attr-defined]
                 self.device, memory_format=torch.channels_last, non_blocking=True
@@ -193,7 +203,7 @@ class image(base):
         else:
             self.cri_ldl = None
 
-        # Focal Frequency Loss
+        # focal-frequency loss
         if train_opt.get("ff_opt"):
             self.cri_ff = build_loss(train_opt["ff_opt"]).to(  # type: ignore[reportCallIssue,attr-defined]
                 self.device, memory_format=torch.channels_last, non_blocking=True
@@ -201,7 +211,7 @@ class image(base):
         else:
             self.cri_ff = None
 
-        # Gradient-Weighted loss
+        # gradient-weighted loss
         if train_opt.get("gw_opt"):
             self.cri_gw = build_loss(train_opt["gw_opt"]).to(  # type: ignore[reportCallIssue,attr-defined]
                 self.device, memory_format=torch.channels_last, non_blocking=True
@@ -209,23 +219,7 @@ class image(base):
         else:
             self.cri_gw = None
 
-        # Color loss
-        if train_opt.get("color_opt"):
-            self.cri_color = build_loss(train_opt["color_opt"]).to(  # type: ignore[reportCallIssue,attr-defined]
-                self.device, memory_format=torch.channels_last, non_blocking=True
-            )
-        else:
-            self.cri_color = None
-
-        # Luma loss
-        if train_opt.get("luma_opt"):
-            self.cri_luma = build_loss(train_opt["luma_opt"]).to(  # type: ignore[reportCallIssue,attr-defined]
-                self.device, memory_format=torch.channels_last, non_blocking=True
-            )
-        else:
-            self.cri_luma = None
-
-        # Wavelet Guided loss
+        # wavelet-guided loss
         self.wavelet_guided = self.opt["train"].get("wavelet_guided", False)
         self.wavelet_init = self.opt["train"].get("wavelet_init", 0)
         if self.wavelet_guided:
@@ -410,6 +404,7 @@ class image(base):
             self.net_output = self.net_g(self.lq)  # type: ignore[reportCallIssue,operator]
             # define gt centroid
             self.gt = ((1 - a) * self.net_output) + (a * self.gt)
+            self.gt = torch.clamp(self.gt, 1 / 255, 1)
             # downsampled prediction
             self.lq_scaled = torch.clamp(
                 F.interpolate(
@@ -418,7 +413,7 @@ class image(base):
                     mode="bicubic",
                     antialias=True,
                 ),
-                0,
+                1 / 255,
                 1,
             )
             # define lq centroid
@@ -426,6 +421,7 @@ class image(base):
 
         # predict from lq centroid
         self.output = self.net_g(self.output)  # type: ignore[reportCallIssue,operator]
+        self.output = torch.clamp(self.output, 1 / 255, 1)
 
         return self.output, self.gt
 
@@ -446,17 +442,24 @@ class image(base):
             # eco
             if self.eco and current_iter <= self.eco_iters:
                 if current_iter < self.eco_init and self.pretrain is None:
-                    self.output = self.net_g(self.lq)  # type: ignore[reportCallIssue,operator]
+                    self.output = torch.clamp(self.net_g(self.lq), 0, 1)  # type: ignore[reportCallIssue,operator]
                 else:
                     self.output, self.gt = self.eco_strategy(current_iter)
             else:
-                self.output = self.net_g(self.lq)  # type: ignore[reportCallIssue,operator]
+                self.output = torch.clamp(self.net_g(self.lq), 1 / 255, 1)  # type: ignore[reportCallIssue,operator]
 
             # lq match
             if self.match_lq_colors:
                 with torch.no_grad():
-                    self.lq_interp = F.interpolate(
-                        self.lq, scale_factor=self.scale, mode="bicubic", antialias=True
+                    self.lq_interp = torch.clamp(
+                        F.interpolate(
+                            self.lq,
+                            scale_factor=self.scale,
+                            mode="bicubic",
+                            antialias=True,
+                        ),
+                        1 / 255,
+                        1,
                     )
 
             # wavelet guided loss
@@ -472,13 +475,19 @@ class image(base):
                 l_g_pix = self.cri_pix(self.output, self.gt)
                 l_g_total += l_g_pix
                 loss_dict["l_g_pix"] = l_g_pix
-
             # ssim loss
             if self.cri_mssim:
                 l_g_mssim = self.cri_mssim(self.output, self.gt)
                 l_g_total += l_g_mssim
                 loss_dict["l_g_mssim"] = l_g_mssim
-
+            # consistency loss
+            if self.cri_consistency:
+                if self.match_lq_colors:
+                    l_g_consistency = self.cri_consistency(self.output, self.lq_interp)
+                else:
+                    l_g_consistency = self.cri_consistency(self.output, self.gt)
+                l_g_total += l_g_consistency
+                loss_dict["l_g_consistency"] = l_g_consistency
             # perceptual loss
             if self.cri_perceptual:
                 l_g_percep = self.cri_perceptual(self.output, self.gt)
@@ -504,23 +513,7 @@ class image(base):
                 l_g_gw = self.cri_gw(self.output, self.gt)
                 l_g_total += l_g_gw
                 loss_dict["l_g_gw"] = l_g_gw
-            # color loss
-            if self.cri_color:
-                if self.match_lq_colors:
-                    l_g_color = self.cri_color(self.output, self.lq_interp)
-                else:
-                    l_g_color = self.cri_color(self.output, self.gt)
-                l_g_total += l_g_color
-                loss_dict["l_g_color"] = l_g_color
-            # luma loss
-            if self.cri_luma:
-                if self.match_lq_colors:
-                    l_g_luma = self.cri_luma(self.output, self.lq_interp)
-                else:
-                    l_g_luma = self.cri_luma(self.output, self.gt)
-                l_g_total += l_g_luma
-                loss_dict["l_g_luma"] = l_g_luma
-            # GAN loss
+            # gan loss
             if self.cri_gan:
                 fake_g_pred = self.net_d(self.output)  # type: ignore[reportCallIssue,reportOptionalCall]
                 l_g_gan = self.cri_gan(fake_g_pred, target_is_real=True, is_disc=False)

@@ -79,6 +79,12 @@ schedule_free = true
 type = "mssim_loss"
 loss_weight = 1.0
 
+[train.consistency_opt]
+type = "consistency_loss"
+loss_weight = 1.0
+#saturation = 1.0
+#brightness = 1.0
+
 [train.perceptual_opt]
 type = "vgg_perceptual_loss"
 loss_weight = 1.0
@@ -91,16 +97,6 @@ criterion = "huber"
 type = "gan_loss"
 gan_type = "bce"
 loss_weight = 0.3
-
-[train.color_opt]
-type = "color_loss"
-loss_weight = 1.0
-criterion = "huber"
-
-[train.luma_opt]
-type = "luma_loss"
-loss_weight = 1.0
-criterion = "huber"
 
 #[train.dists_opt]
 #type = "dists_loss"

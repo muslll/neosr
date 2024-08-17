@@ -74,9 +74,6 @@ class mssim_loss(nn.Module):
         K2: float = 0.03,
         L: int = 1,
         padding: int | None = None,
-        clip: bool = False,
-        cosim: bool = True,
-        cosim_lambda: float = 2.0,
         loss_weight: float = 1.0,
     ) -> None:
         """Adapted from 'A better pytorch-based implementation for the mean structural
@@ -95,9 +92,6 @@ class mssim_loss(nn.Module):
             L (int): The dynamic range of the pixel values (255 for 8-bit grayscale images). Defaults to 1.
             padding (int, optional): The padding of the gaussian filter. Defaults to None. If it is set to None,
                 the filter will use window_size//2 as the padding. Another common setting is 0.
-            clip (bool): Clips values to train range, to reduce noise.
-            cosim (bool): Enables CosineSimilary on final loss, to keep better color consistency.
-            cosim_lambda (float): Lambda value to increase CosineSimilarity weight.
             loss_weight (float): Weight of final loss value.
 
         """
@@ -106,9 +100,6 @@ class mssim_loss(nn.Module):
         self.window_size = window_size
         self.C1 = (K1 * L) ** 2  # equ 7 in ref1
         self.C2 = (K2 * L) ** 2  # equ 7 in ref1
-        self.clip = clip
-        self.cosim = cosim
-        self.cosim_lambda = cosim_lambda
         self.loss_weight = loss_weight
 
         self.gaussian_filter = GaussianFilter2D(
@@ -151,13 +142,6 @@ class mssim_loss(nn.Module):
                 y = F.avg_pool2d(y, kernel_size=2, stride=2, padding=padding)
 
         msssim = cast(Tensor, math.prod(ms_components))  # equ 7 in ref2
-
-        # cosine similarity
-        if self.cosim:
-            similarity = nn.CosineSimilarity(dim=1, eps=1e-20)
-            cosine_term = (1 - similarity(x, y)).mean()
-            msssim -= self.cosim_lambda * cosine_term
-
         return msssim
 
     def _ssim(self, x: Tensor, y: Tensor) -> tuple[Tensor, Tensor]:
@@ -171,9 +155,6 @@ class mssim_loss(nn.Module):
         A2 = 2 * sigma_xy + self.C2
         B1 = mu_x.pow(2) + mu_y.pow(2) + self.C1
         B2 = sigma2_x + sigma2_y + self.C2
-
-        if self.clip:
-            A1 = torch.clamp(A1, 0.003921, 0.996078)
 
         # equ 12, 13 in ref1
         l1 = A1 / B1
