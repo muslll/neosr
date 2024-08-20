@@ -28,12 +28,14 @@ class consistency_loss(nn.Module):
         self,
         criterion: str = "chc",
         blur: bool = True,
+        cosim: bool = True,
         saturation: float = 1.0,
-        brightness: float = 1.0,
+        brightness: float = 1.1,
         loss_weight: float = 1.0,
     ) -> None:
         super().__init__()
         self.use_blur = blur
+        self.cosim = cosim
         self.saturation = saturation
         self.brightness = brightness
         self.loss_weight = loss_weight
@@ -157,6 +159,7 @@ class consistency_loss(nn.Module):
             target_luma = self.rgb_to_l_star(gt_blur) * self.brightness
         else:
             input_luma = self.rgb_to_l_star(net_output)
+            # default brightness to 1.1 due to GAN
             target_luma = self.rgb_to_l_star(gt) * self.brightness
 
         # chroma
@@ -166,16 +169,17 @@ class consistency_loss(nn.Module):
         input_chroma = torch.clamp((input_chroma + self.mean * 1), 0, 1)
         target_chroma = torch.clamp((target_chroma + self.mean * 1), 0, 1)
 
-        # cosine-similarity
-        cosim_chroma = 1 - self.similarity(input_chroma, target_chroma).mean()
-        cosim_luma = 1 - self.similarity(input_luma, target_luma).mean()
-        # hardcoded lambda for now, as values above 0.5 seems to cause instability
-        cosim = (0.5 * cosim_chroma) + (0.5 * cosim_luma)
-
-        # final loss formulation
+        # loss formulation
         loss = self.criterion(input_luma, target_luma) + self.criterion(
             input_chroma, target_chroma
         )
-        loss = loss + cosim
+
+        if self.cosim:
+            # cosine-similarity
+            cosim_chroma = 1 - self.similarity(input_chroma, target_chroma).mean()
+            cosim_luma = 1 - self.similarity(input_luma, target_luma).mean()
+            # hardcoded lambda for now, as values above 0.5 seems to cause instability
+            cosim = (0.5 * cosim_chroma) + (0.5 * cosim_luma)
+            loss = loss + cosim
 
         return loss * self.loss_weight

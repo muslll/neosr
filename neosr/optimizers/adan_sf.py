@@ -43,7 +43,7 @@ class adan_sf(Optimizer):
         self,
         params: Iterable[Tensor],
         lr: float = 1.6e-3,
-        betas: tuple[float, float, float] = (0.98, 0.92, 0.987),
+        betas: tuple[float, float, float] = (0.98, 0.92, 0.99),
         eps: float = 1e-8,
         weight_decay: float = 0.02,
         max_grad_norm: float = 0.0,
