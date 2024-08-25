@@ -30,7 +30,7 @@ class consistency_loss(nn.Module):
         blur: bool = True,
         cosim: bool = True,
         saturation: float = 1.0,
-        brightness: float = 1.1,
+        brightness: float = 1.0,
         loss_weight: float = 1.0,
     ) -> None:
         super().__init__()
@@ -159,7 +159,6 @@ class consistency_loss(nn.Module):
             target_luma = self.rgb_to_l_star(gt_blur) * self.brightness
         else:
             input_luma = self.rgb_to_l_star(net_output)
-            # default brightness to 1.1 due to GAN
             target_luma = self.rgb_to_l_star(gt) * self.brightness
 
         # chroma
@@ -178,8 +177,10 @@ class consistency_loss(nn.Module):
             # cosine-similarity
             cosim_chroma = 1 - self.similarity(input_chroma, target_chroma).mean()
             cosim_luma = 1 - self.similarity(input_luma, target_luma).mean()
-            # hardcoded lambda for now, as values above 0.5 seems to cause instability
+            # hardcoded lambda for now, as values above 0.5 causes instability
             cosim = (0.5 * cosim_chroma) + (0.5 * cosim_luma)
-            loss = loss + cosim
+            # set threshold to avoid instability on early iters 
+            if cosim < 1e-3:
+                loss = loss + cosim
 
         return loss * self.loss_weight

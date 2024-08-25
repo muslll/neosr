@@ -370,6 +370,7 @@ class base:
         self.param_key = param_key
         logger = get_root_logger()
         net = self.get_bare_model(net)
+        # TODO make a nicer error handling
         load_net = torch.load(
             load_path, map_location=torch.device("cuda"), weights_only=True
         )
