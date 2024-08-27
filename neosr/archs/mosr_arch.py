@@ -1,3 +1,4 @@
+# type: ignore  # noqa: PGH003
 import torch
 from torch import nn
 from torch.nn.init import trunc_normal_

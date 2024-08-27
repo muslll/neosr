@@ -31,6 +31,11 @@ from neosr.utils import (
 )
 from neosr.utils.options import copy_opt_file, parse_options
 
+# minimum supported python version
+if sys.version_info < (3, 12):  # noqa: UP036
+    msg = f"{tc.red}Python version >=3.12 is required.{tc.end}"
+    raise ValueError(msg)
+
 
 def init_tb_loggers(opt: dict[str, Any]):
     # initialize wandb logger before tensorboard logger to allow proper sync
@@ -143,6 +148,16 @@ def load_resume_state(opt: dict[str, Any]):
 
 
 def train_pipeline(root_path: str) -> None:
+    # raise error if pytorch <2.4
+    if int(torch.__version__.split(".")[1]) < 4:
+        msg = f"{tc.red}Pytorch >=2.4 is required, please upgrade.{tc.end}"
+        raise NotImplementedError(msg)
+
+    # raise error if not CUDA
+    if not torch.cuda.is_available():
+        msg = f"{tc.red}CUDA not available. Please install pytorch with cuda support.{tc.end}"
+        raise NotImplementedError(msg)
+
     # parse options, set distributed setting, set random seed
     opt, args = parse_options(root_path, is_train=True)
     opt["root_path"] = root_path
@@ -184,6 +199,7 @@ def train_pipeline(root_path: str) -> None:
     logger = get_root_logger(
         logger_name="neosr", log_level=logging.INFO, log_file=str(log_file)
     )
+
     logger.info(
         f"\n------------------------ neosr ------------------------\nPytorch Version: {torch.__version__}"
     )

@@ -179,7 +179,7 @@ class consistency_loss(nn.Module):
             cosim_luma = 1 - self.similarity(input_luma, target_luma).mean()
             # hardcoded lambda for now, as values above 0.5 causes instability
             cosim = (0.5 * cosim_chroma) + (0.5 * cosim_luma)
-            # set threshold to avoid instability on early iters 
+            # set threshold to avoid instability on early iters
             if cosim < 1e-3:
                 loss = loss + cosim
 

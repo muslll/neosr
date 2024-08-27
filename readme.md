@@ -120,7 +120,7 @@ Where `options.toml` is a configuration file. Templates can be found in [options
 |-------------------------------------------------------------------------------|-------------------------------|
 | U-Net w/ SN 							  		| `unet` 		        |
 | [PatchGAN](https://github.com/NVIDIA/pix2pixHD) w/ SN		  		| `patchgan`			|
-| EA2FPN (bespoke, based on [A2-FPN](https://github.com/lironui/A2-FPN)		| `ea2fpn`			|
+| EA2FPN (bespoke, based on [A2-FPN](https://github.com/lironui/A2-FPN))	| `ea2fpn`			|
 
 ### [Supported Optimizers](https://github.com/muslll/neosr/wiki/Optimizer-Options):
 
@@ -169,10 +169,10 @@ Where `options.toml` is a configuration file. Templates can be found in [options
 
 ### Supported Models:
 
-| model   | description                                                            | option    |
-|---------|------------------------------------------------------------------------|-----------|
-| Default | Base model for SISR, supports both Generator and Discriminator         | `image`   |
-| OTF     | Builds on top of `default`, adding Real-ESRGAN on-the-fly degradations | `otf`     |
+| model 	| description                                                            | option    |
+|---------------|------------------------------------------------------------------------|-----------|
+| Single Image  | Base model for SISR, supports both Generator and Discriminator         | `image`   |
+| OTF     	| Builds on top of `default`, adding Real-ESRGAN on-the-fly degradations | `otf`     |
 
 ### Supported dataset loaders:
 
@@ -203,6 +203,7 @@ pie
   "Vegetation" : 574
 ```
 
+- `4xNomosRealWeb Dataset`: realistically degraded LQ's for Nomos-v2 dataset (from [@Phhofm](https://github.com/Phhofm)).
 - `nomos_uni` (*recommended for lightweight networks*): contains 2989 images, multipurpose. Meant to be used on lightweight networks (<800k parameters).
 - `hfa2k`: contains 2568 anime images.
 
@@ -212,6 +213,7 @@ pie
 | [**nomosv2.lmdb**](https://drive.google.com/file/d/1Rzdjt3w0qXle7vHa8FeFltmyKTMIwPR5/view?usp=drive_link) (3GB)	| [sha256](https://drive.google.com/file/d/1IrDjI37psiCc-Khn3_KSyov-xP4txZYe/view?usp=drive_link) |
 | [nomosv2_lq_4x](https://drive.google.com/file/d/1YiCywSFwRuwaYmnZ0TgoWDvcDQifAsZo/view?usp=drive_link) (187MB)	| [sha256](https://drive.google.com/file/d/1iOOte6h-AE1iD-i5wl_gVx1uJzNTS4Cq/view?usp=drive_link) |
 | [nomosv2_lq_4x.lmdb](https://drive.google.com/file/d/1IrDjI37psiCc-Khn3_KSyov-xP4txZYe/view?usp=drive_link) (187MB)	| [sha256](https://drive.google.com/file/d/1bpuuiGFNBrDuZiRSP5hpVgFQx44MImay/view?usp=drive_link) |
+| [4xNomosRealWeb](https://github.com/Phhofm/models/releases/tag/4xnomosrealweb_dataset)				| -												  |
 | [nomos_uni](https://drive.google.com/file/d/1LVS7i9J3mP9f2Qav2Z9i9vq3y2xsKxA_/view?usp=sharing) (1.3GB)		| [sha256](https://drive.google.com/file/d/1cdzVSpXQQhcbRVuFPbNtb6mZx_BoLwyW/view?usp=sharing)	  |
 | [nomos_uni.lmdb](https://drive.google.com/file/d/1MHJCS4Zl3H5nihgpA_VVliziXnhJ3aU7/view?usp=sharing) (1.3GB)		| [sha256](https://drive.google.com/file/d/1g3XLV-hFdLUcuAHLv2R6Entye8MkMx0V/view?usp=drive_link) |
 | [nomos_uni_lq_4x](https://drive.google.com/file/d/1uvMl8dG8-LXjCOEoO9Aiq5Q9rd_BIUw9/view?usp=sharing)			| [sha256](https://drive.google.com/file/d/1MTJBcfaMYdfWhsZCWEEOwbKSdmN5dVwl/view?usp=drive_link) |
@@ -225,11 +227,17 @@ Datasets made by the upscaling community. More info can be found in author's rep
 
 - `FaceUp`: Curated version of [FFHQ](https://github.com/NVlabs/ffhq-dataset)
 - `SSDIR`: Curated version of [LSDIR](https://data.vision.ee.ethz.ch/yawli/).
+- `ArtFaces`: Curated version of [MetFaces](https://github.com/NVlabs/metfaces-dataset).
+- `Nature Dataset`: Curated version of [iNaturalist](https://github.com/visipedia/inat_comp/tree/master/2017).
+- `digital_art_v2`: Digital art from [@umzi2](https://github.com/umzi2). 
 
 | dataset                                                | download 												      |
 |--------------------------------------------------------|------------------------------------------------------------------------------------------------------------|
 | [@Phhofm](https://github.com/Phhofm) FaceUp            | [GDrive (4GB)](https://drive.google.com/file/d/1WFY0siR_ERVSnE2p7ouiCfV3wQizpAKr/view)                     |
 | [@Phhofm](https://github.com/Phhofm) SSDIR             | [Gdrive (4.5GB)](https://drive.google.com/file/d/1FA8Q-T3xZ6_KA7SHYgoa6idIS7xpdrl4/view)                   |
+| [@Phhofm](https://github.com/Phhofm) ArtFaces		 | [Release page](https://github.com/Phhofm/models/releases/tag/dataset_artfaces)			      |
+| [@Phhofm](https://github.com/Phhofm) Nature Dataset	 | [Release page](https://github.com/Phhofm/models/releases/tag/nature_dataset)				      |
+| [@umzi2](https://github.com/umzi2) Digital Art (v2)	 | [Release page](https://huggingface.co/datasets/umzi/digital_art_v2)					      | 
 
 ## resources
 
@@ -246,4 +254,4 @@ This code was originally based on [BasicSR](https://github.com/XPixelGroup/Basic
 
 Thanks to [victorca25/traiNNer](https://github.com/victorca25/traiNNer), [styler00dollar/Colab-traiNNer](https://github.com/styler00dollar/Colab-traiNNer/) and [timm](https://github.com/huggingface/pytorch-image-models) for providing helpful insights into some problems.
 
-Thanks to contributors [@Phhofm](https://github.com/Phhofm), [@Sirosky](https://github.com/Sirosky), [@terrainer](https://github.com/terrainer) and [@umzi2](https://github.com/umzi2) for helping with tests and bug reporting. 
+Thanks to active contributors [@Phhofm](https://github.com/Phhofm), [@Sirosky](https://github.com/Sirosky), and [@umzi2](https://github.com/umzi2) for helping with tests and bug reporting. 

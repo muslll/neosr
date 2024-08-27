@@ -370,7 +370,13 @@ class base:
         self.param_key = param_key
         logger = get_root_logger()
         net = self.get_bare_model(net)
-        # TODO make a nicer error handling
+
+        # error if path not found
+        if not Path(load_path).exists():
+            msg = f"{tc.red}Path to model doesn't exist. Please check your configuration.{tc.end}"
+            logger.error(msg)
+            sys.exit(0)
+
         load_net = torch.load(
             load_path, map_location=torch.device("cuda"), weights_only=True
         )
@@ -401,7 +407,14 @@ class base:
                 load_net[k[7:]] = v
                 load_net.pop(k)
         self._print_different_keys_loading(net, load_net, strict)
-        net.load_state_dict(load_net, strict=strict)
+
+        try:
+            net.load_state_dict(load_net, strict=strict)
+        except:
+            msg = f"{tc.red}Failed to load model. Please check scale and net parameters, or disable strict_load.{tc.end}"
+            logger.exception(msg)
+            sys.exit(0)
+
         torch.cuda.empty_cache()
 
     @master_only
