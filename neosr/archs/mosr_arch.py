@@ -10,7 +10,9 @@ upscale, __ = net_opt()
 
 
 class GPS(nn.Module):
-    """Geo ensemble PielShuffle"""
+    """Geo ensemble PixelShuffle:
+    https://github.com/dslisleedh/IGConv
+    """
 
     def __init__(
         self,
@@ -18,10 +20,12 @@ class GPS(nn.Module):
         scale,
         out_ch=3,
         # Own parameters
-        kernel_size: int = 3
+        kernel_size: int = 3,
     ):
         super().__init__()
-        self.in_to_k = nn.Conv2d(dim, scale * scale * out_ch * 8, kernel_size, 1, kernel_size // 2)
+        self.in_to_k = nn.Conv2d(
+            dim, scale * scale * out_ch * 8, kernel_size, 1, kernel_size // 2
+        )
         self.ps = nn.PixelShuffle(scale)
 
     def forward(self, x):

@@ -775,9 +775,6 @@ class GAB(nn.Module):
 
         x_win_attn = torch.cat([x_win_attn, x_win_s_attn], dim=-1)
         x = torch.cat([x_win_attn, x_grid_attn], dim=-1)
-        # torch.save(x_win_attn.to(torch.device('cpu')), "x_win_attn.pth")
-        # torch.save(x_win_s_attn.to(torch.device('cpu')), "_win_s_attn.pth")
-        # torch.save(x_grid_attn.to(torch.device('cpu')), "x_grid_attn.pth")
         x = self.norm1(self.fc(x))
 
         # FFN

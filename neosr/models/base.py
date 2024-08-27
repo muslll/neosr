@@ -313,6 +313,7 @@ class base:
             net__ = self.get_bare_model(net_)
             state_dict = net__.state_dict()
             new_state_dict = OrderedDict()
+
             for key, param in state_dict.items():
                 if key.startswith("module."):  # remove unnecessary 'module.'
                     key = key[7:]  # noqa: PLW2901
