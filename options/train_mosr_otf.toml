@@ -87,6 +87,8 @@ val_freq = 1000
 [network_g]
 type = "mosr"
 #type = "mosr_t"
+#drop_path = 0.1
+#upsampler = "dys" # "gps"
 
 [network_d]
 type = "ea2fpn"

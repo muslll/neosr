@@ -9,6 +9,33 @@ from neosr.utils.registry import ARCH_REGISTRY
 upscale, __ = net_opt()
 
 
+class GPS(nn.Module):
+    """Geo ensemble PielShuffle"""
+
+    def __init__(
+        self,
+        dim,
+        scale,
+        out_ch=3,
+        # Own parameters
+        kernel_size: int = 3
+    ):
+        super().__init__()
+        self.in_to_k = nn.Conv2d(dim, scale * scale * out_ch * 8, kernel_size, 1, kernel_size // 2)
+        self.ps = nn.PixelShuffle(scale)
+
+    def forward(self, x):
+        rgb = self._geo_ensemble(x)
+        rgb = self.ps(rgb)
+        return rgb
+
+    def _geo_ensemble(self, x):
+        x = self.in_to_k(x)
+        x = x.reshape(x.shape[0], 8, -1, x.shape[-2], x.shape[-1])
+        x = x.mean(dim=1)
+        return x
+
+
 class LayerNorm(nn.Module):
     def __init__(self, dim: int, eps: float = 1e-6):
         super().__init__()
@@ -118,7 +145,7 @@ class mosr(nn.Module):
         upscale: int = upscale,
         n_block: int = 24,
         dim: int = 64,
-        upsampler: str = "ps",  # "ps" "ds"
+        upsampler: str = "ps",  # "ps" "gps" "dys"
         drop_path: float = 0.0,
         kernel_size: int = 7,
         expansion_ratio: float = 1.5,
@@ -155,10 +182,12 @@ class mosr(nn.Module):
             self.upsampler = nn.Sequential(
                 nn.Conv2d(dim, out_ch * (upscale**2), 3, 1, 1), nn.PixelShuffle(upscale)
             )
+        elif upsampler == "gps":
+            self.upsampler = GPS(dim, upscale, out_ch)
         elif upsampler == "dys":
             self.upsampler = DySample(dim, out_ch, upscale)
         else:
-            msg = f"upsampler: {upsampler} not supported, choose one of these options: ['ps', 'dys']"
+            msg = f"upsampler: {upsampler} not supported, choose one of these options: ['ps', 'gps', 'dys']"
             raise ValueError(msg)
 
     def forward(self, x):
