@@ -149,11 +149,22 @@ def paired_paths_from_folder(
     assert (
         len(keys) == 2
     ), f"The len of keys should be 2 with [input_key, gt_key]. But got {len(keys)}"
+
+    extensions = (".jpg", ".jpeg", ".png")
     input_folder, gt_folder = folders
     input_key, gt_key = keys
 
-    input_paths = list(scandir(input_folder, recursive=True, full_path=True))
-    gt_paths = list(scandir(gt_folder, recursive=True, full_path=True))
+    input_paths = [
+        path
+        for path in scandir(input_folder, recursive=True, full_path=True)
+        if path.lower().endswith(extensions)
+    ]
+    gt_paths = [
+        path
+        for path in scandir(gt_folder, recursive=True, full_path=True)
+        if path.lower().endswith(extensions)
+    ]
+
     assert len(input_paths) == len(gt_paths), (
         f"{input_key} and {gt_key} datasets have different number of images: "
         f"{len(input_paths)}, {len(gt_paths)}."
