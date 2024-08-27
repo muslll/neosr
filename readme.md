@@ -109,9 +109,9 @@ Where `options.toml` is a configuration file. Templates can be found in [options
 
 #### Under Testing
 
-| arch										| option					|
-|-------------------------------------------------------------------------------|-----------------------------------------------|
-| -										| -						|
+| arch										| option					   |
+|-------------------------------------------------------------------------------|--------------------------------------------------|
+| [GRFormer](https://github.com/sisrformer/GRFormer)				| `grformer`, `grformer_medium`, `grformer_large`  |
 
 
 ### Supported Discriminators:
