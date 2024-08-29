@@ -403,10 +403,9 @@ class image(base):
             else:
                 a = min(current_iter / self.eco_iters, 1.0)
             # network prediction
-            self.net_output = torch.clamp(self.net_g(self.lq), 1 / 255, 1)  # type: ignore[reportCallIssue,operator]
+            self.net_output = self.net_g(self.lq)  # type: ignore[reportCallIssue,operator]
             # define gt centroid
             self.gt = ((1 - a) * self.net_output) + (a * self.gt)
-            self.gt = torch.clamp(self.gt, 1 / 255, 1)
             # downsampled prediction
             self.lq_scaled = torch.clamp(
                 F.interpolate(
@@ -415,13 +414,13 @@ class image(base):
                     mode="bicubic",
                     antialias=True,
                 ),
-                1 / 255,
+                0,
                 1,
             )
             # define lq centroid
             self.output = ((1 - a) * self.lq_scaled) + (a * self.lq)
         # predict from lq centroid
-        self.output = torch.clamp(self.net_g(self.output), 1 / 255, 1)  # type: ignore[reportCallIssue,operator]
+        self.output = self.net_g(self.output)  # type: ignore[reportCallIssue,operator]
 
         return self.output, self.gt
 
@@ -442,9 +441,11 @@ class image(base):
             # eco
             if self.eco and current_iter <= self.eco_iters:
                 if current_iter < self.eco_init and self.pretrain is None:
-                    self.output = torch.clamp(self.net_g(self.lq), 0, 1)  # type: ignore[reportCallIssue,operator]
+                    self.output = torch.clamp(self.net_g(self.lq), 1 / 255, 1)  # type: ignore[reportCallIssue,operator]
                 else:
                     self.output, self.gt = self.eco_strategy(current_iter)
+                    self.output = torch.clamp(self.output, 1 / 255, 1)
+                    self.gt = torch.clamp(self.gt, 1 / 255, 1)
             else:
                 self.output = torch.clamp(self.net_g(self.lq), 1 / 255, 1)  # type: ignore[reportCallIssue,operator]
 
