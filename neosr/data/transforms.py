@@ -1,4 +1,5 @@
 import random
+import sys
 from typing import cast
 
 import cv2
@@ -6,6 +7,8 @@ import numpy as np
 import torch
 from numpy.typing import ArrayLike
 from torch import Tensor
+
+from neosr.utils import get_root_logger, tc
 
 
 def mod_crop(img: np.ndarray, scale: int) -> np.ndarray:
@@ -69,6 +72,9 @@ def paired_random_crop(
     if not isinstance(img_lqs, list):
         img_lqs = cast(list[np.ndarray], [img_lqs])
 
+    # initialize logger
+    logger = get_root_logger()
+
     # determine input type: Numpy array or Tensor
     input_type = "Tensor" if torch.is_tensor(img_gts[0]) else "Numpy"
 
@@ -81,18 +87,14 @@ def paired_random_crop(
     gt_patch_size = lq_patch_size * scale
 
     if h_gt != h_lq * scale or w_gt != w_lq * scale:
-        msg = f"Scale mismatches. GT ({h_gt}, {w_gt}) is not {scale}x "
-        raise ValueError(
-            msg, f"multiplication of LQ ({h_lq}, {w_lq}). Please fix {gt_path}."
-        )
+        msg = f"{tc.red}Scale mismatches. GT ({h_gt}, {w_gt}) is not {scale}x of LQ ({h_lq}, {w_lq}). Fix {gt_path}.{tc.end}"
+        logger.error(msg)
+        sys.exit(1)
 
     if h_lq < lq_patch_size or w_lq < lq_patch_size:
-        msg = (
-            f"LQ ({h_lq}, {w_lq}) is smaller than patch size "
-            f"({lq_patch_size}, {lq_patch_size}). "
-            f"Please remove {gt_path}."
-        )
-        raise ValueError(msg)
+        msg = f"{tc.red}LQ ({h_lq}, {w_lq}) is smaller than patch size ({lq_patch_size}, {lq_patch_size}). Fix {gt_path}.{tc.end}"
+        logger.error(msg)
+        sys.exit(1)
 
     # randomly choose top and left coordinates for lq patch
     top = random.randint(0, h_lq - lq_patch_size)
