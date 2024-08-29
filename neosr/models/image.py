@@ -73,6 +73,8 @@ class image(base):
     def init_training_settings(self) -> None:
         # options var
         train_opt = self.opt["train"]
+        # initialize logger
+        logger = get_root_logger()
 
         # set EMA
         self.ema = self.opt["train"].get("ema", -1)
@@ -82,7 +84,6 @@ class image(base):
                 multi_avg_fn=get_ema_multi_avg_fn(self.ema),
                 device=self.device,
             )
-            logger = get_root_logger()
             logger.info("Using exponential-moving average.")
 
         # sharpness-aware minimization
@@ -223,7 +224,6 @@ class image(base):
         self.wavelet_guided = self.opt["train"].get("wavelet_guided", False)
         self.wavelet_init = self.opt["train"].get("wavelet_init", 0)
         if self.wavelet_guided:
-            logger = get_root_logger()
             logger.info("Loss [Wavelet-Guided] enabled.")
 
         # gradient clipping
@@ -231,14 +231,16 @@ class image(base):
 
         # log sam
         if self.sam is not None:
-            logger = get_root_logger()
             logger.info("Sharpness-Aware Minimization enabled.")
+
+        # log eco
+        if self.eco:
+            logger.info("ECO enabled.")
 
         # error handling
         optim_d = self.opt["train"].get("optim_d", None)
         pix_losses_bool = self.cri_pix or self.cri_mssim is not None
         percep_losses_bool = self.cri_perceptual or self.cri_dists is not None
-        logger = get_root_logger()
 
         if self.sam is not None and self.use_amp is True:
             # Closure not supported:
