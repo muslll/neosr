@@ -147,8 +147,6 @@ Where `options.toml` is a configuration file. Templates can be found in [options
 | CHC (Clipped Huber with Cosine Similarity Loss)			 						| `chc_loss`				     |
 | Perceptual Loss                                                        						| `perceptual_opt`, `vgg_perceptual_loss`    |
 | GAN                                                                    						| `gan_opt`, `gan_loss`			     |
-| Y**CbCr** Color Loss (bt601)                                           						| `color_opt`, `color_loss`                  |
-| Luma Loss (CIE L*)						 							| `luma_opt` `luma_loss`	     	     |
 | [MS-SSIM](https://github.com/lartpang/mssim.pytorch)			 						| `mssim_opt` `mssim_loss`		     |
 | [LDL Loss](https://github.com/csjliang/LDL)                            						| `ldl_opt`, `ldl_loss` 	             |
 | [Focal Frequency](https://github.com/EndlessSora/focal-frequency-loss) 						| `ff_opt`, `ff_loss`             	     |
@@ -156,6 +154,7 @@ Where `options.toml` is a configuration file. Templates can be found in [options
 | [Wavelet Guided](https://github.com/mandalinadagi/WGSR)		 						| `wavelet_guided`			     |
 | [Gradient-Weighted](https://github.com/xiezw5/Component-Divide-and-Conquer-for-Real-World-Image-Super-Resolution/)	| `gw_opt`, `gw_loss`			     | 
 | [Perceptual Patch Loss](https://github.com/Suanmd/Patch-Loss-for-Super-Resolution)					| `perceptual_opt`, `patchloss`, `ipk`	     |
+| [Consistency Loss](https://github.com/muslll/neosr/wiki/Losses#consistency_opt-consistency_loss) (Oklab and CIE L*)	| `consistency_opt`, `consistency_loss`	     |
 
 ### Supported Augmentations:
 
