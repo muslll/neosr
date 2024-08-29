@@ -150,7 +150,7 @@ def paired_paths_from_folder(
         len(keys) == 2
     ), f"The len of keys should be 2 with [input_key, gt_key]. But got {len(keys)}"
 
-    extensions = (".jpg", ".jpeg", ".png")
+    extensions = (".jpg", ".jpeg", ".png", ".webp")
     input_folder, gt_folder = folders
     input_key, gt_key = keys
 
