@@ -112,6 +112,7 @@ Where `options.toml` is a configuration file. Templates can be found in [options
 | arch										| option					   |
 |-------------------------------------------------------------------------------|--------------------------------------------------|
 | [GRFormer](https://github.com/sisrformer/GRFormer)				| `grformer`, `grformer_medium`, `grformer_large`  |
+| [EIMN](https://github.com/liux520/EIMN)					| `eimn`, `eimn_a`, `eimn_l`			   |
 
 
 ### Supported Discriminators:

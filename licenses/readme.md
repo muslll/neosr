@@ -52,3 +52,4 @@
 | [`MAN`](https://github.com/icandle/MAN)									| [Apache 2.0](https://github.com/icandle/MAN/blob/main/LICENSE)						|
 | [`MoSR`](https://github.com/umzi2/MoSR)									| [MIT](https://github.com/umzi2/MoSR/blob/master/LICENSE)							|
 | [`GRFormer`](https://github.com/sisrformer/GRFormer)								| Unknown													|
+| [`EIMN`](https://github.com/liux520/EIMN)									| Unknown													| 

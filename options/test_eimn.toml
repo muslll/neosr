@@ -1,0 +1,22 @@
+# Results will be saved to neosr/experiments/results/
+
+name = "test_eimn"
+model_type = "image"
+scale = 4
+#use_amp = true
+#compile = true
+
+[datasets.test_1]
+name = "val_1"
+type = "single"
+dataroot_lq = 'C:\datasets\val\'
+[val]
+#tile = 200
+
+[network_g]
+type = "eimn"
+#type = "eimn_a"
+#type = "eimn_l"
+
+[path]
+pretrain_network_g = 'C:\model.pth'
