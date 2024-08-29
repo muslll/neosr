@@ -385,7 +385,8 @@ class SWTForward(nn.Module):
 
 @torch.no_grad()
 def wavelet_guided(output: Tensor, gt: Tensor) -> tuple[Tensor, Tensor]:
-    wavelet = pywt.Wavelet("sym7")  # type: ignore[reportAttributeAccessIssue]
+    #wavelet = pywt.Wavelet("sym7")  # type: ignore[reportAttributeAccessIssue]
+    wavelet = pywt.Wavelet("sym19")  # type: ignore[reportAttributeAccessIssue]
     dlo = wavelet.dec_lo
     an_lo = np.divide(dlo, sum(dlo))
     an_hi = wavelet.dec_hi
@@ -406,10 +407,10 @@ def wavelet_guided(output: Tensor, gt: Tensor) -> tuple[Tensor, Tensor]:
     )
     wavelet_sr: Tensor = sfm(sr_img_y)[0]
 
-    # LL = wavelet_sr[:, 0:1, :, :]
-    LH: Tensor = wavelet_sr[:, 1:2, :, :]
-    HL: Tensor = wavelet_sr[:, 2:3, :, :]
-    HH: Tensor = wavelet_sr[:, 3:, :, :]
+    #LL: Tensor = wavelet_sr[:, 0:1, :, :] * 0.05
+    LH: Tensor = wavelet_sr[:, 1:2, :, :] * 0.025
+    HL: Tensor = wavelet_sr[:, 2:3, :, :] * 0.025
+    HH: Tensor = wavelet_sr[:, 3:, :, :] * 0.02
 
     combined_HF = torch.cat((LH, HL, HH), dim=1)
 
@@ -421,10 +422,11 @@ def wavelet_guided(output: Tensor, gt: Tensor) -> tuple[Tensor, Tensor]:
     )
     wavelet_hr: Tensor = sfm(hr_img_y)[0]
 
-    # LL_gt = wavelet_hr[:, 0:1, :, :]
-    LH_gt: Tensor = wavelet_hr[:, 1:2, :, :]
-    HL_gt: Tensor = wavelet_hr[:, 2:3, :, :]
-    HH_gt: Tensor = wavelet_hr[:, 3:, :, :]
+    #LL_gt: Tensor = wavelet_hr[:, 0:1, :, :] * 0.05
+    LH_gt: Tensor = wavelet_hr[:, 1:2, :, :] * 0.025
+    HL_gt: Tensor = wavelet_hr[:, 2:3, :, :] * 0.025
+    HH_gt: Tensor = wavelet_hr[:, 3:, :, :] * 0.02
+
     combined_HF_gt = torch.cat((LH_gt, HL_gt, HH_gt), dim=1)
 
     return combined_HF, combined_HF_gt
