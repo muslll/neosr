@@ -1,4 +1,4 @@
-# type: ignore
+# type: ignore  # noqa: PGH003
 import torch
 from einops import rearrange
 from torch import nn

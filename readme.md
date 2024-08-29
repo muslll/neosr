@@ -23,7 +23,7 @@ Join our <a href="https://discord.gg/NN2HGtJ3d6">Discord</a>
 ## 💻 installation
 
 Requires Python 3.12 and CUDA =>11.8.
-Install latest [Pytorch (=>2.4) and TorchVision](https://pytorch.org/get-started/locally/) (required).
+Install latest [Pytorch (>=2.4) and TorchVision](https://pytorch.org/get-started/locally/) (required).
 
 Clone the repository:
 
