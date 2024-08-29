@@ -403,7 +403,7 @@ class image(base):
             else:
                 a = min(current_iter / self.eco_iters, 1.0)
             # network prediction
-            self.net_output = self.net_g(self.lq)  # type: ignore[reportCallIssue,operator]
+            self.net_output = torch.clamp(self.net_g(self.lq), 1 / 255, 1)  # type: ignore[reportCallIssue,operator]
             # define gt centroid
             self.gt = ((1 - a) * self.net_output) + (a * self.gt)
             self.gt = torch.clamp(self.gt, 1 / 255, 1)
@@ -420,10 +420,8 @@ class image(base):
             )
             # define lq centroid
             self.output = ((1 - a) * self.lq_scaled) + (a * self.lq)
-
         # predict from lq centroid
-        self.output = self.net_g(self.output)  # type: ignore[reportCallIssue,operator]
-        self.output = torch.clamp(self.output, 1 / 255, 1)
+        self.output = torch.clamp(self.net_g(self.output), 1 / 255, 1)  # type: ignore[reportCallIssue,operator]
 
         return self.output, self.gt
 
