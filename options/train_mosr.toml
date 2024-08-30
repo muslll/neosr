@@ -86,8 +86,8 @@ loss_weight = 1.0
 
 [train.perceptual_opt]
 type = "vgg_perceptual_loss"
-loss_weight = 1.0
-criterion = "huber"
+loss_weight = 0.5
+criterion = "chc"
 #patchloss = true
 #ipk = true
 #patch_weight = 1.0

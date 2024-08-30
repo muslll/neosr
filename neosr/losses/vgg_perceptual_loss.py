@@ -6,6 +6,7 @@ from torch import Tensor, nn
 from torch.nn import functional as F
 
 from neosr.archs.arch_util import net_opt
+from neosr.losses.basic_loss import chc_loss
 from neosr.archs.vgg_arch import VGGFeatureExtractor
 from neosr.utils.registry import LOSS_REGISTRY
 
@@ -136,6 +137,8 @@ class vgg_perceptual_loss(nn.Module):
             self.criterion = nn.MSELoss()
         elif self.criterion_type == "huber":
             self.criterion = nn.HuberLoss()
+        elif self.criterion_type == "chc":
+            self.criterion = chc_loss(loss_lambda=0, clip_min=0, clip_max=1)  # type: ignore[reportCallIssue]
         else:
             msg = f"{criterion} criterion not supported."
             raise NotImplementedError(msg)
@@ -212,29 +215,25 @@ class vgg_perceptual_loss(nn.Module):
         x_features = self.vgg(x)
         gt_features = self.vgg(gt.detach())
         percep_loss: float = 0.0
-
         # calculate perceptual loss
-        if self.loss_weight > 0:
-            for k in x_features:
-                if self.patchloss:
-                    percep_loss += (
-                        self.patch(x_features[k], gt_features[k])
-                        * self.layer_weights[k]
-                        * self.patch_weights
-                        + self.criterion(x_features[k], gt_features[k])
-                        * self.layer_weights[k]
-                    )
-                else:
-                    percep_loss += (
-                        self.criterion(x_features[k], gt_features[k])
-                        * self.layer_weights[k]
-                    )
+        for k in x_features:
+            if self.patchloss:
+                percep_loss += (
+                    self.patch(x_features[k], gt_features[k])
+                    * self.layer_weights[k]
+                    * self.patch_weights
+                    + self.criterion(x_features[k], gt_features[k])
+                    * self.layer_weights[k]
+                )
+            else:
+                # decrease magnitude to balance other losses
+                percep_loss += (
+                    self.criterion(x_features[k] / 10, gt_features[k] / 10)
+                    * self.layer_weights[k]
+                )
+        # add IPK
+        if self.patchloss and self.ipk:
+            ipk = self.patch(x, gt, is_ipk=True)
+            percep_loss += ipk
 
-            # add IPK
-            if self.patchloss and self.ipk:
-                ipk = self.patch(x, gt, is_ipk=True)
-                percep_loss += ipk
-
-            percep_loss = percep_loss * self.loss_weight
-
-        return percep_loss
+        return percep_loss * self.loss_weight
