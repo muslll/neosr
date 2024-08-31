@@ -1,8 +1,14 @@
+from typing import TYPE_CHECKING
+
 import torch
 from torch import Tensor, nn
 from torch.nn import functional as F
 
+from neosr.losses.basic_loss import chc_loss
 from neosr.utils.registry import LOSS_REGISTRY
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 @LOSS_REGISTRY.register()
@@ -20,13 +26,13 @@ class ldl_loss(nn.Module):
     """
 
     def __init__(
-        self, criterion: str = "huber", loss_weight: float = 1.0, ksize: int = 7
+        self, criterion: str = "chc", loss_weight: float = 1.0, ksize: int = 7
     ) -> None:
         super().__init__()
         self.loss_weight = loss_weight
         self.ksize = ksize
         self.criterion_type = criterion
-        self.criterion: nn.L1Loss | nn.MSELoss | nn.HuberLoss
+        self.criterion: nn.L1Loss | nn.MSELoss | nn.HuberLoss | Callable
 
         if self.criterion_type == "l1":
             self.criterion = nn.L1Loss()
@@ -34,6 +40,8 @@ class ldl_loss(nn.Module):
             self.criterion = nn.MSELoss()
         elif self.criterion_type == "huber":
             self.criterion = nn.HuberLoss()
+        elif self.criterion_type == "chc":
+            self.criterion = chc_loss(loss_lambda=0, clip_min=0, clip_max=1)  # type: ignore[reportCallIssue]
         else:
             msg = f"{criterion} criterion has not been supported."
             raise NotImplementedError(msg)

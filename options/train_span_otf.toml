@@ -147,7 +147,7 @@ loss_weight = 0.3
 #[train.ldl_opt]
 #type = "ldl_loss"
 #loss_weight = 1.0
-#criterion = "huber"
+#criterion = "chc"
 
 #[train.ff_opt]
 #type = "ff_loss"
