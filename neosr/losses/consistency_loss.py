@@ -151,6 +151,11 @@ class consistency_loss(nn.Module):
         Returns:
             float.
         """
+
+        # clamp
+        net_output = torch.clamp(net_output, 1 / 255, 1)
+        gt = torch.clamp(gt, 1 / 255, 1)
+
         # luma
         if self.use_blur:
             net_output_blur = torch.clamp(self.blur(net_output), 0, 1)
@@ -164,6 +169,7 @@ class consistency_loss(nn.Module):
         # chroma
         input_chroma = self.rgb_to_oklab_chroma(net_output)
         target_chroma = self.rgb_to_oklab_chroma(gt) * self.saturation
+
         # clip and normalize
         input_chroma = torch.clamp((input_chroma + self.mean * 1), 0, 1)
         target_chroma = torch.clamp((target_chroma + self.mean * 1), 0, 1)

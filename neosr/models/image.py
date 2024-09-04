@@ -441,13 +441,11 @@ class image(base):
             # eco
             if self.eco and current_iter <= self.eco_iters:
                 if current_iter < self.eco_init and self.pretrain is None:
-                    self.output = torch.clamp(self.net_g(self.lq), 1 / 255, 1)  # type: ignore[reportCallIssue,operator]
+                    self.output = self.net_g(self.lq)  # type: ignore[reportCallIssue,operator]
                 else:
                     self.output, self.gt = self.eco_strategy(current_iter)
-                    self.output = torch.clamp(self.output, 1 / 255, 1)
-                    self.gt = torch.clamp(self.gt, 1 / 255, 1)
             else:
-                self.output = torch.clamp(self.net_g(self.lq), 1 / 255, 1)  # type: ignore[reportCallIssue,operator]
+                self.output = self.net_g(self.lq)  # type: ignore[reportCallIssue,operator]
 
             # lq match
             if self.match_lq_colors:
@@ -865,6 +863,7 @@ class image(base):
                         / f'{img_name}_{self.opt["name"]}.png'
                     )
                 imwrite(sr_img, str(save_img_path))  # type: ignore[arg-type]
+                # TODO: add original lq and gt to results folder, once
 
             # check for dataset option save_tb, to save images on tb_logger
             if self.is_train:

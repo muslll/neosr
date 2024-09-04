@@ -149,7 +149,7 @@ class mosr(nn.Module):
         upscale: int = upscale,
         n_block: int = 24,
         dim: int = 64,
-        upsampler: str = "ps",  # "ps" "gps" "dys"
+        upsampler: str = "dys",  # "ps" "gps" "dys"
         drop_path: float = 0.0,
         kernel_size: int = 7,
         expansion_ratio: float = 1.5,
