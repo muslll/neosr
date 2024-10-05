@@ -7,15 +7,22 @@ license = "Apache 2.0"
 readme = "readme.md"
 
 [tool.poetry.dependencies]
-einops = "^0.6.1"
-lmdb = "^1.5.1"
-numpy = "^1.25.2"
-opencv-python-headless = "^4.8.1.78"
 python = "^3.12"
-pywavelets = "^1.5.0"
-scipy = "^1.11.1"
-tqdm = "^4.65.0"
-tb-nightly = "^2.18.0a20240708"
+einops = "^0.8"
+lmdb = "^1.5.1"
+numpy = "^2.1.0"
+opencv-python-headless = "^4.10"
+pywavelets = "^1.7.0"
+scipy = "^1.14"
+tqdm = "^4.66"
+tb-nightly = "^2.19.0a20241004"
+torch = {version = "^2.4.1+cu124", source = "pytorch-gpu-src"}
+torchvision = {version = "^0.19.1+cu124", source = "pytorch-gpu-src"}
+
+[[tool.poetry.source]]
+name = "pytorch-gpu-src"
+url = "https://download.pytorch.org/whl/cu124"
+priority = "explicit"
 
 [tool.ruff]
 lint.select = ["ALL"]
