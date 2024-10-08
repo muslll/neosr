@@ -159,6 +159,10 @@ loss_weight = 0.3
 #type = "gw_loss"
 #loss_weight = 1.0
 
+#[train.ncc_opt]
+#type = "ncc_loss"
+#loss_weight = 1.0
+
 [logger]
 total_iter = 1000000
 save_checkpoint_freq = 1000

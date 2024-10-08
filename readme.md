@@ -103,6 +103,8 @@ Where `options.toml` is a configuration file. Templates can be found in [options
 | [MAN](https://github.com/icandle/MAN)								    | `man`, `man_tiny`, `man_light`				|
 | [light-SAFMN++](https://github.com/sunny2109/SAFMN/tree/main/AIS2024-RTSR)			    | `light_safmnpp`						|
 | [MoSR](https://github.com/umzi2/MoSR)								    | `mosr`, `mosr_t`						|
+| [GRFormer](https://github.com/sisrformer/GRFormer)						    | `grformer`, `grformer_medium`, `grformer_large`  |
+| [EIMN](https://github.com/liux520/EIMN)							    | `eimn`, `eimn_a`, `eimn_l`			   |
 
 > [!NOTE]
 > For all arch-specific parameters, [read the wiki](https://github.com/muslll/neosr/wiki/Arch%E2%80%90specific-options).
@@ -111,8 +113,6 @@ Where `options.toml` is a configuration file. Templates can be found in [options
 
 | arch										| option					   |
 |-------------------------------------------------------------------------------|--------------------------------------------------|
-| [GRFormer](https://github.com/sisrformer/GRFormer)				| `grformer`, `grformer_medium`, `grformer_large`  |
-| [EIMN](https://github.com/liux520/EIMN)					| `eimn`, `eimn_a`, `eimn_l`			   |
 
 
 ### Supported Discriminators:
@@ -146,6 +146,7 @@ Where `options.toml` is a configuration file. Templates can be found in [options
 | L2 Loss                                                                						| `MSELoss`, `mse_loss`    	     	     |
 | Huber Loss                                                             						| `HuberLoss`, `huber_loss` 	    	     |
 | CHC (Clipped Huber with Cosine Similarity Loss)			 						| `chc_loss`				     |
+| NCC (Normalized Cross-Correlation)											| `ncc_opt`, `ncc_loss`			     |
 | Perceptual Loss                                                        						| `perceptual_opt`, `vgg_perceptual_loss`    |
 | GAN                                                                    						| `gan_opt`, `gan_loss`			     |
 | [MS-SSIM](https://github.com/lartpang/mssim.pytorch)			 						| `mssim_opt` `mssim_loss`		     |

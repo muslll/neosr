@@ -165,6 +165,14 @@ class image(base):
         else:
             self.cri_mssim = None
 
+        # ncc loss
+        if train_opt.get("ncc_opt"):
+            self.cri_ncc = build_loss(train_opt["ncc_opt"]).to(  # type: ignore[reportCallIssue,attr-defined]
+                self.device, memory_format=torch.channels_last, non_blocking=True
+            )
+        else:
+            self.cri_ncc = None
+
         # consistency loss
         if train_opt.get("consistency_opt"):
             self.cri_consistency = build_loss(train_opt["consistency_opt"]).to(  # type: ignore[reportCallIssue,attr-defined]
@@ -479,6 +487,11 @@ class image(base):
                 l_g_mssim = self.cri_mssim(self.output, self.gt)
                 l_g_total += l_g_mssim
                 loss_dict["l_g_mssim"] = l_g_mssim
+            # ncc loss
+            if self.cri_ncc:
+                l_g_ncc = self.cri_ncc(self.output, self.gt)
+                l_g_total += l_g_ncc
+                loss_dict["l_g_ncc"] = l_g_ncc
             # consistency loss
             if self.cri_consistency:
                 if self.match_lq_colors:

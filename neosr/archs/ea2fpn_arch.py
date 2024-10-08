@@ -1,5 +1,4 @@
 import torch
-import torch.nn.modules.module
 from torch import Tensor, nn
 from torch.nn import Conv2d, Module, Parameter
 from torch.nn.utils import spectral_norm
