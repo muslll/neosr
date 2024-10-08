@@ -1,3 +1,4 @@
+# type: ignore  # noqa: PGH003
 import math
 
 import numpy as np

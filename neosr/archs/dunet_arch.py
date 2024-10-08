@@ -1,3 +1,4 @@
+# type: ignore  # noqa: PGH003
 from torch import Tensor, nn
 from torch.nn.utils import spectral_norm
 

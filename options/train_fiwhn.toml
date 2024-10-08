@@ -1,0 +1,123 @@
+
+name = "train_fiwhn"
+model_type = "image"
+scale = 4
+#use_amp = true
+#bfloat16 = true
+#fast_matmul = true
+#compile = true
+#manual_seed = 1024
+
+[datasets.train]
+type = "paired"
+dataroot_gt = 'C:\datasets\gt\'
+dataroot_lq = 'C:\datasets\lq\'
+patch_size = 32
+batch_size = 8
+#accumulate = 1
+#augmentation = [ "none", "mixup", "cutmix", "resizemix" ] # [ "cutblur" ]
+#aug_prob = [ 0.5, 0.1, 0.1, 0.1 ] # [ 0.7 ]
+
+[datasets.val]
+name = "val"
+type = "paired"
+dataroot_gt = 'C:\datasets\val\gt\'
+dataroot_lq = 'C:\datasets\val\lq\'
+[val]
+val_freq = 1000
+#tile = 200
+#[val.metrics.psnr]
+#type = "calculate_psnr"
+#[val.metrics.ssim]
+#type = "calculate_ssim"
+#[val.metrics.dists]
+#type = "calculate_dists"
+#better = "lower"
+
+[path]
+#pretrain_network_g = 'experiments\pretrain_g.pth'
+#pretrain_network_d = 'experiments\pretrain_d.pth'
+
+[network_g]
+type = "fiwhn"
+
+[network_d]
+type = "ea2fpn"
+
+[train]
+ema = 0.999
+#sam = "fsam"
+#sam_init = 1000
+#eco = true
+#eco_init = 15000
+#wavelet_guided = true
+#wavelet_init = 80000
+#match_lq_colors = true
+
+[train.optim_g]
+type = "adan_sf"
+lr = 5e-4
+betas = [ 0.98, 0.92, 0.987 ]
+weight_decay = 0.02
+schedule_free = true
+warmup_steps = 1600
+
+[train.optim_d]
+type = "adan_sf"
+lr = 5e-4
+betas = [ 0.98, 0.92, 0.99 ]
+weight_decay = 0.02
+schedule_free = true
+#warmup_steps = 600
+
+#  losses
+[train.mssim_opt]
+type = "mssim_loss"
+loss_weight = 1.0
+
+[train.consistency_opt]
+type = "consistency_loss"
+loss_weight = 1.0
+#saturation = 1.0
+#brightness = 1.0
+
+[train.perceptual_opt]
+type = "vgg_perceptual_loss"
+loss_weight = 0.5
+criterion = "chc"
+#patchloss = true
+#ipk = true
+#patch_weight = 1.0
+
+[train.gan_opt]
+type = "gan_loss"
+gan_type = "bce"
+loss_weight = 0.3
+
+#[train.dists_opt]
+#type = "dists_loss"
+#loss_weight = 0.5
+
+#[train.ldl_opt]
+#type = "ldl_loss"
+#loss_weight = 1.0
+#criterion = "chc"
+
+#[train.ff_opt]
+#type = "ff_loss"
+#loss_weight = 1.0
+
+#[train.gw_opt]
+#type = "gw_loss"
+#loss_weight = 1.0
+
+#[train.ncc_opt]
+#type = "ncc_loss"
+#loss_weight = 1.0
+
+[logger]
+total_iter = 1000000
+save_checkpoint_freq = 1000
+use_tb_logger = true
+#save_tb_img = true
+#print_freq = 100

@@ -116,6 +116,7 @@ Where `options.toml` is a configuration file. Templates can be found in [options
 | [Swin2-MoSE](https://github.com/hachreak/swin2-mose)				| `swin2mose`					   |
 | [LMLT](https://github.com/jwgdmkj/LMLT)					| `lmlt`, `lmlt_tiny`, `lmlt_large`		   |
 | [DCT](https://github.com/zhengchen1999/DCT)					| `dct`						   |
+| [FIWHN](https://github.com/24wenjie-li/FIWHN)					| `fiwhn`					   |
 
 
 ### Supported Discriminators:

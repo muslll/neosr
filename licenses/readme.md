@@ -57,3 +57,4 @@
 | [`Swin2-MoSE`](https://github.com/hachreak/swin2-mose)							| [GPLv2](https://github.com/hachreak/swin2-mose/blob/master/LICENSE)						|
 | [`LMLT`](https://github.com/jwgdmkj/LMLT)									| [MIT](https://github.com/jwgdmkj/LMLT/blob/main/LICENSE)							|
 | [`DCT`](https://github.com/zhengchen1999/DCT)									| Unknown													|
+| [`FIWHN`](https://github.com/24wenjie-li/FIWHN)								| Unknown													|
