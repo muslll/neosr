@@ -54,3 +54,4 @@
 | [`GRFormer`](https://github.com/sisrformer/GRFormer)								| Unknown													|
 | [`EIMN`](https://github.com/liux520/EIMN)									| Unknown													| 
 | [`DUnet`](https://github.com/umzi2/DUnet)									| [MIT](https://github.com/umzi2/DUnet/blob/master/LICENSE)							|
+| [`Swin2-MoSE`](https://github.com/hachreak/swin2-mose)							| [GPLv2](https://github.com/hachreak/swin2-mose/blob/master/LICENSE)						|

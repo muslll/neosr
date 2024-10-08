@@ -113,6 +113,7 @@ Where `options.toml` is a configuration file. Templates can be found in [options
 
 | arch										| option					   |
 |-------------------------------------------------------------------------------|--------------------------------------------------|
+| [Swin2-MoSE](https://github.com/hachreak/swin2-mose)				| `swin2mose`					   |
 
 
 ### Supported Discriminators:
