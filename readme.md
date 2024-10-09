@@ -117,6 +117,7 @@ Where `options.toml` is a configuration file. Templates can be found in [options
 | [LMLT](https://github.com/jwgdmkj/LMLT)					| `lmlt`, `lmlt_tiny`, `lmlt_large`		   |
 | [DCT](https://github.com/zhengchen1999/DCT)					| `dct`						   |
 | [FIWHN](https://github.com/24wenjie-li/FIWHN)					| `fiwhn`					   |
+| [KRGN](https://github.com/ZhangDY827/KRGN)					| `krgn`					   |
 
 
 ### Supported Discriminators:

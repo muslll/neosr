@@ -58,3 +58,4 @@
 | [`LMLT`](https://github.com/jwgdmkj/LMLT)									| [MIT](https://github.com/jwgdmkj/LMLT/blob/main/LICENSE)							|
 | [`DCT`](https://github.com/zhengchen1999/DCT)									| Unknown													|
 | [`FIWHN`](https://github.com/24wenjie-li/FIWHN)								| Unknown													|
+| [`KRGN`](https://github.com/ZhangDY827/KRGN)									| Unknown													|
