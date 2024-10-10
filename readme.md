@@ -118,6 +118,7 @@ Where `options.toml` is a configuration file. Templates can be found in [options
 | [DCT](https://github.com/zhengchen1999/DCT)					| `dct`						   |
 | [FIWHN](https://github.com/24wenjie-li/FIWHN)					| `fiwhn`					   |
 | [KRGN](https://github.com/ZhangDY827/KRGN)					| `krgn`					   |
+| [PlainUSR](https://github.com/icandle/PlainUSR)				| `plainusr`, `plainusr_ultra`, `plainusr_large`   | 
 
 
 ### Supported Discriminators:

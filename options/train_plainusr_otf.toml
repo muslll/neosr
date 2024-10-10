@@ -1,6 +1,6 @@
 
-name = "train_krgn"
-model_type = "image"
+name = "train_plainusr_otf"
+model_type = "otf"
 scale = 4
 #use_amp = true
 #bfloat16 = true
@@ -9,14 +9,60 @@ scale = 4
 #manual_seed = 1024
 
 [datasets.train]
-type = "paired"
+type = "otf"
 dataroot_gt = 'C:\datasets\gt\'
-dataroot_lq = 'C:\datasets\lq\'
 patch_size = 48
 batch_size = 8
 #accumulate = 1
-#augmentation = [ "none", "mixup", "cutmix", "resizemix" ] # [ "cutblur" ]
-#aug_prob = [ 0.5, 0.1, 0.1, 0.1 ] # [ 0.7 ]
+augmentation = [ "none", "mixup", "cutmix", "resizemix", "cutblur" ]
+aug_prob = [ 0.5, 0.1, 0.1, 0.1, 0.5 ]
+
+[degradations]
+resize_prob = [ 0.3, 0.4, 0.3 ]
+resize_range = [ 0.5, 1.5 ]
+gaussian_noise_prob = 0.2
+noise_range = [ 0, 2 ]
+poisson_scale_range = [ 0.05, 0.25 ]
+gray_noise_prob = 0.1
+jpeg_range = [ 40, 95 ]
+second_blur_prob = 0.4
+resize_prob2 = [ 0.3, 0.4, 0.3 ]
+resize_range2 = [ 0.3, 1.5 ]
+gaussian_noise_prob2 = 0.2
+noise_range2 = [ 0, 2 ]
+poisson_scale_range2 = [ 0.05, 0.1 ]
+gray_noise_prob2 = 0.1
+jpeg_range2 = [ 35, 95 ]
+
+blur_kernel_size = 7
+kernel_list = [
+  "iso",
+  "aniso",
+  "generalized_iso",
+  "generalized_aniso",
+  "plateau_iso",
+  "plateau_aniso"
+]
+kernel_prob = [ 0.45, 0.25, 0.12, 0.03, 0.12, 0.03 ]
+sinc_prob = 0.1
+blur_sigma = [ 0.2, 3 ]
+betag_range = [ 0.5, 4 ]
+betap_range = [ 1, 2 ]
+blur_kernel_size2 = 9
+kernel_list2 = [
+  "iso",
+  "aniso",
+  "generalized_iso",
+  "generalized_aniso",
+  "plateau_iso",
+  "plateau_aniso"
+]
+kernel_prob2 = [ 0.45, 0.25, 0.12, 0.03, 0.12, 0.03 ]
+sinc_prob2 = 0.1
+blur_sigma2 = [ 0.2, 1.5 ]
+betag_range2 = [ 0.5, 4 ]
+betap_range2 = [ 1, 2 ]
+final_sinc_prob = 0.8
 
 [datasets.val]
 name = "val"
@@ -39,7 +85,9 @@ val_freq = 1000
 #pretrain_network_d = 'experiments\pretrain_d.pth'
 
 [network_g]
-type = "krgn"
+type = "plainusr"
+#type = "plainusr_ultra"
+#type = "plainusr_large"
 
 [network_d]
 type = "ea2fpn"
@@ -52,7 +100,7 @@ ema = 0.999
 #eco_init = 15000
 #wavelet_guided = true
 #wavelet_init = 80000
-#match_lq_colors = true
+#match_lq = true
 
 [train.optim_g]
 type = "adan_sf"
@@ -68,7 +116,7 @@ lr = 5e-4
 betas = [ 0.98, 0.92, 0.99 ]
 weight_decay = 0.02
 schedule_free = true
-#warmup_steps = 600
+#warmup_steps = 500
 
 #  losses
 [train.mssim_opt]

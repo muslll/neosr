@@ -11,7 +11,7 @@ scale = 4
 [datasets.train]
 type = "otf"
 dataroot_gt = 'C:\datasets\gt\'
-patch_size = 32
+patch_size = 48
 batch_size = 8
 #accumulate = 1
 augmentation = [ "none", "mixup", "cutmix", "resizemix", "cutblur" ]
