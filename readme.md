@@ -3,9 +3,8 @@
 
 [neosr](https://github.com/muslll/neosr) is a framework for training real-world single-image super-resolution networks. [wiki](https://github.com/muslll/neosr/wiki)
 
-<a href="https://discord.gg/NN2HGtJ3d6"><img src="https://github.com/muslll/neosr/assets/132400428/4bd54b1d-4639-4940-b9c7-b3f212aea5c8?sanitize=true" width="80"></img></a><br>
+<a href="https://discord.gg/NN2HGtJ3d6"><img src="https://github.com/muslll/neosr/assets/132400428/4bd54b1d-4639-4940-b9c7-b3f212aea5c8?sanitize=true" width="100"></img></a><br>
 Join our <a href="https://discord.gg/NN2HGtJ3d6">Discord</a>
-</div>
 </p>
 
 ## 🤝 support me
