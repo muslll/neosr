@@ -38,7 +38,7 @@ Alternatively, use `pip`:
 pip install -e .
 ```
 
-## quick start
+## ⏩quick start
 
 Start training by running:
 
@@ -50,7 +50,7 @@ Where `options.toml` is a configuration file. Templates can be found in [options
 > [!TIP]
 > Please read the wiki [Configuration Walkthrough](https://github.com/muslll/neosr/wiki/Configuration-Walkthrough) for an explanation of each option.
 
-## features
+## ✨features
 
 ### [Supported Archs](https://github.com/muslll/neosr/wiki/Arch%E2%80%90specific-options):
 
@@ -225,14 +225,14 @@ Datasets made by the upscaling community. More info can be found in author's rep
 | [@Phhofm](https://github.com/Phhofm) Nature Dataset	 | [Release page](https://github.com/Phhofm/models/releases/tag/nature_dataset)				      |
 | [@umzi2](https://github.com/umzi2) Digital Art (v2)	 | [Release page](https://huggingface.co/datasets/umzi/digital_art_v2)					      | 
 
-## resources
+## 📖resources
 
 - [Training Guide](https://github.com/Sirosky/Upscale-Hub/wiki/%F0%9F%93%88-Training-a-Model-in-NeoSR) from [@Sirosky](https://github.com/Sirosky) 
 - Philip's [youtube channel](https://www.youtube.com/@philip_hofmann/videos)
 - [OpenModelDB](https://openmodeldb.info/)
 - [chaiNNer](https://chainner.app/)
 
-## 📄 license and acknowledgements
+## 📄license and acknowledgements
 
 Released under the [Apache license](license.txt).
 All licenses listed on [license/readme](license/readme.md).
