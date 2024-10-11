@@ -38,7 +38,7 @@ Alternatively, use `pip`:
 pip install -e .
 ```
 
-## ⏩quick start
+## ⏩ quick start
 
 Start training by running:
 
@@ -50,9 +50,9 @@ Where `options.toml` is a configuration file. Templates can be found in [options
 > [!TIP]
 > Please read the wiki [Configuration Walkthrough](https://github.com/muslll/neosr/wiki/Configuration-Walkthrough) for an explanation of each option.
 
-## ✨features
+## ✨ features
 
-### [Supported Archs](https://github.com/muslll/neosr/wiki/Arch%E2%80%90specific-options):
+### [supported archs](https://github.com/muslll/neosr/wiki/Arch%E2%80%90specific-options):
 
 | arch                                                                                              | option                                 			|
 |---------------------------------------------------------------------------------------------------|-----------------------------------------------------------|
@@ -87,7 +87,7 @@ Where `options.toml` is a configuration file. Templates can be found in [options
 > [!NOTE]
 > For all arch-specific parameters, [read the wiki](https://github.com/muslll/neosr/wiki/Arch%E2%80%90specific-options).
 
-#### Under Testing
+#### under testing
 
 | arch										| option					   |
 |-------------------------------------------------------------------------------|--------------------------------------------------|
@@ -99,7 +99,7 @@ Where `options.toml` is a configuration file. Templates can be found in [options
 | [PlainUSR](https://github.com/icandle/PlainUSR)				| `plainusr`, `plainusr_ultra`, `plainusr_large`   | 
 
 
-### Supported Discriminators:
+### [supported discriminators](https://github.com/muslll/neosr/wiki/Arch%E2%80%90specific-options#discriminators):
 
 | net                               				  		| option 		        |
 |-------------------------------------------------------------------------------|-------------------------------|
@@ -108,7 +108,7 @@ Where `options.toml` is a configuration file. Templates can be found in [options
 | EA2FPN (bespoke, based on [A2-FPN](https://github.com/lironui/A2-FPN))	| `ea2fpn`			|
 | [DUnet](https://github.com/umzi2/DUnet)					| `dunet`			|
 
-### [Supported Optimizers](https://github.com/muslll/neosr/wiki/Optimizer-Options):
+### [supported optimizers](https://github.com/muslll/neosr/wiki/Optimizer-Options):
 
 | optimizer                                                                 | option             	 |
 |---------------------------------------------------------------------------|----------------------------|
@@ -122,7 +122,7 @@ Where `options.toml` is a configuration file. Templates can be found in [options
 | [Adan Schedule-Free](https://github.com/muslll/adan_schedule_free)	    | `adan_sf`			 |
 | [F-SAM](https://github.com/nblt/F-SAM)				    | `fsam`, `FSAM`		 |
 
-### [Supported Losses](https://github.com/muslll/neosr/wiki/Losses):
+### [supported losses](https://github.com/muslll/neosr/wiki/Losses):
 
 | loss                                                                   						| option               		      	     |
 |-----------------------------------------------------------------------------------------------------------------------|--------------------------------------------|
@@ -142,7 +142,7 @@ Where `options.toml` is a configuration file. Templates can be found in [options
 | [Perceptual Patch Loss](https://github.com/Suanmd/Patch-Loss-for-Super-Resolution)					| `perceptual_opt`, `patchloss`, `ipk`	     |
 | [Consistency Loss](https://github.com/muslll/neosr/wiki/Losses#consistency_opt-consistency_loss) (Oklab and CIE L*)	| `consistency_opt`, `consistency_loss`	     |
 
-### Supported Augmentations:
+### [supported augmentations](https://github.com/muslll/neosr/wiki/Configuration-Walkthrough#augmentations-aug_prob):
 
 | augmentation						| option	|
 |-------------------------------------------------------|---------------|
@@ -153,14 +153,14 @@ Where `options.toml` is a configuration file. Templates can be found in [options
 | [ResizeMix](https://arxiv.org/abs/2012.11101)		| `resizemix`	|
 | [CutBlur](https://github.com/clovaai/cutblur/)	| `cutblur`	|
 
-### Supported Models:
+### [supported models](https://github.com/muslll/neosr/wiki/Configuration-Walkthrough#model_type):
 
 | model 	| description                                                            | option    |
 |---------------|------------------------------------------------------------------------|-----------|
 | Single Image  | Base model for SISR, supports both Generator and Discriminator         | `image`   |
 | OTF     	| Builds on top of `default`, adding Real-ESRGAN on-the-fly degradations | `otf`     |
 
-### Supported dataset loaders:
+### [supported dataloaders](https://github.com/muslll/neosr/wiki/Configuration-Walkthrough#dataset-type):
 
 | loader                                          | option   |
 |-------------------------------------------------|----------|
@@ -225,14 +225,14 @@ Datasets made by the upscaling community. More info can be found in author's rep
 | [@Phhofm](https://github.com/Phhofm) Nature Dataset	 | [Release page](https://github.com/Phhofm/models/releases/tag/nature_dataset)				      |
 | [@umzi2](https://github.com/umzi2) Digital Art (v2)	 | [Release page](https://huggingface.co/datasets/umzi/digital_art_v2)					      | 
 
-## 📖resources
+## 📖 resources
 
 - [Training Guide](https://github.com/Sirosky/Upscale-Hub/wiki/%F0%9F%93%88-Training-a-Model-in-NeoSR) from [@Sirosky](https://github.com/Sirosky) 
 - Philip's [youtube channel](https://www.youtube.com/@philip_hofmann/videos)
 - [OpenModelDB](https://openmodeldb.info/)
 - [chaiNNer](https://chainner.app/)
 
-## 📄license and acknowledgements
+## 📄 license and acknowledgements
 
 Released under the [Apache license](license.txt).
 All licenses listed on [license/readme](license/readme.md).
