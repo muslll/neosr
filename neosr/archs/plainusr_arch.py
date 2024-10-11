@@ -1,3 +1,4 @@
+# type: ignore  # noqa: PGH003
 import torch
 import torch.nn.functional as F
 from einops.layers.torch import Rearrange, Reduce
@@ -243,7 +244,7 @@ class Block(nn.Module):
                 self.body[3].body[i].weight.data = body[4].body[i].weight.data
                 self.body[3].body[i].bias.data = body[4].body[i].bias.data
         else:
-            for i in [0,2,3]:
+            for i in [0, 2, 3]:
                 self.body[5].body[i].weight.data = body[6].body[i].weight.data
                 self.body[5].body[i].bias.data = body[6].body[i].bias.data
 
@@ -336,11 +337,12 @@ class LocalAttention(nn.Module):
 
 @ARCH_REGISTRY.register()
 class plainusr(nn.Module):
-    """ PlainUSR: Chasing Faster ConvNet for Efficient Super-Resolution:
+    """PlainUSR: Chasing Faster ConvNet for Efficient Super-Resolution:
     https://arxiv.org/abs/2409.13435
     Code adapted from:
     https://github.com/icandle/PlainUSR
     """
+
     def __init__(self, n_feat=64, im_feat=(64, 48, 32), attn_feat=16, scale=upscale):
         super().__init__()
         self.n_feat = n_feat
@@ -434,20 +436,3 @@ def plainusr_ultra(**kwargs):
 @ARCH_REGISTRY.register()
 def plainusr_large(**kwargs):
     return plainusr(n_feat=80, im_feat=(80, 64, 48), attn_feat=16, **kwargs)
-
-
-"""
-# TODO: port to convert.py
-
-def model_convert(model:torch.nn.Module, save_path=None, prune=False, do_copy=True):
-    if do_copy:
-        model = deepcopy(model)
-    for module in model.modules():
-        if hasattr(module, 'switch_to_deploy'):
-            module.switch_to_deploy(prune)
-    if save_path is not None:
-        torch.save(model.state_dict(), save_path)
-    return model
-    #net_rep = model_convert(net,'model_zoo/PlainUSRU_Rep_x2.pth',False)
-    #net_rep(x)
-"""

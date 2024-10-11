@@ -55,6 +55,16 @@ def load_net():
 
     # load_network and send to device
     net.load_state_dict(load_net, strict=True)  # type: ignore[reportAttributeAccessIssue,attr-defined]
+
+    # plainusr
+    try:
+        for module in net.modules():
+            if hasattr(module, "switch_to_deploy"):
+                module.switch_to_deploy(False)
+        print("-------- Reparametrization completed successfully.")
+    except:
+        pass
+
     net = net.to(device="cuda", non_blocking=True)  # type: ignore[reportAttributeAccessIssue,attr-defined]
     print(f"-------- Successfully loaded network [{args.network}].")
     torch.cuda.empty_cache()
