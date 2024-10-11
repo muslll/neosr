@@ -53,8 +53,9 @@ def load_net():
             load_net[k[7:]] = v
             load_net.pop(k)
 
-    # load_network and send to device
+    # load_network and send to device and set to eval mode
     net.load_state_dict(load_net, strict=True)  # type: ignore[reportAttributeAccessIssue,attr-defined]
+    net.eval()
 
     # plainusr
     try:

@@ -1,4 +1,4 @@
-# type: ignore  # noqa: PGH003
+# type: ignore
 import torch
 import torch.nn.functional as F
 from einops.layers.torch import Rearrange, Reduce
@@ -158,6 +158,9 @@ class Block(nn.Module):
                 LocalAttention(n_feat, f),
             )
 
+    def forward(self, x):
+        return self.body(x)
+
     def _conv_or_mb(self, n_feat):
         if self.training:
             return MBConv(n_feat)
@@ -168,13 +171,13 @@ class Block(nn.Module):
             return PConv(n_feat)
         return nn.Conv2d(n_feat, n_feat, 3, 1, 1)
 
-    def forward(self, x):
-        return self.body(x)
-
     def switch_to_deploy(self, prune):
+        n_feat, _, _, _ = self.body[0].conv.weight.data.shape
+
         self.body[0].switch_to_deploy()
         self.body[2].switch_to_deploy()
-        n_feat, _, _, _ = self.body[0].conv.weight.data.shape
+        if self.version >= 4:
+            self.body[4].switch_to_deploy()
 
         if self.version == 1:
             body = self.body
@@ -184,7 +187,7 @@ class Block(nn.Module):
                 nn.LeakyReLU(0.05, inplace=True),
                 nn.Conv2d(n_feat, n_feat, 3, 1, 1),
             )
-        else:
+        elif self.version in [2, 3]:
             k3x3 = self.body[2].conv.weight.data
             b3x3 = self.body[2].conv.bias.data
             k1x1 = self.body[3].conv.weight.data
@@ -199,6 +202,23 @@ class Block(nn.Module):
             ).view(-1)
             self.body[2].conv.weight.data[0:1, :, ...] = merge_w.float()
             self.body[2].conv.bias.data[0:1] = merge_b.float()
+            body = self.body
+            self.__delattr__("body")
+        else:
+            k3x3 = self.body[4].conv.weight.data
+            b3x3 = self.body[4].conv.bias.data
+            k1x1 = self.body[5].conv.weight.data
+            b1x1 = self.body[5].conv.bias.data
+            merge_w = F.conv2d(input=k3x3.permute(1, 0, 2, 3), weight=k1x1).permute(
+                1, 0, 2, 3
+            )
+            merge_b = F.conv2d(
+                input=b3x3.unsqueeze(0).unsqueeze(-1).unsqueeze(-1),
+                weight=k1x1,
+                bias=b1x1,
+            ).view(-1)
+            self.body[4].conv.weight.data[0:1, :, ...] = merge_w.float()
+            self.body[4].conv.bias.data[0:1] = merge_b.float()
             body = self.body
             self.__delattr__("body")
 
@@ -231,7 +251,7 @@ class Block(nn.Module):
         self.body[2].weight.data = body[2].conv.weight.data
         self.body[2].bias.data = body[2].conv.bias.data
 
-        if self.version not in [1, 2, 3]:
+        if self.version >= 4:
             self.body[4].weight.data = body[4].conv.weight.data
             self.body[4].bias.data = body[4].conv.bias.data
 
