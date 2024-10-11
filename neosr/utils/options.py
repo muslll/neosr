@@ -81,10 +81,10 @@ def parse_options(
     )
 
     group.add_argument(
-        "-safetensor",
-        "--safetensor",
+        "-prune",
+        "--prune",
         action="store_true",
-        help="Enables safetensor conversion.",
+        help="Enables network prune if supported.",
         default=False,
     )
 

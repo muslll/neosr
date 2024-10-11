@@ -60,7 +60,7 @@ def load_net():
     try:
         for module in net.modules():
             if hasattr(module, "switch_to_deploy"):
-                module.switch_to_deploy(False)
+                module.switch_to_deploy(args.prune)
         print("-------- Reparametrization completed successfully.")
     except:
         pass
