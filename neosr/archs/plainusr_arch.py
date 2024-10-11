@@ -243,8 +243,9 @@ class Block(nn.Module):
                 self.body[3].body[i].weight.data = body[4].body[i].weight.data
                 self.body[3].body[i].bias.data = body[4].body[i].bias.data
         else:
-            self.body[5].body[i].weight.data = body[6].body[i].weight.data
-            self.body[5].body[i].bias.data = body[6].body[i].bias.data
+            for i in [0,2,3]:
+                self.body[5].body[i].weight.data = body[6].body[i].weight.data
+                self.body[5].body[i].bias.data = body[6].body[i].bias.data
 
         if prune:
             x = self.body[0].weight.data
