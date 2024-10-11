@@ -18,6 +18,9 @@ tqdm = "^4.66"
 tb-nightly = "^2.19.0a20241004"
 torch = {version = "^2.4.1+cu124", source = "pytorch-gpu-src"}
 torchvision = {version = "^0.19.1+cu124", source = "pytorch-gpu-src"}
+onnx = "^1.17.0"
+onnxruntime-gpu = "^1.19.2"
+onnxconverter-common = "^1.14.0"
 
 [[tool.poetry.source]]
 name = "pytorch-gpu-src"

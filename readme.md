@@ -22,7 +22,7 @@ Join our <a href="https://discord.gg/NN2HGtJ3d6">Discord</a>
 
 ## 💻 installation
 
-Requires Python 3.12 and CUDA =>11.8.
+Requires Python 3.12 and CUDA >=12.4.
 Install latest [Pytorch (>=2.4) and TorchVision](https://pytorch.org/get-started/locally/) (required).
 
 Clone the repository:
@@ -32,33 +32,19 @@ git clone https://github.com/muslll/neosr
 cd neosr
 ```
 
-Then install other dependencies via `pip`:
+Then install via [**`poetry`**](https://python-poetry.org/docs/#installation):
+
+```
+poetry install
+```
+Note: You must use `poetry shell` to enter the env after installation.
+
+
+Alternatively, use `pip`:
 
 ```
 pip install -e .
 ```
-
-Alternatively, use [**`poetry`**](https://python-poetry.org/docs/#installation) (*recommended on linux*):
-
-```
-poetry install
-poetry add torch@latest torchvision@latest
-```
-Note: You must use `poetry shell` to enter the env after installation.
-
-***(optional)*** If you want to convert your models ([convert.py](convert.py)), you need the following dependencies:
-
-```
-pip install onnx onnxruntime-gpu onnxconverter-common onnxsim
-```
-
-You can also install using poetry (*recommended on linux*):
-
-```
-poetry add onnx onnxruntime-gpu onnxconverter-common onnxsim
-```
-
-Please read the [**wiki tutorial**](https://github.com/muslll/neosr/wiki/Model-Conversion) for converting your models.
 
 ## quick start
 
