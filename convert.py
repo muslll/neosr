@@ -126,7 +126,10 @@ def to_onnx() -> None:
             "output_names": ["output"],
         }
     else:
-        dyn_axes = None
+        dyn_axes = {
+            "input_names": ["input"],
+            "output_names": ["output"],
+        }
 
     # add _fp32 suffix to output str
     filename, extension = osp.splitext(args.output)  # noqa: PTH122
