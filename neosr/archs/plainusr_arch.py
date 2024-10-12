@@ -91,6 +91,21 @@ class MBConv(nn.Module):
         self.__delattr__("reduce_conv")
         self.__delattr__("se")
 
+        # redundancy
+        delattr(self, "expand_conv")
+        delattr(self, "fea_conv")
+        delattr(self, "reduce_conv")
+        delattr(self, "se")
+        del self._modules["expand_conv"]
+        del self._parameters["expand_conv"]
+        del self._modules["fea_conv"]
+        del self._parameters["fea_conv"]
+        del self._modules["reduce_conv"]
+        del self._parameters["reduce_conv"]
+        del self._modules["se"]
+        del self._parameters["se"]
+
+
 
 class ASR(nn.Module):
     def __init__(self, n_feat):
@@ -182,6 +197,10 @@ class Block(nn.Module):
         if self.version == 1:
             body = self.body
             self.__delattr__("body")
+            # redundancy
+            delattr(self, "body")
+            del self._modules["body"]
+            del self._parameters["body"]
             self.body = nn.Sequential(
                 nn.Conv2d(n_feat, n_feat, 3, 1, 1),
                 nn.LeakyReLU(0.05, inplace=True),
@@ -204,6 +223,10 @@ class Block(nn.Module):
             self.body[2].conv.bias.data[0:1] = merge_b.float()
             body = self.body
             self.__delattr__("body")
+            # redundancy
+            delattr(self, "body")
+            del self._modules["body"]
+            del self._parameters["body"]
         else:
             k3x3 = self.body[4].conv.weight.data
             b3x3 = self.body[4].conv.bias.data
@@ -221,6 +244,10 @@ class Block(nn.Module):
             self.body[4].conv.bias.data[0:1] = merge_b.float()
             body = self.body
             self.__delattr__("body")
+            # redundancy
+            delattr(self, "body")
+            del self._modules["body"]
+            del self._parameters["body"]
 
         if self.version == 2:
             self.body = nn.Sequential(
