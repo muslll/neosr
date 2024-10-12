@@ -98,7 +98,12 @@ class MessageLogger:
             iter_time /= self.accumulate
 
             total_time = time.time() - self.start_time
-            time_sec_avg = total_time / (current_iter - self.start_iter - 1)
+
+            try:
+                time_sec_avg = total_time / (current_iter - self.start_iter - 1)
+            except ZeroDivisionError:
+                time_sec_avg = 0
+
             eta_sec = time_sec_avg * (self.max_iters - current_iter - 1)
             eta_str = str(datetime.timedelta(seconds=int(eta_sec)))
             message += f" [ performance: {iter_time:.3f} it/s ] [ lr: "
