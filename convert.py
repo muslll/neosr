@@ -138,19 +138,20 @@ def to_onnx() -> None:
     # begin conversion
     print("-------- Starting ONNX conversion (this can take a while)...")
 
-    with torch.device("cpu"):
-        # TODO: switch to dynamo_export once it supports ATen PixelShuffle
-        # then torch.testing.assert_close for verification
+    with torch.inference_mode():
+        with torch.device("cpu"):
+            # TODO: switch to dynamo_export once it supports ATen PixelShuffle
+            # then torch.testing.assert_close for verification
 
-        torch.onnx.export(
-            model,
-            dummy_input,
-            output_fp32,
-            export_params=True,
-            opset_version=args.opset,
-            do_constant_folding=False,
-            **(dyn_axes or {}),  # type: ignore
-        )
+            torch.onnx.export(
+                model,
+                dummy_input,
+                output_fp32,
+                export_params=True,
+                opset_version=args.opset,
+                do_constant_folding=False,
+                **(dyn_axes or {}),  # type: ignore
+            )
 
     print("-------- Conversion was successful. Verifying...")
     # verify onnx
