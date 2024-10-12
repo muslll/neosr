@@ -3,6 +3,7 @@ import torch
 import torch.nn.functional as F
 from einops.layers.torch import Rearrange, Reduce
 from torch import nn
+from torch.nn.utils.parametrize import remove_parametrizations
 
 from neosr.archs.arch_util import net_opt
 from neosr.utils.registry import ARCH_REGISTRY
@@ -92,6 +93,10 @@ class MBConv(nn.Module):
         self.__delattr__("se")
 
         # redundancy
+        remove_parametrizations(self, "expand_conv", leave_parametrized=False)
+        remove_parametrizations(self, "fea_conv", leave_parametrized=False)
+        remove_parametrizations(self, "reduce_conv", leave_parametrized=False)
+        remove_parametrizations(self, "se", leave_parametrized=False)
         delattr(self, "expand_conv")
         delattr(self, "fea_conv")
         delattr(self, "reduce_conv")
@@ -198,6 +203,7 @@ class Block(nn.Module):
             body = self.body
             self.__delattr__("body")
             # redundancy
+            remove_parametrizations(self, "body", leave_parametrized=False)
             delattr(self, "body")
             del self._modules["body"]
             del self._parameters["body"]
@@ -224,6 +230,7 @@ class Block(nn.Module):
             body = self.body
             self.__delattr__("body")
             # redundancy
+            remove_parametrizations(self, "body", leave_parametrized=False)
             delattr(self, "body")
             del self._modules["body"]
             del self._parameters["body"]
@@ -245,6 +252,7 @@ class Block(nn.Module):
             body = self.body
             self.__delattr__("body")
             # redundancy
+            remove_parametrizations(self, "body", leave_parametrized=False)
             delattr(self, "body")
             del self._modules["body"]
             del self._parameters["body"]
