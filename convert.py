@@ -88,7 +88,8 @@ def assert_verify(onnx_model, torch_model) -> None:
     ort_outs = ort_session.run(None, ort_inputs)
 
     # torch outputs
-    torch_outputs = torch_model(dummy_input)
+    with torch.inference_mode():
+        torch_outputs = torch_model(dummy_input)
 
     # final assert - default tolerance values - rtol=1e-03, atol=1e-05
     np.testing.assert_allclose(
