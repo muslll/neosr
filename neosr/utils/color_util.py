@@ -177,9 +177,9 @@ def _convert_input_type_range(img: np.ndarray) -> np.ndarray:
     """
     img_type = img.dtype
     img = img.astype(np.float32)
-    if img_type in {np.float32, np.float16}:
+    if img_type == "float32" or img_type == "float16":
         pass
-    elif img_type == np.uint8:
+    elif img_type == "uint8":
         img /= 255.0
     else:
         msg = f"The img type should be np.float32, np.float16 or np.uint8, but got {img_type}"
@@ -208,7 +208,7 @@ def _convert_output_type_range(img: np.ndarray, dst_type: DTypeLike) -> np.ndarr
         (ndarray): The converted image with desired type and range.
 
     """
-    if dst_type not in {np.uint8, np.float32, np.float16}:
+    if str(dst_type) not in {"np.uint8", "np.float32", "np.float16", "float32", "float16", "uint8"}:
         msg = f"The dst_type should be np.float32, np.float16 or np.uint8, but got {dst_type}"
         raise TypeError(msg)
     if dst_type == np.uint8:
