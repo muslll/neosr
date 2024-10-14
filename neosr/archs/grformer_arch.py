@@ -232,6 +232,8 @@ class GRSA(nn.Module):
         # cosine attention
         attn = F.normalize(q, dim=-1) @ F.normalize(k, dim=-1).transpose(-2, -1)
 
+        # send to device
+        self.logit_scale = self.logit_scale.to(x.device)
         logit_scale = torch.clamp(
             self.logit_scale, max=torch.log(torch.tensor(1.0 / 0.01))
         ).exp()

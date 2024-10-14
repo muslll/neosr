@@ -918,6 +918,16 @@ class drct(nn.Module):
         return x
 
     def forward(self, x):
+        # make sure x is divisible by window-size
+        _, _, h_old, w_old = x.size()
+        h_pad = (h_old // self.window_size + 1) * self.window_size - h_old
+        w_pad = (w_old // self.window_size + 1) * self.window_size - w_old
+        pad = h_pad != 0 or w_pad != 0
+
+        if pad:
+            x = torch.cat([x, torch.flip(x, [2])], 2)[:, :, : h_old + h_pad, :]
+            x = torch.cat([x, torch.flip(x, [3])], 3)[:, :, :, : w_old + w_pad]
+
         self.mean = self.mean.type_as(x)
         x = (x - self.mean) * self.img_range
 

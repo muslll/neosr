@@ -948,7 +948,6 @@ class craft(nn.Module):
             x = torch.cat([x, torch.flip(x, [2])], 2)[:, :, : h_old + h_pad, :]
             x = torch.cat([x, torch.flip(x, [3])], 3)[:, :, :, : w_old + w_pad]
 
-        self.h, self.w = x.shape[2:]
         self.mean = self.mean.type_as(x)
         x = (x - self.mean) * self.img_range
 
