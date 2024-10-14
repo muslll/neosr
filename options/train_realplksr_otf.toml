@@ -153,7 +153,7 @@ loss_weight = 0.2
 
 #[train.ff_opt]
 #type = "ff_loss"
-#loss_weight = 1.0
+#loss_weight = 0.5
 
 #[train.gw_opt]
 #type = "gw_loss"
