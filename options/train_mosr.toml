@@ -112,7 +112,7 @@ loss_weight = 0.1
 
 #[train.gw_opt]
 #type = "gw_loss"
-#loss_weight = 1.0
+#loss_weight = 0.5
 
 #[train.ncc_opt]
 #type = "ncc_loss"

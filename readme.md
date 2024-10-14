@@ -15,7 +15,6 @@ Join our <a href="https://discord.gg/NN2HGtJ3d6">Discord</a>
 ## 💻 installation
 
 Requires Python 3.12 and CUDA >=12.4.
-Install latest [Pytorch (>=2.4) and TorchVision](https://pytorch.org/get-started/locally/) (required).
 
 Clone the repository:
 
@@ -30,13 +29,6 @@ Then install via [**`poetry`**](https://python-poetry.org/docs/#installation):
 poetry install
 ```
 Note: You must use `poetry shell` to enter the env after installation.
-
-
-Alternatively, use `pip`:
-
-```
-pip install -e .
-```
 
 ## ⏩ quick start
 
