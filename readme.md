@@ -130,9 +130,9 @@ Where `options.toml` is a configuration file. Templates can be found in [options
 | L2 Loss                                                                						| `MSELoss`, `mse_loss`    	     	     |
 | Huber Loss                                                             						| `HuberLoss`, `huber_loss` 	    	     |
 | CHC (Clipped Huber with Cosine Similarity Loss)			 						| `chc_loss`				     |
-| NCC (Normalized Cross-Correlation)											| `ncc_opt`, `ncc_loss`			     |
-| Perceptual Loss                                                        						| `perceptual_opt`, `vgg_perceptual_loss`    |
-| GAN                                                                    						| `gan_opt`, `gan_loss`			     |
+| [NCC](https://github.com/muslll/neosr/wiki/Losses#ncc_opt-ncc_loss) (Normalized Cross-Correlation)			| `ncc_opt`, `ncc_loss`			     |
+| [Perceptual Loss](https://github.com/muslll/neosr/wiki/Losses#perceptual_opt-vgg_perceptual_loss)			| `perceptual_opt`, `vgg_perceptual_loss`    |
+| [GAN](https://github.com/muslll/neosr/wiki/Losses#gan_opt-gan_loss)							| `gan_opt`, `gan_loss`			     |
 | [MS-SSIM](https://github.com/lartpang/mssim.pytorch)			 						| `mssim_opt` `mssim_loss`		     |
 | [LDL Loss](https://github.com/csjliang/LDL)                            						| `ldl_opt`, `ldl_loss` 	             |
 | [Focal Frequency](https://github.com/EndlessSora/focal-frequency-loss) 						| `ff_opt`, `ff_loss`             	     |
