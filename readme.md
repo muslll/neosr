@@ -15,20 +15,17 @@ Join our <a href="https://discord.gg/NN2HGtJ3d6">Discord</a>
 ## 💻 installation
 
 Requires Python 3.12 and CUDA >=12.4.
-
-Clone the repository:
+Clone the repository and install via [**`poetry`**](https://python-poetry.org/docs/#installation):
 
 ```
 git clone https://github.com/muslll/neosr
 cd neosr
-```
-
-Then install via [**`poetry`**](https://python-poetry.org/docs/#installation):
-
-```
-poetry install
+poetry install --sync
 ```
 Note: You must use `poetry shell` to enter the env after installation.
+
+See detailed [Installation Instructions](https://github.com/muslll/neosr/wiki/Installation-Instructions) for more details.
+
 
 ## ⏩ quick start
 

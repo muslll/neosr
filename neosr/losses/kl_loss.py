@@ -26,4 +26,6 @@ class kl_loss(nn.Module):
         net_output_log_prob = torch.log(net_output_prob + 1e-8)
         # Compute KL divergence
         loss = F.kl_div(net_output_log_prob, gt_prob, reduction="batchmean")
+        # balance loss to avoid issues
+        loss = loss * 0.03
         return loss * self.loss_weight

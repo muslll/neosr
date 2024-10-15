@@ -20,7 +20,7 @@ upscale, __ = net_opt()
 class PDL(nn.Module):
     """Projected Distribution Loss: https://arxiv.org/abs/2012.09289"""
 
-    def __init__(self, num_projections=25) -> None:
+    def __init__(self, num_projections=36) -> None:
         super().__init__()
         self.num_projections = num_projections
 
@@ -36,10 +36,13 @@ class PDL(nn.Module):
         e_y = torch.matmul(y, W)
         loss = 0
         for ii in range(e_x.shape[2]):
-            loss = loss + F.l1_loss(
+            # use chc instead of L1
+            criterion = chc_loss(loss_lambda=0, clip_min=0, clip_max=1)
+            loss = loss + criterion(
                 torch.sort(e_x[:, :, ii], dim=1)[0], torch.sort(e_y[:, :, ii], dim=1)[0]
             )
-            # TODO: try chc() and Huber
+            # reduce weight to match other criterions
+            loss = loss * 0.75
         return loss
 
 
