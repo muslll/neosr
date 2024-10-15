@@ -16,6 +16,33 @@ if TYPE_CHECKING:
 upscale, __ = net_opt()
 
 
+@LOSS_REGISTRY.register()
+class PDL(nn.Module):
+    """Projected Distribution Loss: https://arxiv.org/abs/2012.09289"""
+
+    def __init__(self, num_projections=25) -> None:
+        super().__init__()
+        self.num_projections = num_projections
+
+    def rand_projections(self, dim, device="cuda"):
+        projections = torch.randn((dim, self.num_projections), device=device)
+        return projections / torch.sqrt(torch.sum(projections**2, dim=0, keepdim=True))
+
+    def forward(self, x: Tensor, y: Tensor):
+        x = x.reshape(x.shape[0], x.shape[1], -1)
+        y = y.reshape(y.shape[0], y.shape[1], -1)
+        W = self.rand_projections(x.shape[-1], device=x.device)
+        e_x = torch.matmul(x, W)
+        e_y = torch.matmul(y, W)
+        loss = 0
+        for ii in range(e_x.shape[2]):
+            loss = loss + F.l1_loss(
+                torch.sort(e_x[:, :, ii], dim=1)[0], torch.sort(e_y[:, :, ii], dim=1)[0]
+            )
+            # TODO: try chc() and Huber
+        return loss
+
+
 class PatchesKernel3D(nn.Module):
     """Adapted from 'Patch Loss: A Generic Multi-Scale Perceptual Loss for
     Single Image Super-resolution':
@@ -142,6 +169,8 @@ class vgg_perceptual_loss(nn.Module):
             self.criterion = nn.HuberLoss()
         elif self.criterion_type == "chc":
             self.criterion = chc_loss(loss_lambda=0, clip_min=0, clip_max=1)  # type: ignore[reportCallIssue]
+        elif self.criterion_type == "pdl":
+            self.criterion = PDL()  # type: ignore[reportCallIssue]
         else:
             msg = f"{criterion} criterion not supported."
             raise NotImplementedError(msg)

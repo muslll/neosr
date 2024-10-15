@@ -87,7 +87,7 @@ loss_weight = 1.0
 [train.perceptual_opt]
 type = "vgg_perceptual_loss"
 loss_weight = 0.5
-criterion = "chc"
+criterion = "chc" # "pdl"
 #patchloss = true
 #ipk = true
 #patch_weight = 1.0
@@ -116,6 +116,10 @@ loss_weight = 0.2
 
 #[train.ncc_opt]
 #type = "ncc_loss"
+#loss_weight = 1.0
+
+#[train.kl_opt]
+#type = "kl_loss"
 #loss_weight = 1.0
 
 [logger]

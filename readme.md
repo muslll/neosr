@@ -134,6 +134,8 @@ Where `options.toml` is a configuration file. Templates can be found in [options
 | [Gradient-Weighted](https://github.com/xiezw5/Component-Divide-and-Conquer-for-Real-World-Image-Super-Resolution/)	| `gw_opt`, `gw_loss`			     | 
 | [Perceptual Patch Loss](https://github.com/Suanmd/Patch-Loss-for-Super-Resolution)					| `perceptual_opt`, `patchloss`, `ipk`	     |
 | [Consistency Loss](https://github.com/muslll/neosr/wiki/Losses#consistency_opt-consistency_loss) (Oklab and CIE L*)	| `consistency_opt`, `consistency_loss`	     |
+| [KL Divergence](https://pytorch.org/docs/stable/generated/torch.nn.KLDivLoss.html)					| `kl_opt`, `kl_loss`			     |
+| [Projected Distribution Loss](https://github.com/saurabh-kataria/projected-distribution-loss)				| `perceptual_opt`, `pdl`		     |
 
 ### [supported augmentations](https://github.com/muslll/neosr/wiki/Configuration-Walkthrough#augmentations-aug_prob):
 
