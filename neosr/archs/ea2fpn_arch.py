@@ -40,8 +40,7 @@ def conv3otherMish(
                 bias=True,
             )
         ),
-        #nn.Mish(inplace=True),
-        nn.SiLU(inplace=True),
+        nn.Mish(inplace=True),
     )
 
 
@@ -84,8 +83,7 @@ class ConvBnMish(nn.Module):
             self.bn = norm_layer(out_planes, eps=bn_eps)
         self.has_mish = has_mish
         if self.has_mish:
-            #self.mish = nn.Mish(inplace=inplace)
-            self.mish = nn.SiLU(inplace=inplace)
+            self.mish = nn.Mish(inplace=inplace)
 
     def forward(self, x: Tensor) -> Tensor:
         x = self.conv(x)
@@ -169,8 +167,7 @@ class Conv3x3GNMish(nn.Module):
                 )
             ),
             nn.GroupNorm(32, out_channels),
-            #nn.Mish(inplace=True),
-            nn.SiLU(inplace=True),
+            nn.Mish(inplace=True),
         )
 
     def forward(self, x: Tensor) -> Tensor:

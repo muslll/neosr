@@ -79,12 +79,18 @@ class image(base):
         # set EMA
         self.ema = self.opt["train"].get("ema", -1)
         if self.ema > 0:
+            logger.info("Using exponential-moving average.")
             self.net_g_ema = AveragedModel(
                 self.net_g,  # type: ignore[reportArgumentType,arg-type]
                 multi_avg_fn=get_ema_multi_avg_fn(self.ema),
                 device=self.device,
             )
-            logger.info("Using exponential-moving average.")
+            if self.net_d is not None:
+                self.net_d_ema = AveragedModel(
+                    self.net_d,  # type: ignore[reportArgumentType,arg-type]
+                    multi_avg_fn=get_ema_multi_avg_fn(self.ema),
+                    device=self.device,
+                )
 
         # sharpness-aware minimization
         self.sam = self.opt["train"].get("sam", None)
@@ -675,6 +681,8 @@ class image(base):
 
             if self.ema > 0:
                 self.net_g_ema.update_parameters(self.net_g)  # type: ignore[reportArgumentType,arg-type]
+                if self.net_d is not None:
+                    self.net_d_ema.update_parameters(self.net_d)  # type: ignore[reportArgumentType,arg-type]
 
     def test(self) -> None:
         self.tile = self.opt["val"].get("tile", -1)
@@ -960,7 +968,10 @@ class image(base):
             self.save_network(self.net_g, "net_g", current_iter)
 
         if self.net_d is not None:
-            self.save_network(self.net_d, "net_d", current_iter)
+            if self.ema > 0:
+                self.save_network(self.net_d_ema, "net_d", current_iter)
+            else:
+                self.save_network(self.net_d, "net_d", current_iter)
 
         self.save_training_state(epoch, current_iter)
 
