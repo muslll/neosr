@@ -89,6 +89,7 @@ Where `options.toml` is a configuration file. Templates can be found in [options
 | [FIWHN](https://github.com/24wenjie-li/FIWHN)					| `fiwhn`					   |
 | [KRGN](https://github.com/ZhangDY827/KRGN)					| `krgn`					   |
 | [PlainUSR](https://github.com/icandle/PlainUSR)				| `plainusr`, `plainusr_ultra`, `plainusr_large`   | 
+| [HASN](https://github.com/nathan66666/HASN)					| `hasn`					   |
 
 
 ### [supported discriminators](https://github.com/muslll/neosr/wiki/Arch%E2%80%90specific-options#discriminators):

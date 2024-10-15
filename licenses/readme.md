@@ -60,3 +60,4 @@
 | [`FIWHN`](https://github.com/24wenjie-li/FIWHN)								| Unknown													|
 | [`KRGN`](https://github.com/ZhangDY827/KRGN)									| Unknown													|
 | [`PlainUSR`](https://github.com/icandle/PlainUSR)								| [MIT](https://github.com/icandle/PlainUSR/blob/main/LICENSE)							|
+| [`HASN`](https://github.com/nathan66666/HASN)									| Unknown													|
