@@ -20,7 +20,7 @@ class gw_loss(nn.Module):
     def __init__(
         self,
         corner: bool = True,
-        criterion: str | None = None,
+        criterion: str | None = "chc",
         loss_weight: float = 1.0,
     ) -> None:
         super().__init__()
@@ -36,7 +36,7 @@ class gw_loss(nn.Module):
         elif self.criterion_type == "huber":
             self.criterion = nn.HuberLoss()
         elif self.criterion_type == "chc":
-            self.criterion = chc_loss()  # type: ignore[reportGeneralTypeIssues]
+            self.criterion = chc_loss(loss_lambda=0, clip_min=0, clip_max=1)  # type: ignore[reportGeneralTypeIssues]
         elif self.criterion_type is None:
             self.criterion = None
         else:

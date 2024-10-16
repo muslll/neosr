@@ -113,7 +113,7 @@ warmup_steps = 1600
 
 [train.optim_d]
 type = "adan_sf"
-lr = 5e-4
+lr = 3e-4
 betas = [ 0.98, 0.92, 0.99 ]
 weight_decay = 0.02
 schedule_free = true
@@ -158,7 +158,7 @@ loss_weight = 0.2
 
 #[train.gw_opt]
 #type = "gw_loss"
-#loss_weight = 0.5
+#loss_weight = 0.2
 
 #[train.ncc_opt]
 #type = "ncc_loss"
