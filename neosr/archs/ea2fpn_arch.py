@@ -45,7 +45,7 @@ def conv3otherMish(
 
 
 def l2_norm(x: Tensor) -> Tensor:
-    return torch.einsum("bcn, bn->bcn", x, 1 / torch.norm(x, p=2, dim=-2))
+    return torch.einsum("bcn, bn->bcn", x, 1 / torch.linalg.vector_norm(x, ord=2, dim=-2))
 
 
 class ConvBnMish(nn.Module):

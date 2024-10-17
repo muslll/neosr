@@ -1,23 +1,26 @@
 [tool.poetry]
 name = "neosr"
-version = "0.1.0"
-description = "neosr, a framework for training real-world single-image super-resolution networks."
+version = "1.0.0"
+description = "neosr is an open-source framework for training super-resolution models. It provides a comprehensive and reproducible environment for achieving state-of-the-art image restoration results, making it suitable for both the enthusiastic community, professionals and machine learning academic researchers. It serves as a versatile platform and aims to bridge the gap between practical application and academic research in the field."
 authors = ["musl"]
-license = "Apache 2.0"
+license = "Apache-2.0"
 readme = "readme.md"
+repository = "https://github.com/neosr-project/neosr"
+documentation = "https://github.com/neosr-project/neosr/wiki"
+keywords = ["super-resolution", "computer-vision", "machine-learning", "image-restoration"]
 
 [tool.poetry.dependencies]
 python = "^3.12"
 einops = "^0.8"
 lmdb = "^1.5.1"
-numpy = "^2.1.0"
+numpy = "^2.1.2"
 opencv-python-headless = "^4.10"
 pywavelets = "^1.7.0"
-scipy = "^1.14"
-tqdm = "^4.66"
+scipy = "^1.14.1"
+tqdm = "^4.66.5"
 tb-nightly = "^2.19.0a20241004"
-torch = {version = "^2.4.1+cu124", source = "pytorch-gpu-src"}
-torchvision = {version = "^0.19.1+cu124", source = "pytorch-gpu-src"}
+torch = {version = "^2.5.0+cu124", source = "pytorch-gpu-src"}
+torchvision = {version = "^0.20.0+cu124", source = "pytorch-gpu-src"}
 onnx = "^1.17.0"
 onnxruntime-gpu = "^1.19.2"
 onnxconverter-common = "^1.14.0"

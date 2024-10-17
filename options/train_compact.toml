@@ -65,7 +65,7 @@ warmup_steps = 1600
 
 [train.optim_d]
 type = "adan_sf"
-lr = 3e-4
+lr = 2e-4
 betas = [ 0.98, 0.92, 0.99 ]
 weight_decay = 0.02
 schedule_free = true
@@ -93,7 +93,7 @@ criterion = "chc" # "pdl"
 [train.gan_opt]
 type = "gan_loss"
 gan_type = "bce"
-loss_weight = 0.2
+loss_weight = 0.1
 
 #[train.dists_opt]
 #type = "dists_loss"
@@ -106,11 +106,11 @@ loss_weight = 0.2
 
 #[train.ff_opt]
 #type = "ff_loss"
-#loss_weight = 0.5
+#loss_weight = 0.35
 
 #[train.gw_opt]
 #type = "gw_loss"
-#loss_weight = 0.3
+#loss_weight = 0.1
 
 #[train.ncc_opt]
 #type = "ncc_loss"

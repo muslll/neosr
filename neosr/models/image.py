@@ -466,10 +466,10 @@ class image(base):
                     self.output = self.net_g(self.lq)  # type: ignore[reportCallIssue,operator]
                 else:
                     self.output, self.gt = self.eco_strategy(current_iter)
-                    self.gt = torch.clamp(self.gt, 1/255, 1)
+                    self.gt = torch.clamp(self.gt, 1 / 255, 1)
             else:
                 self.output = self.net_g(self.lq)  # type: ignore[reportCallIssue,operator]
-            self.output = torch.clamp(self.output, 1/255, 1)
+            self.output = torch.clamp(self.output, 1 / 255, 1)
 
             # lq match
             if self.match_lq_colors:

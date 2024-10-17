@@ -98,7 +98,7 @@ class fsam(Optimizer):
         shared_device = self.param_groups[0]["params"][
             0
         ].device  # put everything on the same device, in case of model parallelism
-        return torch.norm(
+        return torch.linalg.vector_norm(
             torch.stack([
                 ((torch.abs(p) if group["adaptive"] else 1.0) * p.grad)
                 .norm(p=2)
@@ -107,7 +107,7 @@ class fsam(Optimizer):
                 for p in group["params"]
                 if p.grad is not None
             ]),
-            p=2,
+            ord=2,
         )
 
     def load_state_dict(self, state_dict: dict[Any, Any]) -> None:

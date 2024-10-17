@@ -140,9 +140,8 @@ def to_onnx() -> None:
 
     with torch.inference_mode():
         with torch.device("cpu"):
-            # TODO: switch to dynamo_export once it supports ATen PixelShuffle
-            # then torch.testing.assert_close for verification
-
+            # TODO: add param dynamo=True as a switch
+            # py2.5 supports the verify=True flag now as well
             torch.onnx.export(
                 model,
                 dummy_input,

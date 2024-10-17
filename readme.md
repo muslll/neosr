@@ -1,16 +1,28 @@
 <div align="center">
 <img src="https://github.com/muslll/neosr/assets/132400428/54e8f7fa-8705-4ea3-8b6e-c6227117044d?sanitize=true" width="480"></img>
 
-[neosr](https://github.com/muslll/neosr) is a framework for training real-world single-image super-resolution networks. [wiki](https://github.com/muslll/neosr/wiki)
-
 <a href="https://discord.gg/NN2HGtJ3d6"><img src="https://github.com/muslll/neosr/assets/132400428/4bd54b1d-4639-4940-b9c7-b3f212aea5c8?sanitize=true" width="100"></img></a><br>
 Join our <a href="https://discord.gg/NN2HGtJ3d6">Discord</a>
 </div>
 
-## 🤝 support me
+[neosr](https://github.com/muslll/neosr) is an open-source framework for training super-resolution models. It provides a comprehensive and reproducible environment for achieving state-of-the-art image restoration results, making it suitable for both the enthusiastic community, professionals and machine learning academic researchers. It serves as a versatile platform and aims to bridge the gap between practical application and academic research in the field.
+
+- **Accessible**: implements a wide range of the latest advancements in single-image super-resolution networks, losses, optimizers and augmentations. Users can easily explore, adapt and experiment with various configurations for their specific needs, even without coding skills.
+
+- **Efficient**: optimized for faster training iterations, quicker convergence and low GPU requirements, making it the most efficient choice for both research and practical use cases.
+
+- **Practical**: focuses on the real-world use of super-resolution to realistically restore degraded images in various domains, including photos, anime/cartoons, illustrations and more. It's also suitable for critical applications like medical imaging, forensics, geospatial and others (although caution should be taken in those cases).
+
+- **Reproducible**: this framework emphasizes the importance of reproducible research. It provides deterministic training environments that can create bit-exact reproducible models (on the same platform), ensuring predictable and reliable results, which are essential for maintaining consistency in academic validation.
+
+- **Simple**: features are easy to implement or modify. Code is written in readable Python, no fancy styling. All code is validated and formatted by [`ruff`](https://docs.astral.sh/ruff/), [`mypy`](https://www.mypy-lang.org/) and [`torchfix`](https://github.com/pytorch-labs/torchfix).
+
+For more information see our [wiki](https://github.com/muslll/neosr/wiki).
+
+## 🤝 support the project
 
 > [!TIP]
-> Consider supporting me on [**KoFi**](https://ko-fi.com/muslll) &#9749; or [**Patreon**](https://www.patreon.com/neosr)
+> Consider supporting the project on [**KoFi**](https://ko-fi.com/muslll) &#9749; or [**Patreon**](https://www.patreon.com/neosr)
 
 ## 💻 installation
 
@@ -22,10 +34,7 @@ git clone https://github.com/muslll/neosr
 cd neosr
 poetry install --sync
 ```
-Note: You must use `poetry shell` to enter the env after installation.
-
 See detailed [Installation Instructions](https://github.com/muslll/neosr/wiki/Installation-Instructions) for more details.
-
 
 ## ⏩ quick start
 

@@ -85,7 +85,7 @@ class ff_loss(nn.Module):
 
             # whether to adjust the spectrum weight matrix by logarithm
             if self.log_matrix:
-                matrix_tmp = torch.log(matrix_tmp + 1.0)
+                matrix_tmp = torch.log1p(matrix_tmp)
 
             # whether to calculate the spectrum weight matrix using batch-based statistics
             if self.batch_matrix:
