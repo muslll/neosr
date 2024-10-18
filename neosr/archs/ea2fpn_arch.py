@@ -9,43 +9,10 @@ from neosr.archs.arch_util import DySample
 from neosr.utils.registry import ARCH_REGISTRY
 
 
-def conv3otherMish(
-    in_planes: int,
-    out_planes: int,
-    kernel_size: int | None = None,
-    stride: int | None = None,
-    padding: int | None = None,
-) -> nn.Sequential:
-    # 3x3 convolution with padding and mish
-    if kernel_size is None:
-        kernel_size = 3
-    assert isinstance(kernel_size, int | tuple), "kernel_size is not in (int, tuple)!"
-
-    if stride is None:
-        stride = 1
-    assert isinstance(stride, int | tuple), "stride is not in (int, tuple)!"
-
-    if padding is None:
-        padding = 1
-    assert isinstance(padding, int | tuple), "padding is not in (int, tuple)!"
-
-    return nn.Sequential(
-        spectral_norm(
-            nn.Conv2d(
-                in_planes,
-                out_planes,
-                kernel_size=kernel_size,
-                stride=stride,
-                padding=padding,
-                bias=True,
-            )
-        ),
-        nn.Mish(inplace=True),
-    )
-
-
 def l2_norm(x: Tensor) -> Tensor:
-    return torch.einsum("bcn, bn->bcn", x, 1 / torch.linalg.vector_norm(x, ord=2, dim=-2))
+    return torch.einsum(
+        "bcn, bn->bcn", x, 1 / torch.linalg.vector_norm(x, ord=2, dim=-2)
+    )
 
 
 class ConvBnMish(nn.Module):
@@ -200,10 +167,10 @@ class SegmentationBlock(nn.Module):
 
         blocks = [Conv3x3GNMish(in_channels, out_channels, upsample=bool(n_upsamples))]
         if n_upsamples > 1:
-            blocks.extend(
+            blocks.extend([
                 Conv3x3GNMish(out_channels, out_channels, upsample=True)
                 for _ in range(1, n_upsamples)
-            )
+            ])
         self.block = nn.Sequential(*blocks)
 
     def forward(self, x: Tensor) -> Tensor:

@@ -257,13 +257,13 @@ class vgg_perceptual_loss(nn.Module):
                     self.patch(x_features[k], gt_features[k])
                     * self.layer_weights[k]
                     * self.patch_weights
-                    + self.criterion(x_features[k], gt_features[k])
+                    + self.criterion(x_features[k] * 0.1, gt_features[k] * 0.1)
                     * self.layer_weights[k]
                 )
             else:
-                # decrease magnitude to balance other losses
                 percep_loss += (
-                    self.criterion(x_features[k] / 10, gt_features[k] / 10)
+                    # decrease magnitude to balance other losses
+                    self.criterion(x_features[k] * 0.1, gt_features[k] * 0.1)
                     * self.layer_weights[k]
                 )
         # add IPK

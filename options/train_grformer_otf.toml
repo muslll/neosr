@@ -106,7 +106,7 @@ ema = 0.999
 type = "adan_sf"
 lr = 1e-3
 betas = [ 0.98, 0.92, 0.99 ]
-weight_decay = 0.02
+weight_decay = 0.01
 schedule_free = true
 warmup_steps = 1600
 
@@ -114,7 +114,7 @@ warmup_steps = 1600
 type = "adan_sf"
 lr = 2e-4
 betas = [ 0.98, 0.92, 0.99 ]
-weight_decay = 0.02
+weight_decay = 0.01
 schedule_free = true
 #warmup_steps = 500
 
