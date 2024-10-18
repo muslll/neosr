@@ -1,11 +1,11 @@
 <div align="center">
-<img src="https://github.com/muslll/neosr/assets/132400428/54e8f7fa-8705-4ea3-8b6e-c6227117044d?sanitize=true" width="480"></img>
+<img src="https://github.com/neosr-project/neosr/assets/132400428/54e8f7fa-8705-4ea3-8b6e-c6227117044d?sanitize=true" width="480"></img>
 
-<a href="https://discord.gg/NN2HGtJ3d6"><img src="https://github.com/muslll/neosr/assets/132400428/4bd54b1d-4639-4940-b9c7-b3f212aea5c8?sanitize=true" width="100"></img></a><br>
+<a href="https://discord.gg/NN2HGtJ3d6"><img src="https://github.com/neosr-project/neosr/assets/132400428/4bd54b1d-4639-4940-b9c7-b3f212aea5c8?sanitize=true" width="100"></img></a><br>
 Join our <a href="https://discord.gg/NN2HGtJ3d6">Discord</a>
 </div>
 
-[neosr](https://github.com/muslll/neosr) is an open-source framework for training super-resolution models. It provides a comprehensive and reproducible environment for achieving state-of-the-art image restoration results, making it suitable for both the enthusiastic community, professionals and machine learning academic researchers. It serves as a versatile platform and aims to bridge the gap between practical application and academic research in the field.
+[neosr](https://github.com/neosr-project/neosr) is an open-source framework for training super-resolution models. It provides a comprehensive and reproducible environment for achieving state-of-the-art image restoration results, making it suitable for both the enthusiastic community, professionals and machine learning academic researchers. It serves as a versatile platform and aims to bridge the gap between practical application and academic research in the field.
 
 - **Accessible**: implements a wide range of the latest advancements in single-image super-resolution networks, losses, optimizers and augmentations. Users can easily explore, adapt and experiment with various configurations for their specific needs, even without coding skills.
 
@@ -17,12 +17,12 @@ Join our <a href="https://discord.gg/NN2HGtJ3d6">Discord</a>
 
 - **Simple**: features are easy to implement or modify. Code is written in readable Python, no fancy styling. All code is validated and formatted by [`ruff`](https://docs.astral.sh/ruff/), [`mypy`](https://www.mypy-lang.org/) and [`torchfix`](https://github.com/pytorch-labs/torchfix).
 
-For more information see our [wiki](https://github.com/muslll/neosr/wiki).
+For more information see our [wiki](https://github.com/neosr-project/neosr/wiki).
 
 ## 🤝 support the project
 
 > [!TIP]
-> Consider supporting the project on [**KoFi**](https://ko-fi.com/muslll) &#9749; or [**Patreon**](https://www.patreon.com/neosr)
+> Consider supporting the project on [**KoFi**](https://ko-fi.com/neosr) &#9749; or [**Patreon**](https://www.patreon.com/neosr)
 
 ## 💻 installation
 
@@ -30,11 +30,11 @@ Requires Python 3.12 and CUDA >=12.4.
 Clone the repository and install via [**`poetry`**](https://python-poetry.org/docs/#installation):
 
 ```
-git clone https://github.com/muslll/neosr
+git clone https://github.com/neosr-project/neosr
 cd neosr
 poetry install --sync
 ```
-See detailed [Installation Instructions](https://github.com/muslll/neosr/wiki/Installation-Instructions) for more details.
+See detailed [Installation Instructions](https://github.com/neosr-project/neosr/wiki/Installation-Instructions) for more details.
 
 ## ⏩ quick start
 
@@ -46,11 +46,11 @@ python train.py -opt options.toml
 Where `options.toml` is a configuration file. Templates can be found in [options](options/).
 
 > [!TIP]
-> Please read the wiki [Configuration Walkthrough](https://github.com/muslll/neosr/wiki/Configuration-Walkthrough) for an explanation of each option.
+> Please read the wiki [Configuration Walkthrough](https://github.com/neosr-project/neosr/wiki/Configuration-Walkthrough) for an explanation of each option.
 
 ## ✨ features
 
-### [supported archs](https://github.com/muslll/neosr/wiki/Arch%E2%80%90specific-options):
+### [supported archs](https://github.com/neosr-project/neosr/wiki/Arch%E2%80%90specific-options):
 
 | arch                                                                                              | option                                 			|
 |---------------------------------------------------------------------------------------------------|-----------------------------------------------------------|
@@ -83,7 +83,7 @@ Where `options.toml` is a configuration file. Templates can be found in [options
 | [EIMN](https://github.com/liux520/EIMN)							    | `eimn`, `eimn_a`, `eimn_l`			   |
 
 > [!NOTE]
-> For all arch-specific parameters, [read the wiki](https://github.com/muslll/neosr/wiki/Arch%E2%80%90specific-options).
+> For all arch-specific parameters, [read the wiki](https://github.com/neosr-project/neosr/wiki/Arch%E2%80%90specific-options).
 
 #### under testing
 
@@ -98,7 +98,7 @@ Where `options.toml` is a configuration file. Templates can be found in [options
 | [HASN](https://github.com/nathan66666/HASN)					| `hasn`					   |
 
 
-### [supported discriminators](https://github.com/muslll/neosr/wiki/Arch%E2%80%90specific-options#discriminators):
+### [supported discriminators](https://github.com/neosr-project/neosr/wiki/Arch%E2%80%90specific-options#discriminators):
 
 | net                               				  		| option 		        |
 |-------------------------------------------------------------------------------|-------------------------------|
@@ -107,7 +107,7 @@ Where `options.toml` is a configuration file. Templates can be found in [options
 | EA2FPN (bespoke, based on [A2-FPN](https://github.com/lironui/A2-FPN))	| `ea2fpn`			|
 | [DUnet](https://github.com/umzi2/DUnet)					| `dunet`			|
 
-### [supported optimizers](https://github.com/muslll/neosr/wiki/Optimizer-Options):
+### [supported optimizers](https://github.com/neosr-project/neosr/wiki/Optimizer-Options):
 
 | optimizer                                                                 | option             	 |
 |---------------------------------------------------------------------------|----------------------------|
@@ -118,10 +118,10 @@ Where `options.toml` is a configuration file. Templates can be found in [options
 | [AdamW Win2](https://github.com/sail-sg/win)				    | `AdamW_Win` or `adamw_win` |
 | [ECO strategy](https://github.com/2minkyulee/ECO)			    | `eco`, `eco_iters`	 |
 | [AdamW Schedule-Free](https://github.com/facebookresearch/schedule_free)  | `adamw_sf`		 |
-| [Adan Schedule-Free](https://github.com/muslll/adan_schedule_free)	    | `adan_sf`			 |
+| [Adan Schedule-Free](https://github.com/neosr-project/adan_schedule_free)	    | `adan_sf`			 |
 | [F-SAM](https://github.com/nblt/F-SAM)				    | `fsam`, `FSAM`		 |
 
-### [supported losses](https://github.com/muslll/neosr/wiki/Losses):
+### [supported losses](https://github.com/neosr-project/neosr/wiki/Losses):
 
 | loss                                                                   						| option               		      	     |
 |-----------------------------------------------------------------------------------------------------------------------|--------------------------------------------|
@@ -129,9 +129,9 @@ Where `options.toml` is a configuration file. Templates can be found in [options
 | L2 Loss                                                                						| `MSELoss`, `mse_loss`    	     	     |
 | Huber Loss                                                             						| `HuberLoss`, `huber_loss` 	    	     |
 | CHC (Clipped Huber with Cosine Similarity Loss)			 						| `chc_loss`				     |
-| [NCC](https://github.com/muslll/neosr/wiki/Losses#ncc_opt-ncc_loss) (Normalized Cross-Correlation)			| `ncc_opt`, `ncc_loss`			     |
-| [Perceptual Loss](https://github.com/muslll/neosr/wiki/Losses#perceptual_opt-vgg_perceptual_loss)			| `perceptual_opt`, `vgg_perceptual_loss`    |
-| [GAN](https://github.com/muslll/neosr/wiki/Losses#gan_opt-gan_loss)							| `gan_opt`, `gan_loss`			     |
+| [NCC](https://github.com/neosr-project/neosr/wiki/Losses#ncc_opt-ncc_loss) (Normalized Cross-Correlation)			| `ncc_opt`, `ncc_loss`			     |
+| [Perceptual Loss](https://github.com/neosr-project/neosr/wiki/Losses#perceptual_opt-vgg_perceptual_loss)			| `perceptual_opt`, `vgg_perceptual_loss`    |
+| [GAN](https://github.com/neosr-project/neosr/wiki/Losses#gan_opt-gan_loss)							| `gan_opt`, `gan_loss`			     |
 | [MS-SSIM](https://github.com/lartpang/mssim.pytorch)			 						| `mssim_opt` `mssim_loss`		     |
 | [LDL Loss](https://github.com/csjliang/LDL)                            						| `ldl_opt`, `ldl_loss` 	             |
 | [Focal Frequency](https://github.com/EndlessSora/focal-frequency-loss) 						| `ff_opt`, `ff_loss`             	     |
@@ -139,11 +139,11 @@ Where `options.toml` is a configuration file. Templates can be found in [options
 | [Wavelet Guided](https://github.com/mandalinadagi/WGSR)		 						| `wavelet_guided`			     |
 | [Gradient-Weighted](https://github.com/xiezw5/Component-Divide-and-Conquer-for-Real-World-Image-Super-Resolution/)	| `gw_opt`, `gw_loss`			     | 
 | [Perceptual Patch Loss](https://github.com/Suanmd/Patch-Loss-for-Super-Resolution)					| `perceptual_opt`, `patchloss`, `ipk`	     |
-| [Consistency Loss](https://github.com/muslll/neosr/wiki/Losses#consistency_opt-consistency_loss) (Oklab and CIE L*)	| `consistency_opt`, `consistency_loss`	     |
+| [Consistency Loss](https://github.com/neosr-project/neosr/wiki/Losses#consistency_opt-consistency_loss) (Oklab and CIE L*)	| `consistency_opt`, `consistency_loss`	     |
 | [KL Divergence](https://pytorch.org/docs/stable/generated/torch.nn.KLDivLoss.html)					| `kl_opt`, `kl_loss`			     |
 | [Projected Distribution Loss](https://github.com/saurabh-kataria/projected-distribution-loss)				| `perceptual_opt`, `pdl`		     |
 
-### [supported augmentations](https://github.com/muslll/neosr/wiki/Configuration-Walkthrough#augmentations-aug_prob):
+### [supported augmentations](https://github.com/neosr-project/neosr/wiki/Configuration-Walkthrough#augmentations-aug_prob):
 
 | augmentation						| option	|
 |-------------------------------------------------------|---------------|
@@ -154,14 +154,14 @@ Where `options.toml` is a configuration file. Templates can be found in [options
 | [ResizeMix](https://arxiv.org/abs/2012.11101)		| `resizemix`	|
 | [CutBlur](https://github.com/clovaai/cutblur/)	| `cutblur`	|
 
-### [supported models](https://github.com/muslll/neosr/wiki/Configuration-Walkthrough#model_type):
+### [supported models](https://github.com/neosr-project/neosr/wiki/Configuration-Walkthrough#model_type):
 
 | model 	| description                                                            | option    |
 |---------------|------------------------------------------------------------------------|-----------|
 | Single Image  | Base model for SISR, supports both Generator and Discriminator         | `image`   |
 | OTF     	| Builds on top of `default`, adding Real-ESRGAN on-the-fly degradations | `otf`     |
 
-### [supported dataloaders](https://github.com/muslll/neosr/wiki/Configuration-Walkthrough#dataset-type):
+### [supported dataloaders](https://github.com/neosr-project/neosr/wiki/Configuration-Walkthrough#dataset-type):
 
 | loader                                          | option   |
 |-------------------------------------------------|----------|

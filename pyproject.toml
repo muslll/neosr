@@ -2,12 +2,11 @@
 name = "neosr"
 version = "1.0.0"
 description = "neosr is an open-source framework for training super-resolution models. It provides a comprehensive and reproducible environment for achieving state-of-the-art image restoration results, making it suitable for both the enthusiastic community, professionals and machine learning academic researchers. It serves as a versatile platform and aims to bridge the gap between practical application and academic research in the field."
-authors = ["musl"]
+authors = ["neosr-project"]
 license = "Apache-2.0"
 readme = "readme.md"
 repository = "https://github.com/neosr-project/neosr"
 documentation = "https://github.com/neosr-project/neosr/wiki"
-keywords = ["super-resolution", "computer-vision", "machine-learning", "image-restoration"]
 
 [tool.poetry.dependencies]
 python = "^3.12"
